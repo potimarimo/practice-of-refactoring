@@ -722,6 +722,8 @@ protected:
 	const shared_ptr<const Token> ReadCore(string::const_iterator &cursol, const string::const_iterator& end) const override;
 };
 
+class SequenceParser;
+//! さまざまなパーサーの基底クラスとなる抽象クラスです。
 class Parser
 {
 public:
@@ -770,12 +772,12 @@ public:
 	//! SequenceParserクラスの新しいインスタンスを初期化します。
 	//! @param [in] 読み取りが成功したら実行する処理です。
 	//! @params [in] parser1 一つ目のParserです。
-	//! @params [in] parser1 一つ目のParserです。
+	//! @params [in] parser2 二つ目目のParserです。
 	SequenceParser(function<void(void)> action, shared_ptr<Parser> parser1, shared_ptr<Parser> parser2);
 
 	//! SequenceParserクラスの新しいインスタンスを初期化します。
 	//! @params [in] parser1 一つ目のParserです。
-	//! @params [in] parser1 一つ目のParserです。
+	//! @params [in] parser2 二つ目のParserです。
 	SequenceParser(shared_ptr<Parser> parser1, shared_ptr<Parser> parser2);
 
 	//! 読み取りが成功したら実行する処理を登録します。
@@ -787,6 +789,11 @@ public:
 	//! @return パースが成功したかどうかです。
 	const bool Parse(vector<const Token>::const_iterator& cursol) const override;
 };
+
+//! SequenceParserクラスの新しいインスタンスを生成します。
+//! @params [in] parser1 一つ目のParserです。
+//! @params [in] parser2 二つ目のParserです。
+shared_ptr<SequenceParser> operator>>(shared_ptr<Parser> parser1, shared_ptr<Parser> parser2);
 
 //! 出力するデータを管理します。
 class OutputData
@@ -1967,6 +1974,14 @@ shared_ptr<SequenceParser> SequenceParser::Action(function<void(void)> action)
 	return make_shared<SequenceParser>(action, m_parser1, m_parser2);
 }
 
+//! SequenceParserクラスの新しいインスタンスを生成します。
+//! @params [in] parser1 一つ目のParserです。
+//! @params [in] parser2 二つ目のParserです。
+shared_ptr<SequenceParser> operator>>(shared_ptr<Parser> parser1, shared_ptr<Parser> parser2)
+{
+	return make_shared<SequenceParser>(parser1, parser2);
+}
+
 //! 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
 void OutputData::InitializeAllInputColumns()
 {
@@ -2402,7 +2417,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 		queryInfo->selectColumns.back() = Column(queryInfo->selectColumns.back().columnName, token.word);
 	});
 
-	auto SECOND_COLUMN = make_shared<SequenceParser>(DOT, SECOND_COLUMN_NAME);
+	auto SECOND_COLUMN = DOT >> SECOND_COLUMN_NAME;
 
 	if (!SELECT->Parse(tokenCursol)){
 		throw ResultValue::ERR_SQL_SYNTAX;
