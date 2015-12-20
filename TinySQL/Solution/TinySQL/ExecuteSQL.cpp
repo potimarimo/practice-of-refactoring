@@ -929,16 +929,12 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 		if (tokenCursol <= &tokens.back()){
 			throw ResultValue::ERR_SQL_SYNTAX;
 		}
-		Column inputColumns[MAX_TABLE_COUNT][MAX_COLUMN_COUNT]; // 入力されたCSVの行の情報です。
+		vector<Column> inputColumns[MAX_TABLE_COUNT]; // 入力されたCSVの行の情報です。
 		// inputColumnsを初期化します。
 		for (size_t i = 0; i < sizeof(inputColumns) / sizeof(inputColumns[0]); i++)
 		{
-			for (size_t j = 0; j < sizeof(inputColumns[0]) / sizeof(inputColumns[0][0]); j++)
-			{
-				inputColumns[i][j] = Column();
-			}
+			inputColumns[i] = vector<Column>();
 		}
-		int inputColumnNums[MAX_TABLE_COUNT] = { 0 }; // 各テーブルごとの列の数です。
 
 		for (size_t i = 0; i < tableNames.size(); ++i){
 
@@ -961,11 +957,8 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 
 				// 読み込んだ行を最後まで読みます。
 				while (*charactorCursol && *charactorCursol != '\r' && *charactorCursol != '\n'){
-					if (MAX_COLUMN_COUNT <= inputColumnNums[i]){
-						throw ResultValue::ERR_MEMORY_OVER;
-					}
-					strncpy(inputColumns[i][inputColumnNums[i]].tableName, tableNames[i].c_str(), MAX_WORD_LENGTH);
-					char *writeCursol = inputColumns[i][inputColumnNums[i]++].columnName; // 列名の書き込みに利用するカーソルです。
+					inputColumns[i].push_back(Column(tableNames[i].c_str(), ""));					
+					char *writeCursol = inputColumns[i].back().columnName; // 列名の書き込みに利用するカーソルです。
 
 					// 列名を一つ読みます。
 					while (*charactorCursol && *charactorCursol != ',' && *charactorCursol != '\r'&& *charactorCursol != '\n'){
@@ -1027,7 +1020,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 			}
 
 			// 全てが数値となる列は数値列に変換します。
-			for (int j = 0; j < inputColumnNums[i]; ++j){
+			for (size_t j = 0; j < inputColumns[i].size(); ++j){
 
 				// 全ての行のある列について、データ文字列から符号と数値以外の文字を探します。
 				currentRow = inputData[i];
@@ -1077,8 +1070,8 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 
 		// 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
 		for (size_t i = 0; i < tableNames.size(); ++i){
-			for (int j = 0; j < inputColumnNums[i]; ++j){
-				allInputColumns[allInputColumnsNum++] = Column(tableNames[i].c_str(), inputColumns[i][j].columnName);
+			for (auto &inputColumn : inputColumns[i]){
+				allInputColumns[allInputColumnsNum++] = Column(tableNames[i].c_str(), inputColumn.columnName);
 			}
 		}
 
@@ -1098,14 +1091,15 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 		for (auto &selectColumn : selectColumns){
 			found = false;
 			for (size_t i = 0; i < tableNames.size(); ++i){
-				for (int j = 0; j < inputColumnNums[i]; ++j){
+				int j = 0;
+				for (auto &inputColumn : inputColumns[i]){
 					char* selectTableNameCursol = selectColumn.tableName;
-					char* inputTableNameCursol = inputColumns[i][j].tableName;
+					char* inputTableNameCursol = inputColumn.tableName;
 					while (*selectTableNameCursol && toupper(*selectTableNameCursol) == toupper(*inputTableNameCursol++)){
 						++selectTableNameCursol;
 					}
 					char* selectColumnNameCursol = selectColumn.columnName;
-					char* inputColumnNameCursol = inputColumns[i][j].columnName;
+					char* inputColumnNameCursol = inputColumn.columnName;
 					while (*selectColumnNameCursol && toupper(*selectColumnNameCursol) == toupper(*inputColumnNameCursol++)){
 						++selectColumnNameCursol;
 					}
@@ -1124,6 +1118,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 						}
 						selectColumnIndexes[selectColumnIndexesNum++] = ColumnIndex(i, j);
 					}
+					++j;
 				}
 			}
 			// 一つも見つからなくてもエラーです。
@@ -1193,7 +1188,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 			// allColumnsRowの列を設定します。
 			int allColumnsNum = 0; // allColumnsRowの現在の列数です。
 			for (size_t i = 0; i < tableNames.size(); ++i){
-				for (int j = 0; j < inputColumnNums[i]; ++j){
+				for (int j = 0; j < inputColumns[i].size(); ++j){
 					allColumnsRow[allColumnsNum] = (Data*)malloc(sizeof(Data));
 					if (!allColumnsRow[allColumnsNum]){
 						throw ResultValue::ERR_MEMORY_ALLOCATE;
