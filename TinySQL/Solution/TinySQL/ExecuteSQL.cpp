@@ -736,7 +736,7 @@ public:
 //! トークンをひとつ読み取るパーサーです。
 class TokenParser : public Parser
 {
-	TokenKind m_kind; //!< 読み取るトークンの種類です。
+	vector<TokenKind> m_kinds; //!< 読み取るトークンの種類です。
 	function<void(const Token)> m_action; //!< 読み取りが成功したら実行する処理です。
 public:
 	//! TokenParserクラスの新しいインスタンスを初期化します。
@@ -2023,18 +2023,18 @@ const shared_ptr<const Token> IdentifierReader::ReadCore(string::const_iterator 
 //! TokenParserクラスの新しいインスタンスを初期化します。
 //! @param [in] 読み取りが成功したら実行する処理です。
 //! @params [in] kind 読み取るトークンの種類です。
-TokenParser::TokenParser(function<void(const Token)> action, TokenKind kind) : m_action(action), m_kind(kind){}
+TokenParser::TokenParser(function<void(const Token)> action, TokenKind kind) : m_action(action), m_kinds({ kind }){}
 
 //! TokenParserクラスの新しいインスタンスを初期化します。
 //! @params [in] kind 読み取るトークンの種類です。
-TokenParser::TokenParser(TokenKind kind) : m_kind(kind){}
+TokenParser::TokenParser(TokenKind kind) : m_kinds({ kind }){}
 
 //! トークンに対するパースを行います。
 //! @params [in] cursol 現在の読み取り位置を表すカーソルです。
 //! @return パースが成功したかどうかです。
 const bool TokenParser::Parse(vector<const Token>::const_iterator& cursol) const
 {
-	if (cursol->kind == m_kind){
+	if (cursol->kind == m_kinds[0]){
 		if (m_action){
 			m_action(*cursol);
 		}
@@ -2049,7 +2049,7 @@ const bool TokenParser::Parse(vector<const Token>::const_iterator& cursol) const
 //! @param [in] 読み取りが成功したら実行する処理です。
 const shared_ptr<const TokenParser> TokenParser::Action(const function<void(const Token)> action) const
 {
-	return make_shared<TokenParser>(action, m_kind);
+	return make_shared<TokenParser>(action, m_kinds[0]);
 }
 
 //! トークンのパーサーを生成します。
