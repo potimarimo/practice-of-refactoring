@@ -966,12 +966,11 @@ int ExecuteSQL(const string sql, const string outputFileName)
 				// 全ての行のある列について、データ文字列から符号と数値以外の文字を探します。
 				found = false;
 				for (auto& inputRow : inputData[i]){
-					const char *currentChar = inputRow[j]->string().c_str();
-					while (*currentChar){
+					for (auto currentChar : inputRow[j]->string()){
 						bool isNum = false;
 						const char *currentNum = signNum.c_str();
 						while (*currentNum){
-							if (*currentChar == *currentNum){
+							if (currentChar == *currentNum){
 								isNum = true;
 								break;
 							}
@@ -981,7 +980,6 @@ int ExecuteSQL(const string sql, const string outputFileName)
 							found = true;
 							break;
 						}
-						++currentChar;
 					}
 					if (found){
 						break;
