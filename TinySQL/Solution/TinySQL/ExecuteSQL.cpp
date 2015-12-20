@@ -908,8 +908,12 @@ public:
 	//! 繰り返しのパースを行います。
 	//! @params [in] cursol 現在の読み取り位置を表すカーソルです。
 	//! @return パースが成功したかどうかです。
-	const bool Parse(vector<const Token>::const_iterator& cursol) const override;
+	const bool Parse(vector<const Token>::const_iterator& cursol) const;
 };
+
+//! AndPredicateParserクラスの新しいインスタンスを初期化します。
+//! @params [in] parser 先読みする規則です。
+const shared_ptr<const AndPredicateParser> operator&(const shared_ptr<const Parser> parser);
 
 //! 出力するデータを管理します。
 class OutputData
@@ -2250,6 +2254,13 @@ const bool AndPredicateParser::Parse(vector<const Token>::const_iterator& cursol
 	}
 }
 
+//! AndPredicateParserクラスの新しいインスタンスを初期化します。
+//! @params [in] parser 先読みする規則です。
+const shared_ptr<const AndPredicateParser> operator&(const shared_ptr<const Parser> parser)
+{
+	return make_shared<AndPredicateParser>(parser);
+}
+
 //! 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
 void OutputData::InitializeAllInputColumns()
 {
@@ -2762,7 +2773,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 	auto ORDER_BY_CLAUSE = ORDER >> BY >> ORDER_BY_COLUMNS; // ORDER BY句のパーサーです。
 
 	// オペランドに前置される + か -の次のトークンを先読みし判別するパーサーです。
-	auto WHERE_UNIALY_NEXT = make_shared<AndPredicateParser>(IDENTIFIER | INT_LITERAL)->Action([&](const bool success){
+	auto WHERE_UNIALY_NEXT = (&(IDENTIFIER | INT_LITERAL))->Action([&](const bool success){
 		if (!success){
 			throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 		}
