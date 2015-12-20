@@ -440,7 +440,12 @@ ColumnIndex::ColumnIndex(const int table, const int column) : table(table), colu
 //! @return 切り出されたトークンです。読み込みが失敗した場合はnullptrを返します。
 const shared_ptr<const Token> TokenReader::Read(string::const_iterator &cursol, const string::const_iterator &end) const
 {
-	return ReadCore(cursol, end);
+	auto backPoint = cursol;
+	auto token = ReadCore(cursol, end);
+	if (!token){
+		cursol = backPoint;
+	}
+	return token;
 }
 
 //! 実際にトークンを読み込みます。
@@ -449,15 +454,14 @@ const shared_ptr<const Token> TokenReader::Read(string::const_iterator &cursol, 
 //! @return 切り出されたトークンです。読み込みが失敗した場合はnullptrを返します。
 const shared_ptr<const Token> IntLiteralReader::ReadCore(string::const_iterator &cursol, const string::const_iterator &end) const
 {
-	auto backPoint = cursol;
+	auto start = cursol;
 	cursol = find_if(cursol, end, [&](char c){return num.find(c) == string::npos; });
-	if (cursol != backPoint && (
+	if (start != cursol && (
 		alpahUnder.find(*cursol) == string::npos || // 数字の後にすぐに識別子が続くのは紛らわしいので数値リテラルとは扱いません。
 		cursol == end)){
-		return make_shared<Token>(TokenKind::INT_LITERAL, string(backPoint, cursol));
+		return make_shared<Token>(TokenKind::INT_LITERAL, string(start, cursol));
 	}
 	else{
-		cursol = backPoint;
 		return nullptr;
 	}
 }
@@ -468,7 +472,7 @@ const shared_ptr<const Token> IntLiteralReader::ReadCore(string::const_iterator 
 //! @return 切り出されたトークンです。読み込みが失敗した場合はnullptrを返します。
 const shared_ptr<const Token> StringLiteralReader::ReadCore(string::const_iterator &cursol, const string::const_iterator &end) const
 {
-	auto backPoint = cursol;
+	auto start = cursol;
 	// 文字列リテラルを開始するシングルクォートを判別し、読み込みます。
 	if (*cursol == "\'"[0]){
 		++cursol;
@@ -478,10 +482,9 @@ const shared_ptr<const Token> StringLiteralReader::ReadCore(string::const_iterat
 			throw ResultValue::ERR_TOKEN_CANT_READ;
 		}
 		++cursol;
-		return make_shared<Token>(TokenKind::STRING_LITERAL, string(backPoint, cursol));
+		return make_shared<Token>(TokenKind::STRING_LITERAL, string(start, cursol));
 	}
 	else{
-		cursol = backPoint;
 		return nullptr;
 	}
 }
@@ -534,6 +537,13 @@ const shared_ptr<const vector<const Token>> SqlQuery::GetTokens(const string sql
 			tokens->push_back(*token);
 			continue;
 		}
+		//sqlBackPoint = sqlCursol;
+
+		// 文字列リテラルを開始するシングルクォートを判別し、読み込みます。
+		//if (*sqlCursol == "\'"[0]){
+		//	++sqlCursol;
+		//	
+
 
 		// キーワードを読み込みます。
 		auto keyword = find_if(keywordConditions.begin(), keywordConditions.end(),
