@@ -152,12 +152,14 @@ public:
 	Token(const TokenKind kind, const string word);
 };
 
+class InputTable;
 //! 指定された列の情報です。どのテーブルに所属するかの情報も含みます。
 class Column
 {
 public:
 	string tableName; //!< 列が所属するテーブル名です。指定されていない場合は空文字列となります。
 	string columnName; //!< 指定された列の列名です。
+	int allColumnsIndex; //!< 全てのテーブルのすべての列の中で、この列が何番目かです。
 
 	//! Columnクラスの新しいインスタンスを初期化します。
 	Column();
@@ -170,6 +172,11 @@ public:
 	//! @param [in] tableName 列が所属するテーブル名です。指定されていない場合は空文字列となります。
 	//! @param [in] columnName 指定された列の列名です。
 	Column(const string tableName, const string columnName);
+
+	//! データの検索に利用するため、全てのテーブルの列の情報を登録します。
+	//! @param [in] queryInfo SQLに記述された情報です。
+	//! @param [in] inputTables ファイルから読み取ったデータです。
+	void Column::SetAllColumns(const vector<const InputTable> &inputTables);
 };
 
 //! WHERE句の条件の式木を表します。
@@ -334,10 +341,31 @@ protected:
 	const shared_ptr<const Token> ReadCore(string::const_iterator &cursol, const string::const_iterator& end) const override;
 };
 
+//! 出力するデータを管理します。
+class OutputData
+{
+	SqlQueryInfo queryInfo; //!< SQLに記述された内容です。
+public:
+
+	//! OutputDataクラスの新しいインスタンスを初期化します。
+	//! @param [in] queryInfo SQLの情報です。
+	OutputData(const SqlQueryInfo queryInfo);
+
+	//! CSVファイルに出力データを書き込みます。
+	//! @param [in] outputFileName 結果を出力するファイルのファイル名です。
+	//! @param [in] inputTables ファイルから読み取ったデータです。
+	void WriteCsv(const string outputFileName, const vector<const InputTable> &inputTables);
+};
+
 //! SqlQueryのCsvに対する入出力を扱います。
 class Csv
 {
 	const shared_ptr<const SqlQueryInfo> queryInfo; //!< SQLに記述された内容です。
+
+	//! ファイルストリームからカンマ区切りの一行を読み込みます。
+	//! @param [in] inputFile データを読み込むファイルストリームです。
+	//! @return ファイルから読み込んだ一行分のデータです。
+	const shared_ptr<const vector<const string>> ReadLineData(ifstream &inputFile) const;
 
 	//! 入力ファイルを開きます。
 	//! @param [in] filePath 開くファイルのファイルパスです。
@@ -349,13 +377,13 @@ class Csv
 	void CloseInputFile(ifstream &inputFile) const;
 
 	//! 入力CSVのヘッダ行を読み込みます。
-	//! @param [in] inputFile 入力ファイルを扱うストリームです。
+	//! @param [in] inputFile 入力ファイルを扱うストリームです。開いた後何も読み込んでいません。
 	//! @param [in] tableName SQLで指定されたテーブル名です。
 	//! @return ファイルから読み取ったヘッダ情報です。
 	const shared_ptr<const vector<const Column>> ReadHeader(ifstream &inputFile, const string tableName) const;
 
 	//! 入力CSVのデータ行を読み込みます。
-	//! @param [in] inputFile 入力ファイルを扱うストリームです。
+	//! @param [in] inputFile 入力ファイルを扱うストリームです。すでにヘッダのみを読み込んだ後です。
 	//! @return ファイルから読み取ったデータです。
 	const shared_ptr<vector<const vector<const Data>>> ReadData(ifstream &inputFile) const;
 public:
@@ -404,6 +432,17 @@ public:
 };
 
 // 以上ヘッダに相当する部分。
+
+//! 二つの文字列を、大文字小文字を区別せずに比較し、等しいかどうかです。
+//! @param [in] str1 比較される一つ目の文字列です。
+//! @param [in] str2 比較される二つ目の文字列です。
+//! @return 比較した結果、等しいかどうかです。
+bool Equali(const string str1, const string str2){
+	return
+		str1.size() == str2.size() &&
+		equal(str1.begin(), str1.end(), str2.begin(),
+		[](const char &c1, const char &c2){return toupper(c1) == toupper(c2); });
+}
 
 //! Dataクラスの新しいインスタンスを初期化します。
 Data::Data() :m_value({ 0 })
@@ -503,6 +542,36 @@ Column::Column(const string tableName, const string columnName)
 {
 	this->tableName = tableName;
 	this->columnName = columnName;
+}
+
+//! データの検索に利用するため、全てのテーブルの列の情報を登録します。
+//! @param [in] queryInfo SQLに記述された情報です。
+//! @param [in] inputTables ファイルから読み取ったデータです。
+void Column::SetAllColumns(const vector<const InputTable> &inputTables)
+{
+	bool found = false;
+	int i = 0;
+	for (auto &inputTable : inputTables){
+		for (auto &inputColumn : *inputTable.columns()){
+			if (Equali(columnName, inputColumn.columnName) &&
+				(tableName.empty() || // テーブル名が設定されている場合のみテーブル名の比較を行います。
+				Equali(tableName, inputColumn.tableName))){
+
+				// 既に見つかっているのにもう一つ見つかったらエラーです。
+				if (found){
+					throw ResultValue::ERR_BAD_COLUMN_NAME;
+				}
+				found = true;
+				// 見つかった値を持つ列のデータを生成します。
+				allColumnsIndex = i;
+			}
+			++i;
+		}
+	}
+	// 一つも見つからなくてもエラーです。
+	if (!found){
+		throw ResultValue::ERR_BAD_COLUMN_NAME;
+	}
 }
 
 //! ExtensionTreeNodeクラスの新しいインスタンスを初期化します。
@@ -686,163 +755,49 @@ const shared_ptr<const Token> IdentifierReader::ReadCore(string::const_iterator 
 	}
 }
 
-//! 二つの文字列を、大文字小文字を区別せずに比較し、等しいかどうかです。
-//! @param [in] str1 比較される一つ目の文字列です。
-//! @param [in] str2 比較される二つ目の文字列です。
-//! @return 比較した結果、等しいかどうかです。
-bool Equali(const string str1, const string str2){
-	return
-		str1.size() == str2.size() &&
-		equal(str1.begin(), str1.end(), str2.begin(),
-		[](const char &c1, const char &c2){return toupper(c1) == toupper(c2); });
-}
-
-//! 入力CSVのヘッダ行を読み込みます。
-//! @param [in] inputFile 入力ファイルを扱うストリームです。
-//! @param [in] tableName SQLで指定されたテーブル名です。
-//! @return ファイルから読み取ったヘッダ情報です。
-const shared_ptr<const vector<const Column>> Csv::ReadHeader(ifstream &inputFile, const string tableName) const
+//! OutputDataクラスの新しいインスタンスを初期化します。
+//! @param [in] queryInfo SQLの情報です。
+OutputData::OutputData(const SqlQueryInfo queryInfo) : queryInfo(queryInfo)
 {
-	auto columns = make_shared<vector<const Column>>(); // 読み込んだ列の一覧。
-
-	string inputLine; // ファイルから読み込んだ行文字列です。
-	if (getline(inputFile, inputLine)){
-		auto charactorCursol = inputLine.begin(); // ヘッダ入力行を検索するカーソルです。
-		auto lineEnd = inputLine.end(); // ヘッダ入力行のendを指します。
-
-		// 読み込んだ行を最後まで読みます。
-		while (charactorCursol != lineEnd){
-
-			// 列名を一つ読みます。
-			auto columnStart = charactorCursol; // 現在の列の最初を記録しておきます。
-			charactorCursol = find(charactorCursol, lineEnd, ',');
-			columns->push_back(Column(tableName, string(columnStart, charactorCursol)));
-
-			// 入力行のカンマの分を読み進めます。
-			if (charactorCursol != lineEnd){
-				++charactorCursol;
-			}
-		}
-	}
-	else{
-		throw ResultValue::ERR_CSV_SYNTAX;
-	}
-	return columns;
-}
-//! 入力CSVのデータ行を読み込みます。
-//! @param [in] inputFile 入力ファイルを扱うストリームです。
-//! @return ファイルから読み取ったデータです。
-const shared_ptr<vector<const vector<const Data>>> Csv::ReadData(ifstream &inputFile) const
-{
-	auto data = make_shared<vector<const vector<const Data>>>(); // 読み込んだデータの一覧。
-
-	string inputLine;
-	while (getline(inputFile, inputLine)){
-		data->push_back(vector<const Data>()); // 入力されている一行分のデータです。
-		auto &row = data->back();
-
-		auto charactorCursol = inputLine.begin(); // データ入力行を検索するカーソルです。
-		auto lineEnd = inputLine.end(); // データ入力行のendを指します。
-
-		// 読み込んだ行を最後まで読みます。
-		while (charactorCursol != lineEnd){
-
-			// 読み込んだデータを書き込む行のカラムを生成します。
-			auto columnStart = charactorCursol; // 現在の列の最初を記録しておきます。
-			charactorCursol = find(charactorCursol, lineEnd, ',');
-
-			row.push_back(Data(string(columnStart, charactorCursol)));
-
-			// 入力行のカンマの分を読み進めます。
-			if (charactorCursol != lineEnd){
-				++charactorCursol;
-			}
-		}
-	}
-	return data;
-}
-
-//! 入力ファイルを開きます。
-//! @param [in] filePath 開くファイルのファイルパスです。
-//! @return 入力ファイルを扱うストリームです。
-ifstream Csv::OpenInputFile(const string filePath) const
-{
-	auto inputFile = ifstream(filePath); //入力するCSVファイルを扱うストリームです。
-	if (!inputFile){
-		throw ResultValue::ERR_FILE_OPEN;
-	}
-	return inputFile;
-}
-
-//! 入力ファイルを閉じます。
-//! @param [in] inputFile 入力ファイルを扱うストリームです。
-void Csv::CloseInputFile(ifstream &inputFile) const
-{
-	inputFile.close();
-	if (inputFile.bad()){
-		throw ResultValue::ERR_FILE_CLOSE;
-	}
-}
-
-//! Csvクラスの新しいインスタンスを初期化します。
-//! @param [in] queryInfo SQLに記述された内容です。
-Csv::Csv(const shared_ptr<const SqlQueryInfo> queryInfo) : queryInfo(queryInfo){}
-
-//! CSVファイルから入力データを読み取ります。
-//! @return ファイルから読み取ったデータです。
-const shared_ptr<const vector<const InputTable>> Csv::ReadCsv() const
-{
-	auto tables = make_shared<vector<const InputTable>>();
-
-	for (auto &tableName : queryInfo->tableNames){
-		
-		auto inputFile = OpenInputFile(tableName + ".csv");
-		
-		auto header = ReadHeader(inputFile, tableName);
-		auto data = ReadData(inputFile);
-		tables->push_back(InputTable(InputTable(header, data)));
-
-		CloseInputFile(inputFile);
-	}
-	return tables;
 }
 
 //! CSVファイルに出力データを書き込みます。
 //! @param [in] outputFileName 結果を出力するファイルのファイル名です。
-//! @param [in] queryInfo SQLの情報です。
 //! @param [in] inputTables ファイルから読み取ったデータです。
-void Csv::WriteCsv(const string outputFileName, const vector<const InputTable> &inputTables) const
+void OutputData::WriteCsv(const string outputFileName, const vector<const InputTable> &inputTables)
 {
-	SqlQueryInfo info = *queryInfo;
-
 	ofstream outputFile; // 書き込むファイルのファイルポインタです。
+
 	vector<Column> allInputColumns; // 入力に含まれるすべての列の一覧です。
 
 	vector<vector<Data>> outputData; // 出力データです。
 	vector<vector<Data>> allColumnOutputData; // 出力するデータに対応するインデックスを持ち、すべての入力データを保管します。
 
 	// 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
-	for (size_t i = 0; i < info.tableNames.size(); ++i){
+	for (size_t i = 0; i < queryInfo.tableNames.size(); ++i){
 		transform(
 			inputTables[i].columns()->begin(),
 			inputTables[i].columns()->end(),
 			back_inserter(allInputColumns),
-			[&](const Column& column){return Column(info.tableNames[i], column.columnName); });
+			[&](const Column& column){return Column(queryInfo.tableNames[i], column.columnName); });
 	}
 
 	// SELECT句の列名指定が*だった場合は、入力CSVの列名がすべて選択されます。
-	if (info.selectColumns.empty()){
-		copy(allInputColumns.begin(), allInputColumns.end(), back_inserter(info.selectColumns));
+	if (queryInfo.selectColumns.empty()){
+		copy(allInputColumns.begin(), allInputColumns.end(), back_inserter(queryInfo.selectColumns));
 	}
 
 	vector<Column> outputColumns; // 出力するすべての行の情報です。
 
 	// SELECT句で指定された列名が、何個目の入力ファイルの何列目に相当するかを判別します。
+	for (auto &selectColumn : queryInfo.selectColumns){
+		selectColumn.SetAllColumns(inputTables);
+	}
 	vector<ColumnIndex> selectColumnIndexes; // SELECT句で指定された列の、入力ファイルとしてのインデックスです。
 
-	for (auto &selectColumn : info.selectColumns){
+	for (auto &selectColumn : queryInfo.selectColumns){
 		bool found = false;
-		for (size_t i = 0; i < info.tableNames.size(); ++i){
+		for (size_t i = 0; i < queryInfo.tableNames.size(); ++i){
 			int j = 0;
 			for (auto &inputColumn : *inputTables[i].columns()){
 				if (Equali(selectColumn.columnName, inputColumn.columnName) &&
@@ -873,9 +828,9 @@ void Csv::WriteCsv(const string outputFileName, const vector<const InputTable> &
 		back_inserter(outputColumns),
 		[&](const ColumnIndex& index){return (*inputTables[index.table].columns())[index.column]; });
 
-	if (info.whereTopNode){
+	if (queryInfo.whereTopNode){
 		// 既存数値の符号を計算します。
-		for (auto &whereExtensionNode : info.whereExtensionNodes){
+		for (auto &whereExtensionNode : queryInfo.whereExtensionNodes){
 			if (whereExtensionNode->middleOperator.kind == TokenKind::NOT_TOKEN &&
 				whereExtensionNode->column.columnName.empty() &&
 				whereExtensionNode->value.type == DataType::INTEGER){
@@ -896,13 +851,6 @@ void Csv::WriteCsv(const string outputFileName, const vector<const InputTable> &
 		outputData.push_back(vector<Data>());
 		vector<Data> &row = outputData.back(); // 出力している一行分のデータです。
 
-		// 行の各列のデータを入力から持ってきて設定します。
-		transform(
-			selectColumnIndexes.begin(),
-			selectColumnIndexes.end(),
-			back_inserter(row),
-			[&](const ColumnIndex& index){return (*currentRows[index.table])[index.column]; });
-
 		allColumnOutputData.push_back(vector<Data>());
 		vector<Data> &allColumnsRow = allColumnOutputData.back();// WHEREやORDERのためにすべての情報を含む行。rowとインデックスを共有します。
 
@@ -913,9 +861,17 @@ void Csv::WriteCsv(const string outputFileName, const vector<const InputTable> &
 				currentRow->end(),
 				back_inserter(allColumnsRow));
 		}
+
+		// 行の各列のデータを設定します。
+		transform(
+			queryInfo.selectColumns.begin(),
+			queryInfo.selectColumns.end(),
+			back_inserter(row),
+			[&](const Column& column){return allColumnsRow[column.allColumnsIndex]; });
+
 		// WHEREの条件となる値を再帰的に計算します。
-		if (info.whereTopNode){
-			shared_ptr<ExtensionTreeNode> currentNode = info.whereTopNode; // 現在見ているノードです。
+		if (queryInfo.whereTopNode){
+			shared_ptr<ExtensionTreeNode> currentNode = queryInfo.whereTopNode; // 現在見ているノードです。
 			while (currentNode){
 				// 子ノードの計算が終わってない場合は、まずそちらの計算を行います。
 				if (currentNode->left && !currentNode->left->calculated){
@@ -1076,12 +1032,12 @@ void Csv::WriteCsv(const string outputFileName, const vector<const InputTable> &
 			}
 
 			// 条件に合わない行は出力から削除します。
-			if (!info.whereTopNode->value.boolean()){
+			if (!queryInfo.whereTopNode->value.boolean()){
 				allColumnOutputData.pop_back();
 				outputData.pop_back();
 			}
 			// WHERE条件の計算結果をリセットします。
-			for (auto &whereExtensionNode : info.whereExtensionNodes){
+			for (auto &whereExtensionNode : queryInfo.whereExtensionNodes){
 				whereExtensionNode->calculated = false;
 			}
 		}
@@ -1089,10 +1045,10 @@ void Csv::WriteCsv(const string outputFileName, const vector<const InputTable> &
 		// 各テーブルの行のすべての組み合わせを出力します。
 
 		// 最後のテーブルのカレント行をインクリメントします。
-		++currentRows[info.tableNames.size() - 1];
+		++currentRows[queryInfo.tableNames.size() - 1];
 
 		// 最後のテーブルが最終行になっていた場合は先頭に戻し、順に前のテーブルのカレント行をインクリメントします。
-		for (int i = info.tableNames.size() - 1; currentRows[i] == inputTables[i].data()->end() && 0 < i; --i){
+		for (int i = queryInfo.tableNames.size() - 1; currentRows[i] == inputTables[i].data()->end() && 0 < i; --i){
 			++currentRows[i - 1];
 			currentRows[i] = inputTables[i].data()->begin();
 		}
@@ -1104,11 +1060,11 @@ void Csv::WriteCsv(const string outputFileName, const vector<const InputTable> &
 	}
 
 	// ORDER句による並び替えの処理を行います。
-	if (!info.orderByColumns.empty()){
+	if (!queryInfo.orderByColumns.empty()){
 		// ORDER句で指定されている列が、全ての入力行の中のどの行なのかを計算します。
 		vector<int> orderByColumnIndexes; // ORDER句で指定された列の、すべての行の中でのインデックスです。
 
-		for (auto &orderByColumn : info.orderByColumns){
+		for (auto &orderByColumn : queryInfo.orderByColumns){
 			bool found = false;
 			for (size_t i = 0; i < allInputColumns.size(); ++i){
 				if (Equali(orderByColumn.columnName, allInputColumns[i].columnName) &&
@@ -1148,7 +1104,7 @@ void Csv::WriteCsv(const string outputFileName, const vector<const InputTable> &
 					}
 
 					// 降順ならcmpの大小を入れ替えます。
-					if (info.orders[k] == TokenKind::DESC){
+					if (queryInfo.orders[k] == TokenKind::DESC){
 						cmp *= -1;
 					}
 					if (cmp < 0){
@@ -1180,9 +1136,9 @@ void Csv::WriteCsv(const string outputFileName, const vector<const InputTable> &
 	}
 
 	// 出力ファイルに列名を出力します。
-	for (size_t i = 0; i < info.selectColumns.size(); ++i){
+	for (size_t i = 0; i < queryInfo.selectColumns.size(); ++i){
 		outputFile << outputColumns[i].columnName;
-		if (i < info.selectColumns.size() - 1){
+		if (i < queryInfo.selectColumns.size() - 1){
 			outputFile << ",";
 		}
 		else{
@@ -1202,7 +1158,7 @@ void Csv::WriteCsv(const string outputFileName, const vector<const InputTable> &
 				outputFile << column.string();
 				break;
 			}
-			if (i++ < info.selectColumns.size() - 1){
+			if (i++ < queryInfo.selectColumns.size() - 1){
 				outputFile << ",";
 			}
 			else{
@@ -1219,6 +1175,132 @@ void Csv::WriteCsv(const string outputFileName, const vector<const InputTable> &
 			throw ResultValue::ERR_FILE_CLOSE;
 		}
 	}
+}
+
+//! CSVファイルに出力データを書き込みます。
+//! @param [in] outputFileName 結果を出力するファイルのファイル名です。
+//! @param [in] queryInfo SQLの情報です。
+//! @param [in] inputTables ファイルから読み取ったデータです。
+void Csv::WriteCsv(const string outputFileName, const vector<const InputTable> &inputTables) const
+{
+	OutputData output(*queryInfo);
+	output.WriteCsv(outputFileName, inputTables);
+}
+
+//! ファイルストリームからカンマ区切りの一行を読み込みます。
+//! @param [in] inputFile データを読み込むファイルストリームです。
+//! @return ファイルから読み込んだ一行分のデータです。
+const shared_ptr<const vector<const string>> Csv::ReadLineData(ifstream &inputFile) const
+{
+	string inputLine; // ファイルから読み込んだ行文字列です。
+	if (getline(inputFile, inputLine)){
+		auto lineData = make_shared<vector<const string>>(); // 一行分のデータです。
+
+		auto charactorCursol = inputLine.begin(); // ヘッダ入力行を検索するカーソルです。
+		auto lineEnd = inputLine.end(); // ヘッダ入力行のendを指します。
+
+		// 読み込んだ行を最後まで読みます。
+		while (charactorCursol != lineEnd){
+
+			// 列名を一つ読みます。
+			auto columnStart = charactorCursol; // 現在の列の最初を記録しておきます。
+			charactorCursol = find(charactorCursol, lineEnd, ',');
+			lineData->push_back(string(columnStart, charactorCursol));
+
+			// 入力行のカンマの分を読み進めます。
+			if (charactorCursol != lineEnd){
+				++charactorCursol;
+			}
+		}
+		return lineData;
+	}
+	else{
+		return nullptr;
+	}
+}
+
+//! 入力CSVのヘッダ行を読み込みます。
+//! @param [in] inputFile 入力ファイルを扱うストリームです。開いた後何も読み込んでいません。
+//! @param [in] tableName SQLで指定されたテーブル名です。
+//! @return ファイルから読み取ったヘッダ情報です。
+const shared_ptr<const vector<const Column>> Csv::ReadHeader(ifstream &inputFile, const string tableName) const
+{
+	auto columns = make_shared<vector<const Column>>(); // 読み込んだ列の一覧。
+
+	if (auto lineData = ReadLineData(inputFile)){
+		transform(
+			lineData->begin(),
+			lineData->end(),
+			back_inserter(*columns),
+			[&](const string& column){return Column(tableName, column); });
+		return columns;
+	}
+	else{
+		throw ResultValue::ERR_CSV_SYNTAX;
+	}
+}
+//! 入力CSVのデータ行を読み込みます。
+//! @param [in] inputFile 入力ファイルを扱うストリームです。すでにヘッダのみを読み込んだ後です。
+//! @return ファイルから読み取ったデータです。
+const shared_ptr<vector<const vector<const Data>>> Csv::ReadData(ifstream &inputFile) const
+{
+	auto data = make_shared<vector<const vector<const Data>>>(); // 読み込んだデータの一覧。
+
+	while (auto lineData = ReadLineData(inputFile)){
+		vector<const Data> row;
+		transform(
+			lineData->begin(),
+			lineData->end(),
+			back_inserter(row),
+			[&](const string& column){return Data(column); });
+		data->push_back(row);
+	}
+	return data;
+}
+
+//! 入力ファイルを開きます。
+//! @param [in] filePath 開くファイルのファイルパスです。
+//! @return 入力ファイルを扱うストリームです。
+ifstream Csv::OpenInputFile(const string filePath) const
+{
+	auto inputFile = ifstream(filePath); //入力するCSVファイルを扱うストリームです。
+	if (!inputFile){
+		throw ResultValue::ERR_FILE_OPEN;
+	}
+	return inputFile;
+}
+
+//! 入力ファイルを閉じます。
+//! @param [in] inputFile 入力ファイルを扱うストリームです。
+void Csv::CloseInputFile(ifstream &inputFile) const
+{
+	inputFile.close();
+	if (inputFile.bad()){
+		throw ResultValue::ERR_FILE_CLOSE;
+	}
+}
+
+//! Csvクラスの新しいインスタンスを初期化します。
+//! @param [in] queryInfo SQLに記述された内容です。
+Csv::Csv(const shared_ptr<const SqlQueryInfo> queryInfo) : queryInfo(queryInfo){}
+
+//! CSVファイルから入力データを読み取ります。
+//! @return ファイルから読み取ったデータです。
+const shared_ptr<const vector<const InputTable>> Csv::ReadCsv() const
+{
+	auto tables = make_shared<vector<const InputTable>>();
+
+	for (auto &tableName : queryInfo->tableNames){
+		
+		auto inputFile = OpenInputFile(tableName + ".csv");
+		
+		auto header = ReadHeader(inputFile, tableName);
+		auto data = ReadData(inputFile);
+		tables->push_back(InputTable(InputTable(header, data)));
+
+		CloseInputFile(inputFile);
+	}
+	return tables;
 }
 
 //! SQLの文字列からトークンを切り出します。
