@@ -183,6 +183,9 @@ public:
 //! WHERE句の条件の式木を表します。
 class ExtensionTreeNode
 {
+	//! カラム名で指定されたデータを持つノードかどうかです。
+	//! @return カラム名で指定されたデータを持つノードかどうか。
+	bool ExtensionTreeNode::isDataNodeAsColumnName();
 public:
 	shared_ptr<ExtensionTreeNode> parent;//!< 親となるノードです。根の式木の場合はnullptrとなります。
 	shared_ptr<ExtensionTreeNode> left;  //!< 左の子となるノードです。自身が末端の葉となる式木の場合はnullptrとなります。
@@ -743,12 +746,19 @@ void ExtensionTreeNode::Operate()
 	}
 }
 
+//! カラム名で指定されたデータを持つノードかどうかです。
+//! @return カラム名で指定されたデータを持つノードかどうか。
+bool ExtensionTreeNode::isDataNodeAsColumnName()
+{
+	return middleOperator.kind == TokenKind::NOT_TOKEN && !column.columnName.empty();
+}
+
 //! 実際に出力する行に合わせて列にデータを設定します。
 //! @param [in] inputTables ファイルから読み取ったデータです。
 //! @param [in] 実際に出力する行です。
 void ExtensionTreeNode::SetColumnData(const vector<const InputTable> &inputTables, const vector<const Data> &outputRow)
 {
-	if (middleOperator.kind == TokenKind::NOT_TOKEN && !column.columnName.empty()){
+	if (isDataNodeAsColumnName()){
 		column.SetAllColumns(inputTables);
 		value = outputRow[column.allColumnsIndex];
 
