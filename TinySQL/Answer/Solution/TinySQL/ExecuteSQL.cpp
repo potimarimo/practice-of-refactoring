@@ -507,21 +507,25 @@ public:
 //! トークンを表します。
 class Token
 {
+	const TokenKind m_kind; //!< トークンの種類です。
+	const string m_word; //!< 記録されているトークンの文字列です。記録の必要がなければ空白です。
 public:
-	TokenKind kind; //!< トークンの種類です。
-	string word; //!< 記録されているトークンの文字列です。記録の必要がなければ空白です。
-
-	//! Tokenクラスの新しいインスタンスを初期化します。
-	Token();
-
 	//! Tokenクラスの新しいインスタンスを初期化します。
 	//! @param [in] kind トークンの種類です。
-	Token(const TokenKind kind);
+	Token(const TokenKind &kind);
 
 	//! Tokenクラスの新しいインスタンスを初期化します。
 	//! @param [in] kind トークンの種類です。
 	//! @param [in] word 記録されているトークンの文字列です。記録の必要がなければ空白です。
-	Token(const TokenKind kind, const string word);
+	Token(const TokenKind &kind, const string &word);
+
+	//! トークンの種類を取得します。
+	//! @return トークンの種類です。
+	const TokenKind& kind() const;
+
+	//! 記録されているトークンの文字列を取得します。記録の必要がなければ空白です。
+	//! @return 記録されているトークンの文字列です。
+	const string& word() const;
 };
 
 class InputTable;
@@ -1773,22 +1777,30 @@ const int& Operator::order() const
 }
 
 //! Tokenクラスの新しいインスタンスを初期化します。
-Token::Token() : Token(TokenKind::NOT_TOKEN, "")
-{
-}
-
-//! Tokenクラスの新しいインスタンスを初期化します。
 //! @param [in] kind トークンの種類です。
-Token::Token(const TokenKind kind) : Token(kind, "")
+Token::Token(const TokenKind &kind) : Token(kind, "")
 {
 }
 
 //! Tokenクラスの新しいインスタンスを初期化します。
 //! @param [in] kind トークンの種類です。
 //! @param [in] word 記録されているトークンの文字列です。記録の必要がなければ空白です。
-Token::Token(const TokenKind kind, const string word) :kind(kind)
+Token::Token(const TokenKind& kind, const string& word) :m_kind(kind), m_word(word)
 {
-	this->word = word;
+}
+
+//! トークンの種類を取得します。
+//! @return トークンの種類です。
+const TokenKind& Token::kind() const
+{
+	return m_kind;
+}
+
+//! 記録されているトークンの文字列を取得します。記録の必要がなければ空白です。
+//! @return 記録されているトークンの文字列です。
+const string& Token::word() const
+{
+	return m_word;
 }
 
 //! Columnクラスの新しいインスタンスを初期化します。
@@ -2124,10 +2136,10 @@ const shared_ptr<const Token> StringLiteralReader::ReadCore(string::const_iterat
 const shared_ptr<const Token> KeywordReader::ReadCore(string::const_iterator &cursol, const string::const_iterator &end) const
 {
 	auto result =
-		mismatch(keyword.word.begin(), keyword.word.end(), cursol,
+		mismatch(keyword.word().begin(), keyword.word().end(), cursol,
 		[](const char keywordChar, const char sqlChar){return keywordChar == toupper(sqlChar); });
 
-	if (result.first == keyword.word.end() && // キーワードの最後の文字まで同じです。
+	if (result.first == keyword.word().end() && // キーワードの最後の文字まで同じです。
 		CheckNextChar(result.second, end)){ 
 		cursol = result.second;
 		return make_shared<Token>(keyword);
@@ -2203,7 +2215,7 @@ const bool TokenParser::Parse(vector<const Token>::const_iterator& cursol, vecto
 		return false;
 	}
 	return any_of(m_kinds.begin(), m_kinds.end(),[&](const TokenKind &kind){
-		if (cursol->kind == kind){
+		if (cursol->kind() == kind){
 			if (m_action){
 				m_action(*cursol);
 			}
@@ -2960,13 +2972,13 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 	// 列指定の一つ目の識別子のパーサーです。
 	auto FIRST_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
 		// テーブル名が指定されていない場合と仮定して読み込みます。
-		column = Column(token.word);
+		column = Column(token.word());
 	});
 
 	// 列指定の二つ目の識別子のパーサーです。
 	auto SECOND_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
 		// テーブル名が指定されていることがわかったので読み替えます。
-		column = Column(column.columnName, token.word);
+		column = Column(column.columnName, token.word());
 	});
 
 	auto COLUMN = FIRST_COLUMN_NAME >> -(DOT >> SECOND_COLUMN_NAME); // 列指定一つのパーサーです。
@@ -2992,11 +3004,11 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 	});
 
 	auto WHERE_INT_LITERAL = INT_LITERAL->Action([&](const Token token){
-		currentNode->value = Data::New(stoi(token.word));
+		currentNode->value = Data::New(stoi(token.word()));
 	});
 
 	auto WHERE_STRING_LITERAL = STRING_LITERAL->Action([&](const Token token){
-		currentNode->value = Data::New(token.word.substr(1, token.word.size() - 2));
+		currentNode->value = Data::New(token.word().substr(1, token.word().size() - 2));
 	});
 
 	// 記号の意味
@@ -3065,7 +3077,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 	
 	OPERATOR = OPERATOR->Action([&](const Token token){
 		// 演算子(オペレーターを読み込みます。
-		auto foundOperator = find_if(operators.begin(), operators.end(), [&](const Operator& op){return op.kind() == token.kind; }); // 現在読み込んでいる演算子の情報です。
+		auto foundOperator = find_if(operators.begin(), operators.end(), [&](const Operator& op){return op.kind() == token.kind(); }); // 現在読み込んでいる演算子の情報です。
 
 		// 現在見ている演算子の情報を探します。
 		// 見つかった演算子の情報をもとにノードを入れ替えます。
@@ -3122,7 +3134,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 	auto WHERE_ORDER = (ORDER_BY_CLAUSE >> -WHERE_CLAUSE) | (WHERE_CLAUSE >> -ORDER_BY_CLAUSE);
 
 	auto TABLE_NAME = IDENTIFIER->Action([&](const Token &token){
-		queryInfo->tableNames.push_back(token.word);
+		queryInfo->tableNames.push_back(token.word());
 	});
 
 	auto FROM_CLAUSE = FROM >> TABLE_NAME >> ~(COMMA >> TABLE_NAME);
