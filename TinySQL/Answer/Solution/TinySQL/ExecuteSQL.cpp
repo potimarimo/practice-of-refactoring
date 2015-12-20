@@ -222,9 +222,19 @@ public:
 //! CSVとして入力されたファイルの内容を表します。
 class InputTable
 {
+	const shared_ptr<const vector<const Column>> m_columns; //!< 列の情報です。
+	const shared_ptr<vector<vector<Data>>> m_data; //! データです。
 public:
-	vector<const Column> columns; //!< 列の情報です。
-	vector<const vector<const Data>> data; //! データです。
+	//! InputTableクラスの新しいインスタンスを初期化します。
+	//! @param [in] columns 読み込んだヘッダ情報です。
+	//! @param [in] data 読み込んだデータです。
+	InputTable(const shared_ptr<const vector<const Column>> columns, const shared_ptr<vector<vector<Data>>> data);
+
+	//! 列の情報を取得します。
+	const shared_ptr<const vector<const Column>> columns() const;
+
+	//! データを取得します。
+	const shared_ptr<vector<vector<Data>>> data() const;
 };
 
 class TokenReader
@@ -334,7 +344,7 @@ class Csv
 	//! 入力CSVのデータ行を読み込みます。
 	//! @param [in] inputFile 入力ファイルを扱うストリームです。
 	//! @return ファイルから読み取ったデータです。
-	const shared_ptr<const vector<const vector<const Data>>> ReadData(ifstream &inputFile) const;
+	const shared_ptr<vector<vector<Data>>> ReadData(ifstream &inputFile) const;
 public:
 
 	//! Csvクラスの新しいインスタンスを初期化します。
@@ -497,6 +507,23 @@ ColumnIndex::ColumnIndex() : ColumnIndex(0, 0)
 //! @param [in] column 列が入力のテーブルの何列目かです。
 ColumnIndex::ColumnIndex(const int table, const int column) : table(table), column(column)
 {
+}
+
+//! InputTableクラスの新しいインスタンスを初期化します。
+//! @param [in] columns 読み込んだヘッダ情報です。
+//! @param [in] data 読み込んだデータです。
+InputTable::InputTable(const shared_ptr<const vector<const Column>> columns, const shared_ptr<vector<vector<Data>>> data) : m_columns(columns), m_data(data){}
+
+//! 列の情報を取得します。
+const shared_ptr<const vector<const Column>> InputTable::columns() const
+{
+	return m_columns;
+}
+
+//! データを取得します。
+const shared_ptr<vector<vector<Data>>> InputTable::data() const
+{
+	return m_data;
 }
 
 //! トークンを読み込みます。
@@ -664,13 +691,13 @@ const shared_ptr<const vector<const Column>> Csv::ReadHeader(ifstream &inputFile
 //! 入力CSVのデータ行を読み込みます。
 //! @param [in] inputFile 入力ファイルを扱うストリームです。
 //! @return ファイルから読み取ったデータです。
-const shared_ptr<const vector<const vector<const Data>>> Csv::ReadData(ifstream &inputFile) const
+const shared_ptr<vector<vector<Data>>> Csv::ReadData(ifstream &inputFile) const
 {
-	auto data = make_shared<vector<const vector<const Data>>>(); // 読み込んだデータの一覧。
+	auto data = make_shared<vector<vector<Data>>>(); // 読み込んだデータの一覧。
 
 	string inputLine;
 	while (getline(inputFile, inputLine)){
-		data->push_back(vector<const Data>()); // 入力されている一行分のデータです。
+		data->push_back(vector<Data>()); // 入力されている一行分のデータです。
 		auto &row = data->back();
 
 		auto charactorCursol = inputLine.begin(); // データ入力行を検索するカーソルです。
@@ -705,33 +732,32 @@ const shared_ptr<const vector<const InputTable>> Csv::ReadCsv() const
 	auto &tables = *ret;
 
 	for (auto &tableName : queryInfo->tableNames){
-		tables.push_back(InputTable());
-		auto &table = tables.back();
+		
 		// 入力ファイルを開きます。
 		auto inputFile =ifstream(tableName + ".csv"); //入力するCSVファイルを扱うストリームです。
 		if (!inputFile){
 			throw ResultValue::ERR_FILE_OPEN;
 		}
-
-		table.columns = *ReadHeader(inputFile, tableName);
-		table.data = *ReadData(inputFile);
-
+		auto header = ReadHeader(inputFile, tableName);
+		auto data = ReadData(inputFile);
+		auto table = InputTable(header, data);
+		tables.push_back(table);
 
 		// 全てが数値となる列は数値列に変換します。
-		for (size_t j = 0; j < table.columns.size(); ++j){
+		for (size_t j = 0; j < table.columns()->size(); ++j){
 
 			// 全ての行のある列について、データ文字列から符号と数値以外の文字を探します。
 			if (none_of(
-				table.data.begin(),
-				table.data.end(),
-				[&](const vector<const Data> &inputRow){
+				data->begin(),
+				data->end(),
+				[&](const vector<Data> &inputRow){
 				return any_of(
 					inputRow[j].string().begin(),
 					inputRow[j].string().end(),
 					[&](const char& c){return signNum.find(c) == string::npos; }); })){
 
 				// 符号と数字以外が見つからない列については、数値列に変換します。
-				for (auto& inputRow : table.data){
+				for (auto& inputRow : *data){
 					inputRow[j] = Data(stoi(inputRow[j].string()));
 				}
 			}
@@ -761,8 +787,8 @@ void Csv::WriteCsv(const string outputFileName, const vector<const InputTable> &
 	// 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
 	for (size_t i = 0; i < info.tableNames.size(); ++i){
 		transform(
-			inputTables[i].columns.begin(),
-			inputTables[i].columns.end(),
+			inputTables[i].columns()->begin(),
+			inputTables[i].columns()->end(),
 			back_inserter(allInputColumns),
 			[&](const Column& column){return Column(info.tableNames[i], column.columnName); });
 	}
@@ -781,7 +807,7 @@ void Csv::WriteCsv(const string outputFileName, const vector<const InputTable> &
 		bool found = false;
 		for (size_t i = 0; i < info.tableNames.size(); ++i){
 			int j = 0;
-			for (auto &inputColumn : inputTables[i].columns){
+			for (auto &inputColumn : *inputTables[i].columns()){
 				if (Equali(selectColumn.columnName, inputColumn.columnName) &&
 					(selectColumn.tableName.empty() || // テーブル名が設定されている場合のみテーブル名の比較を行います。
 					Equali(selectColumn.tableName, inputColumn.tableName))){
@@ -808,7 +834,7 @@ void Csv::WriteCsv(const string outputFileName, const vector<const InputTable> &
 		selectColumnIndexes.begin(),
 		selectColumnIndexes.end(),
 		back_inserter(outputColumns),
-		[&](const ColumnIndex& index){return inputTables[index.table].columns[index.column]; });
+		[&](const ColumnIndex& index){return (*inputTables[index.table].columns())[index.column]; });
 
 	if (info.whereTopNode){
 		// 既存数値の符号を計算します。
@@ -821,12 +847,12 @@ void Csv::WriteCsv(const string outputFileName, const vector<const InputTable> &
 		}
 	}
 
-	vector<vector<const vector<const Data>>::const_iterator> currentRows; // 入力された各テーブルの、現在出力している行を指すカーソルです。
+	vector<vector<const vector<Data>>::const_iterator> currentRows; // 入力された各テーブルの、現在出力している行を指すカーソルです。
 	transform(
 		inputTables.begin(),
 		inputTables.end(),
 		back_inserter(currentRows),
-		[](const InputTable& table){return table.data.begin(); });
+		[](const InputTable& table){return table.data()->begin(); });
 
 	// 出力するデータを設定します。
 	while (true){
@@ -1029,13 +1055,13 @@ void Csv::WriteCsv(const string outputFileName, const vector<const InputTable> &
 		++currentRows[info.tableNames.size() - 1];
 
 		// 最後のテーブルが最終行になっていた場合は先頭に戻し、順に前のテーブルのカレント行をインクリメントします。
-		for (int i = info.tableNames.size() - 1; currentRows[i] == inputTables[i].data.end() && 0 < i; --i){
+		for (int i = info.tableNames.size() - 1; currentRows[i] == inputTables[i].data()->end() && 0 < i; --i){
 			++currentRows[i - 1];
-			currentRows[i] = inputTables[i].data.begin();
+			currentRows[i] = inputTables[i].data()->begin();
 		}
 
 		// 最初のテーブルが最後の行を超えたなら出力行の生成は終わりです。
-		if (currentRows[0] == inputTables[0].data.end()){
+		if (currentRows[0] == inputTables[0].data()->end()){
 			break;
 		}
 	}
