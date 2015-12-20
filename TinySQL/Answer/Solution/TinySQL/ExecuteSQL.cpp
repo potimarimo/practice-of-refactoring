@@ -212,7 +212,6 @@ public:
 	vector<Column> selectColumns; //!< SELECT句に指定された列名です。
 	vector<Column> orderByColumns; //!< ORDER句に指定された列名です。
 	vector<TokenKind> orders; //!< 同じインデックスのorderByColumnsに対応している、昇順、降順の指定です。
-	vector<shared_ptr<ExtensionTreeNode>> whereExtensionNodes; //!< WHEREに指定された木のノードを、木構造とは無関係に格納します。
 	shared_ptr<ExtensionTreeNode> whereTopNode; //!< 式木の根となるノードです。
 };
 
@@ -233,9 +232,11 @@ public:
 	InputTable(const shared_ptr<const vector<const Column>> columns, const shared_ptr<vector<const vector<const Data>>> data);
 
 	//! 列の情報を取得します。
+	//! @return 列の情報です。
 	const shared_ptr<const vector<const Column>> columns() const;
 
 	//! データを取得します。
+	//! @return データです。
 	const shared_ptr<vector<const vector<const Data>>> data() const;
 };
 
@@ -628,12 +629,14 @@ InputTable::InputTable(const shared_ptr<const vector<const Column>> columns, con
 }
 
 //! 列の情報を取得します。
+//! @return データです。
 const shared_ptr<const vector<const Column>> InputTable::columns() const
 {
 	return m_columns;
 }
 
 //! データを取得します。
+//! @return 列の情報です。
 const shared_ptr<vector<const vector<const Data>>> InputTable::data() const
 {
 	return m_data;
@@ -773,15 +776,12 @@ void OutputData::WriteCsv(const string outputFileName, const vector<const InputT
 
 	vector<Column> allInputColumns; // 入力に含まれるすべての列の一覧です。
 
-	vector<vector<Data>> allColumnOutputData; // 出力するデータに対応するインデックスを持ち、すべての入力データを保管します。
-
 	// 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
-	for (size_t i = 0; i < queryInfo.tableNames.size(); ++i){
-		transform(
-			inputTables[i].columns()->begin(),
-			inputTables[i].columns()->end(),
-			back_inserter(allInputColumns),
-			[&](const Column& column){return Column(queryInfo.tableNames[i], column.columnName); });
+	for (auto &inputTable : inputTables){
+		copy(
+			inputTable.columns()->begin(),
+			inputTable.columns()->end(),
+			back_inserter(allInputColumns));
 	}
 
 	// SELECT句の列名指定が*だった場合は、入力CSVの列名がすべて選択されます。
@@ -814,6 +814,7 @@ void OutputData::WriteCsv(const string outputFileName, const vector<const InputT
 		[](const InputTable& table){return table.data()->begin(); });
 
 	// 出力するデータを設定します。
+	vector<vector<Data>> allColumnOutputData; // 出力するデータに対応するインデックスを持ち、すべての入力データを保管します。
 	while (true){
 
 		allColumnOutputData.push_back(vector<Data>());
@@ -994,8 +995,9 @@ void OutputData::WriteCsv(const string outputFileName, const vector<const InputT
 				allColumnOutputData.pop_back();
 			}
 			// WHERE条件の計算結果をリセットします。
-			for (auto &whereExtensionNode : queryInfo.whereExtensionNodes){
-				whereExtensionNode->calculated = false;
+			auto whereNodes = SelfAndDescendants(queryInfo.whereTopNode);
+			for (auto &whereNode : *whereNodes){
+				whereNode->calculated = false;
 			}
 		}
 
@@ -1417,16 +1419,16 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 				// オペランドを読み込みます。
 
 				// オペランドのノードを新しく生成します。
-				queryInfo->whereExtensionNodes.push_back(make_shared<ExtensionTreeNode>());
+				auto newNode = make_shared<ExtensionTreeNode>();
 				if (currentNode){
 					// 現在のノードを右の子にずらし、元の位置に新しいノードを挿入します。
-					currentNode->right = queryInfo->whereExtensionNodes.back();
+					currentNode->right = newNode;
 					currentNode->right->parent = currentNode;
 					currentNode = currentNode->right;
 				}
 				else{
 					// 最初はカレントノードに新しいノードを入れます。
-					currentNode = queryInfo->whereExtensionNodes.back();
+					currentNode = newNode;
 				}
 
 				// カッコ開くを読み込みます。
@@ -1529,8 +1531,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 					} while (!searched && tmp->parent && (tmp->parent->middleOperator.order <= foundOperator->order || tmp->parent->inParen));
 
 					// 演算子のノードを新しく生成します。
-					queryInfo->whereExtensionNodes.push_back(make_shared<ExtensionTreeNode>());
-					currentNode = queryInfo->whereExtensionNodes.back();
+					currentNode = make_shared<ExtensionTreeNode>();
 					currentNode->middleOperator = *foundOperator;
 
 					// 見つかった場所に新しいノードを配置します。これまでその位置にあったノードは左の子となるよう、親ノードと子ノードのポインタをつけかえます。
