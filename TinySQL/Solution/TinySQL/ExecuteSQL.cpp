@@ -140,7 +140,7 @@ public:
 	//! Tokenクラスの新しいインスタンスを初期化します。
 	//! @param [in] kind トークンの種類です。
 	//! @param [in] word 記録されているトークンの文字列です。記録の必要がなければ空白です。
-	Token(const TokenKind kind, const char *word);
+	Token(const TokenKind kind, const string word);
 };
 
 //! 指定された列の情報です。どのテーブルに所属するかの情報も含みます。
@@ -252,7 +252,7 @@ Token::Token(const TokenKind kind) : Token(kind, "")
 //! Tokenクラスの新しいインスタンスを初期化します。
 //! @param [in] kind トークンの種類です。
 //! @param [in] word 記録されているトークンの文字列です。記録の必要がなければ空白です。
-Token::Token(const TokenKind kind, const char *word) :kind(kind)
+Token::Token(const TokenKind kind, const string word) :kind(kind)
 {
 	this->word = word;
 }
