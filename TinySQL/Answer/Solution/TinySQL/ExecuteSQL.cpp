@@ -210,35 +210,30 @@ public:
 //! ファイルに対して実行するSQLを表すクラスです。
 class SqlQuery
 {
-	vector<ifstream> inputTableFiles;                       // 読み込む入力ファイルの全てのファイルポインタです。
-	ofstream outputFile;                                    // 書き込むファイルのファイルポインタです。
-	bool found = false;                                     // 検索時に見つかったかどうかの結果を一時的に保存します。
-	vector<vector<vector<Data>>> inputData;                 // 入力データです。
-	vector<vector<Data>> outputData;                        // 出力データです。
-	vector<vector<Data>> allColumnOutputData;               // 出力するデータに対応するインデックスを持ち、すべての入力データを保管します。
+	vector<ifstream> inputTableFiles;                       //!< 読み込む入力ファイルの全てのファイルポインタです。
+	ofstream outputFile;                                    //!< 書き込むファイルのファイルポインタです。
+	bool found = false;                                     //!< 検索時に見つかったかどうかの結果を一時的に保存します。
+	vector<vector<vector<Data>>> inputData;                 //!< 入力データです。
+	vector<vector<Data>> outputData;                        //!< 出力データです。
+	vector<vector<Data>> allColumnOutputData;               //!< 出力するデータに対応するインデックスを持ち、すべての入力データを保管します。
 
-	const string alpahUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ"; // 全てのアルファベットの大文字小文字とアンダーバーです。
-	const string alpahNumUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; // 全ての数字とアルファベットの大文字小文字とアンダーバーです。
-	const string signNum = "+-0123456789"; // 全ての符号と数字です。
-	const string num = "0123456789"; // 全ての数字です。
-	const string space = " \t\r\n"; // 全ての空白文字です。
+	const string alpahUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ"; //!< 全てのアルファベットの大文字小文字とアンダーバーです。
+	const string alpahNumUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; //!< 全ての数字とアルファベットの大文字小文字とアンダーバーです。
+	const string signNum = "+-0123456789"; //!< 全ての符号と数字です。
+	const string num = "0123456789"; //!< 全ての数字です。
+	const string space = " \t\r\n"; //!< 全ての空白文字です。
 
 	// keywordConditionsとsignConditionsは先頭から順に検索されるので、前方一致となる二つの項目は順番に気をつけて登録しなくてはいけません。
+	const vector<const Token> keywordConditions;//!< キーワードをトークンとして認識するためのキーワード一覧情報です。
+	const vector<const Token> signConditions;//!< 記号をトークンとして認識するための記号一覧情報です。
+	const vector<const Operator> operators; //!< 演算子の情報です。
 
-	// キーワードをトークンとして認識するためのキーワード一覧情報です。
-	const vector<const Token> keywordConditions;
+	vector<const Token> tokens; //!< SQLを分割したトークンです。
+	vector<const string> tableNames; //!< FROM句で指定しているテーブル名です。
 
-	// 記号をトークンとして認識するための記号一覧情報です。
-	const vector<const Token> signConditions;
-
-	// 演算子の情報です。
-	const vector<const Operator> operators;
-
-	vector<const Token> tokens; // SQLを分割したトークンです。
-
-	vector<const string> tableNames; // FROM句で指定しているテーブル名です。
+	string m_sql; //!< 実行するSQLです。
+	string m_outputFileName; //!< outputFileName SQLの実行結果をCSVとして出力するファイル名です。拡張子を含みます。
 public:
-
 	//! SqlQueryクラスの新しいインスタンスを初期化します。
 	SqlQuery();
 
@@ -426,15 +421,17 @@ SqlQuery::SqlQuery() :
 //! @return 実行した結果の状態です。 
 int SqlQuery::Execute(const string sql, const string outputFileName)
 {
+	m_sql = sql;
+	m_outputFileName = outputFileName;
 	try
 	{
 		// SQLからトークンを読み込みます。
 
-		auto sqlBackPoint = sql.begin(); // SQLをトークンに分割して読み込む時に戻るポイントを記録しておきます。
+		auto sqlBackPoint = m_sql.begin(); // SQLをトークンに分割して読み込む時に戻るポイントを記録しておきます。
 
-		auto sqlCursol = sql.begin(); // SQLをトークンに分割して読み込む時に現在読んでいる文字の場所を表します。
+		auto sqlCursol = m_sql.begin(); // SQLをトークンに分割して読み込む時に現在読んでいる文字の場所を表します。
 
-		auto sqlEnd = sql.end(); // sqlのendを指します。
+		auto sqlEnd = m_sql.end(); // m_sqlのendを指します。
 
 		// SQLをトークンに分割て読み込みます。
 		while (sqlCursol != sqlEnd){
@@ -1267,7 +1264,7 @@ int SqlQuery::Execute(const string sql, const string outputFileName)
 		}
 
 		// 出力ファイルを開きます。
-		outputFile = ofstream(outputFileName);
+		outputFile = ofstream(m_outputFileName);
 		if (outputFile.bad()){
 			throw ResultValue::ERR_FILE_OPEN;
 		}
