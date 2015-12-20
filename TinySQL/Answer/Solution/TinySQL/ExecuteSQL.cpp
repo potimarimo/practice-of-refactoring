@@ -257,13 +257,14 @@ class SqlQuery
 	const shared_ptr<const SqlQueryInfo> AnalyzeTokens(const vector<const Token> &tokens) const;
 
 	//! CSVファイルから入力データを読み取ります。
-	void ReadCsv();
+	//! @param [in] queryInfo SQLの情報です。
+	//! @return ファイルから読み取ったデータです。
+	const shared_ptr<vector<vector<vector<Data>>>> ReadCsv(const SqlQueryInfo& queryInfo);
 
 	//! CSVファイルに出力データを書き込みます。
-	void WriteCsv();
-
-	//! ファイルのClose処理を行い、正常に行われたか確認します。
-	void CheckClosingFiles();
+	//! @param [in] queryInfo SQLの情報です。
+	//! @param [in] inputData ファイルから読み取ったデータです。
+	void WriteCsv(const SqlQueryInfo& queryInfo, vector<vector<vector<Data>>> &inputData);
 public:
 	//! SqlQueryクラスの新しいインスタンスを初期化します。
 	SqlQuery();
@@ -809,8 +810,13 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 }
 
 //! CSVファイルから入力データを読み取ります。
-void SqlQuery::ReadCsv()
+//! @param [in] queryInfo SQLの情報です。
+//! @return ファイルから読み取ったデータです。
+const shared_ptr<vector<vector<vector<Data>>>> SqlQuery::ReadCsv(const SqlQueryInfo& queryInfo)
 {
+	auto ret = make_shared<vector<vector<vector<Data>>>>();
+	auto &inputData = *ret;
+
 	for (size_t i = 0; i < queryInfo.tableNames.size(); ++i){
 		// 入力ファイルを開きます。
 		inputTableFiles.push_back(ifstream(queryInfo.tableNames[i] + ".csv"));
@@ -890,25 +896,37 @@ void SqlQuery::ReadCsv()
 			}
 		}
 	}
+	for (auto &inputTableFile : inputTableFiles){
+		if (inputTableFile){
+			inputTableFile.close();
+			if (inputTableFile.bad()){
+				throw ResultValue::ERR_FILE_CLOSE;
+			}
+		}
+	}
+	return ret;
 }
 
 //! CSVファイルに出力データを書き込みます。
-void SqlQuery::WriteCsv()
+//! @param [in] queryInfo SQLの情報です。
+//! @param [in] inputData ファイルから読み取ったデータです。
+void SqlQuery::WriteCsv(const SqlQueryInfo& queryInfo, vector<vector<vector<Data>>> &inputData)
 {
+	SqlQueryInfo info = queryInfo;
 	vector<Column> allInputColumns; // 入力に含まれるすべての列の一覧です。
 
 	// 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
-	for (size_t i = 0; i < queryInfo.tableNames.size(); ++i){
+	for (size_t i = 0; i < info.tableNames.size(); ++i){
 		transform(
 			inputColumns[i].begin(),
 			inputColumns[i].end(),
 			back_inserter(allInputColumns),
-			[&](const Column& column){return Column(queryInfo.tableNames[i], column.columnName); });
+			[&](const Column& column){return Column(info.tableNames[i], column.columnName); });
 	}
 
 	// SELECT句の列名指定が*だった場合は、入力CSVの列名がすべて選択されます。
-	if (queryInfo.selectColumns.empty()){
-		copy(allInputColumns.begin(), allInputColumns.end(), back_inserter(queryInfo.selectColumns));
+	if (info.selectColumns.empty()){
+		copy(allInputColumns.begin(), allInputColumns.end(), back_inserter(info.selectColumns));
 	}
 
 	vector<Column> outputColumns; // 出力するすべての行の情報です。
@@ -916,9 +934,9 @@ void SqlQuery::WriteCsv()
 	// SELECT句で指定された列名が、何個目の入力ファイルの何列目に相当するかを判別します。
 	vector<ColumnIndex> selectColumnIndexes; // SELECT句で指定された列の、入力ファイルとしてのインデックスです。
 
-	for (auto &selectColumn : queryInfo.selectColumns){
+	for (auto &selectColumn : info.selectColumns){
 		found = false;
-		for (size_t i = 0; i < queryInfo.tableNames.size(); ++i){
+		for (size_t i = 0; i < info.tableNames.size(); ++i){
 			int j = 0;
 			for (auto &inputColumn : inputColumns[i]){
 				if (Equali(selectColumn.columnName, inputColumn.columnName) &&
@@ -949,9 +967,9 @@ void SqlQuery::WriteCsv()
 		back_inserter(outputColumns),
 		[&](const ColumnIndex& index){return inputColumns[index.table][index.column]; });
 
-	if (queryInfo.whereTopNode){
+	if (info.whereTopNode){
 		// 既存数値の符号を計算します。
-		for (auto &whereExtensionNode : queryInfo.whereExtensionNodes){
+		for (auto &whereExtensionNode : info.whereExtensionNodes){
 			if (whereExtensionNode->middleOperator.kind == TokenKind::NOT_TOKEN &&
 				whereExtensionNode->column.columnName.empty() &&
 				whereExtensionNode->value.type == DataType::INTEGER){
@@ -990,8 +1008,8 @@ void SqlQuery::WriteCsv()
 				back_inserter(allColumnsRow));
 		}
 		// WHEREの条件となる値を再帰的に計算します。
-		if (queryInfo.whereTopNode){
-			shared_ptr<ExtensionTreeNode> currentNode = queryInfo.whereTopNode; // 現在見ているノードです。
+		if (info.whereTopNode){
+			shared_ptr<ExtensionTreeNode> currentNode = info.whereTopNode; // 現在見ているノードです。
 			while (currentNode){
 				// 子ノードの計算が終わってない場合は、まずそちらの計算を行います。
 				if (currentNode->left && !currentNode->left->calculated){
@@ -1152,12 +1170,12 @@ void SqlQuery::WriteCsv()
 			}
 
 			// 条件に合わない行は出力から削除します。
-			if (!queryInfo.whereTopNode->value.boolean()){
+			if (!info.whereTopNode->value.boolean()){
 				allColumnOutputData.pop_back();
 				outputData.pop_back();
 			}
 			// WHERE条件の計算結果をリセットします。
-			for (auto &whereExtensionNode : queryInfo.whereExtensionNodes){
+			for (auto &whereExtensionNode : info.whereExtensionNodes){
 				whereExtensionNode->calculated = false;
 			}
 		}
@@ -1165,10 +1183,10 @@ void SqlQuery::WriteCsv()
 		// 各テーブルの行のすべての組み合わせを出力します。
 
 		// 最後のテーブルのカレント行をインクリメントします。
-		++currentRows[queryInfo.tableNames.size() - 1];
+		++currentRows[info.tableNames.size() - 1];
 
 		// 最後のテーブルが最終行になっていた場合は先頭に戻し、順に前のテーブルのカレント行をインクリメントします。
-		for (int i = queryInfo.tableNames.size() - 1; currentRows[i] == inputData[i].end() && 0 < i; --i){
+		for (int i = info.tableNames.size() - 1; currentRows[i] == inputData[i].end() && 0 < i; --i){
 			++currentRows[i - 1];
 			currentRows[i] = inputData[i].begin();
 		}
@@ -1180,11 +1198,11 @@ void SqlQuery::WriteCsv()
 	}
 
 	// ORDER句による並び替えの処理を行います。
-	if (!queryInfo.orderByColumns.empty()){
+	if (!info.orderByColumns.empty()){
 		// ORDER句で指定されている列が、全ての入力行の中のどの行なのかを計算します。
 		vector<int> orderByColumnIndexes; // ORDER句で指定された列の、すべての行の中でのインデックスです。
 
-		for (auto &orderByColumn : queryInfo.orderByColumns){
+		for (auto &orderByColumn : info.orderByColumns){
 			found = false;
 			for (size_t i = 0; i < allInputColumns.size(); ++i){
 				if (Equali(orderByColumn.columnName, allInputColumns[i].columnName) &&
@@ -1224,7 +1242,7 @@ void SqlQuery::WriteCsv()
 					}
 
 					// 降順ならcmpの大小を入れ替えます。
-					if (queryInfo.orders[k] == TokenKind::DESC){
+					if (info.orders[k] == TokenKind::DESC){
 						cmp *= -1;
 					}
 					if (cmp < 0){
@@ -1256,9 +1274,9 @@ void SqlQuery::WriteCsv()
 	}
 
 	// 出力ファイルに列名を出力します。
-	for (size_t i = 0; i < queryInfo.selectColumns.size(); ++i){
+	for (size_t i = 0; i < info.selectColumns.size(); ++i){
 		outputFile << outputColumns[i].columnName;
-		if (i < queryInfo.selectColumns.size() - 1){
+		if (i < info.selectColumns.size() - 1){
 			outputFile << ",";
 		}
 		else{
@@ -1278,7 +1296,7 @@ void SqlQuery::WriteCsv()
 				outputFile << column.string();
 				break;
 			}
-			if (i++ < queryInfo.selectColumns.size() - 1){
+			if (i++ < info.selectColumns.size() - 1){
 				outputFile << ",";
 			}
 			else{
@@ -1288,20 +1306,6 @@ void SqlQuery::WriteCsv()
 	}
 	if (outputFile.bad()){
 		throw ResultValue::ERR_FILE_WRITE;
-	}
-}
-
-//! ファイルのClose処理を行い、正常に行われたか確認します。
-void SqlQuery::CheckClosingFiles()
-{
-	// ファイルリソースを解放します。
-	for (auto &inputTableFile : inputTableFiles){
-		if (inputTableFile){
-			inputTableFile.close();
-			if (inputTableFile.bad()){
-				throw ResultValue::ERR_FILE_CLOSE;
-			}
-		}
 	}
 	if (outputFile){
 		outputFile.close();
@@ -1362,10 +1366,9 @@ int SqlQuery::Execute(const string sql, const string outputFileName)
 	try
 	{
 		auto tokens = GetTokens(sql);
-		queryInfo = *AnalyzeTokens(*tokens);
-		ReadCsv();
-		WriteCsv();
-		CheckClosingFiles();
+		auto queryInfo = AnalyzeTokens(*tokens);
+		auto inputData = ReadCsv(*queryInfo);
+		WriteCsv(*queryInfo, *inputData);
 
 		return static_cast<int>(ResultValue::OK);
 	}
