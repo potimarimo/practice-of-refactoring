@@ -84,6 +84,18 @@ protected:
 	//! Dataクラスの新しいインスタンスを初期化します。
 	Data();
 public:
+	//! Data型の具象クラスのインスタンスを返します。
+	//! @param [in] value データの実際の値です。
+	static shared_ptr<Data> New(const string value);
+
+	//! Data型の具象クラスのインスタンスを返します。
+	//! @param [in] value データの実際の値です。
+	static shared_ptr<Data> New(const int value);
+
+	//! Data型の具象クラスのインスタンスを返します。
+	//! @param [in] value データの実際の値です。
+	static shared_ptr<Data> New(const bool value);
+
 	//! データの型を取得します。
 	//! @return データの型です。
 	virtual const DataType type() const = 0;
@@ -553,6 +565,27 @@ bool Equali(const string str1, const string str2){
 //! Dataクラスの新しいインスタンスを初期化します。
 Data::Data(){}
 
+//! Data型の具象クラスのインスタンスを返します。
+//! @param [in] value データの実際の値です。
+shared_ptr<Data> Data::New(const std::string value)
+{
+	return make_shared<StringData>(value);
+}
+
+//! Data型の具象クラスのインスタンスを返します。
+//! @param [in] value データの実際の値です。
+shared_ptr<Data> Data::New(const int value)
+{
+	return make_shared<IntegerData>(value);
+}
+
+//! Data型の具象クラスのインスタンスを返します。
+//! @param [in] value データの実際の値です。
+shared_ptr<Data> Data::New(const bool value)
+{
+	return make_shared<BooleanData>(value);
+}
+
 //! データが文字列型の場合の値を取得します。
 //! @return データが文字列型の場合の値です。
 const DataType Data::type() const
@@ -759,44 +792,44 @@ void ExtensionTreeNode::Operate()
 		case DataType::INTEGER:
 			switch (middleOperator.kind){
 			case TokenKind::EQUAL:
-				value = make_shared<BooleanData>(left->value->integer() == right->value->integer());
+				value = Data::New(left->value->integer() == right->value->integer());
 				break;
 			case TokenKind::GREATER_THAN:
-				value = make_shared<BooleanData>(left->value->integer() > right->value->integer());
+				value = Data::New(left->value->integer() > right->value->integer());
 				break;
 			case TokenKind::GREATER_THAN_OR_EQUAL:
-				value = make_shared<BooleanData>(left->value->integer() >= right->value->integer());
+				value = Data::New(left->value->integer() >= right->value->integer());
 				break;
 			case TokenKind::LESS_THAN:
-				value = make_shared<BooleanData>(left->value->integer() < right->value->integer());
+				value = Data::New(left->value->integer() < right->value->integer());
 				break;
 			case TokenKind::LESS_THAN_OR_EQUAL:
-				value = make_shared<BooleanData>(left->value->integer() <= right->value->integer());
+				value = Data::New(left->value->integer() <= right->value->integer());
 				break;
 			case TokenKind::NOT_EQUAL:
-				value = make_shared<BooleanData>(left->value->integer() != right->value->integer());
+				value = Data::New(left->value->integer() != right->value->integer());
 				break;
 			}
 			break;
 		case DataType::STRING:
 			switch (middleOperator.kind){
 			case TokenKind::EQUAL:
-				value = make_shared<BooleanData>(left->value->string() == right->value->string());
+				value = Data::New(left->value->string() == right->value->string());
 				break;
 			case TokenKind::GREATER_THAN:
-				value = make_shared<BooleanData>(left->value->string() > right->value->string());
+				value = Data::New(left->value->string() > right->value->string());
 				break;
 			case TokenKind::GREATER_THAN_OR_EQUAL:
-				value = make_shared<BooleanData>(left->value->string() >= right->value->string());
+				value = Data::New(left->value->string() >= right->value->string());
 				break;
 			case TokenKind::LESS_THAN:
-				value = make_shared<BooleanData>(left->value->string() < right->value->string());
+				value = Data::New(left->value->string() < right->value->string());
 				break;
 			case TokenKind::LESS_THAN_OR_EQUAL:
-				value = make_shared<BooleanData>(left->value->string() <= right->value->string());
+				value = Data::New(left->value->string() <= right->value->string());
 				break;
 			case TokenKind::NOT_EQUAL:
-				value = make_shared<BooleanData>(left->value->string() != right->value->string());
+				value = Data::New(left->value->string() != right->value->string());
 				break;
 			}
 			break;
@@ -816,16 +849,16 @@ void ExtensionTreeNode::Operate()
 		// 比較結果を演算子によって計算方法を変えて、計算します。
 		switch (middleOperator.kind){
 		case TokenKind::PLUS:
-			value = make_shared<IntegerData>(left->value->integer() + right->value->integer());
+			value = Data::New(left->value->integer() + right->value->integer());
 			break;
 		case TokenKind::MINUS:
-			value = make_shared<IntegerData>(left->value->integer() - right->value->integer());
+			value = Data::New(left->value->integer() - right->value->integer());
 			break;
 		case TokenKind::ASTERISK:
-			value = make_shared<IntegerData>(left->value->integer() * right->value->integer());
+			value = Data::New(left->value->integer() * right->value->integer());
 			break;
 		case TokenKind::SLASH:
-			value = make_shared<IntegerData>(left->value->integer() / right->value->integer());
+			value = Data::New(left->value->integer() / right->value->integer());
 			break;
 		}
 		break;
@@ -841,10 +874,10 @@ void ExtensionTreeNode::Operate()
 		// 比較結果を演算子によって計算方法を変えて、計算します。
 		switch (middleOperator.kind){
 		case TokenKind::AND:
-			value = make_shared<BooleanData>(left->value->boolean() && right->value->boolean());
+			value = Data::New(left->value->boolean() && right->value->boolean());
 			break;
 		case TokenKind::OR:
-			value = make_shared<BooleanData>(left->value->boolean() || right->value->boolean());
+			value = Data::New(left->value->boolean() || right->value->boolean());
 			break;
 		}
 	}
@@ -866,7 +899,7 @@ void ExtensionTreeNode::SetColumnData(const vector<const shared_ptr<const Data>>
 
 		// 符号を考慮して値を計算します。
 		if (value->type() == DataType::INTEGER){
-			value = make_shared<IntegerData>(value->integer() * signCoefficient);
+			value = Data::New(value->integer() * signCoefficient);
 		}
 	}
 }
@@ -919,7 +952,7 @@ void InputTable::InitializeIntegerColumn()
 
 			// 符号と数字以外が見つからない列については、数値列に変換します。
 			for (auto& inputRow : *data()){
-				inputRow[i] = make_shared<IntegerData>(stoi(inputRow[i]->string()));
+				inputRow[i] = Data::New(stoi(inputRow[i]->string()));
 			}
 		}
 	}
@@ -1333,7 +1366,7 @@ const shared_ptr<vector<const vector<const shared_ptr<const Data>>>> Csv::ReadDa
 			lineData->begin(),
 			lineData->end(),
 			back_inserter(row),
-			[&](const string& column){return make_shared<StringData>(column); });
+			[&](const string& column){return Data::New(column); });
 		data->push_back(row);
 	}
 	return data;
@@ -1659,12 +1692,12 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 					}
 				}
 				else if (tokenCursol->kind == TokenKind::INT_LITERAL){
-					currentNode->value = make_shared<IntegerData>(stoi(tokenCursol->word));
+					currentNode->value = Data::New(stoi(tokenCursol->word));
 					++tokenCursol;
 				}
 				else if (tokenCursol->kind == TokenKind::STRING_LITERAL){
 					// 前後のシングルクォートを取り去った文字列をデータとして読み込みます。
-					currentNode->value = make_shared<StringData>(tokenCursol->word.substr(1, tokenCursol->word.size() - 2));
+					currentNode->value = Data::New(tokenCursol->word.substr(1, tokenCursol->word.size() - 2));
 					++tokenCursol;
 				}
 				else{
@@ -1750,7 +1783,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 				if (whereNode->middleOperator.kind == TokenKind::NOT_TOKEN &&
 					whereNode->column.columnName.empty() &&
 					whereNode->value->type() == DataType::INTEGER){
-					whereNode->value = make_shared<IntegerData>(whereNode->value->integer() * whereNode->signCoefficient);
+					whereNode->value = Data::New(whereNode->value->integer() * whereNode->signCoefficient);
 				}
 			}
 		}
