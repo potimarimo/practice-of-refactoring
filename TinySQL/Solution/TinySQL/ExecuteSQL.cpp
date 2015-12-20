@@ -824,6 +824,31 @@ public:
 //! @params [in] optional 存在してもしなくてもよい規則です。
 const shared_ptr<const OptionalParser> operator-(const shared_ptr<const Parser> optional);
 
+//! 0回以上の繰り返しを読み取るパーサーです。
+class ZeroOrMoreParser : public Parser
+{
+	const shared_ptr<const Parser> m_once; //!< 繰り返しの一回分となる規則です。
+	const function<void(void)> m_action; //!< 読み取りが成功したら実行する処理です。
+public:
+	//! ZeroOrMoreParserクラスの新しいインスタンスを初期化します。
+	//! @param [in] 読み取りが成功したら実行する処理です。
+	//! @params [in] once 繰り返しの一回分となる規則です。
+	ZeroOrMoreParser(const function<void(void)> action, const shared_ptr<const Parser> once);
+
+	//! ZeroOrMoreParserクラスの新しいインスタンスを初期化します。
+	//! @params [in] once 繰り返しの一回分となる規則です。
+	ZeroOrMoreParser(const shared_ptr<const Parser> once);
+
+	//! 読み取りが成功したら実行する処理を登録します。
+	//! @param [in] 読み取りが成功したら実行する処理です。
+	const shared_ptr<const ZeroOrMoreParser> Action(const function<void(void)> action) const;
+
+	//! 繰り返しのパースを行います。
+	//! @params [in] cursol 現在の読み取り位置を表すカーソルです。
+	//! @return パースが成功したかどうかです。
+	const bool Parse(vector<const Token>::const_iterator& cursol) const override;
+};
+
 //! 出力するデータを管理します。
 class OutputData
 {
@@ -1984,10 +2009,12 @@ SequenceParser::SequenceParser(const shared_ptr<const Parser> parser1, const sha
 //! @return パースが成功したかどうかです。
 const bool SequenceParser::Parse(vector<const Token>::const_iterator& cursol) const
 {
+	auto beforeParse = cursol;
 	if (!m_parser1->Parse(cursol)){
 		return false;
 	}
 	if (!m_parser2->Parse(cursol)){
+		cursol = beforeParse;
 		return false;
 	}
 	if (m_action){
@@ -2048,6 +2075,34 @@ const bool OptionalParser::Parse(vector<const Token>::const_iterator& cursol) co
 const shared_ptr<const OptionalParser> operator-(const shared_ptr<const Parser> optional)
 {
 	return make_shared<OptionalParser>(optional);
+}
+
+//! ZeroOrMoreParserクラスの新しいインスタンスを初期化します。
+//! @param [in] 読み取りが成功したら実行する処理です。
+//! @params [in] once 繰り返しの一回分となる規則です。
+ZeroOrMoreParser::ZeroOrMoreParser(const function<void(void)> action, const shared_ptr<const Parser> once) :m_action(action), m_once(once){}
+
+//! ZeroOrMoreParserクラスの新しいインスタンスを初期化します。
+//! @params [in] once 繰り返しの一回分となる規則です。
+ZeroOrMoreParser::ZeroOrMoreParser(const shared_ptr<const Parser> once): m_once(once){}
+
+//! 読み取りが成功したら実行する処理を登録します。
+//! @param [in] 読み取りが成功したら実行する処理です。
+const shared_ptr<const ZeroOrMoreParser> ZeroOrMoreParser::Action(const function<void(void)> action) const
+{
+	return make_shared<ZeroOrMoreParser>(action, m_once);
+}
+
+//! 繰り返しのパースを行います。
+//! @params [in] cursol 現在の読み取り位置を表すカーソルです。
+//! @return パースが成功したかどうかです。
+const bool ZeroOrMoreParser::Parse(vector<const Token>::const_iterator& cursol) const
+{
+	while (m_once->Parse(cursol)){}
+	if (m_action){
+		m_action();
+	}
+	return true;
 }
 
 //! 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
@@ -2475,6 +2530,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 {
 	auto queryInfo = make_shared<SqlQueryInfo>();
 
+	auto COMMA = token(TokenKind::COMMA);
 	auto DOT = token(TokenKind::DOT);
 	auto IDENTIFIER = token(TokenKind::IDENTIFIER);
 	auto SELECT = token(TokenKind::SELECT);
@@ -2491,6 +2547,8 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 
 	auto SELECT_COLUMN = FIRST_SELECT_COLUMN_NAME >> -(DOT >> SECOND_SELECT_COLUMN_NAME);
 
+	auto SELECT_COLUMNS = SELECT_COLUMN >> make_shared<ZeroOrMoreParser>(COMMA >> SELECT_COLUMN);
+
 	auto tokenCursol = tokens.begin(); // 現在見ているトークンを指します。
 
 	if (!SELECT->Parse(tokenCursol)){
@@ -2502,16 +2560,20 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 	}
 	else
 	{
-		bool first = true; // SELECT句に最初に指定された列名の読み込みかどうかです。
-		while (tokenCursol->kind == TokenKind::COMMA || first){
-			if (tokenCursol->kind == TokenKind::COMMA){
-				++tokenCursol;
-			}
-			if (!SELECT_COLUMN->Parse(tokenCursol)){
-				throw ResultValue::ERR_SQL_SYNTAX;
-			}
-			first = false;
+
+		if (!SELECT_COLUMNS->Parse(tokenCursol)){
+			throw ResultValue::ERR_SQL_SYNTAX;
 		}
+		//bool first = true; // SELECT句に最初に指定された列名の読み込みかどうかです。
+		//while (tokenCursol->kind == TokenKind::COMMA || first){
+		//	if (tokenCursol->kind == TokenKind::COMMA){
+		//		++tokenCursol;
+		//	}
+		//	if (!SELECT_COLUMN->Parse(tokenCursol)){
+		//		throw ResultValue::ERR_SQL_SYNTAX;
+		//	}
+		//	first = false;
+		//}
 	}
 
 	// ORDER句とWHERE句を読み込みます。最大各一回ずつ書くことができます。
