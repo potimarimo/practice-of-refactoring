@@ -116,6 +116,21 @@ public:
 	//! @param [in] right 右辺です。
 	//! @return 加算した結果です。
 	virtual const shared_ptr<const Data> operator+(const shared_ptr<const Data>& right) const = 0;
+
+	//! 減算演算を行います。
+	//! @param [in] right 右辺です。
+	//! @return 減算した結果です。
+	virtual const shared_ptr<const Data> operator-(const shared_ptr<const Data>& right) const = 0;
+
+	//! 乗算演算を行います。
+	//! @param [in] right 右辺です。
+	//! @return 乗算した結果です。
+	virtual const shared_ptr<const Data> operator*(const shared_ptr<const Data>& right) const = 0;
+
+	//! 除算演算を行います。
+	//! @param [in] right 右辺です。
+	//! @return 除算した結果です。
+	virtual const shared_ptr<const Data> operator/(const shared_ptr<const Data>& right) const = 0;
 };
 
 //! 文字列の値を持つDataです。
@@ -140,6 +155,21 @@ public:
 	//! @param [in] right 右辺です。
 	//! @return 加算した結果です。
 	const shared_ptr<const Data> operator+(const shared_ptr<const Data>& right) const override;
+
+	//! 減算演算を行います。
+	//! @param [in] right 右辺です。
+	//! @return 減算した結果です。
+	const shared_ptr<const Data> operator-(const shared_ptr<const Data>& right) const override;
+
+	//! 乗算演算を行います。
+	//! @param [in] right 右辺です。
+	//! @return 乗算した結果です。
+	const shared_ptr<const Data> operator*(const shared_ptr<const Data>& right) const override;
+
+	//! 除算演算を行います。
+	//! @param [in] right 右辺です。
+	//! @return 除算した結果です。
+	const shared_ptr<const Data> operator/(const shared_ptr<const Data>& right) const override;
 };
 
 //! 整数の値を持つDataです。
@@ -164,6 +194,21 @@ public:
 	//! @param [in] right 右辺です。
 	//! @return 加算した結果です。
 	const shared_ptr<const Data> operator+(const shared_ptr<const Data>& right) const override;
+
+	//! 減算演算を行います。
+	//! @param [in] right 右辺です。
+	//! @return 減算した結果です。
+	const shared_ptr<const Data> operator-(const shared_ptr<const Data>& right) const override;
+
+	//! 乗算演算を行います。
+	//! @param [in] right 右辺です。
+	//! @return 乗算した結果です。
+	const shared_ptr<const Data> operator*(const shared_ptr<const Data>& right) const override;
+
+	//! 除算演算を行います。
+	//! @param [in] right 右辺です。
+	//! @return 除算した結果です。
+	const shared_ptr<const Data> operator/(const shared_ptr<const Data>& right) const override;
 };
 
 //! 真偽値の値を持つDataです。
@@ -188,6 +233,21 @@ public:
 	//! @param [in] right 右辺です。
 	//! @return 加算した結果です。
 	const shared_ptr<const Data> operator+(const shared_ptr<const Data>& right) const override;
+
+	//! 減算演算を行います。
+	//! @param [in] right 右辺です。
+	//! @return 減算した結果です。
+	const shared_ptr<const Data> operator-(const shared_ptr<const Data>& right) const override;
+
+	//! 乗算演算を行います。
+	//! @param [in] right 右辺です。
+	//! @return 乗算した結果です。
+	const shared_ptr<const Data> operator*(const shared_ptr<const Data>& right) const override;
+
+	//! 除算演算を行います。
+	//! @param [in] right 右辺です。
+	//! @return 除算した結果です。
+	const shared_ptr<const Data> operator/(const shared_ptr<const Data>& right) const override;
 };
 
 //! WHERE句に指定する演算子の情報を表します。
@@ -660,6 +720,30 @@ const shared_ptr<const Data> StringData::operator+(const shared_ptr<const Data>&
 	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 }
 
+//! 減算演算を行います。
+//! @param [in] right 右辺です。
+//! @return 減算した結果です。
+const shared_ptr<const Data> StringData::operator-(const shared_ptr<const Data>& right) const
+{
+	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+}
+
+//! 乗算演算を行います。
+//! @param [in] right 右辺です。
+//! @return 乗算した結果です。
+const shared_ptr<const Data> StringData::operator*(const shared_ptr<const Data>& right) const
+{
+	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+}
+
+//! 除算演算を行います。
+//! @param [in] right 右辺です。
+//! @return 除算した結果です。
+const shared_ptr<const Data> StringData::operator/(const shared_ptr<const Data>& right) const
+{
+	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+}
+
 //! Dataクラスの新しいインスタンスを初期化します。
 //! @param [in] value データの値です。
 IntegerData::IntegerData(const int value) : m_integer(value){}
@@ -691,6 +775,46 @@ const shared_ptr<const Data> IntegerData::operator+(const shared_ptr<const Data>
 	}
 }
 
+//! 減算演算を行います。
+//! @param [in] right 右辺です。
+//! @return 減算した結果です。
+const shared_ptr<const Data> IntegerData::operator-(const shared_ptr<const Data>& right) const
+{
+	if (right->type() == DataType::INTEGER){
+		return Data::New(integer() - right->integer());
+	}
+	else{
+		throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+	}
+}
+
+//! 乗算演算を行います。
+//! @param [in] right 右辺です。
+//! @return 乗算した結果です。
+const shared_ptr<const Data> IntegerData::operator*(const shared_ptr<const Data>& right) const
+{
+	if (right->type() == DataType::INTEGER){
+		return Data::New(integer() * right->integer());
+	}
+	else{
+		throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+	}
+}
+
+//! 除算演算を行います。
+//! @param [in] right 右辺です。
+//! @return 除算した結果です。
+const shared_ptr<const Data> IntegerData::operator/(const shared_ptr<const Data>& right) const
+{
+	if (right->type() == DataType::INTEGER){
+		return Data::New(integer() / right->integer());
+	}
+	else{
+		throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+	}
+}
+
+
 //! Dataクラスの新しいインスタンスを初期化します。
 //! @param [in] value データの値です。
 BooleanData::BooleanData(const bool value) : m_boolean(value){}
@@ -713,6 +837,30 @@ const bool BooleanData::boolean() const
 //! @param [in] right 右辺です。
 //! @return 加算した結果です。
 const shared_ptr<const Data> BooleanData::operator+(const shared_ptr<const Data>& right) const
+{
+	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+}
+
+//! 減算演算を行います。
+//! @param [in] right 右辺です。
+//! @return 減算した結果です。
+const shared_ptr<const Data> BooleanData::operator-(const shared_ptr<const Data>& right) const
+{
+	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+}
+
+//! 乗算演算を行います。
+//! @param [in] right 右辺です。
+//! @return 乗算した結果です。
+const shared_ptr<const Data> BooleanData::operator*(const shared_ptr<const Data>& right) const
+{
+	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+}
+
+//! 除算演算を行います。
+//! @param [in] right 右辺です。
+//! @return 除算した結果です。
+const shared_ptr<const Data> BooleanData::operator/(const shared_ptr<const Data>& right) const
 {
 	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 }
@@ -823,6 +971,15 @@ void ExtensionTreeNode::Operate()
 	case TokenKind::PLUS:
 		value = *left->value + right->value;
 		break;
+	case TokenKind::MINUS:
+		value = *left->value - right->value;
+		break;
+	case TokenKind::ASTERISK:
+		value = *left->value * right->value;
+		break;
+	case TokenKind::SLASH:
+		value = *left->value / right->value;
+		break;
 	case TokenKind::EQUAL:
 	case TokenKind::GREATER_THAN:
 	case TokenKind::GREATER_THAN_OR_EQUAL:
@@ -882,29 +1039,6 @@ void ExtensionTreeNode::Operate()
 				value = Data::New(left->value->string() != right->value->string());
 				break;
 			}
-			break;
-		}
-		break;
-	case TokenKind::MINUS:
-	case TokenKind::ASTERISK:
-	case TokenKind::SLASH:
-		// 四則演算の場合です。
-
-		// 演算できるのは整数型同士の場合のみです。
-		if (left->value->type() != DataType::INTEGER || right->value->type() != DataType::INTEGER){
-			throw ResultValue::ERR_WHERE_OPERAND_TYPE;
-		}
-
-		// 比較結果を演算子によって計算方法を変えて、計算します。
-		switch (middleOperator.kind){
-		case TokenKind::MINUS:
-			value = Data::New(left->value->integer() - right->value->integer());
-			break;
-		case TokenKind::ASTERISK:
-			value = Data::New(left->value->integer() * right->value->integer());
-			break;
-		case TokenKind::SLASH:
-			value = Data::New(left->value->integer() / right->value->integer());
 			break;
 		}
 		break;
