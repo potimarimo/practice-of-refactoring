@@ -2047,17 +2047,14 @@ SequenceParser::SequenceParser(const shared_ptr<const Parser> parser1, const sha
 const bool SequenceParser::Parse(vector<const Token>::const_iterator& cursol) const
 {
 	auto beforeParse = cursol;
-	if (!m_parser1->Parse(cursol)){
-		return false;
+	if (m_parser1->Parse(cursol) && m_parser2->Parse(cursol)){
+		if (m_action){
+			m_action();
+		}
+		return true;
 	}
-	if (!m_parser2->Parse(cursol)){
-		cursol = beforeParse;
-		return false;
-	}
-	if (m_action){
-		m_action();
-	}
-	return true;
+	cursol = beforeParse;
+	return false;
 }
 
 //! 読み取りが成功したら実行する処理を登録します。
