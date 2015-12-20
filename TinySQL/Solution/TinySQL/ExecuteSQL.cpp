@@ -336,6 +336,16 @@ class Csv
 {
 	const shared_ptr<const SqlQueryInfo> queryInfo; //!< SQLに記述された内容です。
 
+	//! 入力ファイルを開きます。
+	//! @param [in] filePath 開くファイルのファイルパスです。
+	//! @return 入力ファイルを扱うストリームです。
+	ifstream OpenInputFile(const string filePath) const;
+
+	//! 入力ファイルを閉じます。
+	//! @param [in] inputFile 入力ファイルを扱うストリームです。
+	void CloseInputFile(ifstream &inputFile) const;
+
+	//! 入力CSVのヘッダ行を読み込みます。
 	//! @param [in] inputFile 入力ファイルを扱うストリームです。
 	//! @param [in] tableName SQLで指定されたテーブル名です。
 	//! @return ファイルから読み取ったヘッダ情報です。
@@ -741,6 +751,29 @@ const shared_ptr<vector<vector<Data>>> Csv::ReadData(ifstream &inputFile) const
 	}
 	return data;
 }
+
+//! 入力ファイルを開きます。
+//! @param [in] filePath 開くファイルのファイルパスです。
+//! @return 入力ファイルを扱うストリームです。
+ifstream Csv::OpenInputFile(const string filePath) const
+{
+	auto inputFile = ifstream(filePath); //入力するCSVファイルを扱うストリームです。
+	if (!inputFile){
+		throw ResultValue::ERR_FILE_OPEN;
+	}
+	return inputFile;
+}
+
+//! 入力ファイルを閉じます。
+//! @param [in] inputFile 入力ファイルを扱うストリームです。
+void Csv::CloseInputFile(ifstream &inputFile) const
+{
+	inputFile.close();
+	if (inputFile.bad()){
+		throw ResultValue::ERR_FILE_CLOSE;
+	}
+}
+
 //! Csvクラスの新しいインスタンスを初期化します。
 //! @param [in] queryInfo SQLに記述された内容です。
 Csv::Csv(const shared_ptr<const SqlQueryInfo> queryInfo) : queryInfo(queryInfo){}
@@ -753,20 +786,13 @@ const shared_ptr<const vector<const InputTable>> Csv::ReadCsv() const
 
 	for (auto &tableName : queryInfo->tableNames){
 		
-		// 入力ファイルを開きます。
-		auto inputFile =ifstream(tableName + ".csv"); //入力するCSVファイルを扱うストリームです。
-		if (!inputFile){
-			throw ResultValue::ERR_FILE_OPEN;
-		}
-
+		auto inputFile = OpenInputFile(tableName + ".csv");
+		
 		auto header = ReadHeader(inputFile, tableName);
 		auto data = ReadData(inputFile);
 		tables->push_back(InputTable(InputTable(header, data)));
 
-		inputFile.close();
-		if (inputFile.bad()){
-			throw ResultValue::ERR_FILE_CLOSE;
-		}
+		CloseInputFile(inputFile);
 	}
 	return tables;
 }
