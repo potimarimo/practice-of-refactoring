@@ -733,6 +733,31 @@ public:
 	virtual const bool Parse(vector<const Token>::const_iterator& cursol, vector<const Token>::const_iterator& end) const = 0;
 };
 
+//! トークン列の最後を読み取るパーサーです。
+class EndParser : public Parser
+{
+	function<void(void)> m_action; //!< 読み取りが成功したら実行する処理です。
+public:
+	//! EndParserクラスの新しいインスタンスを初期化します。
+	//! @param [in] 読み取りが成功したら実行する処理です。
+	EndParser(const function<void(void)> action);
+
+	//! EndParserクラスの新しいインスタンスを初期化します。
+	EndParser();
+
+	//! トークンに対するパースを行います。
+	//! @params [in] cursol 現在の読み取り位置を表すカーソルです。
+	//! @return パースが成功したかどうかです。
+	const bool Parse(vector<const Token>::const_iterator& cursol, vector<const Token>::const_iterator& end) const override;
+
+	//! 読み取りが成功したら実行する処理を登録します。
+	//! @param [in] 読み取りが成功したら実行する処理です。
+	const shared_ptr<const EndParser> Action(const function<void(void)> action) const;
+};
+
+//! トークンのパーサーを生成します。
+const shared_ptr<EndParser> end();
+
 //! トークンをひとつ読み取るパーサーです。
 class TokenParser : public Parser
 {
@@ -2108,6 +2133,40 @@ const shared_ptr<const TokenParser> TokenParser::or(const shared_ptr<const Token
 	return make_shared<TokenParser>(newKinds);
 }
 
+//! EndParserクラスの新しいインスタンスを初期化します。
+//! @param [in] 読み取りが成功したら実行する処理です。
+EndParser::EndParser(const function<void(void)> action) : m_action(action){}
+
+//! EndParserクラスの新しいインスタンスを初期化します。
+EndParser::EndParser(){}
+
+//! トークンに対するパースを行います。
+//! @params [in] cursol 現在の読み取り位置を表すカーソルです。
+//! @return パースが成功したかどうかです。
+const bool EndParser::Parse(vector<const Token>::const_iterator& cursol, vector<const Token>::const_iterator& end) const
+{
+	if (cursol == end){
+		if (m_action){
+			m_action();
+		}
+		return true;
+	}
+	return false;
+}
+
+//! 読み取りが成功したら実行する処理を登録します。
+//! @param [in] 読み取りが成功したら実行する処理です。
+const shared_ptr<const EndParser> EndParser::Action(const function<void()> action) const
+{
+	return make_shared<EndParser>(action);
+}
+
+//! トークンのパーサーを生成します。
+const shared_ptr<EndParser> end()
+{
+	return make_shared<EndParser>();
+}
+
 //! NoTokenParserクラスの新しいインスタンスを初期化します。
 //! @param [in] 読み取りが成功したら実行する処理です。
 NoTokenParser::NoTokenParser(const function<void(void)> action) : m_action(action){}
@@ -2972,18 +3031,15 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 	auto TINY_SQL =
 		SELECT_CLAUSE >>
 		-WHERE_ORDER >>
-		FROM_CLAUSE;
+		FROM_CLAUSE >>
+		end();
 
 	auto tokenCursol = tokens.begin(); // 現在見ているトークンを指します。
 
 	if (!TINY_SQL->Parse(tokenCursol, tokens.end())){
 		throw ResultValue::ERR_SQL_SYNTAX;
 	}
-	
-	// 最後のトークンまで読み込みが進んでいなかったらエラーです。
-	if (tokenCursol != tokens.end()){
-		throw ResultValue::ERR_SQL_SYNTAX;
-	}
+
 	// 構文エラーがないことを前提とした処理なので最後に実行しています。
 	if (queryInfo->whereTopNode){
 		// 既存数値の符号を計算します。
