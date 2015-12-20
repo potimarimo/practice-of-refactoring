@@ -192,11 +192,13 @@ public:
 	int parenOpenBeforeClose = 0;        //!< 木の構築中に0以外となり、自身の左にあり、まだ閉じてないカッコの開始の数となります。
 	int signCoefficient = 1;             //!< 自身が葉にあり、マイナス単項演算子がついている場合は-1、それ以外は1となります。
 	Column column;                       //!< 列場指定されている場合に、その列を表します。列指定ではない場合はcolumnNameが空文字列となります。
-	bool calculated = false;             //!< 式の値を計算中に、計算済みかどうかです。
 	Data value;                          //!< 指定された、もしくは計算された値です。
 
 	//! ExtensionTreeNodeクラスの新しいインスタンスを初期化します。
 	ExtensionTreeNode();
+
+	// leftとrightをmiddleOperatorで演算します。
+	void Operate();
 };
 
 //! 引数として渡したノード及びその子孫のノードを取得します。順序は帰りがけ順です。
@@ -609,6 +611,124 @@ ExtensionTreeNode::ExtensionTreeNode()
 {
 }
 
+// leftとrightをmiddleOperatorで演算します。
+void ExtensionTreeNode::Operate()
+{
+	// 自ノードの値を計算します。
+	switch (middleOperator.kind){
+	case TokenKind::EQUAL:
+	case TokenKind::GREATER_THAN:
+	case TokenKind::GREATER_THAN_OR_EQUAL:
+	case TokenKind::LESS_THAN:
+	case TokenKind::LESS_THAN_OR_EQUAL:
+	case TokenKind::NOT_EQUAL:
+		// 比較演算子の場合です。
+
+		// 比較できるのは文字列型か整数型で、かつ左右の型が同じ場合です。
+		if (left->value.type != DataType::INTEGER && left->value.type != DataType::STRING ||
+			left->value.type != right->value.type){
+			throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+		}
+		value.type = DataType::BOOLEAN;
+
+		// 比較結果を型と演算子によって計算方法を変えて、計算します。
+		switch (left->value.type){
+		case DataType::INTEGER:
+			switch (middleOperator.kind){
+			case TokenKind::EQUAL:
+				value = Data(left->value.integer() == right->value.integer());
+				break;
+			case TokenKind::GREATER_THAN:
+				value = Data(left->value.integer() > right->value.integer());
+				break;
+			case TokenKind::GREATER_THAN_OR_EQUAL:
+				value = Data(left->value.integer() >= right->value.integer());
+				break;
+			case TokenKind::LESS_THAN:
+				value = Data(left->value.integer() < right->value.integer());
+				break;
+			case TokenKind::LESS_THAN_OR_EQUAL:
+				value = Data(left->value.integer() <= right->value.integer());
+				break;
+			case TokenKind::NOT_EQUAL:
+				value = Data(left->value.integer() != right->value.integer());
+				break;
+			}
+			break;
+		case DataType::STRING:
+			switch (middleOperator.kind){
+			case TokenKind::EQUAL:
+				value = Data(left->value.string() == right->value.string());
+				break;
+			case TokenKind::GREATER_THAN:
+				value = Data(left->value.string() > right->value.string());
+				break;
+			case TokenKind::GREATER_THAN_OR_EQUAL:
+				value = Data(left->value.string() >= right->value.string());
+				break;
+			case TokenKind::LESS_THAN:
+				value = Data(left->value.string() < right->value.string());
+				break;
+			case TokenKind::LESS_THAN_OR_EQUAL:
+				value = Data(left->value.string() <= right->value.string());
+				break;
+			case TokenKind::NOT_EQUAL:
+				value = Data(left->value.string() != right->value.string());
+				break;
+			}
+			break;
+		}
+		break;
+	case TokenKind::PLUS:
+	case TokenKind::MINUS:
+	case TokenKind::ASTERISK:
+	case TokenKind::SLASH:
+		// 四則演算の場合です。
+
+		// 演算できるのは整数型同士の場合のみです。
+		if (left->value.type != DataType::INTEGER || right->value.type != DataType::INTEGER){
+			throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+		}
+		value.type = DataType::INTEGER;
+
+		// 比較結果を演算子によって計算方法を変えて、計算します。
+		switch (middleOperator.kind){
+		case TokenKind::PLUS:
+			value = Data(left->value.integer() + right->value.integer());
+			break;
+		case TokenKind::MINUS:
+			value = Data(left->value.integer() - right->value.integer());
+			break;
+		case TokenKind::ASTERISK:
+			value = Data(left->value.integer() * right->value.integer());
+			break;
+		case TokenKind::SLASH:
+			value = Data(left->value.integer() / right->value.integer());
+			break;
+		}
+		break;
+	case TokenKind::AND:
+	case TokenKind::OR:
+		// 論理演算の場合です。
+
+		// 演算できるのは真偽値型同士の場合のみです。
+		if (left->value.type != DataType::BOOLEAN || right->value.type != DataType::BOOLEAN){
+			throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+		}
+		value.type = DataType::BOOLEAN;
+
+		// 比較結果を演算子によって計算方法を変えて、計算します。
+		switch (middleOperator.kind){
+		case TokenKind::AND:
+			value = Data(left->value.boolean() && right->value.boolean());
+			break;
+		case TokenKind::OR:
+			value = Data(left->value.boolean() || right->value.boolean());
+			break;
+		}
+	}
+}
+
 //! 引数として渡したノード及びその子孫のノードを取得します。
 //! @param [in] 戻り値のルートとなるノードです。順序は帰りがけ順です。
 //! @return 自身及び子孫のノードです。
@@ -878,176 +998,46 @@ const shared_ptr<const vector<const vector<const Data>>> OutputData::outputRows(
 				back_inserter(outputRow));
 		}
 
-		// WHEREの条件となる値を再帰的に計算します。
+		// WHEREの条件となる値を計算します。
 		if (queryInfo.whereTopNode){
-			shared_ptr<ExtensionTreeNode> currentNode = queryInfo.whereTopNode; // 現在見ているノードです。
-			while (currentNode){
-				// 子ノードの計算が終わってない場合は、まずそちらの計算を行います。
-				if (currentNode->left && !currentNode->left->calculated){
-					currentNode = currentNode->left;
-					continue;
-				}
-				else if (currentNode->right && !currentNode->right->calculated){
-					currentNode = currentNode->right;
-					continue;
-				}
-
-				// 自ノードの値を計算します。
-				switch (currentNode->middleOperator.kind){
+			auto allNodes = SelfAndDescendants(queryInfo.whereTopNode);
+			for (auto& node : *allNodes){
+				switch (node->middleOperator.kind){
 				case TokenKind::NOT_TOKEN:
 					// ノードにデータが設定されている場合です。
 
 					// データが列名で指定されている場合、今扱っている行のデータを設定します。
-					if (!currentNode->column.columnName.empty()){
+					if (!node->column.columnName.empty()){
 						bool found = false;
 						for (size_t i = 0; i < allInputColumns.size(); ++i){
-							if (Equali(currentNode->column.columnName, allInputColumns[i].columnName) &&
-								(currentNode->column.tableName.empty() || // テーブル名が設定されている場合のみテーブル名の比較を行います。
-								Equali(currentNode->column.tableName, allInputColumns[i].tableName))){
+							if (Equali(node->column.columnName, allInputColumns[i].columnName) &&
+								(node->column.tableName.empty() || // テーブル名が設定されている場合のみテーブル名の比較を行います。
+								Equali(node->column.tableName, allInputColumns[i].tableName))){
 								// 既に見つかっているのにもう一つ見つかったらエラーです。
 								if (found){
 									throw ResultValue::ERR_BAD_COLUMN_NAME;
 								}
 								found = true;
-								currentNode->value = outputRow[i];
+								node->value = outputRow[i];
 							}
 						}
 						// 一つも見つからなくてもエラーです。
 						if (!found){
 							throw ResultValue::ERR_BAD_COLUMN_NAME;
 						}
-						;
 						// 符号を考慮して値を計算します。
-						if (currentNode->value.type == DataType::INTEGER){
-							currentNode->value = Data(currentNode->value.integer() * currentNode->signCoefficient);
+						if (node->value.type == DataType::INTEGER){
+							node->value = Data(node->value.integer() * node->signCoefficient);
 						}
 					}
 					break;
-				case TokenKind::EQUAL:
-				case TokenKind::GREATER_THAN:
-				case TokenKind::GREATER_THAN_OR_EQUAL:
-				case TokenKind::LESS_THAN:
-				case TokenKind::LESS_THAN_OR_EQUAL:
-				case TokenKind::NOT_EQUAL:
-					// 比較演算子の場合です。
-
-					// 比較できるのは文字列型か整数型で、かつ左右の型が同じ場合です。
-					if (currentNode->left->value.type != DataType::INTEGER && currentNode->left->value.type != DataType::STRING ||
-						currentNode->left->value.type != currentNode->right->value.type){
-						throw ResultValue::ERR_WHERE_OPERAND_TYPE;
-					}
-					currentNode->value.type = DataType::BOOLEAN;
-
-					// 比較結果を型と演算子によって計算方法を変えて、計算します。
-					switch (currentNode->left->value.type){
-					case DataType::INTEGER:
-						switch (currentNode->middleOperator.kind){
-						case TokenKind::EQUAL:
-							currentNode->value = Data(currentNode->left->value.integer() == currentNode->right->value.integer());
-							break;
-						case TokenKind::GREATER_THAN:
-							currentNode->value = Data(currentNode->left->value.integer() > currentNode->right->value.integer());
-							break;
-						case TokenKind::GREATER_THAN_OR_EQUAL:
-							currentNode->value = Data(currentNode->left->value.integer() >= currentNode->right->value.integer());
-							break;
-						case TokenKind::LESS_THAN:
-							currentNode->value = Data(currentNode->left->value.integer() < currentNode->right->value.integer());
-							break;
-						case TokenKind::LESS_THAN_OR_EQUAL:
-							currentNode->value = Data(currentNode->left->value.integer() <= currentNode->right->value.integer());
-							break;
-						case TokenKind::NOT_EQUAL:
-							currentNode->value = Data(currentNode->left->value.integer() != currentNode->right->value.integer());
-							break;
-						}
-						break;
-					case DataType::STRING:
-						switch (currentNode->middleOperator.kind){
-						case TokenKind::EQUAL:
-							currentNode->value = Data(currentNode->left->value.string() == currentNode->right->value.string());
-							break;
-						case TokenKind::GREATER_THAN:
-							currentNode->value = Data(currentNode->left->value.string() > currentNode->right->value.string());
-							break;
-						case TokenKind::GREATER_THAN_OR_EQUAL:
-							currentNode->value = Data(currentNode->left->value.string() >= currentNode->right->value.string());
-							break;
-						case TokenKind::LESS_THAN:
-							currentNode->value = Data(currentNode->left->value.string() < currentNode->right->value.string());
-							break;
-						case TokenKind::LESS_THAN_OR_EQUAL:
-							currentNode->value = Data(currentNode->left->value.string() <= currentNode->right->value.string());
-							break;
-						case TokenKind::NOT_EQUAL:
-							currentNode->value = Data(currentNode->left->value.string() != currentNode->right->value.string());
-							break;
-						}
-						break;
-					}
-					break;
-				case TokenKind::PLUS:
-				case TokenKind::MINUS:
-				case TokenKind::ASTERISK:
-				case TokenKind::SLASH:
-					// 四則演算の場合です。
-
-					// 演算できるのは整数型同士の場合のみです。
-					if (currentNode->left->value.type != DataType::INTEGER || currentNode->right->value.type != DataType::INTEGER){
-						throw ResultValue::ERR_WHERE_OPERAND_TYPE;
-					}
-					currentNode->value.type = DataType::INTEGER;
-
-					// 比較結果を演算子によって計算方法を変えて、計算します。
-					switch (currentNode->middleOperator.kind){
-					case TokenKind::PLUS:
-						currentNode->value = Data(currentNode->left->value.integer() + currentNode->right->value.integer());
-						break;
-					case TokenKind::MINUS:
-						currentNode->value = Data(currentNode->left->value.integer() - currentNode->right->value.integer());
-						break;
-					case TokenKind::ASTERISK:
-						currentNode->value = Data(currentNode->left->value.integer() * currentNode->right->value.integer());
-						break;
-					case TokenKind::SLASH:
-						currentNode->value = Data(currentNode->left->value.integer() / currentNode->right->value.integer());
-						break;
-					}
-					break;
-				case TokenKind::AND:
-				case TokenKind::OR:
-					// 論理演算の場合です。
-
-					// 演算できるのは真偽値型同士の場合のみです。
-					if (currentNode->left->value.type != DataType::BOOLEAN || currentNode->right->value.type != DataType::BOOLEAN){
-						throw ResultValue::ERR_WHERE_OPERAND_TYPE;
-					}
-					currentNode->value.type = DataType::BOOLEAN;
-
-					// 比較結果を演算子によって計算方法を変えて、計算します。
-					switch (currentNode->middleOperator.kind){
-					case TokenKind::AND:
-						currentNode->value = Data(currentNode->left->value.boolean() && currentNode->right->value.boolean());
-						break;
-					case TokenKind::OR:
-						currentNode->value = Data(currentNode->left->value.boolean() || currentNode->right->value.boolean());
-						break;
-					}
 				}
-				currentNode->calculated = true;
-
-				// 自身の計算が終わった後は親の計算に戻ります。
-				currentNode = currentNode->parent;
+				node->Operate();
 			}
 
 			// 条件に合わない行は出力から削除します。
 			if (!queryInfo.whereTopNode->value.boolean()){
 				outputRows->pop_back();
-			}
-			// WHERE条件の計算結果をリセットします。
-			auto whereNodes = SelfAndDescendants(queryInfo.whereTopNode);
-			for (auto &whereNode : *whereNodes){
-				whereNode->calculated = false;
 			}
 		}
 
