@@ -336,7 +336,18 @@ protected:
 class OutputData
 {
 	SqlQueryInfo queryInfo; //!< SQLに記述された内容です。
-	vector<Column> allInputColumns; // 入力に含まれるすべての列の一覧です。
+	vector<Column> allInputColumns; //!< 入力に含まれるすべての列の一覧です。
+
+	const vector<const InputTable> &inputTables; //!< ファイルから読み取ったデータです。
+
+	//! 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
+	void InitializeAllInputColumns();
+
+	//! SELECT句の列名指定が*だった場合は、入力CSVの列名がすべて選択されます。
+	void OpenSelectAsterisk();
+
+	//! SELECT句で指定された列名が、何個目の入力ファイルの何列目に相当するかを判別します。
+	void SetAllColumns();
 public:
 
 	//! OutputDataクラスの新しいインスタンスを初期化します。
@@ -762,28 +773,40 @@ const shared_ptr<const Token> IdentifierReader::ReadCore(string::const_iterator 
 	}
 }
 
-//! OutputDataクラスの新しいインスタンスを初期化します。
-//! @param [in] queryInfo SQLの情報です。
-OutputData::OutputData(const SqlQueryInfo queryInfo, const vector<const InputTable> &inputTables) : queryInfo(queryInfo)
+//! 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
+void OutputData::InitializeAllInputColumns()
 {
-	// 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
 	for (auto &inputTable : inputTables){
 		copy(
 			inputTable.columns()->begin(),
 			inputTable.columns()->end(),
 			back_inserter(allInputColumns));
 	}
+}
 
-	// SELECT句の列名指定が*だった場合は、入力CSVの列名がすべて選択されます。
+//! SELECT句の列名指定が*だった場合は、入力CSVの列名がすべて選択されます。
+void OutputData::OpenSelectAsterisk()
+{
 	if (queryInfo.selectColumns.empty()){
-		copy(allInputColumns.begin(), allInputColumns.end(), back_inserter(this->queryInfo.selectColumns));
+		copy(allInputColumns.begin(), allInputColumns.end(), back_inserter(queryInfo.selectColumns));
 	}
+}
 
-	// SELECT句で指定された列名が、何個目の入力ファイルの何列目に相当するかを判別します。
-	for (auto &selectColumn : this->queryInfo.selectColumns){
+//! SELECT句で指定された列名が、何個目の入力ファイルの何列目に相当するかを判別します。
+void OutputData::SetAllColumns()
+{
+	for (auto &selectColumn : queryInfo.selectColumns){
 		selectColumn.SetAllColumns(inputTables);
 	}
+}
 
+//! OutputDataクラスの新しいインスタンスを初期化します。
+//! @param [in] queryInfo SQLの情報です。
+OutputData::OutputData(const SqlQueryInfo queryInfo, const vector<const InputTable> &inputTables) : queryInfo(queryInfo), inputTables(inputTables)
+{
+	InitializeAllInputColumns();
+	OpenSelectAsterisk();
+	SetAllColumns();
 }
 
 //! CSVファイルに出力データを書き込みます。
