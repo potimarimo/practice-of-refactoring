@@ -984,11 +984,12 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					row[j] = nullptr;
 				}
 
-				const char* charactorCursol = inputLine.c_str();
+				auto charactorCursol = inputLine.begin(); // データ入力行を検索するカーソルです。
+				auto lineEnd = inputLine.end(); // データ入力行のendを指します。
 				int columnNum = 0; // いま何列目を読み込んでいるか。0基底の数字となります。
 
 				// 読み込んだ行を最後まで読みます。
-				while (*charactorCursol){
+				while (charactorCursol != lineEnd){
 
 					// 読み込んだデータを書き込む行のカラムを生成します。
 					if (MAX_COLUMN_COUNT <= columnNum){
@@ -1003,7 +1004,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					char *writeCursol = str; // データ文字列の書き込みに利用するカーソルです。
 
 					// データ文字列を一つ読みます。
-					while (*charactorCursol && *charactorCursol != ','){
+					while (charactorCursol != lineEnd && *charactorCursol != ','){
 						*writeCursol++ = *charactorCursol++;
 					}
 					// 書き込んでいる列名の文字列に終端文字を書き込みます。
@@ -1012,7 +1013,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					*row[columnNum++] = Data(string(str));
 
 					// 入力行のカンマの分を読み進めます。
-					if (*charactorCursol){
+					if (charactorCursol != lineEnd){
 						++charactorCursol;
 					}
 				}
