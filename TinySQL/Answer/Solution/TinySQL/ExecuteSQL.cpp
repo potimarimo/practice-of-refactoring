@@ -375,6 +375,10 @@ class OutputData
 	//! @return 初期化されたカーソルです。
 	const shared_ptr<vector<vector<const vector<const Data>>::const_iterator>> OutputData::GetInitializedCurrentRows() const;
 
+	//! WHEREやORDER BYを適用していないすべての行を取得します。
+	//! @return すべてのデータ行。入力されたすべての入力データを保管します。
+	const shared_ptr<vector<const vector<const Data>>> GetAllRows() const;
+
 	//! データに対してWHERE句を適用します。
 	//! @params [in] outputRows 適用されるデータ。
 	void ApplyWhere(vector<const vector<const Data>> &outputRows) const;
@@ -609,6 +613,8 @@ Column::Column(const string tableName, const string columnName)
 //! @param [in] inputTables ファイルから読み取ったデータです。
 void Column::SetAllColumns(const vector<const InputTable> &inputTables)
 {
+
+
 	bool found = false;
 	int i = 0;
 	for (auto &inputTable : inputTables){
@@ -992,6 +998,47 @@ void OutputData::InitializeAllInputColumns()
 			back_inserter(allInputColumns));
 	}
 }
+
+//! WHEREやORDER BYを適用していないすべての行を取得します。
+//! @return すべてのデータ行。入力されたすべての入力データを保管します。
+const shared_ptr<vector<const vector<const Data>>> OutputData::GetAllRows() const
+{
+	auto outputRows = make_shared<vector<const vector<const Data>>>();
+	auto currentRowsPtr = GetInitializedCurrentRows();
+	auto &currentRows = *currentRowsPtr;
+
+	// 出力するデータを設定します。
+	while (true){
+		outputRows->push_back(vector<const Data>());
+		auto &outputRow = outputRows->back();// WHEREやORDERのためにすべての情報を含む行。rowとインデックスを共有します。
+
+		// outputRowの列を設定します。
+		for (auto &currentRow : currentRows){
+			copy(
+				currentRow->begin(),
+				currentRow->end(),
+				back_inserter(outputRow));
+		}
+
+		// 各テーブルの行のすべての組み合わせを出力します。
+
+		// 最後のテーブルのカレント行をインクリメントします。
+		++currentRows[queryInfo.tableNames.size() - 1];
+
+		// 最後のテーブルが最終行になっていた場合は先頭に戻し、順に前のテーブルのカレント行をインクリメントします。
+		for (int i = queryInfo.tableNames.size() - 1; currentRows[i] == inputTables[i].data()->end() && 0 < i; --i){
+			++currentRows[i - 1];
+			currentRows[i] = inputTables[i].data()->begin();
+		}
+
+		// 最初のテーブルが最後の行を超えたなら出力行の生成は終わりです。
+		if (currentRows[0] == inputTables[0].data()->end()){
+			break;
+		}
+	}
+	return outputRows;
+}
+
 //! データに対してWHERE句を適用します。
 //! @params [in] outputRows 適用されるデータ。
 void OutputData::ApplyWhere(vector<const vector<const Data>> &outputRows) const
@@ -1113,40 +1160,7 @@ const vector<Column> OutputData::columns() const
 //! @return 出力するすべてのデータ行。入力されたすべての入力データを保管します。
 const shared_ptr<const vector<const vector<const Data>>> OutputData::outputRows() const
 {
-	auto outputRows = make_shared<vector<const vector<const Data>>>();
-	auto currentRowsPtr = GetInitializedCurrentRows();
-	auto &currentRows = *currentRowsPtr;
-
-	// 出力するデータを設定します。
-	while (true){
-
-		outputRows->push_back(vector<const Data>());
-		auto &outputRow = outputRows->back();// WHEREやORDERのためにすべての情報を含む行。rowとインデックスを共有します。
-
-		// outputRowの列を設定します。
-		for (auto &currentRow : currentRows){
-			copy(
-				currentRow->begin(),
-				currentRow->end(),
-				back_inserter(outputRow));
-		}
-
-		// 各テーブルの行のすべての組み合わせを出力します。
-
-		// 最後のテーブルのカレント行をインクリメントします。
-		++currentRows[queryInfo.tableNames.size() - 1];
-
-		// 最後のテーブルが最終行になっていた場合は先頭に戻し、順に前のテーブルのカレント行をインクリメントします。
-		for (int i = queryInfo.tableNames.size() - 1; currentRows[i] == inputTables[i].data()->end() && 0 < i; --i){
-			++currentRows[i - 1];
-			currentRows[i] = inputTables[i].data()->begin();
-		}
-
-		// 最初のテーブルが最後の行を超えたなら出力行の生成は終わりです。
-		if (currentRows[0] == inputTables[0].data()->end()){
-			break;
-		}
-	}
+	auto outputRows = GetAllRows();
 	ApplyWhere(*outputRows);
 
 	ApplyOrderBy(*outputRows);
