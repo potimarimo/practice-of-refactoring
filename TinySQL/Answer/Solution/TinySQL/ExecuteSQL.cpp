@@ -374,6 +374,14 @@ class OutputData
 	//! 入力された各テーブルの、現在出力している行を指すカーソルを、初期化された状態で取得します。
 	//! @return 初期化されたカーソルです。
 	const shared_ptr<vector<vector<const vector<const Data>>::const_iterator>> OutputData::GetInitializedCurrentRows() const;
+
+	//! データに対してWHERE句を適用します。
+	//! @params [in] outputRows 適用されるデータ。
+	void ApplyWhere(vector<const vector<const Data>> &outputRows) const;
+
+	//! データに対してORDER BY句を適用します。
+	//! @params [in] outputRows 適用されるデータ。
+	void ApplyOrderBy(vector<const vector<const Data>> &outputRows) const;
 public:
 
 	//! OutputDataクラスの新しいインスタンスを初期化します。
@@ -984,6 +992,65 @@ void OutputData::InitializeAllInputColumns()
 			back_inserter(allInputColumns));
 	}
 }
+//! データに対してWHERE句を適用します。
+//! @params [in] outputRows 適用されるデータ。
+void OutputData::ApplyWhere(vector<const vector<const Data>> &outputRows) const
+{
+	// WHERE条件を適用します。
+	if (queryInfo.whereTopNode){
+		auto & newEnd = copy_if(
+			outputRows.begin(),
+			outputRows.end(),
+			outputRows.begin(),
+			[&](vector<const Data> row){
+			auto allNodes = SelfAndDescendants(queryInfo.whereTopNode);
+			for (auto& node : *allNodes){
+				node->SetColumnData(row);
+			}
+			queryInfo.whereTopNode->Operate();
+			return queryInfo.whereTopNode->value.boolean();
+		});
+		outputRows.erase(newEnd, outputRows.end());
+	}
+}
+
+//! データに対してORDER BY句を適用します。
+//! @params [in] outputRows 適用されるデータ。
+void OutputData::ApplyOrderBy(vector<const vector<const Data>> &outputRows) const
+{
+	// ORDER句による並び替えの処理を行います。
+	if (!queryInfo.orders.empty()){
+		sort(
+			outputRows.begin(),
+			outputRows.end(),
+			[&](const vector<const Data>& lRow, const vector<const Data>& rRow){
+			for (auto &order : queryInfo.orders){
+				const Data &lData = lRow[order.column.allColumnsIndex]; // インデックスがminIndexのデータです。
+				const Data &rData = rRow[order.column.allColumnsIndex]; // インデックスがjのデータです。
+				int cmp = 0; // 比較結果です。等しければ0、インデックスjの行が大きければプラス、インデックスminIndexの行が大きければマイナスとなります。
+				switch (lData.type)
+				{
+				case DataType::INTEGER:
+					cmp = lData.integer() - rData.integer();
+					break;
+				case DataType::STRING:
+					cmp = strcmp(lData.string().c_str(), rData.string().c_str());
+					break;
+				}
+
+				// 降順ならcmpの大小を入れ替えます。
+				if (!order.isAsc){
+					cmp *= -1;
+				}
+				if (cmp != 0){
+					return cmp < 0;
+				}
+			}
+			return false;
+		});
+	}
+}
+
 
 //! SELECT句の列名指定が*だった場合は、入力CSVの列名がすべて選択されます。
 void OutputData::OpenSelectAsterisk()
@@ -1080,68 +1147,10 @@ const shared_ptr<const vector<const vector<const Data>>> OutputData::outputRows(
 			break;
 		}
 	}
+	ApplyWhere(*outputRows);
 
-	// WHERE条件を適用します。
-	if (queryInfo.whereTopNode){
-		auto & newEnd = copy_if(
-			outputRows->begin(),
-			outputRows->end(),
-			outputRows->begin(),
-			[&](vector<const Data> row){
-				auto allNodes = SelfAndDescendants(queryInfo.whereTopNode);
-				for (auto& node : *allNodes){
-					node->SetColumnData(row);
-				}
-				queryInfo.whereTopNode->Operate();
-				return queryInfo.whereTopNode->value.boolean();
-		});
-		outputRows->erase(newEnd, outputRows->end());
-	}
+	ApplyOrderBy(*outputRows);
 
-	// ORDER句による並び替えの処理を行います。
-	if (!queryInfo.orders.empty()){
-
-		// allColumnOutputDataのソートを行います。簡便のため凝ったソートは使わず、選択ソートを利用します。
-		for (size_t i = 0; i < outputRows->size(); ++i){
-			int minIndex = i; // 現在までで最小の行のインデックスです。
-			for (size_t j = i + 1; j < outputRows->size(); ++j){
-				bool jLessThanMin = false; // インデックスがjの値が、minIndexの値より小さいかどうかです。
-				for (auto &order : queryInfo.orders){
-					const Data &mData = (*outputRows)[minIndex][order.column.allColumnsIndex]; // インデックスがminIndexのデータです。
-					const Data &jData = (*outputRows)[j][order.column.allColumnsIndex]; // インデックスがjのデータです。
-					int cmp = 0; // 比較結果です。等しければ0、インデックスjの行が大きければプラス、インデックスminIndexの行が大きければマイナスとなります。
-					switch (mData.type)
-					{
-					case DataType::INTEGER:
-						cmp = jData.integer() - mData.integer();
-						break;
-					case DataType::STRING:
-						cmp = strcmp(jData.string().c_str(), mData.string().c_str());
-						break;
-					}
-
-					// 降順ならcmpの大小を入れ替えます。
-					if (!order.isAsc){
-						cmp *= -1;
-					}
-					if (cmp < 0){
-						jLessThanMin = true;
-						break;
-					}
-					else if (0 < cmp){
-						break;
-					}
-				}
-				if (jLessThanMin){
-					minIndex = j;
-				}
-			}
-
-			vector<const Data> tmp = (*outputRows)[minIndex];
-			(*outputRows)[minIndex] = (*outputRows)[i];
-			(*outputRows)[i] = tmp;
-		}
-	}
 	return outputRows;
 }
 
