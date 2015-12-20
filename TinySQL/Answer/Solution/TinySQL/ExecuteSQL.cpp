@@ -966,9 +966,11 @@ int ExecuteSQL(const string sql, const string outputFileName)
 
 		// 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
 		for (size_t i = 0; i < tableNames.size(); ++i){
-			for (auto &inputColumn : inputColumns[i]){
-				allInputColumns.push_back(Column(tableNames[i], inputColumn.columnName));
-			}
+			transform(
+				inputColumns[i].begin(),
+				inputColumns[i].end(),
+				back_inserter(allInputColumns),
+				[&](const Column& column){return Column(tableNames[i], column.columnName); });
 		}
 
 		// SELECT句の列名指定が*だった場合は、入力CSVの列名がすべて選択されます。
