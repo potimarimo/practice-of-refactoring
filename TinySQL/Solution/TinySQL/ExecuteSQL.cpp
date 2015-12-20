@@ -1,4 +1,4 @@
-	//! @file
+//! @file
 #include "stdafx.h"
 
 #include <cctype>
@@ -557,8 +557,9 @@ class ExtensionTreeNode : public enable_shared_from_this<ExtensionTreeNode>
 
 	//! 次のノードを指定する関数を指定し、ノードの列を生成します。
 	//! @param [in] nextNode 現在のノードから次のノードを指定する関数です。
+	//! @param [in] includeSelf 自身を含むかどうか。
 	//! @return thisから次のノードをたどっていき、ノードがnullptrになる前までのすべてのノードの列。
-	const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> ExtensionTreeNode::allNodesOf(function<const shared_ptr<ExtensionTreeNode>(const shared_ptr<const ExtensionTreeNode>)> nextNode) const;
+	const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> ExtensionTreeNode::allNodesOf(function<const shared_ptr<ExtensionTreeNode>(const shared_ptr<const ExtensionTreeNode>)> nextNode, const bool includeSelf = false) const;
 public:
 	shared_ptr<ExtensionTreeNode> parent;//!< 親となるノードです。根の式木の場合はnullptrとなります。
 	shared_ptr<ExtensionTreeNode> left;  //!< 左の子となるノードです。自身が末端の葉となる式木の場合はnullptrとなります。
@@ -588,6 +589,14 @@ public:
 	//! 自身の子孫ノードをずっと左に辿っていき自身に近いほうから順に列挙します。
 	//! @return 左に辿った子孫ノードの一覧。
 	const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> allLeftList() const;
+
+	//! 自身及び自身の祖先ノードを自身に近いほうから順に列挙します。
+	//! @return 祖先ノードの一覧。
+	const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> selfAndAncestors() const;
+
+	//! 自身及び自身の子孫ノードをずっと左に辿っていき自身に近いほうから順に列挙します。
+	//! @return 左に辿った子孫ノードの一覧。
+	const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> selfAndAllLeftList() const;
 };
 
 //! 引数として渡したノード及びその子孫のノードを取得します。順序は帰りがけ順です。
@@ -1896,10 +1905,12 @@ void ExtensionTreeNode::SetColumnData(const vector<const shared_ptr<const Data>>
 //! 次のノードを指定する関数を指定し、ノードの列を生成します。
 //! @param [in] nextNode 現在のノードから次のノードを指定する関数です。
 //! @return thisから次のノードをたどっていき、ノードがnullptrになる前までのすべてのノードの列。
-const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> ExtensionTreeNode::allNodesOf(function<const shared_ptr<ExtensionTreeNode>(const shared_ptr<const ExtensionTreeNode>)> nextNode) const
+const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> ExtensionTreeNode::allNodesOf(function<const shared_ptr<ExtensionTreeNode>(const shared_ptr<const ExtensionTreeNode>)> nextNode, bool includeSelf) const
 {
 	auto returnValue = make_shared<vector<const shared_ptr<ExtensionTreeNode>>>();
-
+	if (includeSelf){
+		returnValue->push_back(const_pointer_cast<ExtensionTreeNode>(shared_from_this()));
+	}
 	for (auto current = nextNode(shared_from_this()); current; current = nextNode(current)){
 		returnValue->push_back(current);
 	}
@@ -1918,6 +1929,20 @@ const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> ExtensionTreeNode:
 const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> ExtensionTreeNode::allLeftList() const
 {
 	return allNodesOf([](const shared_ptr<const ExtensionTreeNode> thisNode){return thisNode->left; });
+}
+
+//! 自身及び自身の祖先ノードを自身に近いほうから順に列挙します。
+//! @return 祖先ノードの一覧。
+const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> ExtensionTreeNode::selfAndAncestors() const
+{
+	return allNodesOf([](const shared_ptr<const ExtensionTreeNode> thisNode){return thisNode->parent; }, true);
+}
+
+//! 自身及び自身の子孫ノードをずっと左に辿っていき自身に近いほうから順に列挙します。
+//! @return 左に辿った子孫ノードの一覧。
+const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> ExtensionTreeNode::selfAndAllLeftList() const
+{
+	return allNodesOf([](const shared_ptr<const ExtensionTreeNode> thisNode){return thisNode->left; }, true);
 }
 
 //! 引数として渡したノード及びその子孫のノードを取得します。
@@ -3003,44 +3028,33 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 
 		// 現在見ている演算子の情報を探します。
 		// 見つかった演算子の情報をもとにノードを入れ替えます。
-		shared_ptr<ExtensionTreeNode> tmp = currentNode; //ノードを入れ替えるために使う変数です。
 
 		//カッコにくくられていなかった場合に、演算子の優先順位を参考に結合するノードを探します。
-		auto ancestors = tmp->ancestors();
-		ancestors->insert(ancestors->begin(), tmp);
-		for (auto &ancestor : *ancestors){
-				
-			// 現在の読み込み場所をくくるカッコが開く場所を探します。
-			auto allLefts = ancestor->allLeftList();
-			allLefts->insert(allLefts->begin(), ancestor);
-			auto found = any_of(allLefts->begin(), allLefts->end(),
-				[](shared_ptr<ExtensionTreeNode> node){return node->parenOpenBeforeClose; });
+		auto ancestors = currentNode->selfAndAncestors();
 
-			tmp = ancestor;
-			if (found || !ancestor->parent || !(ancestor->parent->middleOperator.order <= foundOperator->order || ancestor->parent->inParen)){
-				break;
-			}
-			//// 現在の読み込み場所をくくるカッコが開く場所を探します。
-			//while (searched && !searched->parenOpenBeforeClose){
-			//	searched = searched->left;
-			//}
-			//tmp = ancestor;
-			//if (searched || !ancestor->parent || !(ancestor->parent->middleOperator.order <= foundOperator->order || ancestor->parent->inParen)){
-			//	break;
-			//}
-		}
+		auto found = find_if(ancestors->begin(), ancestors->end(),
+			[&](const shared_ptr<ExtensionTreeNode> ancestor)
+		{
+			auto allLefts = ancestor->selfAndAllLeftList();
+
+			return 
+				any_of(allLefts->begin(), allLefts->end(),
+					[](shared_ptr<ExtensionTreeNode> node){return node->parenOpenBeforeClose; }) 
+				|| !ancestor->parent 
+				|| !(ancestor->parent->middleOperator.order <= foundOperator->order || ancestor->parent->inParen);
+		});
 
 		// 演算子のノードを新しく生成します。
 		currentNode = make_shared<ExtensionTreeNode>();
 		currentNode->middleOperator = *foundOperator;
 
 		// 見つかった場所に新しいノードを配置します。これまでその位置にあったノードは左の子となるよう、親ノードと子ノードのポインタをつけかえます。
-		currentNode->parent = tmp->parent;
+		currentNode->parent = (*found)->parent;
 		if (currentNode->parent){
 			currentNode->parent->right = currentNode;
 		}
-		currentNode->left = tmp;
-		tmp->parent = currentNode;
+		currentNode->left = *found;
+		(*found)->parent = currentNode;
 	});
 
 	auto PRE_WHERE_OPERAND = action([&]{
