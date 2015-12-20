@@ -1010,9 +1010,14 @@ int ExecuteSQL(const string sql, const string outputFileName)
 		}
 
 		// 出力する列名を設定します。
-		for (size_t i = 0; i < selectColumns.size(); ++i){
-			outputColumns.push_back(inputColumns[selectColumnIndexes[i].table][selectColumnIndexes[i].column]);
-		}
+		transform(
+			selectColumnIndexes.begin(),
+			selectColumnIndexes.end(),
+			back_inserter(outputColumns),
+			[&](const ColumnIndex& index){return inputColumns[index.table][index.column]; });
+		//for (size_t i = 0; i < selectColumnIndexes.size(); ++i){
+		//	outputColumns.push_back(inputColumns[selectColumnIndexes[i].table][selectColumnIndexes[i].column]);
+		//}
 
 		if (whereTopNode){
 			// 既存数値の符号を計算します。
