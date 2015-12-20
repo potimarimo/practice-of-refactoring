@@ -1129,7 +1129,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 				if (whereExtensionNode.middleOperator.kind == TokenKind::NOT_TOKEN &&
 					whereExtensionNode.column.columnName.empty() &&
 					whereExtensionNode.value.type == DataType::INTEGER){
-					whereExtensionNode.value.value.integer *= whereExtensionNode.signCoefficient;
+					whereExtensionNode.value = Data(whereExtensionNode.value.integer() * whereExtensionNode.signCoefficient);
 				}
 			}
 		}
