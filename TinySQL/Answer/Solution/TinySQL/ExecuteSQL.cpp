@@ -222,6 +222,8 @@ public:
 //! CSVとして入力されたファイルの内容を表します。
 class InputTable
 {
+	const string signNum = "+-0123456789"; //!< 全ての符号と数字です。
+
 	const shared_ptr<const vector<const Column>> m_columns; //!< 列の情報です。
 	const shared_ptr<vector<vector<Data>>> m_data; //! データです。
 public:
@@ -332,8 +334,6 @@ protected:
 //! SqlQueryのCsvに対する入出力を扱います。
 class Csv
 {
-	const string signNum = "+-0123456789"; //!< 全ての符号と数字です。
-
 	const shared_ptr<const SqlQueryInfo> queryInfo; //!< SQLに記述された内容です。
 
 	//! @param [in] inputFile 入力ファイルを扱うストリームです。
@@ -512,7 +512,28 @@ ColumnIndex::ColumnIndex(const int table, const int column) : table(table), colu
 //! InputTableクラスの新しいインスタンスを初期化します。
 //! @param [in] columns 読み込んだヘッダ情報です。
 //! @param [in] data 読み込んだデータです。
-InputTable::InputTable(const shared_ptr<const vector<const Column>> columns, const shared_ptr<vector<vector<Data>>> data) : m_columns(columns), m_data(data){}
+InputTable::InputTable(const shared_ptr<const vector<const Column>> columns, const shared_ptr<vector<vector<Data>>> data) : m_columns(columns), m_data(data)
+{
+	// 全てが数値となる列は数値列に変換します。
+	for (size_t j = 0; j < columns->size(); ++j){
+
+		// 全ての行のある列について、データ文字列から符号と数値以外の文字を探します。
+		if (none_of(
+			data->begin(),
+			data->end(),
+			[&](const vector<Data> &inputRow){
+			return any_of(
+				inputRow[j].string().begin(),
+				inputRow[j].string().end(),
+				[&](const char& c){return signNum.find(c) == string::npos; }); })){
+
+			// 符号と数字以外が見つからない列については、数値列に変換します。
+			for (auto& inputRow : *data){
+				inputRow[j] = Data(stoi(inputRow[j].string()));
+			}
+		}
+	}
+}
 
 //! 列の情報を取得します。
 const shared_ptr<const vector<const Column>> InputTable::columns() const
@@ -738,30 +759,10 @@ const shared_ptr<const vector<const InputTable>> Csv::ReadCsv() const
 		if (!inputFile){
 			throw ResultValue::ERR_FILE_OPEN;
 		}
-		auto header = ReadHeader(inputFile, tableName);
-		auto data = ReadData(inputFile);
+
 		auto table = InputTable(header, data);
 		tables.push_back(table);
 
-		// 全てが数値となる列は数値列に変換します。
-		for (size_t j = 0; j < table.columns()->size(); ++j){
-
-			// 全ての行のある列について、データ文字列から符号と数値以外の文字を探します。
-			if (none_of(
-				data->begin(),
-				data->end(),
-				[&](const vector<Data> &inputRow){
-				return any_of(
-					inputRow[j].string().begin(),
-					inputRow[j].string().end(),
-					[&](const char& c){return signNum.find(c) == string::npos; }); })){
-
-				// 符号と数字以外が見つからない列については、数値列に変換します。
-				for (auto& inputRow : *data){
-					inputRow[j] = Data(stoi(inputRow[j].string()));
-				}
-			}
-		}
 		inputFile.close();
 		if (inputFile.bad()){
 			throw ResultValue::ERR_FILE_CLOSE;
