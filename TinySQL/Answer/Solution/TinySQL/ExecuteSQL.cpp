@@ -744,7 +744,6 @@ void OutputData::WriteCsv(const string outputFileName, const vector<const InputT
 
 	vector<Column> allInputColumns; // 入力に含まれるすべての列の一覧です。
 
-	vector<vector<Data>> outputData; // 出力データです。
 	vector<vector<Data>> allColumnOutputData; // 出力するデータに対応するインデックスを持ち、すべての入力データを保管します。
 
 	// 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
@@ -786,8 +785,6 @@ void OutputData::WriteCsv(const string outputFileName, const vector<const InputT
 
 	// 出力するデータを設定します。
 	while (true){
-		outputData.push_back(vector<Data>());
-		vector<Data> &row = outputData.back(); // 出力している一行分のデータです。
 
 		allColumnOutputData.push_back(vector<Data>());
 		vector<Data> &allColumnsRow = allColumnOutputData.back();// WHEREやORDERのためにすべての情報を含む行。rowとインデックスを共有します。
@@ -799,13 +796,6 @@ void OutputData::WriteCsv(const string outputFileName, const vector<const InputT
 				currentRow->end(),
 				back_inserter(allColumnsRow));
 		}
-
-		// 行の各列のデータを設定します。
-		transform(
-			queryInfo.selectColumns.begin(),
-			queryInfo.selectColumns.end(),
-			back_inserter(row),
-			[&](const Column& column){return allColumnsRow[column.allColumnsIndex]; });
 
 		// WHEREの条件となる値を再帰的に計算します。
 		if (queryInfo.whereTopNode){
@@ -972,7 +962,6 @@ void OutputData::WriteCsv(const string outputFileName, const vector<const InputT
 			// 条件に合わない行は出力から削除します。
 			if (!queryInfo.whereTopNode->value.boolean()){
 				allColumnOutputData.pop_back();
-				outputData.pop_back();
 			}
 			// WHERE条件の計算結果をリセットします。
 			for (auto &whereExtensionNode : queryInfo.whereExtensionNodes){
@@ -1022,10 +1011,10 @@ void OutputData::WriteCsv(const string outputFileName, const vector<const InputT
 			}
 		}
 
-		// outputDataとallColumnOutputDataのソートを一緒に行います。簡便のため凝ったソートは使わず、選択ソートを利用します。
-		for (size_t i = 0; i < outputData.size(); ++i){
+		// allColumnOutputDataのソートを行います。簡便のため凝ったソートは使わず、選択ソートを利用します。
+		for (size_t i = 0; i < allColumnOutputData.size(); ++i){
 			int minIndex = i; // 現在までで最小の行のインデックスです。
-			for (size_t j = i + 1; j < outputData.size(); ++j){
+			for (size_t j = i + 1; j < allColumnOutputData.size(); ++j){
 				bool jLessThanMin = false; // インデックスがjの値が、minIndexの値より小さいかどうかです。
 				for (size_t k = 0; k < orderByColumnIndexes.size(); ++k){
 					const Data &mData = allColumnOutputData[minIndex][orderByColumnIndexes[k]]; // インデックスがminIndexのデータです。
@@ -1057,11 +1046,8 @@ void OutputData::WriteCsv(const string outputFileName, const vector<const InputT
 					minIndex = j;
 				}
 			}
-			vector<Data> tmp = outputData[minIndex];
-			outputData[minIndex] = outputData[i];
-			outputData[i] = tmp;
 
-			tmp = allColumnOutputData[minIndex];
+			vector<Data> tmp = allColumnOutputData[minIndex];
 			allColumnOutputData[minIndex] = allColumnOutputData[i];
 			allColumnOutputData[i] = tmp;
 		}
@@ -1085,15 +1071,15 @@ void OutputData::WriteCsv(const string outputFileName, const vector<const InputT
 	}
 
 	// 出力ファイルにデータを出力します。
-	for (auto& outputRow : outputData){
+	for (auto& allColumnsRow : allColumnOutputData){
 		size_t i = 0;
-		for (const auto &column : outputRow){
-			switch (column.type){
+		for (const auto &column : queryInfo.selectColumns){
+			switch (allColumnsRow[column.allColumnsIndex].type){
 			case DataType::INTEGER:
-				outputFile << column.integer();
+				outputFile << allColumnsRow[column.allColumnsIndex].integer();
 				break;
 			case DataType::STRING:
-				outputFile << column.string();
+				outputFile << allColumnsRow[column.allColumnsIndex].string();
 				break;
 			}
 			if (i++ < queryInfo.selectColumns.size() - 1){
