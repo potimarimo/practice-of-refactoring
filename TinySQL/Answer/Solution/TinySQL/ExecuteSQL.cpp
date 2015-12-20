@@ -136,6 +136,31 @@ public:
 	//! @param [in] right 右辺です。
 	//! @return 比較した結果です。
 	virtual const shared_ptr<const Data> operator==(const shared_ptr<const Data>& right) const = 0;
+
+	//! 不等比較を行います。
+	//! @param [in] right 右辺です。
+	//! @return 比較した結果です。
+	virtual const shared_ptr<const Data> operator!=(const shared_ptr<const Data>& right) const = 0;
+
+	//! 以上比較を行います。
+	//! @param [in] right 右辺です。
+	//! @return 比較した結果です。
+	virtual const shared_ptr<const Data> operator>=(const shared_ptr<const Data>& right) const = 0;
+
+	//! 大きい比較を行います。
+	//! @param [in] right 右辺です。
+	//! @return 比較した結果です。
+	virtual const shared_ptr<const Data> operator>(const shared_ptr<const Data>& right) const = 0;
+
+	//! 以下比較を行います。
+	//! @param [in] right 右辺です。
+	//! @return 比較した結果です。
+	virtual const shared_ptr<const Data> operator<=(const shared_ptr<const Data>& right) const = 0;
+
+	//! 小さい比較を行います。
+	//! @param [in] right 右辺です。
+	//! @return 比較した結果です。
+	virtual const shared_ptr<const Data> operator<(const shared_ptr<const Data>& right) const = 0;
 };
 
 //! 文字列の値を持つDataです。
@@ -180,6 +205,31 @@ public:
 	//! @param [in] right 右辺です。
 	//! @return 比較した結果です。
 	const shared_ptr<const Data> operator==(const shared_ptr<const Data>& right) const override;
+
+	//! 不等比較を行います。
+	//! @param [in] right 右辺です。
+	//! @return 比較した結果です。
+	const shared_ptr<const Data> operator!=(const shared_ptr<const Data>& right) const override;
+
+	//! 以上比較を行います。
+	//! @param [in] right 右辺です。
+	//! @return 比較した結果です。
+	const shared_ptr<const Data> operator>=(const shared_ptr<const Data>& right) const override;
+
+	//! 大きい比較を行います。
+	//! @param [in] right 右辺です。
+	//! @return 比較した結果です。
+	const shared_ptr<const Data> operator>(const shared_ptr<const Data>& right) const override;
+
+	//! 以下比較を行います。
+	//! @param [in] right 右辺です。
+	//! @return 比較した結果です。
+	const shared_ptr<const Data> operator<=(const shared_ptr<const Data>& right) const override;
+
+	//! 小さい比較を行います。
+	//! @param [in] right 右辺です。
+	//! @return 比較した結果です。
+	const shared_ptr<const Data> operator<(const shared_ptr<const Data>& right) const override;
 };
 
 //! 整数の値を持つDataです。
@@ -224,6 +274,31 @@ public:
 	//! @param [in] right 右辺です。
 	//! @return 比較した結果です。
 	const shared_ptr<const Data> operator==(const shared_ptr<const Data>& right) const override;
+
+	//! 不等比較を行います。
+	//! @param [in] right 右辺です。
+	//! @return 比較した結果です。
+	const shared_ptr<const Data> operator!=(const shared_ptr<const Data>& right) const override;
+
+	//! 以上比較を行います。
+	//! @param [in] right 右辺です。
+	//! @return 比較した結果です。
+	const shared_ptr<const Data> operator>=(const shared_ptr<const Data>& right) const override;
+
+	//! 大きい比較を行います。
+	//! @param [in] right 右辺です。
+	//! @return 比較した結果です。
+	const shared_ptr<const Data> operator>(const shared_ptr<const Data>& right) const override;
+
+	//! 以下比較を行います。
+	//! @param [in] right 右辺です。
+	//! @return 比較した結果です。
+	const shared_ptr<const Data> operator<=(const shared_ptr<const Data>& right) const override;
+
+	//! 小さい比較を行います。
+	//! @param [in] right 右辺です。
+	//! @return 比較した結果です。
+	const shared_ptr<const Data> operator<(const shared_ptr<const Data>& right) const override;
 };
 
 //! 真偽値の値を持つDataです。
@@ -268,6 +343,31 @@ public:
 	//! @param [in] right 右辺です。
 	//! @return 比較した結果です。
 	const shared_ptr<const Data> operator==(const shared_ptr<const Data>& right) const override;
+
+	//! 不等比較を行います。
+	//! @param [in] right 右辺です。
+	//! @return 比較した結果です。
+	const shared_ptr<const Data> operator!=(const shared_ptr<const Data>& right) const override;
+
+	//! 以上比較を行います。
+	//! @param [in] right 右辺です。
+	//! @return 比較した結果です。
+	const shared_ptr<const Data> operator>=(const shared_ptr<const Data>& right) const override;
+
+	//! 大きい比較を行います。
+	//! @param [in] right 右辺です。
+	//! @return 比較した結果です。
+	const shared_ptr<const Data> operator>(const shared_ptr<const Data>& right) const override;
+
+	//! 以下比較を行います。
+	//! @param [in] right 右辺です。
+	//! @return 比較した結果です。
+	const shared_ptr<const Data> operator<=(const shared_ptr<const Data>& right) const override;
+
+	//! 小さい比較を行います。
+	//! @param [in] right 右辺です。
+	//! @return 比較した結果です。
+	const shared_ptr<const Data> operator<(const shared_ptr<const Data>& right) const override;
 };
 
 //! WHERE句に指定する演算子の情報を表します。
@@ -777,6 +877,71 @@ const shared_ptr<const Data> StringData::operator==(const shared_ptr<const Data>
 	}
 }
 
+//! 不等比較を行います。
+//! @param [in] right 右辺です。
+//! @return 比較した結果です。
+const shared_ptr<const Data> StringData::operator!=(const shared_ptr<const Data>& right) const
+{
+	if (right->type() == DataType::STRING){
+		return Data::New(string() != right->string());
+	}
+	else{
+		throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+	}
+}
+
+//! 以上比較を行います。
+//! @param [in] right 右辺です。
+//! @return 比較した結果です。
+const shared_ptr<const Data> StringData::operator>=(const shared_ptr<const Data>& right) const
+{
+	if (right->type() == DataType::STRING){
+		return Data::New(string() >= right->string());
+	}
+	else{
+		throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+	}
+}
+
+//! 大きい比較を行います。
+//! @param [in] right 右辺です。
+//! @return 比較した結果です。
+const shared_ptr<const Data> StringData::operator>(const shared_ptr<const Data>& right) const
+{
+	if (right->type() == DataType::STRING){
+		return Data::New(string() > right->string());
+	}
+	else{
+		throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+	}
+}
+
+//! 以下比較を行います。
+//! @param [in] right 右辺です。
+//! @return 比較した結果です。
+const shared_ptr<const Data> StringData::operator<=(const shared_ptr<const Data>& right) const
+{
+	if (right->type() == DataType::STRING){
+		return Data::New(string() <= right->string());
+	}
+	else{
+		throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+	}
+}
+
+//! 小さい比較を行います。
+//! @param [in] right 右辺です。
+//! @return 比較した結果です。
+const shared_ptr<const Data> StringData::operator<(const shared_ptr<const Data>& right) const
+{
+	if (right->type() == DataType::STRING){
+		return Data::New(string() < right->string());
+	}
+	else{
+		throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+	}
+}
+
 //! Dataクラスの新しいインスタンスを初期化します。
 //! @param [in] value データの値です。
 IntegerData::IntegerData(const int value) : m_integer(value){}
@@ -860,6 +1025,71 @@ const shared_ptr<const Data> IntegerData::operator==(const shared_ptr<const Data
 	}
 }
 
+//! 不等比較を行います。
+//! @param [in] right 右辺です。
+//! @return 比較した結果です。
+const shared_ptr<const Data> IntegerData::operator!=(const shared_ptr<const Data>& right) const
+{
+	if (right->type() == DataType::INTEGER){
+		return Data::New(integer() != right->integer());
+	}
+	else{
+		throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+	}
+}
+
+//! 以上比較を行います。
+//! @param [in] right 右辺です。
+//! @return 比較した結果です。
+const shared_ptr<const Data> IntegerData::operator>=(const shared_ptr<const Data>& right) const
+{
+	if (right->type() == DataType::INTEGER){
+		return Data::New(integer() >= right->integer());
+	}
+	else{
+		throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+	}
+}
+
+//! 大きい比較を行います。
+//! @param [in] right 右辺です。
+//! @return 比較した結果です。
+const shared_ptr<const Data> IntegerData::operator>(const shared_ptr<const Data>& right) const
+{
+	if (right->type() == DataType::INTEGER){
+		return Data::New(integer() > right->integer());
+	}
+	else{
+		throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+	}
+}
+
+//! 以下比較を行います。
+//! @param [in] right 右辺です。
+//! @return 比較した結果です。
+const shared_ptr<const Data> IntegerData::operator<=(const shared_ptr<const Data>& right) const
+{
+	if (right->type() == DataType::INTEGER){
+		return Data::New(integer() <= right->integer());
+	}
+	else{
+		throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+	}
+}
+
+//! 小さい比較を行います。
+//! @param [in] right 右辺です。
+//! @return 比較した結果です。
+const shared_ptr<const Data> IntegerData::operator<(const shared_ptr<const Data>& right) const
+{
+	if (right->type() == DataType::INTEGER){
+		return Data::New(integer() < right->integer());
+	}
+	else{
+		throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+	}
+}
+
 
 //! Dataクラスの新しいインスタンスを初期化します。
 //! @param [in] value データの値です。
@@ -915,6 +1145,46 @@ const shared_ptr<const Data> BooleanData::operator/(const shared_ptr<const Data>
 //! @param [in] right 右辺です。
 //! @return 比較した結果です。
 const shared_ptr<const Data> BooleanData::operator==(const shared_ptr<const Data>& right) const
+{
+	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+}
+
+//! 不等比較を行います。
+//! @param [in] right 右辺です。
+//! @return 比較した結果です。
+const shared_ptr<const Data> BooleanData::operator!=(const shared_ptr<const Data>& right) const
+{
+	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+}
+
+//! 以上比較を行います。
+//! @param [in] right 右辺です。
+//! @return 比較した結果です。
+const shared_ptr<const Data> BooleanData::operator>=(const shared_ptr<const Data>& right) const
+{
+	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+}
+
+//! 大きい比較を行います。
+//! @param [in] right 右辺です。
+//! @return 比較した結果です。
+const shared_ptr<const Data> BooleanData::operator>(const shared_ptr<const Data>& right) const
+{
+	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+}
+
+//! 以下比較を行います。
+//! @param [in] right 右辺です。
+//! @return 比較した結果です。
+const shared_ptr<const Data> BooleanData::operator<=(const shared_ptr<const Data>& right) const
+{
+	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+}
+
+//! 小さい比較を行います。
+//! @param [in] right 右辺です。
+//! @return 比較した結果です。
+const shared_ptr<const Data> BooleanData::operator<(const shared_ptr<const Data>& right) const
 {
 	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 }
@@ -1038,59 +1308,19 @@ void ExtensionTreeNode::Operate()
 		value = *left->value == right->value;
 		break;
 	case TokenKind::GREATER_THAN:
+		value = *left->value > right->value;
+		break;
 	case TokenKind::GREATER_THAN_OR_EQUAL:
+		value = *left->value >= right->value;
+		break;
 	case TokenKind::LESS_THAN:
+		value = *left->value < right->value;
+		break;
 	case TokenKind::LESS_THAN_OR_EQUAL:
+		value = *left->value <= right->value;
+		break;
 	case TokenKind::NOT_EQUAL:
-		// 比較演算子の場合です。
-
-		// 比較できるのは文字列型か整数型で、かつ左右の型が同じ場合です。
-		if (left->value->type() != DataType::INTEGER && left->value->type() != DataType::STRING ||
-			left->value->type() != right->value->type()){
-			throw ResultValue::ERR_WHERE_OPERAND_TYPE;
-		}
-
-		// 比較結果を型と演算子によって計算方法を変えて、計算します。
-		switch (left->value->type()){
-		case DataType::INTEGER:
-			switch (middleOperator.kind){
-			case TokenKind::GREATER_THAN:
-				value = Data::New(left->value->integer() > right->value->integer());
-				break;
-			case TokenKind::GREATER_THAN_OR_EQUAL:
-				value = Data::New(left->value->integer() >= right->value->integer());
-				break;
-			case TokenKind::LESS_THAN:
-				value = Data::New(left->value->integer() < right->value->integer());
-				break;
-			case TokenKind::LESS_THAN_OR_EQUAL:
-				value = Data::New(left->value->integer() <= right->value->integer());
-				break;
-			case TokenKind::NOT_EQUAL:
-				value = Data::New(left->value->integer() != right->value->integer());
-				break;
-			}
-			break;
-		case DataType::STRING:
-			switch (middleOperator.kind){
-			case TokenKind::GREATER_THAN:
-				value = Data::New(left->value->string() > right->value->string());
-				break;
-			case TokenKind::GREATER_THAN_OR_EQUAL:
-				value = Data::New(left->value->string() >= right->value->string());
-				break;
-			case TokenKind::LESS_THAN:
-				value = Data::New(left->value->string() < right->value->string());
-				break;
-			case TokenKind::LESS_THAN_OR_EQUAL:
-				value = Data::New(left->value->string() <= right->value->string());
-				break;
-			case TokenKind::NOT_EQUAL:
-				value = Data::New(left->value->string() != right->value->string());
-				break;
-			}
-			break;
-		}
+		value = *left->value != right->value;
 		break;
 	case TokenKind::AND:
 	case TokenKind::OR:
