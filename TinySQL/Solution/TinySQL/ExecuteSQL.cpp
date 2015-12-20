@@ -1072,8 +1072,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 			}
 		}
 
-		Column outputColumns[MAX_TABLE_COUNT * MAX_COLUMN_COUNT]; // 出力するすべての行の情報です。
-		int outputColumnNum = 0; // 出力するすべての行の現在の数です。
+		vector<Column> outputColumns; // 出力するすべての行の情報です。
 
 		// SELECT句で指定された列名が、何個目の入力ファイルの何列目に相当するかを判別します。
 		ColumnIndex selectColumnIndexes[MAX_TABLE_COUNT * MAX_COLUMN_COUNT]; // SELECT句で指定された列の、入力ファイルとしてのインデックスです。
@@ -1119,8 +1118,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 
 		// 出力する列名を設定します。
 		for (size_t i = 0; i < selectColumns.size(); ++i){
-			outputColumns[outputColumnNum] = inputColumns[selectColumnIndexes[i].table][selectColumnIndexes[i].column];
-			++outputColumnNum;
+			outputColumns.push_back(inputColumns[selectColumnIndexes[i].table][selectColumnIndexes[i].column]);
 		}
 
 		if (whereTopNode){
