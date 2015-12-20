@@ -403,7 +403,6 @@ int ExecuteSQL(const string sql, const string outputFileName)
 	vector<ifstream> inputTableFiles;                       // 読み込む入力ファイルの全てのファイルポインタです。
 	ofstream outputFile;                                   // 書き込むファイルのファイルポインタです。
 	bool found = false;                                     // 検索時に見つかったかどうかの結果を一時的に保存します。
-	const char *search = nullptr;                           // 文字列検索に利用するポインタです。
 	Data ***currentRow = nullptr;                           // データ検索時に現在見ている行を表します。
 	vector<vector<Data**>> inputData;                       // 入力データです。
 	vector<Data**> outputData;                              // 出力データです。
@@ -560,50 +559,13 @@ int ExecuteSQL(const string sql, const string outputFileName)
 				tokens.push_back(Token(sign->kind));
 				continue;
 			}
-			//found = false;
-			//for (auto &signCondition : signConditions){
-			//	sqlBackPoint = sqlCursol;
-			//	const char *wordCursol = signCondition.word.c_str(); // 確認する記号の文字列のうち、現在確認している一文字を指します。
-
-			//	// 記号が指定した文字列となっているか確認します。
-			//	while (*wordCursol && sqlCursol != sqlEnd && toupper(*sqlCursol++) == *wordCursol){
-			//		++wordCursol;
-			//	}
-			//	if (!*wordCursol){
-
-			//		// 見つかった記号を生成します。
-			//		tokens.push_back(Token(signCondition.kind));
-			//		found = true;
-			//	}
-			//	else{
-			//		sqlCursol = sqlBackPoint;
-			//	}
-			//}
-			//if (found){
-			//	continue;
-			//}
 
 			// 識別子を読み込みます。
-
-			// 識別子の最初の文字を確認します。
-			for (search = alpahUnder.c_str(); *search && *sqlCursol != *search; ++search){};
-			if (*search){
-				Token identifier{ TokenKind::IDENTIFIER }; // 読み込んだ識別子の情報です。
-				do {
-					// 二文字目以降は数字も許可して文字の種類を確認します。
-					for (search = alpahNumUnder.c_str(); *search && sqlCursol != sqlEnd && *sqlCursol != *search; ++search){};
-					if (*search && sqlCursol != sqlEnd){
-						identifier.word.push_back(*search);
-						sqlCursol++;
-					}
-				} while (*search && sqlCursol != sqlEnd);
-
-				// 読み込んだ識別子を登録します。
-				tokens.push_back(identifier);
+			sqlBackPoint = sqlCursol;
+			if (alpahUnder.find(*sqlCursol++) != string::npos){
+				sqlCursol = find_if(sqlCursol, sqlEnd, [&](const char c){return alpahNumUnder.find(c) == string::npos; });
+				tokens.push_back(Token(TokenKind::IDENTIFIER, string(sqlBackPoint, sqlCursol)));
 				continue;
-			}
-			else{
-				sqlCursol = sqlBackPoint;
 			}
 
 			throw ResultValue::ERR_TOKEN_CANT_READ;
