@@ -795,6 +795,31 @@ public:
 //! @params [in] parser2 二つ目のParserです。
 const shared_ptr<const SequenceParser> operator>>(const shared_ptr<const Parser> parser1, const shared_ptr<const Parser> parser2);
 
+//! 存在しなくても失敗とならない規則を読み取るパーサーです。
+class OptionalParser : public Parser
+{
+	const shared_ptr<const Parser> m_optional; //!< 存在してもしなくてもよい規則です。
+	const function<void(void)> m_action; //!< 読み取りが成功したら実行する処理です。
+public:
+	//! OptionalParserクラスの新しいインスタンスを初期化します。
+	//! @param [in] 読み取りが成功したら実行する処理です。
+	//! @params [in] optional 存在してもしなくてもよい規則です。
+	OptionalParser(const function<void(void)> action, const shared_ptr<const Parser> optional);
+
+	//! OptionalParserクラスの新しいインスタンスを初期化します。
+	//! @params [in] optional 存在してもしなくてもよい規則です。
+	OptionalParser(const shared_ptr<const Parser> optional);
+
+	//! 読み取りが成功したら実行する処理を登録します。
+	//! @param [in] 読み取りが成功したら実行する処理です。
+	const shared_ptr<const OptionalParser> Action(const function<void(void)> action) const;
+
+	//! オプショナルなパースを行います。
+	//! @params [in] cursol 現在の読み取り位置を表すカーソルです。
+	//! @return パースが成功したかどうかです。
+	const bool Parse(vector<const Token>::const_iterator& cursol) const override;
+};
+
 //! 出力するデータを管理します。
 class OutputData
 {
@@ -1982,6 +2007,39 @@ const shared_ptr<const SequenceParser> operator>>(const shared_ptr<const Parser>
 	return make_shared<SequenceParser>(parser1, parser2);
 }
 
+//! OptionalParserクラスの新しいインスタンスを初期化します。
+//! @param [in] 読み取りが成功したら実行する処理です。
+//! @params [in] optional 存在してもしなくてもよい規則です。
+OptionalParser::OptionalParser(const function<void(void)> action, const shared_ptr<const Parser> optional) :m_action(action), m_optional(optional) {}
+
+//! OptionalParserクラスの新しいインスタンスを初期化します。
+//! @params [in] optional 存在してもしなくてもよい規則です。
+OptionalParser::OptionalParser(const shared_ptr<const Parser> optional) : m_optional(optional){}
+
+//! 読み取りが成功したら実行する処理を登録します。
+//! @param [in] 読み取りが成功したら実行する処理です。
+const shared_ptr<const OptionalParser> OptionalParser::Action(const function<void(void)> action) const
+{
+	return make_shared<OptionalParser>(action, m_optional);
+}
+
+//! オプショナルなパースを行います。
+//! @params [in] cursol 現在の読み取り位置を表すカーソルです。
+//! @return パースが成功したかどうかです。
+const bool OptionalParser::Parse(vector<const Token>::const_iterator& cursol) const
+{
+	auto beforeParse = cursol;
+	if (m_optional->Parse(cursol)){
+		if (m_action){
+			m_action();
+		}
+	}
+	else{
+		cursol = beforeParse;
+	}
+	return true;
+}
+
 //! 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
 void OutputData::InitializeAllInputColumns()
 {
@@ -2417,7 +2475,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 		queryInfo->selectColumns.back() = Column(queryInfo->selectColumns.back().columnName, token.word);
 	});
 
-	auto SECOND_COLUMN = DOT >> SECOND_COLUMN_NAME;
+	auto SECOND_COLUMN = make_shared<OptionalParser>(DOT >> SECOND_COLUMN_NAME);
 
 	if (!SELECT->Parse(tokenCursol)){
 		throw ResultValue::ERR_SQL_SYNTAX;
@@ -2438,10 +2496,8 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 				queryInfo->selectColumns.push_back(Column(tokenCursol->word));
 				++tokenCursol;
 
-				if (tokenCursol->kind == TokenKind::DOT){
-					if (!SECOND_COLUMN->Parse(tokenCursol)){
-						throw ResultValue::ERR_SQL_SYNTAX;
-					}
+				if (!SECOND_COLUMN->Parse(tokenCursol)){
+					throw ResultValue::ERR_SQL_SYNTAX;
 				}
 			}
 			else{
