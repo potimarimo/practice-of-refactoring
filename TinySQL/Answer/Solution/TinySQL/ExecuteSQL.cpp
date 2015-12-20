@@ -2699,7 +2699,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 	// ORDER句とWHERE句を読み込みます。最大各一回ずつ書くことができます。
 	bool readOrder = false; // すでにORDER句が読み込み済みかどうかです。
 	bool readWhere = false; // すでにWHERE句が読み込み済みかどうかです。
-	while (tokenCursol->kind == TokenKind::ORDER || tokenCursol->kind == TokenKind::WHERE){
+	while (true){
 
 		// 二度目のORDER句はエラーです。
 		if (readOrder && tokenCursol->kind == TokenKind::ORDER){
@@ -2724,6 +2724,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 			else{
 				throw ResultValue::ERR_SQL_SYNTAX;
 			}
+			continue;
 		}
 
 		// WHERE句を読み込みます。
@@ -2880,7 +2881,9 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 					whereNode->value = Data::New(whereNode->value->integer() * whereNode->signCoefficient);
 				}
 			}
+			continue;
 		}
+		break;
 	}
 
 	// FROM句を読み込みます。
