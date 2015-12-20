@@ -487,17 +487,21 @@ const shared_ptr<const Data> operator||(const shared_ptr<const Data>& left, cons
 //! WHERE句に指定する演算子の情報を表します。
 class Operator
 {
+	TokenKind m_kind; //!< 演算子の種類を、演算子を記述するトークンの種類で表します。
+	int m_order; //!< 演算子の優先順位です。
 public:
-	TokenKind kind = TokenKind::NOT_TOKEN; //!< 演算子の種類を、演算子を記述するトークンの種類で表します。
-	int order = 0; //!< 演算子の優先順位です。
-
-	//! Operatorクラスの新しいインスタンスを初期化します。
-	Operator();
-
 	//! Operatorクラスの新しいインスタンスを初期化します。
 	//! @param [in] kind 演算子の種類を、演算子を記述するトークンの種類で表します。
 	//! @param [in] order 演算子の優先順位です。
-	Operator(const TokenKind kind, const int order);
+	Operator(const TokenKind &kind, const int &order);
+
+	//! 演算子の種類を、演算子を記述するトークンの種類で表したものを取得します。
+	//! @return 演算子の種類を、演算子を記述するトークンの種類で表したもの。
+	const TokenKind& kind() const;
+
+	//! 演算子の優先順位を取得します。
+	//! 演算子の優先順位です。
+	const int& order() const;
 };
 
 //! トークンを表します。
@@ -1748,15 +1752,24 @@ const shared_ptr<const Data> operator||(const shared_ptr<const Data>& left, cons
 }
 
 //! Operatorクラスの新しいインスタンスを初期化します。
-Operator::Operator()
+//! @param [in] kind 演算子の種類を、演算子を記述するトークンの種類で表します。
+//! @param [in] order 演算子の優先順位です。
+Operator::Operator(const TokenKind &kind, const int &order) : m_kind(kind), m_order(order)
 {
 }
 
-//! Operatorクラスの新しいインスタンスを初期化します。
-//! @param [in] kind 演算子の種類を、演算子を記述するトークンの種類で表します。
-//! @param [in] order 演算子の優先順位です。
-Operator::Operator(const TokenKind kind, const int order) : kind(kind), order(order)
+//! 演算子の種類を、演算子を記述するトークンの種類で表したものを取得します。
+//! @return 演算子の種類を、演算子を記述するトークンの種類で表したもの。
+const TokenKind& Operator::kind() const
 {
+	return m_kind;
+}
+
+//! 演算子の優先順位を取得します。
+//! 演算子の優先順位です。
+const int& Operator::order() const
+{
+	return m_order;
 }
 
 //! Tokenクラスの新しいインスタンスを初期化します。
@@ -1833,7 +1846,7 @@ void Column::SetAllColumns(const vector<const InputTable> &inputTables)
 }
 
 //! ExtensionTreeNodeクラスの新しいインスタンスを初期化します。
-ExtensionTreeNode::ExtensionTreeNode()
+ExtensionTreeNode::ExtensionTreeNode() : middleOperator(TokenKind::NOT_TOKEN, 0)
 {
 }
 
@@ -1849,7 +1862,7 @@ void ExtensionTreeNode::Operate()
 	}
 
 	// 自ノードの値を計算します。
-	switch (middleOperator.kind){
+	switch (middleOperator.kind()){
 	case TokenKind::PLUS:
 		value = left->value + right->value;
 		break;
@@ -1893,7 +1906,7 @@ void ExtensionTreeNode::Operate()
 //! @return カラム名で指定されたデータを持つノードかどうか。
 bool ExtensionTreeNode::isDataNodeAsColumnName()
 {
-	return middleOperator.kind == TokenKind::NOT_TOKEN && !column.columnName.empty();
+	return middleOperator.kind() == TokenKind::NOT_TOKEN && !column.columnName.empty();
 }
 
 //! 実際に出力する行に合わせて列にデータを設定します。
@@ -3052,7 +3065,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 	
 	OPERATOR = OPERATOR->Action([&](const Token token){
 		// 演算子(オペレーターを読み込みます。
-		auto foundOperator = find_if(operators.begin(), operators.end(), [&](const Operator& op){return op.kind == token.kind; }); // 現在読み込んでいる演算子の情報です。
+		auto foundOperator = find_if(operators.begin(), operators.end(), [&](const Operator& op){return op.kind() == token.kind; }); // 現在読み込んでいる演算子の情報です。
 
 		// 現在見ている演算子の情報を探します。
 		// 見つかった演算子の情報をもとにノードを入れ替えます。
@@ -3068,7 +3081,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 				any_of(allLefts->begin(), allLefts->end(),
 					[](shared_ptr<ExtensionTreeNode> node){return node->parenOpenBeforeClose; }) 
 				|| !ancestor->parent 
-				|| !(ancestor->parent->middleOperator.order <= foundOperator->order || ancestor->parent->inParen);
+				|| !(ancestor->parent->middleOperator.order() <= foundOperator->order() || ancestor->parent->inParen);
 		});
 
 		// 演算子のノードを新しく生成します。
@@ -3126,7 +3139,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 			// 既存数値の符号を計算します。
 			auto whereNodes = SelfAndDescendants(queryInfo->whereTopNode);
 			for (auto &whereNode : *whereNodes){
-				if (whereNode->middleOperator.kind == TokenKind::NOT_TOKEN &&
+				if (whereNode->middleOperator.kind() == TokenKind::NOT_TOKEN &&
 					whereNode->column.columnName.empty() &&
 					whereNode->value->type() == DataType::INTEGER){
 					whereNode->value = Data::New(whereNode->value->integer() * whereNode->signCoefficient);
