@@ -199,7 +199,7 @@ public:
 	ExtensionTreeNode();
 };
 
-//! 引数として渡したノード及びその子孫のノードを取得します。
+//! 引数として渡したノード及びその子孫のノードを取得します。順序は帰りがけ順です。
 //! @param [in] 戻り値のルートとなるノードです。
 //! @return 自身及び子孫のノードです。
 const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> SelfAndDescendants(shared_ptr<ExtensionTreeNode>);
@@ -610,12 +610,11 @@ ExtensionTreeNode::ExtensionTreeNode()
 }
 
 //! 引数として渡したノード及びその子孫のノードを取得します。
-//! @param [in] 戻り値のルートとなるノードです。
+//! @param [in] 戻り値のルートとなるノードです。順序は帰りがけ順です。
 //! @return 自身及び子孫のノードです。
 const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> SelfAndDescendants(shared_ptr<ExtensionTreeNode> self)
 {
 	auto selfAndDescendants = make_shared<vector<const shared_ptr<ExtensionTreeNode>>>();
-	selfAndDescendants->push_back(self);
 	if (self->left){
 		auto descendants = SelfAndDescendants(self->left);
 		copy(
@@ -630,6 +629,7 @@ const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> SelfAndDescendants
 			descendants->end(),
 			back_inserter(*selfAndDescendants));
 	}
+	selfAndDescendants->push_back(self);
 	return selfAndDescendants;
 }
 
