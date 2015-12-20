@@ -820,6 +820,10 @@ public:
 	const bool Parse(vector<const Token>::const_iterator& cursol) const override;
 };
 
+//! OptionalParserクラスの新しいインスタンスを生成します。
+//! @params [in] optional 存在してもしなくてもよい規則です。
+const shared_ptr<const OptionalParser> operator-(const shared_ptr<const Parser> optional);
+
 //! 出力するデータを管理します。
 class OutputData
 {
@@ -2039,6 +2043,12 @@ const bool OptionalParser::Parse(vector<const Token>::const_iterator& cursol) co
 	}
 	return true;
 }
+//! OptionalParserクラスの新しいインスタンスを生成します。
+//! @params [in] optional 存在してもしなくてもよい規則です。
+const shared_ptr<const OptionalParser> operator-(const shared_ptr<const Parser> optional)
+{
+	return make_shared<OptionalParser>(optional);
+}
 
 //! 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
 void OutputData::InitializeAllInputColumns()
@@ -2475,7 +2485,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 		queryInfo->selectColumns.back() = Column(queryInfo->selectColumns.back().columnName, token.word);
 	});
 
-	auto SECOND_COLUMN = make_shared<OptionalParser>(DOT >> SECOND_COLUMN_NAME);
+	auto SECOND_COLUMN = -(DOT >> SECOND_COLUMN_NAME);
 
 	if (!SELECT->Parse(tokenCursol)){
 		throw ResultValue::ERR_SQL_SYNTAX;
