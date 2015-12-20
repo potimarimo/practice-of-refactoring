@@ -274,13 +274,19 @@ protected:
 //! キーワードトークンを読み込む機能を提供します。
 class KeywordReader : public TokenReader
 {
-	Token keyword; //!< 読み込むキーワードトークンと等しいトークンです。
 protected:
+	Token keyword; //!< 読み込むキーワードトークンと等しいトークンです。
+
 	//! 実際にトークンを読み込みます。
 	//! @param [in] cursol 読み込み開始位置です。
 	//! @param [in] end SQL全体の終了位置です。
 	//! @return 切り出されたトークンです。読み込みが失敗した場合はnullptrを返します。
 	const shared_ptr<const Token> ReadCore(string::const_iterator &cursol, const string::const_iterator& end) const override;
+
+	//! キーワードの次の文字のチェックを行います。
+	//! @param [in] next チェック対象となる次の文字のイテレータです。
+	//! @param [in] next endイテレータです。
+	virtual const bool CheckNextChar(const string::const_iterator& next, const string::const_iterator& end) const;
 public:
 	//! KeywordReaderクラスの新しいインスタンスを初期化します。
 	//! @param [in] kind トークンの種類です。
@@ -289,15 +295,14 @@ public:
 };
 
 //! 記号トークンを読み込む機能を提供します。
-class SignReader : public TokenReader
+class SignReader : public KeywordReader
 {
-	Token sign; //!< 読み込む記号トークンと等しいトークンです。
 protected:
-	//! 実際にトークンを読み込みます。
-	//! @param [in] cursol 読み込み開始位置です。
-	//! @param [in] end SQL全体の終了位置です。
-	//! @return 切り出されたトークンです。読み込みが失敗した場合はnullptrを返します。
-	const shared_ptr<const Token> ReadCore(string::const_iterator &cursol, const string::const_iterator& end) const override;
+	//! キーワードの次の文字のチェックを行います。
+	//! @param [in] next チェック対象となる次の文字のイテレータです。
+	//! @param [in] next endイテレータです。
+	const bool CheckNextChar(const string::const_iterator& next, const string::const_iterator& end) const override;
+
 public:
 	//! KeywordReaderクラスの新しいインスタンスを初期化します。
 	//! @param [in] kind トークンの種類です。
@@ -325,6 +330,7 @@ class SqlQuery
 	const string num = "0123456789"; //!< 全ての数字です。
 	const string space = " \t\r\n"; //!< 全ての空白文字です。
 
+	const vector<const shared_ptr<const TokenReader>> tokenReaders; //!< トークンの読み込みロジックの集合です。
 	const vector<const Operator> operators; //!< 演算子の情報です。
 
 	shared_ptr<const SqlQueryInfo> queryInfo; //!< SQLに記述された内容です。
@@ -542,7 +548,7 @@ const shared_ptr<const Token> KeywordReader::ReadCore(string::const_iterator &cu
 		[](const char keywordChar, const char sqlChar){return keywordChar == toupper(sqlChar); });
 
 	if (result.first == keyword.word.end() && // キーワードの最後の文字まで同じです。
-		result.second != end && alpahNumUnder.find(*result.second) == string::npos){ //キーワードに識別子が区切りなしに続いていないかを確認します。 
+		CheckNextChar(result.second, end)){ 
 		cursol = result.second;
 		return make_shared<Token>(keyword);
 	}
@@ -556,30 +562,28 @@ const shared_ptr<const Token> KeywordReader::ReadCore(string::const_iterator &cu
 //! @param [in] word キーワードの文字列です。
 KeywordReader::KeywordReader(const TokenKind kind, const string word) : keyword(Token(kind, word)){}
 
-
-//! 実際にトークンを読み込みます。
-//! @param [in] cursol 読み込み開始位置です。
-//! @param [in] end SQL全体の終了位置です。
-//! @return 切り出されたトークンです。読み込みが失敗した場合はnullptrを返します。
-const shared_ptr<const Token> SignReader::ReadCore(string::const_iterator &cursol, const string::const_iterator &end) const
+//! キーワードの次の文字のチェックを行います。
+//! @param [in] next チェック対象となる次の文字のイテレータです。
+//! @param [in] next endイテレータです。
+const bool KeywordReader::CheckNextChar(const string::const_iterator& next, const string::const_iterator& end) const
 {
-	auto result =
-		mismatch(sign.word.begin(), sign.word.end(), cursol,
-		[](const char keywordChar, const char sqlChar){return keywordChar == toupper(sqlChar); });
-
-	if (result.first == sign.word.end()){
-		cursol = result.second;
-		return make_shared<Token>(sign);
-	}
-	else{
-		return nullptr;
-	}
+	//キーワードに識別子が区切りなしに続いていないかを確認します。 
+	return next != end && alpahNumUnder.find(*next) == string::npos;
 }
 
 //! KeywordReaderクラスの新しいインスタンスを初期化します。
 //! @param [in] kind トークンの種類です。
 //! @param [in] word キーワードの文字列です。
-SignReader::SignReader(const TokenKind kind, const string word) : sign(Token(kind, word)){}
+SignReader::SignReader(const TokenKind kind, const string word) : KeywordReader(kind, word){}
+
+//! キーワードの次の文字のチェックを行います。
+//! @param [in] next チェック対象となる次の文字のイテレータです。
+//! @param [in] next endイテレータです。
+const bool SignReader::CheckNextChar(const string::const_iterator& next, const string::const_iterator& end) const
+{
+	// 次の文字はチェックせずに必ずOKとなります。
+	return true;
+}
 
 //! 実際にトークンを読み込みます。
 //! @param [in] cursol 読み込み開始位置です。
@@ -613,37 +617,6 @@ bool Equali(const string str1, const string str2){
 //! @return 切り出されたトークンです。
 const shared_ptr<const vector<const Token>> SqlQuery::GetTokens(const string sql) const
 {
-	// トークンを読み込む方法の集合です。
-	// 先頭から順に検索されるので、前方一致となる二つの項目は順番に気をつけて登録しなくてはいけません。
-	const vector<const shared_ptr<const TokenReader>> readers =
-	{
-		make_shared<IntLiteralReader>(),
-		make_shared<StringLiteralReader>(),
-		make_shared<KeywordReader>(TokenKind::AND, "AND"),
-		make_shared<KeywordReader>(TokenKind::ASC, "ASC"),
-		make_shared<KeywordReader>(TokenKind::BY, "BY"),
-		make_shared<KeywordReader>(TokenKind::DESC, "DESC"),
-		make_shared<KeywordReader>(TokenKind::FROM, "FROM"),
-		make_shared<KeywordReader>(TokenKind::ORDER, "ORDER"),
-		make_shared<KeywordReader>(TokenKind::OR, "OR"),
-		make_shared<KeywordReader>(TokenKind::SELECT, "SELECT"),
-		make_shared<KeywordReader>(TokenKind::WHERE, "WHERE"),
-		make_shared<SignReader>(TokenKind::GREATER_THAN_OR_EQUAL, ">="),
-		make_shared<SignReader>(TokenKind::LESS_THAN_OR_EQUAL, "<="),
-		make_shared<SignReader>(TokenKind::NOT_EQUAL, "<>"),
-		make_shared<SignReader>(TokenKind::ASTERISK, "*"),
-		make_shared<SignReader>(TokenKind::COMMA, ","),
-		make_shared<SignReader>(TokenKind::CLOSE_PAREN, ")"),
-		make_shared<SignReader>(TokenKind::DOT, "."),
-		make_shared<SignReader>(TokenKind::EQUAL, "="),
-		make_shared<SignReader>(TokenKind::GREATER_THAN, ">"),
-		make_shared<SignReader>(TokenKind::LESS_THAN, "<"),
-		make_shared<SignReader>(TokenKind::MINUS, "-"),
-		make_shared<SignReader>(TokenKind::OPEN_PAREN, "("),
-		make_shared<SignReader>(TokenKind::PLUS, "+"),
-		make_shared<SignReader>(TokenKind::SLASH, "/"),
-		make_shared<IdentifierReader>(),
-	};
 	auto cursol = sql.begin(); // SQLをトークンに分割して読み込む時に現在読んでいる文字の場所を表します。
 	auto end = sql.end(); // sqlのendを指します。
 	auto tokens = make_shared<vector<const Token>>(); //読み込んだトークンです。
@@ -659,8 +632,8 @@ const shared_ptr<const vector<const Token>> SqlQuery::GetTokens(const string sql
 		// 各種トークンを読み込みます。
 		shared_ptr<const Token> token;
 		if (any_of(
-			readers.begin(),
-			readers.end(),
+			tokenReaders.begin(),
+			tokenReaders.end(),
 			[&](const shared_ptr<const TokenReader>& reader){
 				return token = reader->Read(cursol, end); 
 			})){
@@ -1484,6 +1457,34 @@ void SqlQuery::WriteCsv(const string outputFileName, const vector<const InputTab
 //! SqlQueryクラスの新しいインスタンスを初期化します。
 //! @param [in] sql 実行するSQLです。
 SqlQuery::SqlQuery(const string sql) :
+// 先頭から順に検索されるので、前方一致となる二つの項目は順番に気をつけて登録しなくてはいけません。
+	tokenReaders({
+		make_shared<IntLiteralReader>(),
+		make_shared<StringLiteralReader>(),
+		make_shared<KeywordReader>(TokenKind::AND, "AND"),
+		make_shared<KeywordReader>(TokenKind::ASC, "ASC"),
+		make_shared<KeywordReader>(TokenKind::BY, "BY"),
+		make_shared<KeywordReader>(TokenKind::DESC, "DESC"),
+		make_shared<KeywordReader>(TokenKind::FROM, "FROM"),
+		make_shared<KeywordReader>(TokenKind::ORDER, "ORDER"),
+		make_shared<KeywordReader>(TokenKind::OR, "OR"),
+		make_shared<KeywordReader>(TokenKind::SELECT, "SELECT"),
+		make_shared<KeywordReader>(TokenKind::WHERE, "WHERE"),
+		make_shared<SignReader>(TokenKind::GREATER_THAN_OR_EQUAL, ">="),
+		make_shared<SignReader>(TokenKind::LESS_THAN_OR_EQUAL, "<="),
+		make_shared<SignReader>(TokenKind::NOT_EQUAL, "<>"),
+		make_shared<SignReader>(TokenKind::ASTERISK, "*"),
+		make_shared<SignReader>(TokenKind::COMMA, ","),
+		make_shared<SignReader>(TokenKind::CLOSE_PAREN, ")"),
+		make_shared<SignReader>(TokenKind::DOT, "."),
+		make_shared<SignReader>(TokenKind::EQUAL, "="),
+		make_shared<SignReader>(TokenKind::GREATER_THAN, ">"),
+		make_shared<SignReader>(TokenKind::LESS_THAN, "<"),
+		make_shared<SignReader>(TokenKind::MINUS, "-"),
+		make_shared<SignReader>(TokenKind::OPEN_PAREN, "("),
+		make_shared<SignReader>(TokenKind::PLUS, "+"),
+		make_shared<SignReader>(TokenKind::SLASH, "/"),
+		make_shared<IdentifierReader>(),}),
 	operators({
 		{ TokenKind::ASTERISK, 1 },
 		{ TokenKind::SLASH, 1 },
