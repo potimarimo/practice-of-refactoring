@@ -1,0 +1,91 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.10">
+  <compounddef id="struct_data" kind="struct" language="C++" prot="public">
+    <compoundname>Data</compoundname>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="struct_data_1a2e5297257c1dc5eece871c3d2ccd4178" prot="public" static="no" mutable="no">
+        <type>enum <ref refid="_execute_s_q_l_8c_1aa082c000e4eff6ed512714ea0a33d27b" kindref="member">DATA_TYPE</ref></type>
+        <definition>enum DATA_TYPE Data::type</definition>
+        <argsstring></argsstring>
+        <name>type</name>
+        <briefdescription>
+<para>データの型です。 </para>        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="ExecuteSQL.c" line="208" column="1" bodyfile="ExecuteSQL.c" bodystart="83" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct_data_1afa1355e2cfae2389777be6a8474d3725" prot="public" static="no" mutable="no">
+        <type>char</type>
+        <definition>char Data::string[MAX_DATA_LENGTH]</definition>
+        <argsstring>[MAX_DATA_LENGTH]</argsstring>
+        <name>string</name>
+        <briefdescription>
+<para>データが文字列型の場合の値です。 </para>        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="ExecuteSQL.c" line="88" column="1" bodyfile="ExecuteSQL.c" bodystart="88" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct_data_1a009b81459ef18febd93691ecd35850a3" prot="public" static="no" mutable="no">
+        <type>int</type>
+        <definition>int Data::integer</definition>
+        <argsstring></argsstring>
+        <name>integer</name>
+        <briefdescription>
+<para>データが整数型の場合の値です。 </para>        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="ExecuteSQL.c" line="89" column="1" bodyfile="ExecuteSQL.c" bodystart="89" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct_data_1a0f1743be3970e90b77ed83675f00e4fa" prot="public" static="no" mutable="no">
+        <type>bool</type>
+        <definition>bool Data::boolean</definition>
+        <argsstring></argsstring>
+        <name>boolean</name>
+        <briefdescription>
+<para>データが真偽値型の場合の値です。 </para>        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="ExecuteSQL.c" line="90" column="1" bodyfile="ExecuteSQL.c" bodystart="90" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct_data_1a2fb698a36b4f219379d3d102a7625651" prot="public" static="no" mutable="no">
+        <type>union Data::@0</type>
+        <definition>union Data::@0  Data::value</definition>
+        <argsstring></argsstring>
+        <name>value</name>
+        <briefdescription>
+<para>実際のデータを格納する共用体です。 </para>        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="ExecuteSQL.c" line="91" column="1"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+<para>一つの値を持つデータです。 </para>    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <collaborationgraph>
+      <node id="25">
+        <label>Data</label>
+        <link refid="struct_data"/>
+      </node>
+    </collaborationgraph>
+    <location file="ExecuteSQL.c" line="82" column="1" bodyfile="ExecuteSQL.c" bodystart="81" bodyend="92"/>
+    <listofallmembers>
+      <member refid="struct_data_1a0f1743be3970e90b77ed83675f00e4fa" prot="public" virt="non-virtual"><scope>Data</scope><name>boolean</name></member>
+      <member refid="struct_data_1a009b81459ef18febd93691ecd35850a3" prot="public" virt="non-virtual"><scope>Data</scope><name>integer</name></member>
+      <member refid="struct_data_1afa1355e2cfae2389777be6a8474d3725" prot="public" virt="non-virtual"><scope>Data</scope><name>string</name></member>
+      <member refid="struct_data_1a2e5297257c1dc5eece871c3d2ccd4178" prot="public" virt="non-virtual"><scope>Data</scope><name>type</name></member>
+      <member refid="struct_data_1a2fb698a36b4f219379d3d102a7625651" prot="public" virt="non-virtual"><scope>Data</scope><name>value</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

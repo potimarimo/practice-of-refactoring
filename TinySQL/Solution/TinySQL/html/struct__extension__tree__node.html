@@ -1,0 +1,292 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=9"/>
+<meta name="generator" content="Doxygen 1.8.10"/>
+<title>TinySQL: _extension_tree_node 構造体</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/javascript">
+  $(document).ready(function() { init_search(); });
+</script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr style="height: 56px;">
+  <td id="projectalign" style="padding-left: 0.5em;">
+   <div id="projectname">TinySQL
+   </div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 構築: Doxygen 1.8.10 -->
+<script type="text/javascript">
+var searchBox = new SearchBox("searchBox", "search",false,'検索');
+</script>
+  <div id="navrow1" class="tabs">
+    <ul class="tablist">
+      <li><a href="index.html"><span>総合概要</span></a></li>
+      <li class="current"><a href="annotated.html"><span>クラス</span></a></li>
+      <li><a href="files.html"><span>ファイル</span></a></li>
+      <li>
+        <div id="MSearchBox" class="MSearchBoxInactive">
+        <span class="left">
+          <img id="MSearchSelect" src="search/mag_sel.png"
+               onmouseover="return searchBox.OnSearchSelectShow()"
+               onmouseout="return searchBox.OnSearchSelectHide()"
+               alt=""/>
+          <input type="text" id="MSearchField" value="検索" accesskey="S"
+               onfocus="searchBox.OnSearchFieldFocus(true)" 
+               onblur="searchBox.OnSearchFieldFocus(false)" 
+               onkeyup="searchBox.OnSearchFieldChange(event)"/>
+          </span><span class="right">
+            <a id="MSearchClose" href="javascript:searchBox.CloseResultsWindow()"><img id="MSearchCloseImg" border="0" src="search/close.png" alt=""/></a>
+          </span>
+        </div>
+      </li>
+    </ul>
+  </div>
+  <div id="navrow2" class="tabs2">
+    <ul class="tablist">
+      <li><a href="annotated.html"><span>クラス一覧</span></a></li>
+      <li><a href="classes.html"><span>クラス索引</span></a></li>
+      <li><a href="functions.html"><span>クラスメンバ</span></a></li>
+    </ul>
+  </div>
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<iframe src="javascript:void(0)" frameborder="0" 
+        name="MSearchResults" id="MSearchResults">
+</iframe>
+</div>
+
+</div><!-- top -->
+<div class="header">
+  <div class="summary">
+<a href="#pub-attribs">公開変数類</a> &#124;
+<a href="struct__extension__tree__node-members.html">全メンバ一覧</a>  </div>
+  <div class="headertitle">
+<div class="title">_extension_tree_node 構造体</div>  </div>
+</div><!--header-->
+<div class="contents">
+
+<p>WHERE句の条件の式木を表します。  
+ <a href="struct__extension__tree__node.html#details">[詳解]</a></p>
+<div class="dynheader">
+_extension_tree_node 連携図</div>
+<div class="dyncontent">
+<div class="center"><img src="struct__extension__tree__node__coll__graph.png" border="0" usemap="#__extension__tree__node_coll__map" alt="Collaboration graph"/></div>
+<map name="__extension__tree__node_coll__map" id="__extension__tree__node_coll__map">
+<area shape="rect" id="node2" href="struct_column.html" title="指定された列の情報です。どのテーブルに所属するかの情報も含みます。 " alt="" coords="5,27,116,119"/>
+<area shape="rect" id="node3" href="struct_data.html" title="一つの値を持つデータです。 " alt="" coords="140,5,219,141"/>
+<area shape="rect" id="node4" href="struct_operator.html" title="WHERE句に指定する演算子の情報を表します。 " alt="" coords="243,27,315,119"/>
+</map>
+</div>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
+公開変数類</h2></td></tr>
+<tr class="memitem:ae9de9a3f8b58424d1e19bcb46cf01432"><td class="memItemLeft" align="right" valign="top">struct <a class="el" href="struct__extension__tree__node.html">_extension_tree_node</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct__extension__tree__node.html#ae9de9a3f8b58424d1e19bcb46cf01432">parent</a></td></tr>
+<tr class="memdesc:ae9de9a3f8b58424d1e19bcb46cf01432"><td class="mdescLeft">&#160;</td><td class="mdescRight">親となるノードです。根の式木の場合はNULLとなります。  <a href="#ae9de9a3f8b58424d1e19bcb46cf01432">[詳解]</a><br /></td></tr>
+<tr class="separator:ae9de9a3f8b58424d1e19bcb46cf01432"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afc78a4aacaa8a31770cb3bfcdafd34b6"><td class="memItemLeft" align="right" valign="top">struct <a class="el" href="struct__extension__tree__node.html">_extension_tree_node</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct__extension__tree__node.html#afc78a4aacaa8a31770cb3bfcdafd34b6">left</a></td></tr>
+<tr class="memdesc:afc78a4aacaa8a31770cb3bfcdafd34b6"><td class="mdescLeft">&#160;</td><td class="mdescRight">左の子となるノードです。自身が末端の葉となる式木の場合はNULLとなります。  <a href="#afc78a4aacaa8a31770cb3bfcdafd34b6">[詳解]</a><br /></td></tr>
+<tr class="separator:afc78a4aacaa8a31770cb3bfcdafd34b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a111e07ffa2e1925dddcc4f9665613bf6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="struct_operator.html">Operator</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct__extension__tree__node.html#a111e07ffa2e1925dddcc4f9665613bf6">operator</a></td></tr>
+<tr class="memdesc:a111e07ffa2e1925dddcc4f9665613bf6"><td class="mdescLeft">&#160;</td><td class="mdescRight">中置される演算子です。自身が末端のとなる式木の場合の種類はNOT_TOKENとなります。  <a href="#a111e07ffa2e1925dddcc4f9665613bf6">[詳解]</a><br /></td></tr>
+<tr class="separator:a111e07ffa2e1925dddcc4f9665613bf6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a01e1a5858e5daff11a8cff13d153f371"><td class="memItemLeft" align="right" valign="top">struct <a class="el" href="struct__extension__tree__node.html">_extension_tree_node</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct__extension__tree__node.html#a01e1a5858e5daff11a8cff13d153f371">right</a></td></tr>
+<tr class="memdesc:a01e1a5858e5daff11a8cff13d153f371"><td class="mdescLeft">&#160;</td><td class="mdescRight">右の子となるノードです。自身が末端の葉となる式木の場合はNULLとなります。  <a href="#a01e1a5858e5daff11a8cff13d153f371">[詳解]</a><br /></td></tr>
+<tr class="separator:a01e1a5858e5daff11a8cff13d153f371"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afd500005f33748f7a4980fa3328dd191"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct__extension__tree__node.html#afd500005f33748f7a4980fa3328dd191">inParen</a></td></tr>
+<tr class="memdesc:afd500005f33748f7a4980fa3328dd191"><td class="mdescLeft">&#160;</td><td class="mdescRight">自身がかっこにくるまれているかどうかです。  <a href="#afd500005f33748f7a4980fa3328dd191">[詳解]</a><br /></td></tr>
+<tr class="separator:afd500005f33748f7a4980fa3328dd191"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a17b65544e06504e3e2dcfc0978c24ba6"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct__extension__tree__node.html#a17b65544e06504e3e2dcfc0978c24ba6">parenOpenBeforeClose</a></td></tr>
+<tr class="memdesc:a17b65544e06504e3e2dcfc0978c24ba6"><td class="mdescLeft">&#160;</td><td class="mdescRight">木の構築中に0以外となり、自身の左にあり、まだ閉じてないカッコの開始の数となります。  <a href="#a17b65544e06504e3e2dcfc0978c24ba6">[詳解]</a><br /></td></tr>
+<tr class="separator:a17b65544e06504e3e2dcfc0978c24ba6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaf7e9cae85c8ef976d164e1c57fe676d"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct__extension__tree__node.html#aaf7e9cae85c8ef976d164e1c57fe676d">signCoefficient</a></td></tr>
+<tr class="memdesc:aaf7e9cae85c8ef976d164e1c57fe676d"><td class="mdescLeft">&#160;</td><td class="mdescRight">自身が葉にあり、マイナス単項演算子がついている場合は-1、それ以外は1となります。  <a href="#aaf7e9cae85c8ef976d164e1c57fe676d">[詳解]</a><br /></td></tr>
+<tr class="separator:aaf7e9cae85c8ef976d164e1c57fe676d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeb8ea049b6ea67b44273dd291ef5b5e7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="struct_column.html">Column</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct__extension__tree__node.html#aeb8ea049b6ea67b44273dd291ef5b5e7">column</a></td></tr>
+<tr class="memdesc:aeb8ea049b6ea67b44273dd291ef5b5e7"><td class="mdescLeft">&#160;</td><td class="mdescRight">列場指定されている場合に、その列を表します。列指定ではない場合はcolumnNameが空文字列となります。  <a href="#aeb8ea049b6ea67b44273dd291ef5b5e7">[詳解]</a><br /></td></tr>
+<tr class="separator:aeb8ea049b6ea67b44273dd291ef5b5e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a522280470d8d2fa811c7077f8ea9f399"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct__extension__tree__node.html#a522280470d8d2fa811c7077f8ea9f399">calculated</a></td></tr>
+<tr class="memdesc:a522280470d8d2fa811c7077f8ea9f399"><td class="mdescLeft">&#160;</td><td class="mdescRight">式の値を計算中に、計算済みかどうかです。  <a href="#a522280470d8d2fa811c7077f8ea9f399">[詳解]</a><br /></td></tr>
+<tr class="separator:a522280470d8d2fa811c7077f8ea9f399"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a28257144f172910738585b787410369c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="struct_data.html">Data</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct__extension__tree__node.html#a28257144f172910738585b787410369c">value</a></td></tr>
+<tr class="memdesc:a28257144f172910738585b787410369c"><td class="mdescLeft">&#160;</td><td class="mdescRight">指定された、もしくは計算された値です。  <a href="#a28257144f172910738585b787410369c">[詳解]</a><br /></td></tr>
+<tr class="separator:a28257144f172910738585b787410369c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
+<a name="details" id="details"></a><h2 class="groupheader">詳解</h2>
+<div class="textblock"><p>WHERE句の条件の式木を表します。 </p>
+</div><h2 class="groupheader">メンバ詳解</h2>
+<a class="anchor" id="a522280470d8d2fa811c7077f8ea9f399"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool _extension_tree_node::calculated</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>式の値を計算中に、計算済みかどうかです。 </p>
+
+</div>
+</div>
+<a class="anchor" id="aeb8ea049b6ea67b44273dd291ef5b5e7"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="struct_column.html">Column</a> _extension_tree_node::column</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>列場指定されている場合に、その列を表します。列指定ではない場合はcolumnNameが空文字列となります。 </p>
+
+</div>
+</div>
+<a class="anchor" id="afd500005f33748f7a4980fa3328dd191"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool _extension_tree_node::inParen</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>自身がかっこにくるまれているかどうかです。 </p>
+
+</div>
+</div>
+<a class="anchor" id="afc78a4aacaa8a31770cb3bfcdafd34b6"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">struct <a class="el" href="struct__extension__tree__node.html">_extension_tree_node</a>* _extension_tree_node::left</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>左の子となるノードです。自身が末端の葉となる式木の場合はNULLとなります。 </p>
+
+</div>
+</div>
+<a class="anchor" id="a111e07ffa2e1925dddcc4f9665613bf6"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="struct_operator.html">Operator</a> _extension_tree_node::operator</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>中置される演算子です。自身が末端のとなる式木の場合の種類はNOT_TOKENとなります。 </p>
+
+</div>
+</div>
+<a class="anchor" id="a17b65544e06504e3e2dcfc0978c24ba6"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int _extension_tree_node::parenOpenBeforeClose</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>木の構築中に0以外となり、自身の左にあり、まだ閉じてないカッコの開始の数となります。 </p>
+
+</div>
+</div>
+<a class="anchor" id="ae9de9a3f8b58424d1e19bcb46cf01432"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">struct <a class="el" href="struct__extension__tree__node.html">_extension_tree_node</a>* _extension_tree_node::parent</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>親となるノードです。根の式木の場合はNULLとなります。 </p>
+
+</div>
+</div>
+<a class="anchor" id="a01e1a5858e5daff11a8cff13d153f371"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">struct <a class="el" href="struct__extension__tree__node.html">_extension_tree_node</a>* _extension_tree_node::right</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>右の子となるノードです。自身が末端の葉となる式木の場合はNULLとなります。 </p>
+
+</div>
+</div>
+<a class="anchor" id="aaf7e9cae85c8ef976d164e1c57fe676d"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int _extension_tree_node::signCoefficient</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>自身が葉にあり、マイナス単項演算子がついている場合は-1、それ以外は1となります。 </p>
+
+</div>
+</div>
+<a class="anchor" id="a28257144f172910738585b787410369c"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="struct_data.html">Data</a> _extension_tree_node::value</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>指定された、もしくは計算された値です。 </p>
+
+</div>
+</div>
+<hr/>この構造体詳解は次のファイルから抽出されました:<ul>
+<li><a class="el" href="_execute_s_q_l_8c.html">ExecuteSQL.c</a></li>
+</ul>
+</div><!-- contents -->
+<!-- start footer part -->
+<hr class="footer"/><address class="footer"><small>
+構築: &#160;<a href="http://www.doxygen.org/index.html">
+<img class="footer" src="doxygen.png" alt="doxygen"/>
+</a> 1.8.10
+</small></address>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.10">
+  <compounddef id="stdafx_8cpp" kind="file" language="C++">
+    <compoundname>stdafx.cpp</compoundname>
+    <includes refid="stdafx_8h" local="yes">stdafx.h</includes>
+    <incdepgraph>
+      <node id="38">
+        <label>SDKDDKVer.h</label>
+      </node>
+      <node id="37">
+        <label>targetver.h</label>
+        <link refid="targetver_8h"/>
+        <childnode refid="38" relation="include">
+        </childnode>
+      </node>
+      <node id="35">
+        <label>stdafx.cpp</label>
+        <link refid="stdafx.cpp"/>
+        <childnode refid="36" relation="include">
+        </childnode>
+      </node>
+      <node id="36">
+        <label>stdafx.h</label>
+        <link refid="stdafx_8h"/>
+        <childnode refid="37" relation="include">
+        </childnode>
+      </node>
+    </incdepgraph>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="comment">//<sp/>stdafx.cpp<sp/>:<sp/>標準インクルード<sp/>TinySQL.pch<sp/>のみを</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight><highlight class="comment">//<sp/>含むソース<sp/>ファイルは、プリコンパイル済みヘッダーになります。</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="3"><highlight class="normal"></highlight><highlight class="comment">//<sp/>stdafx.obj<sp/>にはプリコンパイル済み型情報が含まれます。</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="4"><highlight class="normal"></highlight></codeline>
+<codeline lineno="5"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;<ref refid="stdafx_8h" kindref="compound">stdafx.h</ref>&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="6"><highlight class="normal"></highlight></codeline>
+<codeline lineno="7"><highlight class="normal"></highlight><highlight class="comment">//<sp/>TODO:<sp/>このファイルではなく、STDAFX.H<sp/>で必要な</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="8"><highlight class="normal"></highlight><highlight class="comment">//<sp/>追加ヘッダーを参照してください。</highlight><highlight class="normal"></highlight></codeline>
+    </programlisting>
+    <location file="stdafx.cpp"/>
+  </compounddef>
+</doxygen>

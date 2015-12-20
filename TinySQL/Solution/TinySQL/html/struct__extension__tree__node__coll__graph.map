@@ -1,0 +1,5 @@
+<map id="_extension_tree_node" name="_extension_tree_node">
+<area shape="rect" id="node2" href="$struct_column.html" title="指定された列の情報です。どのテーブルに所属するかの情報も含みます。 " alt="" coords="5,27,116,119"/>
+<area shape="rect" id="node3" href="$struct_data.html" title="一つの値を持つデータです。 " alt="" coords="140,5,219,141"/>
+<area shape="rect" id="node4" href="$struct_operator.html" title="WHERE句に指定する演算子の情報を表します。 " alt="" coords="243,27,315,119"/>
+</map>

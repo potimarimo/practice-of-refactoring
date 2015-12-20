@@ -1,0 +1,187 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.10">
+  <compounddef id="struct__extension__tree__node" kind="struct" language="C++" prot="public">
+    <compoundname>_extension_tree_node</compoundname>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="struct__extension__tree__node_1ae9de9a3f8b58424d1e19bcb46cf01432" prot="public" static="no" mutable="no">
+        <type>struct <ref refid="struct__extension__tree__node" kindref="compound">_extension_tree_node</ref> *</type>
+        <definition>struct _extension_tree_node* _extension_tree_node::parent</definition>
+        <argsstring></argsstring>
+        <name>parent</name>
+        <briefdescription>
+<para>親となるノードです。根の式木の場合はNULLとなります。 </para>        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="ExecuteSQL.c" line="118" column="1" bodyfile="ExecuteSQL.c" bodystart="118" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct__extension__tree__node_1afc78a4aacaa8a31770cb3bfcdafd34b6" prot="public" static="no" mutable="no">
+        <type>struct <ref refid="struct__extension__tree__node" kindref="compound">_extension_tree_node</ref> *</type>
+        <definition>struct _extension_tree_node* _extension_tree_node::left</definition>
+        <argsstring></argsstring>
+        <name>left</name>
+        <briefdescription>
+<para>左の子となるノードです。自身が末端の葉となる式木の場合はNULLとなります。 </para>        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="ExecuteSQL.c" line="119" column="1" bodyfile="ExecuteSQL.c" bodystart="119" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct__extension__tree__node_1a111e07ffa2e1925dddcc4f9665613bf6" prot="public" static="no" mutable="no">
+        <type><ref refid="struct_operator" kindref="compound">Operator</ref></type>
+        <definition>Operator _extension_tree_node::operator</definition>
+        <argsstring></argsstring>
+        <name>operator</name>
+        <briefdescription>
+<para>中置される演算子です。自身が末端のとなる式木の場合の種類はNOT_TOKENとなります。 </para>        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="ExecuteSQL.c" line="120" column="1" bodyfile="ExecuteSQL.c" bodystart="120" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct__extension__tree__node_1a01e1a5858e5daff11a8cff13d153f371" prot="public" static="no" mutable="no">
+        <type>struct <ref refid="struct__extension__tree__node" kindref="compound">_extension_tree_node</ref> *</type>
+        <definition>struct _extension_tree_node* _extension_tree_node::right</definition>
+        <argsstring></argsstring>
+        <name>right</name>
+        <briefdescription>
+<para>右の子となるノードです。自身が末端の葉となる式木の場合はNULLとなります。 </para>        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="ExecuteSQL.c" line="121" column="1" bodyfile="ExecuteSQL.c" bodystart="121" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct__extension__tree__node_1afd500005f33748f7a4980fa3328dd191" prot="public" static="no" mutable="no">
+        <type>bool</type>
+        <definition>bool _extension_tree_node::inParen</definition>
+        <argsstring></argsstring>
+        <name>inParen</name>
+        <briefdescription>
+<para>自身がかっこにくるまれているかどうかです。 </para>        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="ExecuteSQL.c" line="122" column="1" bodyfile="ExecuteSQL.c" bodystart="122" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct__extension__tree__node_1a17b65544e06504e3e2dcfc0978c24ba6" prot="public" static="no" mutable="no">
+        <type>int</type>
+        <definition>int _extension_tree_node::parenOpenBeforeClose</definition>
+        <argsstring></argsstring>
+        <name>parenOpenBeforeClose</name>
+        <briefdescription>
+<para>木の構築中に0以外となり、自身の左にあり、まだ閉じてないカッコの開始の数となります。 </para>        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="ExecuteSQL.c" line="123" column="1" bodyfile="ExecuteSQL.c" bodystart="123" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct__extension__tree__node_1aaf7e9cae85c8ef976d164e1c57fe676d" prot="public" static="no" mutable="no">
+        <type>int</type>
+        <definition>int _extension_tree_node::signCoefficient</definition>
+        <argsstring></argsstring>
+        <name>signCoefficient</name>
+        <briefdescription>
+<para>自身が葉にあり、マイナス単項演算子がついている場合は-1、それ以外は1となります。 </para>        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="ExecuteSQL.c" line="124" column="1" bodyfile="ExecuteSQL.c" bodystart="124" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct__extension__tree__node_1aeb8ea049b6ea67b44273dd291ef5b5e7" prot="public" static="no" mutable="no">
+        <type><ref refid="struct_column" kindref="compound">Column</ref></type>
+        <definition>Column _extension_tree_node::column</definition>
+        <argsstring></argsstring>
+        <name>column</name>
+        <briefdescription>
+<para>列場指定されている場合に、その列を表します。列指定ではない場合はcolumnNameが空文字列となります。 </para>        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="ExecuteSQL.c" line="125" column="1" bodyfile="ExecuteSQL.c" bodystart="125" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct__extension__tree__node_1a522280470d8d2fa811c7077f8ea9f399" prot="public" static="no" mutable="no">
+        <type>bool</type>
+        <definition>bool _extension_tree_node::calculated</definition>
+        <argsstring></argsstring>
+        <name>calculated</name>
+        <briefdescription>
+<para>式の値を計算中に、計算済みかどうかです。 </para>        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="ExecuteSQL.c" line="126" column="1" bodyfile="ExecuteSQL.c" bodystart="126" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct__extension__tree__node_1a28257144f172910738585b787410369c" prot="public" static="no" mutable="no">
+        <type><ref refid="struct_data" kindref="compound">Data</ref></type>
+        <definition>Data _extension_tree_node::value</definition>
+        <argsstring></argsstring>
+        <name>value</name>
+        <briefdescription>
+<para>指定された、もしくは計算された値です。 </para>        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="ExecuteSQL.c" line="127" column="1" bodyfile="ExecuteSQL.c" bodystart="127" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+<para>WHERE句の条件の式木を表します。 </para>    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <collaborationgraph>
+      <node id="19">
+        <label>Operator</label>
+        <link refid="struct_operator"/>
+      </node>
+      <node id="17">
+        <label>Column</label>
+        <link refid="struct_column"/>
+      </node>
+      <node id="18">
+        <label>Data</label>
+        <link refid="struct_data"/>
+      </node>
+      <node id="16">
+        <label>_extension_tree_node</label>
+        <link refid="struct__extension__tree__node"/>
+        <childnode refid="16" relation="usage">
+          <edgelabel>+parent</edgelabel>
+          <edgelabel>+right</edgelabel>
+          <edgelabel>+left</edgelabel>
+        </childnode>
+        <childnode refid="17" relation="usage">
+          <edgelabel>+column</edgelabel>
+        </childnode>
+        <childnode refid="18" relation="usage">
+          <edgelabel>+value</edgelabel>
+        </childnode>
+        <childnode refid="19" relation="usage">
+          <edgelabel>+operator</edgelabel>
+        </childnode>
+      </node>
+    </collaborationgraph>
+    <location file="ExecuteSQL.c" line="117" column="1" bodyfile="ExecuteSQL.c" bodystart="116" bodyend="128"/>
+    <listofallmembers>
+      <member refid="struct__extension__tree__node_1a522280470d8d2fa811c7077f8ea9f399" prot="public" virt="non-virtual"><scope>_extension_tree_node</scope><name>calculated</name></member>
+      <member refid="struct__extension__tree__node_1aeb8ea049b6ea67b44273dd291ef5b5e7" prot="public" virt="non-virtual"><scope>_extension_tree_node</scope><name>column</name></member>
+      <member refid="struct__extension__tree__node_1afd500005f33748f7a4980fa3328dd191" prot="public" virt="non-virtual"><scope>_extension_tree_node</scope><name>inParen</name></member>
+      <member refid="struct__extension__tree__node_1afc78a4aacaa8a31770cb3bfcdafd34b6" prot="public" virt="non-virtual"><scope>_extension_tree_node</scope><name>left</name></member>
+      <member refid="struct__extension__tree__node_1a111e07ffa2e1925dddcc4f9665613bf6" prot="public" virt="non-virtual"><scope>_extension_tree_node</scope><name>operator</name></member>
+      <member refid="struct__extension__tree__node_1a17b65544e06504e3e2dcfc0978c24ba6" prot="public" virt="non-virtual"><scope>_extension_tree_node</scope><name>parenOpenBeforeClose</name></member>
+      <member refid="struct__extension__tree__node_1ae9de9a3f8b58424d1e19bcb46cf01432" prot="public" virt="non-virtual"><scope>_extension_tree_node</scope><name>parent</name></member>
+      <member refid="struct__extension__tree__node_1a01e1a5858e5daff11a8cff13d153f371" prot="public" virt="non-virtual"><scope>_extension_tree_node</scope><name>right</name></member>
+      <member refid="struct__extension__tree__node_1aaf7e9cae85c8ef976d164e1c57fe676d" prot="public" virt="non-virtual"><scope>_extension_tree_node</scope><name>signCoefficient</name></member>
+      <member refid="struct__extension__tree__node_1a28257144f172910738585b787410369c" prot="public" virt="non-virtual"><scope>_extension_tree_node</scope><name>value</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

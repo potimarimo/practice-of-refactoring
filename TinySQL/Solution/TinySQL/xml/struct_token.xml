@@ -1,0 +1,49 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.10">
+  <compounddef id="struct_token" kind="struct" language="C++" prot="public">
+    <compoundname>Token</compoundname>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="struct_token_1a4da4a579ef6b75a055c63b95cd049c1a" prot="public" static="no" mutable="no">
+        <type>enum <ref refid="_execute_s_q_l_8c_1a606ef381227b0ad1624e7eced6a781c4" kindref="member">TOKEN_KIND</ref></type>
+        <definition>enum TOKEN_KIND Token::kind</definition>
+        <argsstring></argsstring>
+        <name>kind</name>
+        <briefdescription>
+<para>トークンの種類です。 </para>        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="ExecuteSQL.c" line="98" column="1" bodyfile="ExecuteSQL.c" bodystart="104" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct_token_1af54d4780dfd7dbd0166cdc9d67a421db" prot="public" static="no" mutable="no">
+        <type>char</type>
+        <definition>char Token::word[MAX_WORD_LENGTH]</definition>
+        <argsstring>[MAX_WORD_LENGTH]</argsstring>
+        <name>word</name>
+        <briefdescription>
+<para>記録されているトークンの文字列です。記録の必要がなければ空白です。 </para>        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="ExecuteSQL.c" line="105" column="1" bodyfile="ExecuteSQL.c" bodystart="105" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+<para>トークンを表します。 </para>    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <collaborationgraph>
+      <node id="29">
+        <label>Token</label>
+        <link refid="struct_token"/>
+      </node>
+    </collaborationgraph>
+    <location file="ExecuteSQL.c" line="103" column="1" bodyfile="ExecuteSQL.c" bodystart="102" bodyend="106"/>
+    <listofallmembers>
+      <member refid="struct_token_1a4da4a579ef6b75a055c63b95cd049c1a" prot="public" virt="non-virtual"><scope>Token</scope><name>kind</name></member>
+      <member refid="struct_token_1af54d4780dfd7dbd0166cdc9d67a421db" prot="public" virt="non-virtual"><scope>Token</scope><name>word</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

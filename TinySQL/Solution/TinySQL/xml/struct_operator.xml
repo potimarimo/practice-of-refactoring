@@ -1,0 +1,49 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.8.10">
+  <compounddef id="struct_operator" kind="struct" language="C++" prot="public">
+    <compoundname>Operator</compoundname>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="struct_operator_1a949abb7093c09aa6dd15214a76f12307" prot="public" static="no" mutable="no">
+        <type>enum <ref refid="_execute_s_q_l_8c_1a606ef381227b0ad1624e7eced6a781c4" kindref="member">TOKEN_KIND</ref></type>
+        <definition>enum TOKEN_KIND Operator::kind</definition>
+        <argsstring></argsstring>
+        <name>kind</name>
+        <briefdescription>
+<para>演算子の種類を、演算子を記述するトークンの種類で表します。 </para>        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="ExecuteSQL.c" line="90" column="1" bodyfile="ExecuteSQL.c" bodystart="97" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct_operator_1a135c7bcb47fa416a43d55e4d60ab12b4" prot="public" static="no" mutable="no">
+        <type>int</type>
+        <definition>int Operator::order</definition>
+        <argsstring></argsstring>
+        <name>order</name>
+        <briefdescription>
+<para>演算子の優先順位です。 </para>        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="ExecuteSQL.c" line="98" column="1" bodyfile="ExecuteSQL.c" bodystart="98" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+<para>WHERE句に指定する演算子の情報を表します。 </para>    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <collaborationgraph>
+      <node id="27">
+        <label>Operator</label>
+        <link refid="struct_operator"/>
+      </node>
+    </collaborationgraph>
+    <location file="ExecuteSQL.c" line="96" column="1" bodyfile="ExecuteSQL.c" bodystart="95" bodyend="99"/>
+    <listofallmembers>
+      <member refid="struct_operator_1a949abb7093c09aa6dd15214a76f12307" prot="public" virt="non-virtual"><scope>Operator</scope><name>kind</name></member>
+      <member refid="struct_operator_1a135c7bcb47fa416a43d55e4d60ab12b4" prot="public" virt="non-virtual"><scope>Operator</scope><name>order</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>
