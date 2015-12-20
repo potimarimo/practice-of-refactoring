@@ -214,14 +214,26 @@ public:
 //! @return 自身及び子孫のノードです。
 const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> SelfAndDescendants(shared_ptr<ExtensionTreeNode>);
 
+//! Order句の列と順序の指定を表します。
+class Order
+{
+public:
+	Column column; //<! ORDER句に指定された列名です。
+	const bool isAsc = true; //<! ORDER国指定された順序が昇順かどうかです。
+
+	//! Orderクラスの新しいインスタンスを初期化します。
+	//! @param [in] column ORDER句に指定された列名です。
+	//! @param [in] isAsc ORDER国指定された順序が昇順かどうかです。
+	Order(Column column, const bool isAsc);
+};
+
 //! SqlQueryの構文情報を扱うクラスです。
 class SqlQueryInfo
 {
 public:
 	vector<const string> tableNames; //!< FROM句で指定しているテーブル名です。
 	vector<Column> selectColumns; //!< SELECT句に指定された列名です。
-	vector<Column> orderByColumns; //!< ORDER句に指定された列名です。
-	vector<TokenKind> orders; //!< 同じインデックスのorderByColumnsに対応している、昇順、降順の指定です。
+	vector<Order> orders; //!< ORDER句に指定された順序の情報です。
 	shared_ptr<ExtensionTreeNode> whereTopNode; //!< 式木の根となるノードです。
 };
 
@@ -791,6 +803,11 @@ const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> SelfAndDescendants
 	return selfAndDescendants;
 }
 
+//! Orderクラスの新しいインスタンスを初期化します。
+//! @param [in] column ORDER句に指定された列名です。
+//! @param [in] isAsc ORDER国指定された順序が昇順かどうかです。
+Order::Order(Column column, const bool isAsc) : column(column), isAsc(isAsc){}
+
 //! 全てが数値となる列は数値列に変換します。
 void InputTable::InitializeIntegerColumn()
 {
@@ -990,8 +1007,8 @@ void OutputData::SetAllColumns()
 			}
 		}
 	}
-	for (auto &column : queryInfo.orderByColumns){
-		column.SetAllColumns(inputTables);
+	for (auto &order : queryInfo.orders){
+		order.column.SetAllColumns(inputTables);
 	}
 }
 
@@ -1082,16 +1099,16 @@ const shared_ptr<const vector<const vector<const Data>>> OutputData::outputRows(
 	}
 
 	// ORDER句による並び替えの処理を行います。
-	if (!queryInfo.orderByColumns.empty()){
+	if (!queryInfo.orders.empty()){
 
 		// allColumnOutputDataのソートを行います。簡便のため凝ったソートは使わず、選択ソートを利用します。
 		for (size_t i = 0; i < outputRows->size(); ++i){
 			int minIndex = i; // 現在までで最小の行のインデックスです。
 			for (size_t j = i + 1; j < outputRows->size(); ++j){
 				bool jLessThanMin = false; // インデックスがjの値が、minIndexの値より小さいかどうかです。
-				for (size_t k = 0; k < queryInfo.orderByColumns.size(); ++k){
-					const Data &mData = (*outputRows)[minIndex][queryInfo.orderByColumns[k].allColumnsIndex]; // インデックスがminIndexのデータです。
-					const Data &jData = (*outputRows)[j][queryInfo.orderByColumns[k].allColumnsIndex]; // インデックスがjのデータです。
+				for (size_t k = 0; k < queryInfo.orders.size(); ++k){
+					const Data &mData = (*outputRows)[minIndex][queryInfo.orders[k].column.allColumnsIndex]; // インデックスがminIndexのデータです。
+					const Data &jData = (*outputRows)[j][queryInfo.orders[k].column.allColumnsIndex]; // インデックスがjのデータです。
 					int cmp = 0; // 比較結果です。等しければ0、インデックスjの行が大きければプラス、インデックスminIndexの行が大きければマイナスとなります。
 					switch (mData.type)
 					{
@@ -1104,7 +1121,7 @@ const shared_ptr<const vector<const vector<const Data>>> OutputData::outputRows(
 					}
 
 					// 降順ならcmpの大小を入れ替えます。
-					if (queryInfo.orders[k] == TokenKind::DESC){
+					if (!queryInfo.orders[k].isAsc){
 						cmp *= -1;
 					}
 					if (cmp < 0){
@@ -1443,14 +1460,14 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 					}
 					if (tokenCursol->kind == TokenKind::IDENTIFIER){
 						// テーブル名が指定されていない場合と仮定して読み込みます。
-						queryInfo->orderByColumns.push_back(Column(tokenCursol->word));
+						Column orderColumn(tokenCursol->word);
 						++tokenCursol;
 						if (tokenCursol->kind == TokenKind::DOT){
 							++tokenCursol;
 							if (tokenCursol->kind == TokenKind::IDENTIFIER){
 
 								// テーブル名が指定されていることがわかったので読み替えます。
-								queryInfo->orderByColumns.back() = Column(queryInfo->orderByColumns.back().columnName, tokenCursol->word);
+								orderColumn = Column(orderColumn.columnName, tokenCursol->word);
 								++tokenCursol;
 							}
 							else{
@@ -1459,18 +1476,16 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 						}
 
 						// 並び替えの昇順、降順を指定します。
+						bool isAsc = true;
 						if (tokenCursol->kind == TokenKind::ASC){
-							queryInfo->orders.push_back(TokenKind::ASC);
 							++tokenCursol;
 						}
 						else if (tokenCursol->kind == TokenKind::DESC){
-							queryInfo->orders.push_back(TokenKind::DESC);
+							isAsc = false;
 							++tokenCursol;
 						}
-						else{
-							// 指定がない場合は昇順となります。
-							queryInfo->orders.push_back(TokenKind::ASC);
-						}
+
+						queryInfo->orders.push_back(Order(orderColumn, isAsc));
 					}
 					else{
 						throw ResultValue::ERR_SQL_SYNTAX;
