@@ -364,7 +364,7 @@ public:
 
 	//! 出力するすべてのデータ行を取得します。
 	//! @return 出力するすべてのデータ行。入力されたすべての入力データを保管します。
-	const shared_ptr<vector<vector<Data>>> GetOutputRows() const;
+	const shared_ptr<const vector<const vector<const Data>>> outputRows() const;
 };
 
 //! SqlQueryのCsvに対する入出力を扱います。
@@ -423,12 +423,12 @@ public:
 
 	//! CSVファイルから入力データを読み取ります。
 	//! @return ファイルから読み取ったデータです。
-	const shared_ptr<const vector<const InputTable>> ReadCsv() const;
+	const shared_ptr<const vector<const InputTable>> Read() const;
 
 	//! CSVファイルに出力データを書き込みます。
 	//! @param [in] outputFileName 結果を出力するファイルのファイル名です。
 	//! @param [in] inputTables ファイルから読み取ったデータです。
-	void WriteCsv(const string outputFileName, const vector<const InputTable> &inputTables) const;
+	void Write(const string outputFileName, const vector<const InputTable> &inputTables) const;
 };
 
 //! ファイルに対して実行するSQLを表すクラスです。
@@ -858,17 +858,17 @@ const vector<Column> OutputData::columns() const
 
 //! 出力するすべてのデータ行を取得します。
 //! @return 出力するすべてのデータ行。入力されたすべての入力データを保管します。
-const shared_ptr<vector<vector<Data>>> OutputData::GetOutputRows() const
+const shared_ptr<const vector<const vector<const Data>>> OutputData::outputRows() const
 {
-	auto outputRows = make_shared<vector<vector<Data>>>();
+	auto outputRows = make_shared<vector<const vector<const Data>>>();
 	auto currentRowsPtr = GetInitializedCurrentRows();
 	auto &currentRows = *currentRowsPtr;
 
 	// 出力するデータを設定します。
 	while (true){
 
-		outputRows->push_back(vector<Data>());
-		vector<Data> &outputRow = outputRows->back();// WHEREやORDERのためにすべての情報を含む行。rowとインデックスを共有します。
+		outputRows->push_back(vector<const Data>());
+		auto &outputRow = outputRows->back();// WHEREやORDERのためにすべての情報を含む行。rowとインデックスを共有します。
 
 		// outputRowの列を設定します。
 		for (auto &currentRow : currentRows){
@@ -1129,7 +1129,7 @@ const shared_ptr<vector<vector<Data>>> OutputData::GetOutputRows() const
 				}
 			}
 
-			vector<Data> tmp = (*outputRows)[minIndex];
+			vector<const Data> tmp = (*outputRows)[minIndex];
 			(*outputRows)[minIndex] = (*outputRows)[i];
 			(*outputRows)[i] = tmp;
 		}
@@ -1278,7 +1278,7 @@ void Csv::WriteHeader(ofstream &outputFile, const vector<Column> &columns) const
 //! columns [in] 出力するデータです。
 void Csv::WriteData(ofstream &outputFile, const OutputData &data) const
 {
-	auto &outputRows = data.GetOutputRows();
+	auto &outputRows = data.outputRows();
 	for (auto& outputRow : *outputRows){
 		size_t i = 0;
 		for (const auto &column : data.columns()){
@@ -1306,7 +1306,7 @@ Csv::Csv(const shared_ptr<const SqlQueryInfo> queryInfo) : queryInfo(queryInfo){
 
 //! CSVファイルから入力データを読み取ります。
 //! @return ファイルから読み取ったデータです。
-const shared_ptr<const vector<const InputTable>> Csv::ReadCsv() const
+const shared_ptr<const vector<const InputTable>> Csv::Read() const
 {
 	auto tables = make_shared<vector<const InputTable>>();
 
@@ -1327,7 +1327,7 @@ const shared_ptr<const vector<const InputTable>> Csv::ReadCsv() const
 //! @param [in] outputFileName 結果を出力するファイルのファイル名です。
 //! @param [in] queryInfo SQLの情報です。
 //! @param [in] inputTables ファイルから読み取ったデータです。
-void Csv::WriteCsv(const string outputFileName, const vector<const InputTable> &inputTables) const
+void Csv::Write(const string outputFileName, const vector<const InputTable> &inputTables) const
 {
 	OutputData outputData(*queryInfo, inputTables); // 出力するデータです。
 
@@ -1731,7 +1731,7 @@ SqlQuery::SqlQuery(const string sql) :
 //! @param[in] outputFileName SQLの実行結果をCSVとして出力するファイル名です。拡張子を含みます。
 void SqlQuery::Execute(const string outputFileName)
 {
-	csv->WriteCsv(outputFileName, *csv->ReadCsv());
+	csv->Write(outputFileName, *csv->Read());
 }
 
 //! カレントディレクトリにあるCSVに対し、簡易的なSQLを実行し、結果をファイルに出力します。
