@@ -2931,6 +2931,35 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 		tmp->parent = currentNode;
 	});
 
+	auto PRE_WHERE_OPERAND = action([&]{
+		// オペランドのノードを新しく生成します。
+		auto newNode = make_shared<ExtensionTreeNode>();
+		if (currentNode){
+			// 現在のノードを右の子にずらし、元の位置に新しいノードを挿入します。
+			currentNode->right = newNode;
+			currentNode->right->parent = currentNode;
+			currentNode = currentNode->right;
+		}
+		else{
+			// 最初はカレントノードに新しいノードを入れます。
+			currentNode = newNode;
+		}
+	});
+
+	WHERE_OPERAND = PRE_WHERE_OPERAND >> WHERE_OPERAND;
+
+	auto WHERE_EXTENSION = WHERE_OPERAND >> ~(OPERATOR >> WHERE_OPERAND);
+
+	auto WHERE_CLAUSE = (WHERE >> WHERE_EXTENSION)->Action([&]{
+		queryInfo->whereTopNode = currentNode;
+		// 木を根に向かってさかのぼり、根のノードを設定します。
+		while (queryInfo->whereTopNode->parent){
+			queryInfo->whereTopNode = queryInfo->whereTopNode->parent;
+		}
+	});
+
+	
+
 	auto tokenCursol = tokens.begin(); // 現在見ているトークンを指します。
 
 	if (!SELECT_CLAUSE->Parse(tokenCursol)){
@@ -2960,52 +2989,8 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 		}
 
 		// WHERE句を読み込みます。
-		if (tokenCursol->kind == TokenKind::WHERE){
+		if (WHERE_CLAUSE->Parse(tokenCursol)){
 			readWhere = true;
-			++tokenCursol;
-
-			auto PRE_WHERE_OPERAND = action([&]{
-				// オペランドのノードを新しく生成します。
-				auto newNode = make_shared<ExtensionTreeNode>();
-				if (currentNode){
-					// 現在のノードを右の子にずらし、元の位置に新しいノードを挿入します。
-					currentNode->right = newNode;
-					currentNode->right->parent = currentNode;
-					currentNode = currentNode->right;
-				}
-				else{
-					// 最初はカレントノードに新しいノードを入れます。
-					currentNode = newNode;
-				}
-			});
-
-			WHERE_OPERAND = PRE_WHERE_OPERAND >> WHERE_OPERAND;
-
-			while (true){
-				// オペランドを読み込みます。
-
-				if (!WHERE_OPERAND->Parse(tokenCursol)){
-					throw ResultValue::ERR_SQL_SYNTAX;
-				}
-				if (!OPERATOR->Parse(tokenCursol)){
-					break;
-				}
-			}
-
-			// 木を根に向かってさかのぼり、根のノードを設定します。
-			queryInfo->whereTopNode = currentNode;
-			while (queryInfo->whereTopNode->parent){
-				queryInfo->whereTopNode = queryInfo->whereTopNode->parent;
-			}
-			// 既存数値の符号を計算します。
-			auto whereNodes = SelfAndDescendants(queryInfo->whereTopNode);
-			for (auto &whereNode : *whereNodes){
-				if (whereNode->middleOperator.kind == TokenKind::NOT_TOKEN &&
-					whereNode->column.columnName.empty() &&
-					whereNode->value->type() == DataType::INTEGER){
-					whereNode->value = Data::New(whereNode->value->integer() * whereNode->signCoefficient);
-				}
-			}
 			continue;
 		}
 		break;
@@ -3036,6 +3021,18 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 	// 最後のトークンまで読み込みが進んでいなかったらエラーです。
 	if (tokenCursol != tokens.end()){
 		throw ResultValue::ERR_SQL_SYNTAX;
+	}
+	// 構文エラーがないことを前提とした処理なので最後に実行しています。
+	if (queryInfo->whereTopNode){
+		// 既存数値の符号を計算します。
+		auto whereNodes = SelfAndDescendants(queryInfo->whereTopNode);
+		for (auto &whereNode : *whereNodes){
+			if (whereNode->middleOperator.kind == TokenKind::NOT_TOKEN &&
+				whereNode->column.columnName.empty() &&
+				whereNode->value->type() == DataType::INTEGER){
+				whereNode->value = Data::New(whereNode->value->integer() * whereNode->signCoefficient);
+			}
+		}
 	}
 
 	return queryInfo;
