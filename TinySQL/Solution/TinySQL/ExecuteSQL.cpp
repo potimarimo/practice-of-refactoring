@@ -77,6 +77,8 @@ enum class TokenKind
 //! 一つの値を持つデータです。
 class Data
 {
+	DataType m_type = DataType::STRING; //!< データの型です。
+
 	string m_string; //!< データが文字列型の場合の値です。
 
 	//! 実際のデータを格納する共用体です。
@@ -86,8 +88,6 @@ class Data
 		bool boolean;                 //!< データが真偽値型の場合の値です。
 	} m_value;
 public:
-	DataType type = DataType::STRING; //!< データの型です。
-
 	//! Dataクラスの新しいインスタンスを初期化します。
 	Data();
 
@@ -102,6 +102,9 @@ public:
 	//! Dataクラスの新しいインスタンスを初期化します。
 	//! @param [in] value データの値です。
 	Data(const bool value);
+
+	// データの型を取得します。
+	const DataType& type() const;
 
 	//! データが文字列型の場合の値を取得します。
 	//! @return データが文字列型の場合の値です。
@@ -522,18 +525,24 @@ Data::Data(const std::string value) : m_value({ 0 })
 
 //! Dataクラスの新しいインスタンスを初期化します。
 //! @param [in] value データの値です。
-Data::Data(const int value) : type(DataType::INTEGER)
+Data::Data(const int value) : m_type(DataType::INTEGER)
 {
 	m_value.integer = value;
 }
 
 //! Dataクラスの新しいインスタンスを初期化します。
 //! @param [in] value データの値です。
-Data::Data(const bool value) : type(DataType::BOOLEAN)
+Data::Data(const bool value) : m_type(DataType::BOOLEAN)
 {
 	m_value.boolean = value;
 }
 
+//! データが文字列型の場合の値を取得します。
+//! @return データが文字列型の場合の値です。
+const DataType& Data::type() const
+{
+	return m_type;
+}
 
 //! データが文字列型の場合の値を取得します。
 //! @return データが文字列型の場合の値です。
@@ -668,13 +677,13 @@ void ExtensionTreeNode::Operate()
 		// 比較演算子の場合です。
 
 		// 比較できるのは文字列型か整数型で、かつ左右の型が同じ場合です。
-		if (left->value->type != DataType::INTEGER && left->value->type != DataType::STRING ||
-			left->value->type != right->value->type){
+		if (left->value->type() != DataType::INTEGER && left->value->type() != DataType::STRING ||
+			left->value->type() != right->value->type()){
 			throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 		}
 
 		// 比較結果を型と演算子によって計算方法を変えて、計算します。
-		switch (left->value->type){
+		switch (left->value->type()){
 		case DataType::INTEGER:
 			switch (middleOperator.kind){
 			case TokenKind::EQUAL:
@@ -728,7 +737,7 @@ void ExtensionTreeNode::Operate()
 		// 四則演算の場合です。
 
 		// 演算できるのは整数型同士の場合のみです。
-		if (left->value->type != DataType::INTEGER || right->value->type != DataType::INTEGER){
+		if (left->value->type() != DataType::INTEGER || right->value->type() != DataType::INTEGER){
 			throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 		}
 
@@ -753,7 +762,7 @@ void ExtensionTreeNode::Operate()
 		// 論理演算の場合です。
 
 		// 演算できるのは真偽値型同士の場合のみです。
-		if (left->value->type != DataType::BOOLEAN || right->value->type != DataType::BOOLEAN){
+		if (left->value->type() != DataType::BOOLEAN || right->value->type() != DataType::BOOLEAN){
 			throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 		}
 
@@ -784,7 +793,7 @@ void ExtensionTreeNode::SetColumnData(const vector<const shared_ptr<const Data>>
 		value = outputRow[column.allColumnsIndex];
 
 		// 符号を考慮して値を計算します。
-		if (value->type == DataType::INTEGER){
+		if (value->type() == DataType::INTEGER){
 			value = make_shared<Data>(value->integer() * signCoefficient);
 		}
 	}
@@ -830,7 +839,7 @@ void InputTable::InitializeIntegerColumn()
 			data()->end(),
 			[&](const vector<const shared_ptr<const Data>> &inputRow){
 			return
-				inputRow[i]->type == DataType::STRING &&
+				inputRow[i]->type() == DataType::STRING &&
 				any_of(
 				inputRow[i]->string().begin(),
 				inputRow[i]->string().end(),
@@ -1072,7 +1081,7 @@ void OutputData::ApplyOrderBy(vector<const vector<const shared_ptr<const Data>>>
 				auto &lData = lRow[order.column.allColumnsIndex]; // インデックスがminIndexのデータです。
 				auto &rData = rRow[order.column.allColumnsIndex]; // インデックスがjのデータです。
 				int cmp = 0; // 比較結果です。等しければ0、インデックスjの行が大きければプラス、インデックスminIndexの行が大きければマイナスとなります。
-				switch (lData->type)
+				switch (lData->type())
 				{
 				case DataType::INTEGER:
 					cmp = lData->integer() - rData->integer();
@@ -1310,7 +1319,7 @@ void Csv::WriteData(ofstream &outputFile, const OutputData &data) const
 	for (auto& outputRow : *outputRows){
 		size_t i = 0;
 		for (const auto &column : data.columns()){
-			switch (outputRow[column.allColumnsIndex]->type){
+			switch (outputRow[column.allColumnsIndex]->type()){
 			case DataType::INTEGER:
 				outputFile << outputRow[column.allColumnsIndex]->integer();
 				break;
@@ -1668,7 +1677,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 			for (auto &whereNode : *whereNodes){
 				if (whereNode->middleOperator.kind == TokenKind::NOT_TOKEN &&
 					whereNode->column.columnName.empty() &&
-					whereNode->value->type == DataType::INTEGER){
+					whereNode->value->type() == DataType::INTEGER){
 					whereNode->value = make_shared<Data>(whereNode->value->integer() * whereNode->signCoefficient);
 				}
 			}
