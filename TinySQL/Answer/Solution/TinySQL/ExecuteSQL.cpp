@@ -1045,19 +1045,22 @@ int ExecuteSQL(const string sql, const string outputFileName)
 				selectColumnIndexes.end(),
 				back_inserter(row),
 				[&](const ColumnIndex& index){return (*currentRows[index.table])[index.column]; });
-			//for (size_t i = 0; i < selectColumnIndexes.size(); ++i){
-			//	row.push_back((*currentRows[selectColumnIndexes[i].table])[selectColumnIndexes[i].column]);
-			//}
 
 			allColumnOutputData.push_back(vector<Data>());
 			vector<Data> &allColumnsRow = allColumnOutputData.back();// WHEREやORDERのためにすべての情報を含む行。rowとインデックスを共有します。
 
 			// allColumnsRowの列を設定します。
-			for (size_t i = 0; i < tableNames.size(); ++i){
-				for (size_t j = 0; j < inputColumns[i].size(); ++j){
-					allColumnsRow.push_back((*currentRows[i])[j]);
-				}
+			for (auto &currentRow : currentRows){
+				copy(
+					currentRow->begin(),
+					currentRow->end(),
+					back_inserter(allColumnsRow));
 			}
+			//for (size_t i = 0; i < currentRows.size(); ++i){
+			//	for (size_t j = 0; j < (*currentRows[i]).size(); ++j){
+			//		allColumnsRow.push_back((*currentRows[i])[j]);
+			//	}
+			//}
 			// WHEREの条件となる値を再帰的に計算します。
 			if (whereTopNode){
 				shared_ptr<ExtensionTreeNode> currentNode = whereTopNode; // 現在見ているノードです。
