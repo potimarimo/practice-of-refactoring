@@ -1000,8 +1000,9 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					if (!row[columnNum]){
 						throw ResultValue::ERR_MEMORY_ALLOCATE;
 					}
-					*row[columnNum] = Data("");
-					char *writeCursol = row[columnNum++]->value.string; // データ文字列の書き込みに利用するカーソルです。
+					
+					char str[MAX_DATA_LENGTH] = "";
+					char *writeCursol = str; // データ文字列の書き込みに利用するカーソルです。
 
 					// データ文字列を一つ読みます。
 					while (*charactorCursol && *charactorCursol != ',' && *charactorCursol != '\r'&& *charactorCursol != '\n'){
@@ -1009,6 +1010,8 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					}
 					// 書き込んでいる列名の文字列に終端文字を書き込みます。
 					writeCursol[1] = '\0';
+
+					*row[columnNum++] = Data(str);
 
 					// 入力行のカンマの分を読み進めます。
 					++charactorCursol;
