@@ -996,7 +996,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					if (MAX_COLUMN_COUNT <= columnNum){
 						throw ResultValue::ERR_MEMORY_OVER;
 					}
-					row[columnNum] = (Data*)malloc(sizeof(Data));
+					row[columnNum] = new Data;
 					if (!row[columnNum]){
 						throw ResultValue::ERR_MEMORY_ALLOCATE;
 					}
@@ -1155,7 +1155,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 
 			// 行の各列のデータを入力から持ってきて設定します。
 			for (size_t i = 0; i < selectColumnIndexes.size(); ++i){
-				row[i] = (Data*)malloc(sizeof(Data));
+				row[i] = new Data;
 				if (!row[i]){
 					throw ResultValue::ERR_MEMORY_ALLOCATE;
 				}
@@ -1176,7 +1176,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			int allColumnsNum = 0; // allColumnsRowの現在の列数です。
 			for (size_t i = 0; i < tableNames.size(); ++i){
 				for (size_t j = 0; j < inputColumns[i].size(); ++j){
-					allColumnsRow[allColumnsNum] = (Data*)malloc(sizeof(Data));
+					allColumnsRow[allColumnsNum] = new Data;
 					if (!allColumnsRow[allColumnsNum]){
 						throw ResultValue::ERR_MEMORY_ALLOCATE;
 					}
@@ -1559,7 +1559,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			while (*currentRow){
 				Data **dataCursol = *currentRow;
 				while (*dataCursol){
-					free(*dataCursol++);
+					delete *dataCursol++;
 				}
 				free(*currentRow);
 				currentRow++;
@@ -1570,7 +1570,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			while (*currentRow){
 				Data **dataCursol = *currentRow;
 				while (*dataCursol){
-					free(*dataCursol++);
+					delete *dataCursol++;
 				}
 				free(*currentRow);
 				currentRow++;
@@ -1580,7 +1580,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 		while (*currentRow){
 			Data **dataCursol = *currentRow;
 			while (*dataCursol){
-				free(*dataCursol++);
+				delete *dataCursol++;
 			}
 			free(*currentRow);
 			currentRow++;
