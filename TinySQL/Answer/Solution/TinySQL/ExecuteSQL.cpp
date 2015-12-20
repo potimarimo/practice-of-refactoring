@@ -751,6 +751,34 @@ public:
 //! @params [in] kind 読み取るトークンの種類です。
 const shared_ptr<TokenParser> token(TokenKind kind);
 
+//! 二つの規則を順番に組み合わせた規則を順に読み取るパーサーです。
+class SequenceParser
+{
+	shared_ptr<TokenParser> m_parser1; //!< 一つ目のパーサーです。
+	shared_ptr<TokenParser> m_parser2; //!< 二つ目のパーサーです。
+	function<void(void)> m_action; //!< 読み取りが成功したら実行する処理です。
+public:
+	//! SequenceParserクラスの新しいインスタンスを初期化します。
+	//! @param [in] 読み取りが成功したら実行する処理です。
+	//! @params [in] parser1 一つ目のParserです。
+	//! @params [in] parser1 一つ目のParserです。
+	SequenceParser(function<void(void)> action, shared_ptr<TokenParser> parser1, shared_ptr<TokenParser> parser2);
+
+	//! SequenceParserクラスの新しいインスタンスを初期化します。
+	//! @params [in] parser1 一つ目のParserです。
+	//! @params [in] parser1 一つ目のParserです。
+	SequenceParser(shared_ptr<TokenParser> parser1, shared_ptr<TokenParser> parser2);
+
+	//! トークンに対するパースを行います。
+	//! @params [in] cursol 現在の読み取り位置を表すカーソルです。
+	//! @return パースが成功したかどうかです。
+	const bool Parse(vector<const Token>::const_iterator& cursol) const;
+
+	//! 読み取りが成功したら実行する処理を登録します。
+	//! @param [in] 読み取りが成功したら実行する処理です。
+	shared_ptr<SequenceParser> Action(function<void(void)> action);
+};
+
 //! 出力するデータを管理します。
 class OutputData
 {
@@ -1895,6 +1923,41 @@ const shared_ptr<TokenParser> token(TokenKind kind)
 	return make_shared<TokenParser>(kind);
 }
 
+//! SequenceParserクラスの新しいインスタンスを初期化します。
+//! @param [in] 読み取りが成功したら実行する処理です。
+//! @params [in] parser1 一つ目のParserです。
+//! @params [in] parser1 一つ目のParserです。
+SequenceParser::SequenceParser(function<void(void)> action, shared_ptr<TokenParser> parser1, shared_ptr<TokenParser> parser2) : m_action(action), m_parser1(parser1), m_parser2(parser2){}
+
+//! SequenceParserクラスの新しいインスタンスを初期化します。
+//! @params [in] parser1 一つ目のParserです。
+//! @params [in] parser1 一つ目のParserです。
+SequenceParser::SequenceParser(shared_ptr<TokenParser> parser1, shared_ptr<TokenParser> parser2) : m_parser1(parser1), m_parser2(parser2){}
+
+//! トークンに対するパースを行います。
+//! @params [in] cursol 現在の読み取り位置を表すカーソルです。
+//! @return パースが成功したかどうかです。
+const bool SequenceParser::Parse(vector<const Token>::const_iterator& cursol) const
+{
+	if (!m_parser1->Parse(cursol)){
+		return false;
+	}
+	if (!m_parser2->Parse(cursol)){
+		return false;
+	}
+	if (m_action){
+		m_action();
+	}
+	return true;
+}
+
+//! 読み取りが成功したら実行する処理を登録します。
+//! @param [in] 読み取りが成功したら実行する処理です。
+shared_ptr<SequenceParser> SequenceParser::Action(function<void(void)> action)
+{
+	return make_shared<SequenceParser>(action, m_parser1, m_parser2);
+}
+
 //! 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
 void OutputData::InitializeAllInputColumns()
 {
@@ -2323,6 +2386,14 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 
 	auto SELECT = token(TokenKind::SELECT);
 	auto IDENTIFIER = token(TokenKind::IDENTIFIER);
+	auto DOT = token(TokenKind::DOT);
+
+	auto SECOND_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
+		// テーブル名が指定されていることがわかったので読み替えます。
+		queryInfo->selectColumns.back() = Column(queryInfo->selectColumns.back().columnName, token.word);
+	});
+
+	auto SECOND_COLUMN = make_shared<SequenceParser>(DOT, SECOND_COLUMN_NAME);
 
 	if (!SELECT->Parse(tokenCursol)){
 		throw ResultValue::ERR_SQL_SYNTAX;
@@ -2342,16 +2413,23 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 				// テーブル名が指定されていない場合と仮定して読み込みます。
 				queryInfo->selectColumns.push_back(Column(tokenCursol->word));
 				++tokenCursol;
+
 				if (tokenCursol->kind == TokenKind::DOT){
-					++tokenCursol;
-					auto SECOND_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
-						// テーブル名が指定されていることがわかったので読み替えます。
-						queryInfo->selectColumns.back() = Column(queryInfo->selectColumns.back().columnName, token.word);
-					});
-					if (!SECOND_COLUMN_NAME->Parse(tokenCursol)){
+					if (!SECOND_COLUMN->Parse(tokenCursol)){
 						throw ResultValue::ERR_SQL_SYNTAX;
 					}
 				}
+
+				//if (tokenCursol->kind == TokenKind::DOT){
+				//	++tokenCursol;
+				//	auto SECOND_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
+				//		// テーブル名が指定されていることがわかったので読み替えます。
+				//		queryInfo->selectColumns.back() = Column(queryInfo->selectColumns.back().columnName, token.word);
+				//	});
+				//	if (!SECOND_COLUMN_NAME->Parse(tokenCursol)){
+				//		throw ResultValue::ERR_SQL_SYNTAX;
+				//	}
+				//}
 			}
 			else{
 				throw ResultValue::ERR_SQL_SYNTAX;
