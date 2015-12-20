@@ -527,35 +527,7 @@ public:
 	//! @return 記録されているトークンの文字列です。
 	const string& word() const;
 };
-
-class InputTable;
-//! 指定された列の情報です。どのテーブルに所属するかの情報も含みます。
-class Column
-{
-public:
-	string tableName; //!< 列が所属するテーブル名です。指定されていない場合は空文字列となります。
-	string columnName; //!< 指定された列の列名です。
-	int allColumnsIndex; //!< 全てのテーブルのすべての列の中で、この列が何番目かです。
-	string outputName; //!< この列を出力する時の表示名です。
-
-	//! Columnクラスの新しいインスタンスを初期化します。
-	Column();
-
-	//! Columnクラスの新しいインスタンスを初期化します。
-	//! @param [in] columnName 指定された列の列名です。
-	Column(const string columnName);
-
-	//! Columnクラスの新しいインスタンスを初期化します。
-	//! @param [in] tableName 列が所属するテーブル名です。指定されていない場合は空文字列となります。
-	//! @param [in] columnName 指定された列の列名です。
-	Column(const string tableName, const string columnName);
-
-	//! データの検索に利用するため、全てのテーブルの列の情報を登録します。
-	//! @param [in] queryInfo SQLに記述された情報です。
-	//! @param [in] inputTables ファイルから読み取ったデータです。
-	void Column::SetAllColumns(const vector<const InputTable> &inputTables);
-};
-
+class Column;
 //! 出力するすべてのデータを含む行を表します。
 class OutputAllDataRow
 {
@@ -570,6 +542,46 @@ public:
 	//! @param [in] column 取得したい列。
 	//! @return 指定したデータ。
 	const shared_ptr<const Data> operator[](const Column &column) const;
+};
+class InputTable;
+//! 指定された列の情報です。どのテーブルに所属するかの情報も含みます。
+class Column
+{
+	string m_tableName; //!< 列が所属するテーブル名です。指定されていない場合は空文字列となります。
+	string m_columnName; //!< 指定された列の列名です。
+	int m_allColumnsIndex; //!< 全てのテーブルのすべての列の中で、この列が何番目かです。
+	string m_outputName; //!< この列を出力する時の表示名です。
+
+	friend OutputAllDataRow;
+public:
+	//! Columnクラスの新しいインスタンスを初期化します。
+	Column::Column();
+
+	//! Columnクラスの新しいインスタンスを初期化します。
+	//! @param [in] columnName 指定された列の列名です。
+	Column(const string &columnName);
+
+	//! Columnクラスの新しいインスタンスを初期化します。
+	//! @param [in] tableName 列が所属するテーブル名です。指定されていない場合は空文字列となります。
+	//! @param [in] columnName 指定された列の列名です。
+	Column(const string &tableName, const string &columnName);
+
+	//! データの検索に利用するため、全てのテーブルの列の情報を登録します。
+	//! @param [in] queryInfo SQLに記述された情報です。
+	//! @param [in] inputTables ファイルから読み取ったデータです。
+	void Column::SetAllColumns(const vector<const InputTable> &inputTables);
+
+	//! 列が所属するテーブル名を取得します。指定されていない場合は空文字列となります。
+	//! @return 列が所属するテーブル名です。
+	const string &tableName() const;
+
+	//! 指定された列の列名を取得します。
+	//! @return 指定された列の列名です。
+	const string &columnName() const;
+
+	//! この列を出力する時の表示名を取得します。
+	//! @return この列を出力する時の表示名です。
+	const string &outputName() const;
 };
 
 //! WHERE句の条件の式木を表します。
@@ -1827,17 +1839,15 @@ Column::Column() : Column("", "")
 
 //! Columnクラスの新しいインスタンスを初期化します。
 //! @param [in] columnName 指定された列の列名です。
-Column::Column(const string columnName) : Column("", columnName)
+Column::Column(const string &columnName) : Column("", columnName)
 {
 }
 
 //! Columnクラスの新しいインスタンスを初期化します。
 //! @param [in] tableName 列が所属するテーブル名です。指定されていない場合は空文字列となります。
 //! @param [in] columnName 指定された列の列名です。
-Column::Column(const string tableName, const string columnName)
+Column::Column(const string &tableName, const string &columnName) : m_tableName(tableName), m_columnName(columnName)
 {
-	this->tableName = tableName;
-	this->columnName = columnName;
 }
 
 //! データの検索に利用するため、全てのテーブルの列の情報を登録します。
@@ -1845,15 +1855,13 @@ Column::Column(const string tableName, const string columnName)
 //! @param [in] inputTables ファイルから読み取ったデータです。
 void Column::SetAllColumns(const vector<const InputTable> &inputTables)
 {
-
-
 	bool found = false;
 	int i = 0;
 	for (auto &inputTable : inputTables){
 		for (auto &inputColumn : *inputTable.columns()){
-			if (Equali(columnName, inputColumn.columnName) &&
-				(tableName.empty() || // テーブル名が設定されている場合のみテーブル名の比較を行います。
-				Equali(tableName, inputColumn.tableName))){
+			if (Equali(columnName(), inputColumn.columnName()) &&
+				(tableName().empty() || // テーブル名が設定されている場合のみテーブル名の比較を行います。
+				Equali(tableName(), inputColumn.tableName()))){
 
 				// 既に見つかっているのにもう一つ見つかったらエラーです。
 				if (found){
@@ -1861,8 +1869,8 @@ void Column::SetAllColumns(const vector<const InputTable> &inputTables)
 				}
 				found = true;
 				// 見つかった値を持つ列のデータを生成します。
-				allColumnsIndex = i;
-				outputName = inputColumn.columnName;
+				m_allColumnsIndex = i;
+				m_outputName = inputColumn.columnName();
 			}
 			++i;
 		}
@@ -1871,6 +1879,27 @@ void Column::SetAllColumns(const vector<const InputTable> &inputTables)
 	if (!found){
 		throw ResultValue::ERR_BAD_COLUMN_NAME;
 	}
+}
+
+//! 列が所属するテーブル名を取得します。指定されていない場合は空文字列となります。
+//! @return 列が所属するテーブル名です。
+const string& Column::tableName() const
+{
+	return m_tableName;
+}
+
+//! 指定された列の列名を取得します。
+//! @return 指定された列の列名です。
+const string& Column::columnName() const
+{
+	return m_columnName;
+}
+
+//! この列を出力する時の表示名を取得します。
+//! @return この列を出力する時の表示名です。
+const string& Column::outputName() const
+{
+	return m_outputName;
 }
 
 //! OutputAllDataRowクラスの新しいインスタンスを初期化します。
@@ -1883,7 +1912,7 @@ OutputAllDataRow::OutputAllDataRow(const shared_ptr<const vector<const shared_pt
 //! @return 指定したデータ。
 const shared_ptr<const Data> OutputAllDataRow::operator[](const Column &column) const
 {
-	return (*data)[column.allColumnsIndex];
+	return (*data)[column.m_allColumnsIndex];
 }
 
 //! ExtensionTreeNodeクラスの新しいインスタンスを初期化します。
@@ -1947,7 +1976,7 @@ void ExtensionTreeNode::Operate()
 //! @return カラム名で指定されたデータを持つノードかどうか。
 bool ExtensionTreeNode::isDataNodeAsColumnName()
 {
-	return middleOperator.kind() == TokenKind::NOT_TOKEN && !column.columnName.empty();
+	return middleOperator.kind() == TokenKind::NOT_TOKEN && !column.columnName().empty();
 }
 
 //! 実際に出力する行に合わせて列にデータを設定します。
@@ -2672,7 +2701,7 @@ void OutputData::SetAllColumns()
 	if (queryInfo.whereTopNode){
 		auto allWhereNode = SelfAndDescendants(queryInfo.whereTopNode);
 		for (auto& node : *allWhereNode){
-			if (!node->column.columnName.empty()){
+			if (!node->column.columnName().empty()){
 				node->column.SetAllColumns(inputTables);
 			}
 		}
@@ -2850,7 +2879,7 @@ void Csv::CloseOutputFile(ofstream &outputFile) const
 void Csv::WriteHeader(ofstream &outputFile, const vector<Column> &columns) const
 {
 	for (auto it = columns.begin(); it != columns.end(); ++it){
-		outputFile << it->outputName;
+		outputFile << it->outputName();
 		if (it != columns.end() - 1){
 			outputFile << ",";
 		}
@@ -3009,7 +3038,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 	// 列指定の二つ目の識別子のパーサーです。
 	auto SECOND_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
 		// テーブル名が指定されていることがわかったので読み替えます。
-		column = Column(column.columnName, token.word());
+		column = Column(column.columnName(), token.word());
 	});
 
 	auto COLUMN = FIRST_COLUMN_NAME >> -(DOT >> SECOND_COLUMN_NAME); // 列指定一つのパーサーです。
@@ -3183,7 +3212,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 			auto whereNodes = SelfAndDescendants(queryInfo->whereTopNode);
 			for (auto &whereNode : *whereNodes){
 				if (whereNode->middleOperator.kind() == TokenKind::NOT_TOKEN &&
-					whereNode->column.columnName.empty() &&
+					whereNode->column.columnName().empty() &&
 					whereNode->value->type() == DataType::INTEGER){
 					whereNode->value = Data::New(whereNode->value->integer() * whereNode->signCoefficient);
 				}
