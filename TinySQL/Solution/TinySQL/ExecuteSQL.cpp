@@ -964,17 +964,16 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			for (size_t j = 0; j < inputColumns[i].size(); ++j){
 
 				// 全ての行のある列について、データ文字列から符号と数値以外の文字を探します。
-				found = false;
-				for (auto& inputRow : inputData[i]){
-					found = any_of(inputRow[j]->string().begin(), inputRow[j]->string().end(),
-						[&](const char& c){return signNum.find(c) == string::npos; });
-					if (found){
-						break;
-					}
-				}
+				if (none_of(
+					inputData[i].begin(),
+					inputData[i].end(),
+					[&](Data** inputRow){
+						return any_of(
+							inputRow[j]->string().begin(),
+							inputRow[j]->string().end(),
+							[&](const char& c){return signNum.find(c) == string::npos; }); })){
 
-				// 符号と数字以外が見つからない列については、数値列に変換します。
-				if (!found){
+					// 符号と数字以外が見つからない列については、数値列に変換します。
 					for (auto& inputRow : inputData[i]){
 						*inputRow[j] = Data(atoi(inputRow[j]->string().c_str()));
 					}
