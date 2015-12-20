@@ -364,7 +364,7 @@ public:
 
 	//! 出力するすべてのデータ行を取得します。
 	//! @return 出力するすべてのデータ行。入力されたすべての入力データを保管します。
-	const shared_ptr<vector<vector<Data>>> GetOutputRows();
+	const shared_ptr<vector<vector<Data>>> GetOutputRows() const;
 };
 
 //! SqlQueryのCsvに対する入出力を扱います。
@@ -396,6 +396,25 @@ class Csv
 	//! @param [in] inputFile 入力ファイルを扱うストリームです。すでにヘッダのみを読み込んだ後です。
 	//! @return ファイルから読み取ったデータです。
 	const shared_ptr<vector<const vector<const Data>>> ReadData(ifstream &inputFile) const;
+
+	//! 出力ファイルを開きます。
+	//! @param [in] filePath 開くファイルのファイルパスです。
+	//! @return 出力ファイルを扱うストリームです。
+	ofstream OpenOutputFile(const string filePath) const;
+
+	//! 出力ファイルを閉じます。
+	//! @param [in] OutputFile 入力ファイルを扱うストリームです。
+	void CloseOutputFile(ofstream &outputFile) const;
+
+	//! 入力CSVのヘッダ行を読み込みます。
+	//! @param [in] OutputFile 出力ファイルを扱うストリームです。開いた後何も読み込んでいません。
+	//! @param [in] columns 出力するヘッダ情報です。
+	void WriteHeader(ofstream &outputFile, const vector<Column> &columns) const;
+
+	//! 入力CSVのデータ行を読み込みます。
+	//! @param [in] OutputFile 出力ファイルを扱うストリームです。すでにヘッダのみを読み込んだ後です。
+	//! columns [in] 出力するデータです。
+	void WriteData(ofstream &outputFile, const OutputData &data) const;
 public:
 
 	//! Csvクラスの新しいインスタンスを初期化します。
@@ -839,7 +858,7 @@ const vector<Column> OutputData::columns() const
 
 //! 出力するすべてのデータ行を取得します。
 //! @return 出力するすべてのデータ行。入力されたすべての入力データを保管します。
-const shared_ptr<vector<vector<Data>>> OutputData::GetOutputRows()
+const shared_ptr<vector<vector<Data>>> OutputData::GetOutputRows() const
 {
 	auto outputRows = make_shared<vector<vector<Data>>>();
 	auto currentRowsPtr = GetInitializedCurrentRows();
@@ -1118,63 +1137,6 @@ const shared_ptr<vector<vector<Data>>> OutputData::GetOutputRows()
 	return outputRows;
 }
 
-//! CSVファイルに出力データを書き込みます。
-//! @param [in] outputFileName 結果を出力するファイルのファイル名です。
-//! @param [in] queryInfo SQLの情報です。
-//! @param [in] inputTables ファイルから読み取ったデータです。
-void Csv::WriteCsv(const string outputFileName, const vector<const InputTable> &inputTables) const
-{
-	OutputData outputData(*queryInfo, inputTables);
-	auto outputRows = outputData.GetOutputRows();
-	ofstream outputFile; // 書き込むファイルのファイルポインタです。
-	// 出力ファイルを開きます。
-	outputFile = ofstream(outputFileName);
-	if (outputFile.bad()){
-		throw ResultValue::ERR_FILE_OPEN;
-	}
-
-	// 出力ファイルに列名を出力します。
-	for (size_t i = 0; i < outputData.columns().size(); ++i){
-		outputFile << outputData.columns()[i].outputName;
-		if (i < outputData.columns().size() - 1){
-			outputFile << ",";
-		}
-		else{
-			outputFile << "\n";
-		}
-	}
-
-	// 出力ファイルにデータを出力します。
-	for (auto& outputRow : *outputRows){
-		size_t i = 0;
-		for (const auto &column : outputData.columns()){
-			switch (outputRow[column.allColumnsIndex].type){
-			case DataType::INTEGER:
-				outputFile << outputRow[column.allColumnsIndex].integer();
-				break;
-			case DataType::STRING:
-				outputFile << outputRow[column.allColumnsIndex].string();
-				break;
-			}
-			if (i++ < outputData.columns().size() - 1){
-				outputFile << ",";
-			}
-			else{
-				outputFile << "\n";
-			}
-		}
-	}
-	if (outputFile.bad()){
-		throw ResultValue::ERR_FILE_WRITE;
-	}
-	if (outputFile){
-		outputFile.close();
-		if (outputFile.bad()){
-			throw ResultValue::ERR_FILE_CLOSE;
-		}
-	}
-}
-
 //! ファイルストリームからカンマ区切りの一行を読み込みます。
 //! @param [in] inputFile データを読み込むファイルストリームです。
 //! @return ファイルから読み込んだ一行分のデータです。
@@ -1204,6 +1166,28 @@ const shared_ptr<const vector<const string>> Csv::ReadLineData(ifstream &inputFi
 	}
 	else{
 		return nullptr;
+	}
+}
+
+//! 入力ファイルを開きます。
+//! @param [in] filePath 開くファイルのファイルパスです。
+//! @return 入力ファイルを扱うストリームです。
+ifstream Csv::OpenInputFile(const string filePath) const
+{
+	auto inputFile = ifstream(filePath); //入力するCSVファイルを扱うストリームです。
+	if (!inputFile){
+		throw ResultValue::ERR_FILE_OPEN;
+	}
+	return inputFile;
+}
+
+//! 入力ファイルを閉じます。
+//! @param [in] inputFile 入力ファイルを扱うストリームです。
+void Csv::CloseInputFile(ifstream &inputFile) const
+{
+	inputFile.close();
+	if (inputFile.bad()){
+		throw ResultValue::ERR_FILE_CLOSE;
 	}
 }
 
@@ -1246,25 +1230,73 @@ const shared_ptr<vector<const vector<const Data>>> Csv::ReadData(ifstream &input
 	return data;
 }
 
-//! 入力ファイルを開きます。
-//! @param [in] filePath 開くファイルのファイルパスです。
-//! @return 入力ファイルを扱うストリームです。
-ifstream Csv::OpenInputFile(const string filePath) const
+//! 出力ファイルを開きます。
+//! @param [in] outputFileName 開くファイルのファイルパスです。
+//! @return 出力ファイルを扱うストリームです。
+ofstream Csv::OpenOutputFile(const string outputFileName) const
 {
-	auto inputFile = ifstream(filePath); //入力するCSVファイルを扱うストリームです。
-	if (!inputFile){
+	ofstream outputFile(outputFileName);
+	if (outputFile.bad()){
 		throw ResultValue::ERR_FILE_OPEN;
 	}
-	return inputFile;
+	return outputFile;
 }
 
-//! 入力ファイルを閉じます。
-//! @param [in] inputFile 入力ファイルを扱うストリームです。
-void Csv::CloseInputFile(ifstream &inputFile) const
+//! 出力ファイルを閉じます。
+//! @param [in] OutputFile 入力ファイルを扱うストリームです。
+void Csv::CloseOutputFile(ofstream &outputFile) const
 {
-	inputFile.close();
-	if (inputFile.bad()){
-		throw ResultValue::ERR_FILE_CLOSE;
+	if (outputFile.bad()){
+		throw ResultValue::ERR_FILE_WRITE;
+	}
+	if (outputFile){
+		outputFile.close();
+		if (outputFile.bad()){
+			throw ResultValue::ERR_FILE_CLOSE;
+		}
+	}
+}
+
+//! 入力CSVのヘッダ行を読み込みます。
+//! @param [in] OutputFile 出力ファイルを扱うストリームです。開いた後何も読み込んでいません。
+//! @param [in] columns 出力するヘッダ情報です。
+void Csv::WriteHeader(ofstream &outputFile, const vector<Column> &columns) const
+{
+	for (size_t i = 0; i < columns.size(); ++i){
+		outputFile << columns[i].outputName;
+		if (i < columns.size() - 1){
+			outputFile << ",";
+		}
+		else{
+			outputFile << "\n";
+		}
+	}
+}
+
+//! 入力CSVのデータ行を読み込みます。
+//! @param [in] OutputFile 出力ファイルを扱うストリームです。すでにヘッダのみを読み込んだ後です。
+//! columns [in] 出力するデータです。
+void Csv::WriteData(ofstream &outputFile, const OutputData &data) const
+{
+	auto &outputRows = data.GetOutputRows();
+	for (auto& outputRow : *outputRows){
+		size_t i = 0;
+		for (const auto &column : data.columns()){
+			switch (outputRow[column.allColumnsIndex].type){
+			case DataType::INTEGER:
+				outputFile << outputRow[column.allColumnsIndex].integer();
+				break;
+			case DataType::STRING:
+				outputFile << outputRow[column.allColumnsIndex].string();
+				break;
+			}
+			if (i++ < data.columns().size() - 1){
+				outputFile << ",";
+			}
+			else{
+				outputFile << "\n";
+			}
+		}
 	}
 }
 
@@ -1290,6 +1322,24 @@ const shared_ptr<const vector<const InputTable>> Csv::ReadCsv() const
 	}
 	return tables;
 }
+
+//! CSVファイルに出力データを書き込みます。
+//! @param [in] outputFileName 結果を出力するファイルのファイル名です。
+//! @param [in] queryInfo SQLの情報です。
+//! @param [in] inputTables ファイルから読み取ったデータです。
+void Csv::WriteCsv(const string outputFileName, const vector<const InputTable> &inputTables) const
+{
+	OutputData outputData(*queryInfo, inputTables); // 出力するデータです。
+
+	auto outputFile = OpenOutputFile(outputFileName); // 書き込むファイルのファイルストリームです。
+	
+	WriteHeader(outputFile, outputData.columns());
+
+	WriteData(outputFile, outputData);
+
+	CloseOutputFile(outputFile);
+}
+
 
 //! SQLの文字列からトークンを切り出します。
 //! @param [in] sql トークンに分解する元となるSQLです。
