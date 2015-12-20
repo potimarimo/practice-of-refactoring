@@ -801,19 +801,10 @@ int ExecuteSQL(const string sql, const string outputFileName)
 
 
 					// 演算子(オペレーターを読み込みます。
-					Operator middleOperator; // 現在読み込んでいる演算子の情報です。
+					auto foundOperator = find_if(operators.begin(), operators.end(), [&](const Operator& op){return op.kind == tokenCursol->kind; }); // 現在読み込んでいる演算子の情報です。
 
 					// 現在見ている演算子の情報を探します。
-					found = false;
-					for (auto &anOperator : operators){
-						if (anOperator.kind == tokenCursol->kind){
-							middleOperator = anOperator;
-							found = true;
-							break;
-						}
-					}
-					if (found)
-					{
+					if (foundOperator != operators.end()){
 						// 見つかった演算子の情報をもとにノードを入れ替えます。
 						shared_ptr<ExtensionTreeNode> tmp = currentNode; //ノードを入れ替えるために使う変数です。
 
@@ -831,12 +822,12 @@ int ExecuteSQL(const string sql, const string outputFileName)
 								searched = searched->left;
 							}
 							first = false;
-						} while (!searched && tmp->parent && (tmp->parent->middleOperator.order <= middleOperator.order || tmp->parent->inParen));
+						} while (!searched && tmp->parent && (tmp->parent->middleOperator.order <= foundOperator->order || tmp->parent->inParen));
 
 						// 演算子のノードを新しく生成します。
 						whereExtensionNodes.push_back(make_shared<ExtensionTreeNode>());
 						currentNode = whereExtensionNodes.back();
-						currentNode->middleOperator = middleOperator;
+						currentNode->middleOperator = *foundOperator;
 
 						// 見つかった場所に新しいノードを配置します。これまでその位置にあったノードは左の子となるよう、親ノードと子ノードのポインタをつけかえます。
 						currentNode->parent = tmp->parent;
@@ -1156,16 +1147,16 @@ int ExecuteSQL(const string sql, const string outputFileName)
 								currentNode->value = Data(currentNode->left->value.string() > currentNode->right->value.string());
 								break;
 							case TokenKind::GREATER_THAN_OR_EQUAL:
-								currentNode->value = Data(strcmp(currentNode->left->value.string().c_str(), currentNode->right->value.string().c_str()) >= 0);
+								currentNode->value = Data(currentNode->left->value.string() >= currentNode->right->value.string());
 								break;
 							case TokenKind::LESS_THAN:
-								currentNode->value = Data(strcmp(currentNode->left->value.string().c_str(), currentNode->right->value.string().c_str()) < 0);
+								currentNode->value = Data(currentNode->left->value.string() < currentNode->right->value.string());
 								break;
 							case TokenKind::LESS_THAN_OR_EQUAL:
-								currentNode->value = Data(strcmp(currentNode->left->value.string().c_str(), currentNode->right->value.string().c_str()) <= 0);
+								currentNode->value = Data(currentNode->left->value.string() <= currentNode->right->value.string());
 								break;
 							case TokenKind::NOT_EQUAL:
-								currentNode->value = Data(strcmp(currentNode->left->value.string().c_str(), currentNode->right->value.string().c_str()) != 0);
+								currentNode->value = Data(currentNode->left->value.string() != currentNode->right->value.string());
 								break;
 							}
 							break;
