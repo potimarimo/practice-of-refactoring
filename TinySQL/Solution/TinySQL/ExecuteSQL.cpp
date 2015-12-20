@@ -1078,10 +1078,10 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			}
 		}
 
-		vector<Data***> currentRows; // 入力された各テーブルの、現在出力している行を指すカーソルです。
+		vector<vector<Data**>::iterator> currentRows; // 入力された各テーブルの、現在出力している行を指すカーソルです。
 		for (size_t i = 0; i < tableNames.size(); ++i){
 			// 各テーブルの先頭行を設定します。
-			currentRows.push_back(&inputData[i][0]);
+			currentRows.push_back(inputData[i].begin());
 		}
 
 		// 出力するデータを設定します。
@@ -1316,15 +1316,21 @@ int ExecuteSQL(const string sql, const string outputFileName)
 
 			// 最後のテーブルのカレント行をインクリメントします。
 			++currentRows[tableNames.size() - 1];
+			if (!*currentRows[tableNames.size() - 1]){
+				++currentRows[tableNames.size() - 1];
+			}
 
 			// 最後のテーブルが最終行になっていた場合は先頭に戻し、順に前のテーブルのカレント行をインクリメントします。
-			for (int i = tableNames.size() - 1; !*currentRows[i] && 0 < i; --i){
+			for (int i = tableNames.size() - 1; currentRows[i] == inputData[i].end() && 0 < i; --i){
 				++currentRows[i - 1];
-				currentRows[i] = &inputData[i][0];
+				if (!*currentRows[i - 1]){
+					++currentRows[i - 1];
+				}
+				currentRows[i] = inputData[i].begin();
 			}
 
 			// 最初のテーブルが最後の行を超えたなら出力行の生成は終わりです。
-			if (!*currentRows[0]){
+			if (currentRows[0] == inputData[0].end()){
 				break;
 			}
 		}
