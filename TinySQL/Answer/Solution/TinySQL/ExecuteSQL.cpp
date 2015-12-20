@@ -1044,20 +1044,6 @@ const shared_ptr<const vector<const vector<const Data>>> OutputData::outputRows(
 				back_inserter(outputRow));
 		}
 
-		// WHEREの条件となる値を計算します。
-		if (queryInfo.whereTopNode){
-			auto allNodes = SelfAndDescendants(queryInfo.whereTopNode);
-			for (auto& node : *allNodes){
-				node->SetColumnData(outputRow);
-			}
-			queryInfo.whereTopNode->Operate();
-
-			// 条件に合わない行は出力から削除します。
-			if (!queryInfo.whereTopNode->value.boolean()){
-				outputRows->pop_back();
-			}
-		}
-
 		// 各テーブルの行のすべての組み合わせを出力します。
 
 		// 最後のテーブルのカレント行をインクリメントします。
@@ -1073,6 +1059,22 @@ const shared_ptr<const vector<const vector<const Data>>> OutputData::outputRows(
 		if (currentRows[0] == inputTables[0].data()->end()){
 			break;
 		}
+	}
+
+	if (queryInfo.whereTopNode){
+		auto & newEnd = copy_if(
+			outputRows->begin(),
+			outputRows->end(),
+			outputRows->begin(),
+			[&](vector<const Data> row){
+			auto allNodes = SelfAndDescendants(queryInfo.whereTopNode);
+			for (auto& node : *allNodes){
+				node->SetColumnData(row);
+			}
+			queryInfo.whereTopNode->Operate();
+			return queryInfo.whereTopNode->value.boolean();
+		});
+		outputRows->erase(newEnd, outputRows->end());
 	}
 
 	// ORDER句による並び替えの処理を行います。
