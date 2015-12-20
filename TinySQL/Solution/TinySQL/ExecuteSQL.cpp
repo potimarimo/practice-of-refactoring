@@ -770,6 +770,28 @@ public:
 //! @params [in] kind 読み取るトークンの種類です。
 const shared_ptr<TokenParser> token(TokenKind kind);
 
+//! 何も読み取らずにアクションだけ実行するパーサーです。
+class NoTokenParser : public Parser
+{
+	function<void(void)> m_action; //!< 読み取りが成功したら実行する処理です。
+public:
+	//! NoTokenParserクラスの新しいインスタンスを初期化します。
+	//! @param [in] 読み取りが成功したら実行する処理です。
+	NoTokenParser(const function<void(void)> action);
+
+	//! トークンに対するパースを行います。
+	//! @params [in] cursol 現在の読み取り位置を表すカーソルです。
+	//! @return パースが成功したかどうかです。
+	const bool Parse(vector<const Token>::const_iterator& cursol) const override;
+
+	//! 読み取りが成功したら実行する処理を登録します。
+	//! @param [in] 読み取りが成功したら実行する処理です。
+	const shared_ptr<const NoTokenParser> Action(const function<void(void)> action) const;
+};
+
+//! 何も読み取らずにアクションだけ実行するパーサーを生成します。
+const shared_ptr<NoTokenParser> action(function<void(void)> action);
+
 //! 二つの規則を順番に組み合わせた規則を順に読み取るパーサーです。
 class SequenceParser : public Parser
 {
@@ -2083,6 +2105,34 @@ const shared_ptr<const TokenParser> TokenParser::or(const shared_ptr<const Token
 	return make_shared<TokenParser>(newKinds);
 }
 
+//! NoTokenParserクラスの新しいインスタンスを初期化します。
+//! @param [in] 読み取りが成功したら実行する処理です。
+NoTokenParser::NoTokenParser(const function<void(void)> action) : m_action(action){}
+
+//! トークンに対するパースを行います。
+//! @params [in] cursol 現在の読み取り位置を表すカーソルです。
+//! @return パースが成功したかどうかです。
+const bool NoTokenParser::Parse(vector<const Token>::const_iterator& cursol) const
+{
+	if (m_action){
+		m_action();
+	}
+	return true;
+}
+
+//! 読み取りが成功したら実行する処理を登録します。
+//! @param [in] 読み取りが成功したら実行する処理です。
+const shared_ptr<const NoTokenParser> NoTokenParser::Action(const function<void(void)> action) const
+{
+	return make_shared<NoTokenParser>(action);
+}
+
+//! 何も読み取らずにアクションだけ実行するパーサーを生成します。
+const shared_ptr<NoTokenParser> action(function<void(void)> action)
+{
+	return make_shared<NoTokenParser>(action);
+}
+
 //! SequenceParserクラスの新しいインスタンスを初期化します。
 //! @param [in] 読み取りが成功したら実行する処理です。
 //! @params [in] parser1 一つ目のParserです。
@@ -2795,13 +2845,14 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 
 	auto SELECT_CLAUSE = SELECT >> (ASTERISK | SELECT_COLUMNS); // SELECT句のパーサーです。
 
-	auto ORDER_BY_COLUMN = COLUMN >> -(ASC | SET_DESC); // ORDER BY句の列指定一つのパーサーです。
+	auto PRE_ORDERBY_COLUMN = action([&]{
+		isAsc = true;
+	});
+
+	auto ORDER_BY_COLUMN = PRE_ORDERBY_COLUMN >> COLUMN >> -(ASC | SET_DESC); // ORDER BY句の列指定一つのパーサーです。
 
 	ORDER_BY_COLUMN = ORDER_BY_COLUMN->Action([&]{
 		queryInfo->orders.push_back(Order(column, isAsc));
-
-		// この変数はまたつかわれるので初期化します。
-		isAsc = true;
 	});
 
 	auto ORDER_BY_COLUMNS = ORDER_BY_COLUMN >> ~(COMMA >> ORDER_BY_COLUMN); // ORDER BY句の一つ以上の列指定のパーサーです。
