@@ -7,9 +7,7 @@
 
 #include "CppUnitTest.h"
 
-extern "C"{
-	int ExecuteSQL(const char*, const char*);
-}
+int ExecuteSQL(const char*, const char*);
 
 
 //! ExecuteSQLの戻り値の種類を表します。
