@@ -722,8 +722,17 @@ protected:
 	const shared_ptr<const Token> ReadCore(string::const_iterator &cursol, const string::const_iterator& end) const override;
 };
 
+class Parser
+{
+public:
+	//! トークンに対するパースを行います。
+	//! @params [in] cursol 現在の読み取り位置を表すカーソルです。
+	//! @return パースが成功したかどうかです。
+	virtual const bool Parse(vector<const Token>::const_iterator& cursol) const = 0;
+};
+
 //! トークンをひとつ読み取るパーサーです。
-class TokenParser
+class TokenParser : public Parser
 {
 	TokenKind m_kind; //!< 読み取るトークンの種類です。
 	function<void(const Token)> m_action; //!< 読み取りが成功したら実行する処理です。
@@ -740,7 +749,7 @@ public:
 	//! トークンに対するパースを行います。
 	//! @params [in] cursol 現在の読み取り位置を表すカーソルです。
 	//! @return パースが成功したかどうかです。
-	const bool Parse(vector<const Token>::const_iterator& cursol) const;
+	const bool Parse(vector<const Token>::const_iterator& cursol) const override;
 
 	//! 読み取りが成功したら実行する処理を登録します。
 	//! @param [in] 読み取りが成功したら実行する処理です。
@@ -752,31 +761,31 @@ public:
 const shared_ptr<TokenParser> token(TokenKind kind);
 
 //! 二つの規則を順番に組み合わせた規則を順に読み取るパーサーです。
-class SequenceParser
+class SequenceParser : public Parser
 {
-	shared_ptr<TokenParser> m_parser1; //!< 一つ目のパーサーです。
-	shared_ptr<TokenParser> m_parser2; //!< 二つ目のパーサーです。
+	shared_ptr<Parser> m_parser1; //!< 一つ目のパーサーです。
+	shared_ptr<Parser> m_parser2; //!< 二つ目のパーサーです。
 	function<void(void)> m_action; //!< 読み取りが成功したら実行する処理です。
 public:
 	//! SequenceParserクラスの新しいインスタンスを初期化します。
 	//! @param [in] 読み取りが成功したら実行する処理です。
 	//! @params [in] parser1 一つ目のParserです。
 	//! @params [in] parser1 一つ目のParserです。
-	SequenceParser(function<void(void)> action, shared_ptr<TokenParser> parser1, shared_ptr<TokenParser> parser2);
+	SequenceParser(function<void(void)> action, shared_ptr<Parser> parser1, shared_ptr<Parser> parser2);
 
 	//! SequenceParserクラスの新しいインスタンスを初期化します。
 	//! @params [in] parser1 一つ目のParserです。
 	//! @params [in] parser1 一つ目のParserです。
-	SequenceParser(shared_ptr<TokenParser> parser1, shared_ptr<TokenParser> parser2);
-
-	//! トークンに対するパースを行います。
-	//! @params [in] cursol 現在の読み取り位置を表すカーソルです。
-	//! @return パースが成功したかどうかです。
-	const bool Parse(vector<const Token>::const_iterator& cursol) const;
+	SequenceParser(shared_ptr<Parser> parser1, shared_ptr<Parser> parser2);
 
 	//! 読み取りが成功したら実行する処理を登録します。
 	//! @param [in] 読み取りが成功したら実行する処理です。
 	shared_ptr<SequenceParser> Action(function<void(void)> action);
+
+	//! 二つの規則に対するパースを行います。
+	//! @params [in] cursol 現在の読み取り位置を表すカーソルです。
+	//! @return パースが成功したかどうかです。
+	const bool Parse(vector<const Token>::const_iterator& cursol) const override;
 };
 
 //! 出力するデータを管理します。
@@ -1927,12 +1936,12 @@ const shared_ptr<TokenParser> token(TokenKind kind)
 //! @param [in] 読み取りが成功したら実行する処理です。
 //! @params [in] parser1 一つ目のParserです。
 //! @params [in] parser1 一つ目のParserです。
-SequenceParser::SequenceParser(function<void(void)> action, shared_ptr<TokenParser> parser1, shared_ptr<TokenParser> parser2) : m_action(action), m_parser1(parser1), m_parser2(parser2){}
+SequenceParser::SequenceParser(function<void(void)> action, shared_ptr<Parser> parser1, shared_ptr<Parser> parser2) : m_action(action), m_parser1(parser1), m_parser2(parser2){}
 
 //! SequenceParserクラスの新しいインスタンスを初期化します。
 //! @params [in] parser1 一つ目のParserです。
 //! @params [in] parser1 一つ目のParserです。
-SequenceParser::SequenceParser(shared_ptr<TokenParser> parser1, shared_ptr<TokenParser> parser2) : m_parser1(parser1), m_parser2(parser2){}
+SequenceParser::SequenceParser(shared_ptr<Parser> parser1, shared_ptr<Parser> parser2) : m_parser1(parser1), m_parser2(parser2){}
 
 //! トークンに対するパースを行います。
 //! @params [in] cursol 現在の読み取り位置を表すカーソルです。
@@ -2419,17 +2428,6 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 						throw ResultValue::ERR_SQL_SYNTAX;
 					}
 				}
-
-				//if (tokenCursol->kind == TokenKind::DOT){
-				//	++tokenCursol;
-				//	auto SECOND_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
-				//		// テーブル名が指定されていることがわかったので読み替えます。
-				//		queryInfo->selectColumns.back() = Column(queryInfo->selectColumns.back().columnName, token.word);
-				//	});
-				//	if (!SECOND_COLUMN_NAME->Parse(tokenCursol)){
-				//		throw ResultValue::ERR_SQL_SYNTAX;
-				//	}
-				//}
 			}
 			else{
 				throw ResultValue::ERR_SQL_SYNTAX;
