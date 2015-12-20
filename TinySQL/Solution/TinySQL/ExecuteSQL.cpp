@@ -250,6 +250,9 @@ class SqlQuery
 
 	//! CSVファイルから入力データを読み取ります。
 	void ReadCsv();
+
+	//! CSVファイルに出力データを書き込みます。
+	void WriteCsv();
 public:
 	//! SqlQueryクラスの新しいインスタンスを初期化します。
 	SqlQuery();
@@ -869,6 +872,405 @@ void SqlQuery::ReadCsv()
 	}
 }
 
+//! CSVファイルに出力データを書き込みます。
+void SqlQuery::WriteCsv()
+{
+	vector<Column> allInputColumns; // 入力に含まれるすべての列の一覧です。
+
+	// 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
+	for (size_t i = 0; i < tableNames.size(); ++i){
+		transform(
+			inputColumns[i].begin(),
+			inputColumns[i].end(),
+			back_inserter(allInputColumns),
+			[&](const Column& column){return Column(tableNames[i], column.columnName); });
+	}
+
+	// SELECT句の列名指定が*だった場合は、入力CSVの列名がすべて選択されます。
+	if (selectColumns.empty()){
+		copy(allInputColumns.begin(), allInputColumns.end(), back_inserter(selectColumns));
+	}
+
+	vector<Column> outputColumns; // 出力するすべての行の情報です。
+
+	// SELECT句で指定された列名が、何個目の入力ファイルの何列目に相当するかを判別します。
+	vector<ColumnIndex> selectColumnIndexes; // SELECT句で指定された列の、入力ファイルとしてのインデックスです。
+
+	for (auto &selectColumn : selectColumns){
+		found = false;
+		for (size_t i = 0; i < tableNames.size(); ++i){
+			int j = 0;
+			for (auto &inputColumn : inputColumns[i]){
+				if (Equali(selectColumn.columnName, inputColumn.columnName) &&
+					(selectColumn.tableName.empty() || // テーブル名が設定されている場合のみテーブル名の比較を行います。
+					Equali(selectColumn.tableName, inputColumn.tableName))){
+
+					// 既に見つかっているのにもう一つ見つかったらエラーです。
+					if (found){
+						throw ResultValue::ERR_BAD_COLUMN_NAME;
+					}
+					found = true;
+					// 見つかった値を持つ列のデータを生成します。
+					selectColumnIndexes.push_back(ColumnIndex(i, j));
+				}
+				++j;
+			}
+		}
+		// 一つも見つからなくてもエラーです。
+		if (!found){
+			throw ResultValue::ERR_BAD_COLUMN_NAME;
+		}
+	}
+
+	// 出力する列名を設定します。
+	transform(
+		selectColumnIndexes.begin(),
+		selectColumnIndexes.end(),
+		back_inserter(outputColumns),
+		[&](const ColumnIndex& index){return inputColumns[index.table][index.column]; });
+
+	if (whereTopNode){
+		// 既存数値の符号を計算します。
+		for (auto &whereExtensionNode : whereExtensionNodes){
+			if (whereExtensionNode->middleOperator.kind == TokenKind::NOT_TOKEN &&
+				whereExtensionNode->column.columnName.empty() &&
+				whereExtensionNode->value.type == DataType::INTEGER){
+				whereExtensionNode->value = Data(whereExtensionNode->value.integer() * whereExtensionNode->signCoefficient);
+			}
+		}
+	}
+
+	vector<vector<vector<Data>>::iterator> currentRows; // 入力された各テーブルの、現在出力している行を指すカーソルです。
+	transform(
+		inputData.begin(),
+		inputData.end(),
+		back_inserter(currentRows),
+		[](vector<vector<Data>>& rows){return rows.begin(); });
+
+	// 出力するデータを設定します。
+	while (true){
+		outputData.push_back(vector<Data>());
+		vector<Data> &row = outputData.back(); // 出力している一行分のデータです。
+
+		// 行の各列のデータを入力から持ってきて設定します。
+		transform(
+			selectColumnIndexes.begin(),
+			selectColumnIndexes.end(),
+			back_inserter(row),
+			[&](const ColumnIndex& index){return (*currentRows[index.table])[index.column]; });
+
+		allColumnOutputData.push_back(vector<Data>());
+		vector<Data> &allColumnsRow = allColumnOutputData.back();// WHEREやORDERのためにすべての情報を含む行。rowとインデックスを共有します。
+
+		// allColumnsRowの列を設定します。
+		for (auto &currentRow : currentRows){
+			copy(
+				currentRow->begin(),
+				currentRow->end(),
+				back_inserter(allColumnsRow));
+		}
+		// WHEREの条件となる値を再帰的に計算します。
+		if (whereTopNode){
+			shared_ptr<ExtensionTreeNode> currentNode = whereTopNode; // 現在見ているノードです。
+			while (currentNode){
+				// 子ノードの計算が終わってない場合は、まずそちらの計算を行います。
+				if (currentNode->left && !currentNode->left->calculated){
+					currentNode = currentNode->left;
+					continue;
+				}
+				else if (currentNode->right && !currentNode->right->calculated){
+					currentNode = currentNode->right;
+					continue;
+				}
+
+				// 自ノードの値を計算します。
+				switch (currentNode->middleOperator.kind){
+				case TokenKind::NOT_TOKEN:
+					// ノードにデータが設定されている場合です。
+
+					// データが列名で指定されている場合、今扱っている行のデータを設定します。
+					if (!currentNode->column.columnName.empty()){
+						found = false;
+						for (size_t i = 0; i < allInputColumns.size(); ++i){
+							if (Equali(currentNode->column.columnName, allInputColumns[i].columnName) &&
+								(currentNode->column.tableName.empty() || // テーブル名が設定されている場合のみテーブル名の比較を行います。
+								Equali(currentNode->column.tableName, allInputColumns[i].tableName))){
+								// 既に見つかっているのにもう一つ見つかったらエラーです。
+								if (found){
+									throw ResultValue::ERR_BAD_COLUMN_NAME;
+								}
+								found = true;
+								currentNode->value = allColumnsRow[i];
+							}
+						}
+						// 一つも見つからなくてもエラーです。
+						if (!found){
+							throw ResultValue::ERR_BAD_COLUMN_NAME;
+						}
+						;
+						// 符号を考慮して値を計算します。
+						if (currentNode->value.type == DataType::INTEGER){
+							currentNode->value = Data(currentNode->value.integer() * currentNode->signCoefficient);
+						}
+					}
+					break;
+				case TokenKind::EQUAL:
+				case TokenKind::GREATER_THAN:
+				case TokenKind::GREATER_THAN_OR_EQUAL:
+				case TokenKind::LESS_THAN:
+				case TokenKind::LESS_THAN_OR_EQUAL:
+				case TokenKind::NOT_EQUAL:
+					// 比較演算子の場合です。
+
+					// 比較できるのは文字列型か整数型で、かつ左右の型が同じ場合です。
+					if (currentNode->left->value.type != DataType::INTEGER && currentNode->left->value.type != DataType::STRING ||
+						currentNode->left->value.type != currentNode->right->value.type){
+						throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+					}
+					currentNode->value.type = DataType::BOOLEAN;
+
+					// 比較結果を型と演算子によって計算方法を変えて、計算します。
+					switch (currentNode->left->value.type){
+					case DataType::INTEGER:
+						switch (currentNode->middleOperator.kind){
+						case TokenKind::EQUAL:
+							currentNode->value = Data(currentNode->left->value.integer() == currentNode->right->value.integer());
+							break;
+						case TokenKind::GREATER_THAN:
+							currentNode->value = Data(currentNode->left->value.integer() > currentNode->right->value.integer());
+							break;
+						case TokenKind::GREATER_THAN_OR_EQUAL:
+							currentNode->value = Data(currentNode->left->value.integer() >= currentNode->right->value.integer());
+							break;
+						case TokenKind::LESS_THAN:
+							currentNode->value = Data(currentNode->left->value.integer() < currentNode->right->value.integer());
+							break;
+						case TokenKind::LESS_THAN_OR_EQUAL:
+							currentNode->value = Data(currentNode->left->value.integer() <= currentNode->right->value.integer());
+							break;
+						case TokenKind::NOT_EQUAL:
+							currentNode->value = Data(currentNode->left->value.integer() != currentNode->right->value.integer());
+							break;
+						}
+						break;
+					case DataType::STRING:
+						switch (currentNode->middleOperator.kind){
+						case TokenKind::EQUAL:
+							currentNode->value = Data(currentNode->left->value.string() == currentNode->right->value.string());
+							break;
+						case TokenKind::GREATER_THAN:
+							currentNode->value = Data(currentNode->left->value.string() > currentNode->right->value.string());
+							break;
+						case TokenKind::GREATER_THAN_OR_EQUAL:
+							currentNode->value = Data(currentNode->left->value.string() >= currentNode->right->value.string());
+							break;
+						case TokenKind::LESS_THAN:
+							currentNode->value = Data(currentNode->left->value.string() < currentNode->right->value.string());
+							break;
+						case TokenKind::LESS_THAN_OR_EQUAL:
+							currentNode->value = Data(currentNode->left->value.string() <= currentNode->right->value.string());
+							break;
+						case TokenKind::NOT_EQUAL:
+							currentNode->value = Data(currentNode->left->value.string() != currentNode->right->value.string());
+							break;
+						}
+						break;
+					}
+					break;
+				case TokenKind::PLUS:
+				case TokenKind::MINUS:
+				case TokenKind::ASTERISK:
+				case TokenKind::SLASH:
+					// 四則演算の場合です。
+
+					// 演算できるのは整数型同士の場合のみです。
+					if (currentNode->left->value.type != DataType::INTEGER || currentNode->right->value.type != DataType::INTEGER){
+						throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+					}
+					currentNode->value.type = DataType::INTEGER;
+
+					// 比較結果を演算子によって計算方法を変えて、計算します。
+					switch (currentNode->middleOperator.kind){
+					case TokenKind::PLUS:
+						currentNode->value = Data(currentNode->left->value.integer() + currentNode->right->value.integer());
+						break;
+					case TokenKind::MINUS:
+						currentNode->value = Data(currentNode->left->value.integer() - currentNode->right->value.integer());
+						break;
+					case TokenKind::ASTERISK:
+						currentNode->value = Data(currentNode->left->value.integer() * currentNode->right->value.integer());
+						break;
+					case TokenKind::SLASH:
+						currentNode->value = Data(currentNode->left->value.integer() / currentNode->right->value.integer());
+						break;
+					}
+					break;
+				case TokenKind::AND:
+				case TokenKind::OR:
+					// 論理演算の場合です。
+
+					// 演算できるのは真偽値型同士の場合のみです。
+					if (currentNode->left->value.type != DataType::BOOLEAN || currentNode->right->value.type != DataType::BOOLEAN){
+						throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+					}
+					currentNode->value.type = DataType::BOOLEAN;
+
+					// 比較結果を演算子によって計算方法を変えて、計算します。
+					switch (currentNode->middleOperator.kind){
+					case TokenKind::AND:
+						currentNode->value = Data(currentNode->left->value.boolean() && currentNode->right->value.boolean());
+						break;
+					case TokenKind::OR:
+						currentNode->value = Data(currentNode->left->value.boolean() || currentNode->right->value.boolean());
+						break;
+					}
+				}
+				currentNode->calculated = true;
+
+				// 自身の計算が終わった後は親の計算に戻ります。
+				currentNode = currentNode->parent;
+			}
+
+			// 条件に合わない行は出力から削除します。
+			if (!whereTopNode->value.boolean()){
+				allColumnOutputData.pop_back();
+				outputData.pop_back();
+			}
+			// WHERE条件の計算結果をリセットします。
+			for (auto &whereExtensionNode : whereExtensionNodes){
+				whereExtensionNode->calculated = false;
+			}
+		}
+
+		// 各テーブルの行のすべての組み合わせを出力します。
+
+		// 最後のテーブルのカレント行をインクリメントします。
+		++currentRows[tableNames.size() - 1];
+
+		// 最後のテーブルが最終行になっていた場合は先頭に戻し、順に前のテーブルのカレント行をインクリメントします。
+		for (int i = tableNames.size() - 1; currentRows[i] == inputData[i].end() && 0 < i; --i){
+			++currentRows[i - 1];
+			currentRows[i] = inputData[i].begin();
+		}
+
+		// 最初のテーブルが最後の行を超えたなら出力行の生成は終わりです。
+		if (currentRows[0] == inputData[0].end()){
+			break;
+		}
+	}
+
+	// ORDER句による並び替えの処理を行います。
+	if (!orderByColumns.empty()){
+		// ORDER句で指定されている列が、全ての入力行の中のどの行なのかを計算します。
+		vector<int> orderByColumnIndexes; // ORDER句で指定された列の、すべての行の中でのインデックスです。
+
+		for (auto &orderByColumn : orderByColumns){
+			found = false;
+			for (size_t i = 0; i < allInputColumns.size(); ++i){
+				if (Equali(orderByColumn.columnName, allInputColumns[i].columnName) &&
+					(orderByColumn.tableName.empty() || // テーブル名が設定されている場合のみテーブル名の比較を行います。
+					Equali(orderByColumn.tableName, allInputColumns[i].tableName))){
+					// 既に見つかっているのにもう一つ見つかったらエラーです。
+					if (found){
+						throw ResultValue::ERR_BAD_COLUMN_NAME;
+					}
+					found = true;
+					orderByColumnIndexes.push_back(i);
+				}
+			}
+			// 一つも見つからなくてもエラーです。
+			if (!found){
+				throw ResultValue::ERR_BAD_COLUMN_NAME;
+			}
+		}
+
+		// outputDataとallColumnOutputDataのソートを一緒に行います。簡便のため凝ったソートは使わず、選択ソートを利用します。
+		for (size_t i = 0; i < outputData.size(); ++i){
+			int minIndex = i; // 現在までで最小の行のインデックスです。
+			for (size_t j = i + 1; j < outputData.size(); ++j){
+				bool jLessThanMin = false; // インデックスがjの値が、minIndexの値より小さいかどうかです。
+				for (size_t k = 0; k < orderByColumnIndexes.size(); ++k){
+					const Data &mData = allColumnOutputData[minIndex][orderByColumnIndexes[k]]; // インデックスがminIndexのデータです。
+					const Data &jData = allColumnOutputData[j][orderByColumnIndexes[k]]; // インデックスがjのデータです。
+					int cmp = 0; // 比較結果です。等しければ0、インデックスjの行が大きければプラス、インデックスminIndexの行が大きければマイナスとなります。
+					switch (mData.type)
+					{
+					case DataType::INTEGER:
+						cmp = jData.integer() - mData.integer();
+						break;
+					case DataType::STRING:
+						cmp = strcmp(jData.string().c_str(), mData.string().c_str());
+						break;
+					}
+
+					// 降順ならcmpの大小を入れ替えます。
+					if (orders[k] == TokenKind::DESC){
+						cmp *= -1;
+					}
+					if (cmp < 0){
+						jLessThanMin = true;
+						break;
+					}
+					else if (0 < cmp){
+						break;
+					}
+				}
+				if (jLessThanMin){
+					minIndex = j;
+				}
+			}
+			vector<Data> tmp = outputData[minIndex];
+			outputData[minIndex] = outputData[i];
+			outputData[i] = tmp;
+
+			tmp = allColumnOutputData[minIndex];
+			allColumnOutputData[minIndex] = allColumnOutputData[i];
+			allColumnOutputData[i] = tmp;
+		}
+	}
+
+	// 出力ファイルを開きます。
+	outputFile = ofstream(m_outputFileName);
+	if (outputFile.bad()){
+		throw ResultValue::ERR_FILE_OPEN;
+	}
+
+	// 出力ファイルに列名を出力します。
+	for (size_t i = 0; i < selectColumns.size(); ++i){
+		outputFile << outputColumns[i].columnName;
+		if (i < selectColumns.size() - 1){
+			outputFile << ",";
+		}
+		else{
+			outputFile << "\n";
+		}
+	}
+
+	// 出力ファイルにデータを出力します。
+	for (auto& outputRow : outputData){
+		size_t i = 0;
+		for (const auto &column : outputRow){
+			switch (column.type){
+			case DataType::INTEGER:
+				outputFile << column.integer();
+				break;
+			case DataType::STRING:
+				outputFile << column.string();
+				break;
+			}
+			if (i++ < selectColumns.size() - 1){
+				outputFile << ",";
+			}
+			else{
+				outputFile << "\n";
+			}
+		}
+	}
+	if (outputFile.bad()){
+		throw ResultValue::ERR_FILE_WRITE;
+	}
+}
+
 //! SqlQueryクラスの新しいインスタンスを初期化します。
 SqlQuery::SqlQuery() :
 	keywordConditions({
@@ -923,401 +1325,8 @@ int SqlQuery::Execute(const string sql, const string outputFileName)
 		GetTokens();
 		AnalyzeTokens();
 		ReadCsv();
-
-		vector<Column> allInputColumns; // 入力に含まれるすべての列の一覧です。
-
-		// 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
-		for (size_t i = 0; i < tableNames.size(); ++i){
-			transform(
-				inputColumns[i].begin(),
-				inputColumns[i].end(),
-				back_inserter(allInputColumns),
-				[&](const Column& column){return Column(tableNames[i], column.columnName); });
-		}
-
-		// SELECT句の列名指定が*だった場合は、入力CSVの列名がすべて選択されます。
-		if (selectColumns.empty()){
-			copy(allInputColumns.begin(), allInputColumns.end(), back_inserter(selectColumns));
-		}
-
-		vector<Column> outputColumns; // 出力するすべての行の情報です。
-
-		// SELECT句で指定された列名が、何個目の入力ファイルの何列目に相当するかを判別します。
-		vector<ColumnIndex> selectColumnIndexes; // SELECT句で指定された列の、入力ファイルとしてのインデックスです。
-
-		for (auto &selectColumn : selectColumns){
-			found = false;
-			for (size_t i = 0; i < tableNames.size(); ++i){
-				int j = 0;
-				for (auto &inputColumn : inputColumns[i]){
-					if (Equali(selectColumn.columnName, inputColumn.columnName) &&
-						(selectColumn.tableName.empty() || // テーブル名が設定されている場合のみテーブル名の比較を行います。
-						Equali(selectColumn.tableName, inputColumn.tableName))){
-
-						// 既に見つかっているのにもう一つ見つかったらエラーです。
-						if (found){
-							throw ResultValue::ERR_BAD_COLUMN_NAME;
-						}
-						found = true;
-						// 見つかった値を持つ列のデータを生成します。
-						selectColumnIndexes.push_back(ColumnIndex(i, j));
-					}
-					++j;
-				}
-			}
-			// 一つも見つからなくてもエラーです。
-			if (!found){
-				throw ResultValue::ERR_BAD_COLUMN_NAME;
-			}
-		}
-
-		// 出力する列名を設定します。
-		transform(
-			selectColumnIndexes.begin(),
-			selectColumnIndexes.end(),
-			back_inserter(outputColumns),
-			[&](const ColumnIndex& index){return inputColumns[index.table][index.column]; });
-
-		if (whereTopNode){
-			// 既存数値の符号を計算します。
-			for (auto &whereExtensionNode : whereExtensionNodes){
-				if (whereExtensionNode->middleOperator.kind == TokenKind::NOT_TOKEN &&
-					whereExtensionNode->column.columnName.empty() &&
-					whereExtensionNode->value.type == DataType::INTEGER){
-					whereExtensionNode->value = Data(whereExtensionNode->value.integer() * whereExtensionNode->signCoefficient);
-				}
-			}
-		}
-
-		vector<vector<vector<Data>>::iterator> currentRows; // 入力された各テーブルの、現在出力している行を指すカーソルです。
-		transform(
-			inputData.begin(),
-			inputData.end(),
-			back_inserter(currentRows),
-			[](vector<vector<Data>>& rows){return rows.begin(); });
-
-		// 出力するデータを設定します。
-		while (true){
-			outputData.push_back(vector<Data>());
-			vector<Data> &row = outputData.back(); // 出力している一行分のデータです。
-
-			// 行の各列のデータを入力から持ってきて設定します。
-			transform(
-				selectColumnIndexes.begin(),
-				selectColumnIndexes.end(),
-				back_inserter(row),
-				[&](const ColumnIndex& index){return (*currentRows[index.table])[index.column]; });
-
-			allColumnOutputData.push_back(vector<Data>());
-			vector<Data> &allColumnsRow = allColumnOutputData.back();// WHEREやORDERのためにすべての情報を含む行。rowとインデックスを共有します。
-
-			// allColumnsRowの列を設定します。
-			for (auto &currentRow : currentRows){
-				copy(
-					currentRow->begin(),
-					currentRow->end(),
-					back_inserter(allColumnsRow));
-			}
-			// WHEREの条件となる値を再帰的に計算します。
-			if (whereTopNode){
-				shared_ptr<ExtensionTreeNode> currentNode = whereTopNode; // 現在見ているノードです。
-				while (currentNode){
-					// 子ノードの計算が終わってない場合は、まずそちらの計算を行います。
-					if (currentNode->left && !currentNode->left->calculated){
-						currentNode = currentNode->left;
-						continue;
-					}
-					else if (currentNode->right && !currentNode->right->calculated){
-						currentNode = currentNode->right;
-						continue;
-					}
-
-					// 自ノードの値を計算します。
-					switch (currentNode->middleOperator.kind){
-					case TokenKind::NOT_TOKEN:
-						// ノードにデータが設定されている場合です。
-
-						// データが列名で指定されている場合、今扱っている行のデータを設定します。
-						if (!currentNode->column.columnName.empty()){
-							found = false;
-							for (size_t i = 0; i < allInputColumns.size(); ++i){
-								if (Equali(currentNode->column.columnName, allInputColumns[i].columnName) &&
-									(currentNode->column.tableName.empty() || // テーブル名が設定されている場合のみテーブル名の比較を行います。
-									Equali(currentNode->column.tableName, allInputColumns[i].tableName))){
-									// 既に見つかっているのにもう一つ見つかったらエラーです。
-									if (found){
-										throw ResultValue::ERR_BAD_COLUMN_NAME;
-									}
-									found = true;
-									currentNode->value = allColumnsRow[i];
-								}
-							}
-							// 一つも見つからなくてもエラーです。
-							if (!found){
-								throw ResultValue::ERR_BAD_COLUMN_NAME;
-							}
-							;
-							// 符号を考慮して値を計算します。
-							if (currentNode->value.type == DataType::INTEGER){
-								currentNode->value = Data(currentNode->value.integer() * currentNode->signCoefficient);
-							}
-						}
-						break;
-					case TokenKind::EQUAL:
-					case TokenKind::GREATER_THAN:
-					case TokenKind::GREATER_THAN_OR_EQUAL:
-					case TokenKind::LESS_THAN:
-					case TokenKind::LESS_THAN_OR_EQUAL:
-					case TokenKind::NOT_EQUAL:
-						// 比較演算子の場合です。
-
-						// 比較できるのは文字列型か整数型で、かつ左右の型が同じ場合です。
-						if (currentNode->left->value.type != DataType::INTEGER && currentNode->left->value.type != DataType::STRING ||
-							currentNode->left->value.type != currentNode->right->value.type){
-							throw ResultValue::ERR_WHERE_OPERAND_TYPE;
-						}
-						currentNode->value.type = DataType::BOOLEAN;
-
-						// 比較結果を型と演算子によって計算方法を変えて、計算します。
-						switch (currentNode->left->value.type){
-						case DataType::INTEGER:
-							switch (currentNode->middleOperator.kind){
-							case TokenKind::EQUAL:
-								currentNode->value = Data(currentNode->left->value.integer() == currentNode->right->value.integer());
-								break;
-							case TokenKind::GREATER_THAN:
-								currentNode->value = Data(currentNode->left->value.integer() > currentNode->right->value.integer());
-								break;
-							case TokenKind::GREATER_THAN_OR_EQUAL:
-								currentNode->value = Data(currentNode->left->value.integer() >= currentNode->right->value.integer());
-								break;
-							case TokenKind::LESS_THAN:
-								currentNode->value = Data(currentNode->left->value.integer() < currentNode->right->value.integer());
-								break;
-							case TokenKind::LESS_THAN_OR_EQUAL:
-								currentNode->value = Data(currentNode->left->value.integer() <= currentNode->right->value.integer());
-								break;
-							case TokenKind::NOT_EQUAL:
-								currentNode->value = Data(currentNode->left->value.integer() != currentNode->right->value.integer());
-								break;
-							}
-							break;
-						case DataType::STRING:
-							switch (currentNode->middleOperator.kind){
-							case TokenKind::EQUAL:
-								currentNode->value = Data(currentNode->left->value.string() == currentNode->right->value.string());
-								break;
-							case TokenKind::GREATER_THAN:
-								currentNode->value = Data(currentNode->left->value.string() > currentNode->right->value.string());
-								break;
-							case TokenKind::GREATER_THAN_OR_EQUAL:
-								currentNode->value = Data(currentNode->left->value.string() >= currentNode->right->value.string());
-								break;
-							case TokenKind::LESS_THAN:
-								currentNode->value = Data(currentNode->left->value.string() < currentNode->right->value.string());
-								break;
-							case TokenKind::LESS_THAN_OR_EQUAL:
-								currentNode->value = Data(currentNode->left->value.string() <= currentNode->right->value.string());
-								break;
-							case TokenKind::NOT_EQUAL:
-								currentNode->value = Data(currentNode->left->value.string() != currentNode->right->value.string());
-								break;
-							}
-							break;
-						}
-						break;
-					case TokenKind::PLUS:
-					case TokenKind::MINUS:
-					case TokenKind::ASTERISK:
-					case TokenKind::SLASH:
-						// 四則演算の場合です。
-
-						// 演算できるのは整数型同士の場合のみです。
-						if (currentNode->left->value.type != DataType::INTEGER || currentNode->right->value.type != DataType::INTEGER){
-							throw ResultValue::ERR_WHERE_OPERAND_TYPE;
-						}
-						currentNode->value.type = DataType::INTEGER;
-
-						// 比較結果を演算子によって計算方法を変えて、計算します。
-						switch (currentNode->middleOperator.kind){
-						case TokenKind::PLUS:
-							currentNode->value = Data(currentNode->left->value.integer() + currentNode->right->value.integer());
-							break;
-						case TokenKind::MINUS:
-							currentNode->value = Data(currentNode->left->value.integer() - currentNode->right->value.integer());
-							break;
-						case TokenKind::ASTERISK:
-							currentNode->value = Data(currentNode->left->value.integer() * currentNode->right->value.integer());
-							break;
-						case TokenKind::SLASH:
-							currentNode->value = Data(currentNode->left->value.integer() / currentNode->right->value.integer());
-							break;
-						}
-						break;
-					case TokenKind::AND:
-					case TokenKind::OR:
-						// 論理演算の場合です。
-
-						// 演算できるのは真偽値型同士の場合のみです。
-						if (currentNode->left->value.type != DataType::BOOLEAN || currentNode->right->value.type != DataType::BOOLEAN){
-							throw ResultValue::ERR_WHERE_OPERAND_TYPE;
-						}
-						currentNode->value.type = DataType::BOOLEAN;
-
-						// 比較結果を演算子によって計算方法を変えて、計算します。
-						switch (currentNode->middleOperator.kind){
-						case TokenKind::AND:
-							currentNode->value = Data(currentNode->left->value.boolean() && currentNode->right->value.boolean());
-							break;
-						case TokenKind::OR:
-							currentNode->value = Data(currentNode->left->value.boolean() || currentNode->right->value.boolean());
-							break;
-						}
-					}
-					currentNode->calculated = true;
-
-					// 自身の計算が終わった後は親の計算に戻ります。
-					currentNode = currentNode->parent;
-				}
-
-				// 条件に合わない行は出力から削除します。
-				if (!whereTopNode->value.boolean()){
-					allColumnOutputData.pop_back();
-					outputData.pop_back();
-				}
-				// WHERE条件の計算結果をリセットします。
-				for (auto &whereExtensionNode : whereExtensionNodes){
-					whereExtensionNode->calculated = false;
-				}
-			}
-
-			// 各テーブルの行のすべての組み合わせを出力します。
-
-			// 最後のテーブルのカレント行をインクリメントします。
-			++currentRows[tableNames.size() - 1];
-
-			// 最後のテーブルが最終行になっていた場合は先頭に戻し、順に前のテーブルのカレント行をインクリメントします。
-			for (int i = tableNames.size() - 1; currentRows[i] == inputData[i].end() && 0 < i; --i){
-				++currentRows[i - 1];
-				currentRows[i] = inputData[i].begin();
-			}
-
-			// 最初のテーブルが最後の行を超えたなら出力行の生成は終わりです。
-			if (currentRows[0] == inputData[0].end()){
-				break;
-			}
-		}
-
-		// ORDER句による並び替えの処理を行います。
-		if (!orderByColumns.empty()){
-			// ORDER句で指定されている列が、全ての入力行の中のどの行なのかを計算します。
-			vector<int> orderByColumnIndexes; // ORDER句で指定された列の、すべての行の中でのインデックスです。
-
-			for (auto &orderByColumn : orderByColumns){
-				found = false;
-				for (size_t i = 0; i < allInputColumns.size(); ++i){
-					if (Equali(orderByColumn.columnName, allInputColumns[i].columnName) &&
-						(orderByColumn.tableName.empty() || // テーブル名が設定されている場合のみテーブル名の比較を行います。
-						Equali(orderByColumn.tableName, allInputColumns[i].tableName))){
-						// 既に見つかっているのにもう一つ見つかったらエラーです。
-						if (found){
-							throw ResultValue::ERR_BAD_COLUMN_NAME;
-						}
-						found = true;
-						orderByColumnIndexes.push_back(i);
-					}
-				}
-				// 一つも見つからなくてもエラーです。
-				if (!found){
-					throw ResultValue::ERR_BAD_COLUMN_NAME;
-				}
-			}
-
-			// outputDataとallColumnOutputDataのソートを一緒に行います。簡便のため凝ったソートは使わず、選択ソートを利用します。
-			for (size_t i = 0; i < outputData.size(); ++i){
-				int minIndex = i; // 現在までで最小の行のインデックスです。
-				for (size_t j = i + 1; j < outputData.size(); ++j){
-					bool jLessThanMin = false; // インデックスがjの値が、minIndexの値より小さいかどうかです。
-					for (size_t k = 0; k < orderByColumnIndexes.size(); ++k){
-						const Data &mData = allColumnOutputData[minIndex][orderByColumnIndexes[k]]; // インデックスがminIndexのデータです。
-						const Data &jData = allColumnOutputData[j][orderByColumnIndexes[k]]; // インデックスがjのデータです。
-						int cmp = 0; // 比較結果です。等しければ0、インデックスjの行が大きければプラス、インデックスminIndexの行が大きければマイナスとなります。
-						switch (mData.type)
-						{
-						case DataType::INTEGER:
-							cmp = jData.integer() - mData.integer();
-							break;
-						case DataType::STRING:
-							cmp = strcmp(jData.string().c_str(), mData.string().c_str());
-							break;
-						}
-
-						// 降順ならcmpの大小を入れ替えます。
-						if (orders[k] == TokenKind::DESC){
-							cmp *= -1;
-						}
-						if (cmp < 0){
-							jLessThanMin = true;
-							break;
-						}
-						else if (0 < cmp){
-							break;
-						}
-					}
-					if (jLessThanMin){
-						minIndex = j;
-					}
-				}
-				vector<Data> tmp = outputData[minIndex];
-				outputData[minIndex] = outputData[i];
-				outputData[i] = tmp;
-
-				tmp = allColumnOutputData[minIndex];
-				allColumnOutputData[minIndex] = allColumnOutputData[i];
-				allColumnOutputData[i] = tmp;
-			}
-		}
-
-		// 出力ファイルを開きます。
-		outputFile = ofstream(m_outputFileName);
-		if (outputFile.bad()){
-			throw ResultValue::ERR_FILE_OPEN;
-		}
-
-		// 出力ファイルに列名を出力します。
-		for (size_t i = 0; i < selectColumns.size(); ++i){
-			outputFile << outputColumns[i].columnName;
-			if (i < selectColumns.size() - 1){
-				outputFile << ",";
-			}
-			else{
-				outputFile << "\n";
-			}
-		}
-
-		// 出力ファイルにデータを出力します。
-		for (auto& outputRow : outputData){
-			size_t i = 0;
-			for (const auto &column : outputRow){
-				switch (column.type){
-				case DataType::INTEGER:
-					outputFile << column.integer();
-					break;
-				case DataType::STRING:
-					outputFile << column.string();
-					break;
-				}
-				if (i++ < selectColumns.size() - 1){
-					outputFile << ",";
-				}
-				else{
-					outputFile << "\n";
-				}
-			}
-		}
-		if (outputFile.bad()){
-			throw ResultValue::ERR_FILE_WRITE;
-		}
+		WriteCsv();
+		
 
 		// 正常時の後処理です。
 
