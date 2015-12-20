@@ -1293,9 +1293,9 @@ void Csv::CloseOutputFile(ofstream &outputFile) const
 //! @param [in] columns 出力するヘッダ情報です。
 void Csv::WriteHeader(ofstream &outputFile, const vector<Column> &columns) const
 {
-	for (size_t i = 0; i < columns.size(); ++i){
-		outputFile << columns[i].outputName;
-		if (i < columns.size() - 1){
+	for (auto it = columns.begin(); it != columns.end(); ++it){
+		outputFile << it->outputName;
+		if (it != columns.end() - 1){
 			outputFile << ",";
 		}
 		else{
