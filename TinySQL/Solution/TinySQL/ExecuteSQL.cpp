@@ -2612,6 +2612,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 {
 	auto queryInfo = make_shared<SqlQueryInfo>();
 
+	auto ASTERISK = token(TokenKind::ASTERISK); // アスタリスクトークンのパーサーです。
 	auto COMMA = token(TokenKind::COMMA); // カンマトークンのパーサーです。
 	auto DOT = token(TokenKind::DOT); // ドットトークンのパーサーです。
 	auto IDENTIFIER = token(TokenKind::IDENTIFIER); // 識別子トークンのパーサーです。
@@ -2636,15 +2637,13 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 
 	auto SELECT_COLUMN = FIRST_SELECT_COLUMN_NAME >> -(DOT >> SECOND_SELECT_COLUMN_NAME);
 
-	auto SELECT_COLUMNS = token(TokenKind::ASTERISK) | SELECT_COLUMN >> ~(COMMA >> SELECT_COLUMN);
+	auto SELECT_COLUMNS = SELECT_COLUMN >> ~(COMMA >> SELECT_COLUMN);
+
+	auto SELECT_CLAUSE = SELECT >> (ASTERISK | SELECT_COLUMNS);
 
 	auto tokenCursol = tokens.begin(); // 現在見ているトークンを指します。
 
-	if (!SELECT->Parse(tokenCursol)){
-		throw ResultValue::ERR_SQL_SYNTAX;
-	}
-
-	if (!SELECT_COLUMNS->Parse(tokenCursol)){
+	if (!SELECT_CLAUSE->Parse(tokenCursol)){
 		throw ResultValue::ERR_SQL_SYNTAX;
 	}
 
