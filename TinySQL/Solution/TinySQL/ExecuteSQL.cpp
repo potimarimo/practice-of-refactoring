@@ -886,6 +886,31 @@ public:
 ////! @params [in] once 繰り返しの一回分となる規則です。
 const shared_ptr<const Parser> operator~(const shared_ptr<const Parser> once);
 
+//! 先読みを行い、カーソルを進めず先にその規則の文法が存在するかどうかを返すパーサーです。
+class AndPredicateParser : public Parser
+{
+	const shared_ptr<const Parser> m_parser; //!< 先読みする規則です。
+	const function<void(bool)> m_action; //!< 先読みを実行したら実行する処理です。先読みが成功したかどうかを受け取ります。
+public:
+	//! AndPredicateParserクラスの新しいインスタンスを初期化します。
+	//! @param [in] 先読みを実行したら実行する処理です。先読みが成功したかどうかを受け取ります。
+	//! @params [in] parser 先読みする規則です。
+	AndPredicateParser(const function<void(bool)> action, const shared_ptr<const Parser> parser);
+
+	//! AndPredicateParserクラスの新しいインスタンスを初期化します。
+	//! @params [in] parser 先読みする規則です。
+	AndPredicateParser(const shared_ptr<const Parser> parser);
+
+	//! 読み取りが成功したら実行する処理を登録します。
+	//! @param [in] 先読みを実行したら実行する処理です。先読みが成功したかどうかを受け取ります。
+	const shared_ptr<const AndPredicateParser> Action(const function<void(bool)> action) const;
+
+	//! 繰り返しのパースを行います。
+	//! @params [in] cursol 現在の読み取り位置を表すカーソルです。
+	//! @return パースが成功したかどうかです。
+	const bool Parse(vector<const Token>::const_iterator& cursol) const override;
+};
+
 //! 出力するデータを管理します。
 class OutputData
 {
@@ -2187,6 +2212,44 @@ const shared_ptr<const Parser> operator~(const shared_ptr<const Parser> once)
 	return make_shared<ZeroOrMoreParser>(once);
 }
 
+//! AndPredicateParserクラスの新しいインスタンスを初期化します。
+//! @param [in] 先読みを実行したら実行する処理です。先読みが成功したかどうかを受け取ります。
+//! @params [in] parser 先読みする規則です。
+AndPredicateParser::AndPredicateParser(const function<void(bool)> action, const shared_ptr<const Parser> parser) :m_action(action), m_parser(parser){}
+
+//! ZeroOrMoreParserクラスの新しいインスタンスを初期化します。
+//! @params [in] parser 先読みする規則です。
+AndPredicateParser::AndPredicateParser(const shared_ptr<const Parser> parser) : m_parser(parser){}
+
+//! 読み取りが成功したら実行する処理を登録します。
+//! @param [in] 先読みを実行したら実行する処理です。先読みが成功したかどうかを受け取ります。
+const shared_ptr<const AndPredicateParser> AndPredicateParser::Action(const function<void(bool)> action) const
+{
+	return make_shared<AndPredicateParser>(action, m_parser);
+}
+
+//! 繰り返しのパースを行います。
+//! @params [in] cursol 現在の読み取り位置を表すカーソルです。
+//! @return パースが成功したかどうかです。
+const bool AndPredicateParser::Parse(vector<const Token>::const_iterator& cursol) const
+{
+	auto beforeParse = cursol;
+	if (m_parser->Parse(cursol)){
+		if (m_action){
+			m_action(true);
+		}
+		cursol = beforeParse;
+		return true;
+	}
+	else{
+		if (m_action){
+			m_action(false);
+		}
+		cursol = beforeParse;
+		return false;
+	}
+}
+
 //! 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
 void OutputData::InitializeAllInputColumns()
 {
@@ -2667,6 +2730,10 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 		++currentNode->parenOpenBeforeClose;
 	});
 
+	auto WHERE_UNIARY_MINUS = MINUS->Action([&](const Token token){
+		currentNode->signCoefficient = -1;
+	});
+
 	// 記号の意味
 	// A >> B		:Aの後にBが続く
 	// -A			:Aが任意
@@ -2694,11 +2761,22 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 
 	auto ORDER_BY_CLAUSE = ORDER >> BY >> ORDER_BY_COLUMNS; // ORDER BY句のパーサーです。
 
+	// オペランドに前置される + か -の次のトークンを先読みし判別するパーサーです。
+	auto WHERE_UNIALY_NEXT = make_shared<AndPredicateParser>(IDENTIFIER | INT_LITERAL)->Action([&](const bool success){
+		if (!success){
+			throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+		}
+	});
+
+	// オペランドに前置される + か - を読み込むパーサーです。
+	auto WHERE_UNIAEY_PLUS_MINUS = (PLUS | WHERE_UNIARY_MINUS) >> WHERE_UNIALY_NEXT;
+
 	auto tokenCursol = tokens.begin(); // 現在見ているトークンを指します。
 
 	if (!SELECT_CLAUSE->Parse(tokenCursol)){
 		throw ResultValue::ERR_SQL_SYNTAX;
 	}
+
 
 	// ORDER句とWHERE句を読み込みます。最大各一回ずつ書くことができます。
 	bool readOrder = false; // すでにORDER句が読み込み済みかどうかです。
@@ -2743,18 +2821,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 
 				(~WHERE_OPEN_PAREN)->Parse(tokenCursol);
 
-				// オペランドに前置される+か-を読み込みます。
-				if (tokenCursol->kind == TokenKind::PLUS || tokenCursol->kind == TokenKind::MINUS){
-
-					// +-を前置するのは列名と数値リテラルのみです。
-					if (tokenCursol[1].kind != TokenKind::IDENTIFIER && tokenCursol[1].kind != TokenKind::INT_LITERAL){
-						throw ResultValue::ERR_WHERE_OPERAND_TYPE;
-					}
-					if (tokenCursol->kind == TokenKind::MINUS){
-						currentNode->signCoefficient = -1;
-					}
-					++tokenCursol;
-				}
+				WHERE_UNIAEY_PLUS_MINUS->Parse(tokenCursol);
 
 				// 列名、整数リテラル、文字列リテラルのいずれかをオペランドとして読み込みます。
 				if (tokenCursol->kind == TokenKind::IDENTIFIER){
