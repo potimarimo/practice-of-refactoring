@@ -935,9 +935,10 @@ int ExecuteSQL(const string sql, const string outputFileName)
 
 			// 入力CSVのヘッダ行を読み込みます。
 			inputColumns.push_back(vector<Column>());
-			char inputLine[MAX_FILE_LINE_LENGTH] = ""; // ファイルから読み込んだ行文字列です。
-			if (fgets(inputLine, MAX_FILE_LINE_LENGTH, inputTableFiles.back())){
-				charactorCursol = inputLine;
+			char inputLineBuffer[MAX_FILE_LINE_LENGTH] = ""; // ファイルから読み込んだ行文字列です。
+			if (fgets(inputLineBuffer, MAX_FILE_LINE_LENGTH, inputTableFiles.back())){
+				string inputLine = inputLineBuffer;
+				charactorCursol = inputLine.c_str();
 
 				// 読み込んだ行を最後まで読みます。
 				while (*charactorCursol && *charactorCursol != '\r' && *charactorCursol != '\n'){
@@ -963,7 +964,8 @@ int ExecuteSQL(const string sql, const string outputFileName)
 
 			inputData.push_back(vector<Data**>());
 
-			while (fgets(inputLine, MAX_FILE_LINE_LENGTH, inputTableFiles.back())){
+			while (fgets(inputLineBuffer, MAX_FILE_LINE_LENGTH, inputTableFiles.back())){
+				string inputLine = inputLineBuffer;
 				inputData[i].push_back((Data**)malloc(MAX_COLUMN_COUNT * sizeof(Data*))); // 入力されている一行分のデータです。
 				Data** row = inputData[i].back();
 				// 生成した行を初期化します。
@@ -971,7 +973,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					row[j] = nullptr;
 				}
 
-				charactorCursol = inputLine;
+				charactorCursol = inputLine.c_str();
 				int columnNum = 0; // いま何列目を読み込んでいるか。0基底の数字となります。
 
 				// 読み込んだ行を最後まで読みます。
