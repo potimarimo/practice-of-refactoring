@@ -199,6 +199,11 @@ public:
 	ExtensionTreeNode();
 };
 
+//! 引数として渡したノード及びその子孫のノードを取得します。
+//! @param [in] 戻り値のルートとなるノードです。
+//! @return 自身及び子孫のノードです。
+const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> SelfAndDescendants(shared_ptr<ExtensionTreeNode>);
+
 //! SqlQueryの構文情報を扱うクラスです。
 class SqlQueryInfo
 {
@@ -565,6 +570,30 @@ ExtensionTreeNode::ExtensionTreeNode()
 {
 }
 
+//! 引数として渡したノード及びその子孫のノードを取得します。
+//! @param [in] 戻り値のルートとなるノードです。
+//! @return 自身及び子孫のノードです。
+const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> SelfAndDescendants(shared_ptr<ExtensionTreeNode> self)
+{
+	auto selfAndDescendants = make_shared<vector<const shared_ptr<ExtensionTreeNode>>>();
+	selfAndDescendants->push_back(self);
+	if (self->left){
+		auto descendants = SelfAndDescendants(self->left);
+		copy(
+			descendants->begin(),
+			descendants->end(),
+			back_inserter(*selfAndDescendants));
+	}
+	if (self->right){
+		auto descendants = SelfAndDescendants(self->right);
+		copy(
+			descendants->begin(),
+			descendants->end(),
+			back_inserter(*selfAndDescendants));
+	}
+	return selfAndDescendants;
+}
+
 //! 全てが数値となる列は数値列に変換します。
 void InputTable::InitializeIntegerColumn()
 {
@@ -767,11 +796,12 @@ void OutputData::WriteCsv(const string outputFileName, const vector<const InputT
 
 	if (queryInfo.whereTopNode){
 		// 既存数値の符号を計算します。
-		for (auto &whereExtensionNode : queryInfo.whereExtensionNodes){
-			if (whereExtensionNode->middleOperator.kind == TokenKind::NOT_TOKEN &&
-				whereExtensionNode->column.columnName.empty() &&
-				whereExtensionNode->value.type == DataType::INTEGER){
-				whereExtensionNode->value = Data(whereExtensionNode->value.integer() * whereExtensionNode->signCoefficient);
+		auto whereNodes = SelfAndDescendants(queryInfo.whereTopNode);
+		for (auto &whereNode : *whereNodes){
+			if (whereNode->middleOperator.kind == TokenKind::NOT_TOKEN &&
+				whereNode->column.columnName.empty() &&
+				whereNode->value.type == DataType::INTEGER){
+				whereNode->value = Data(whereNode->value.integer() * whereNode->signCoefficient);
 			}
 		}
 	}
