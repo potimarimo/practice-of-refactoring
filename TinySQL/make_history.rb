@@ -17,6 +17,7 @@ dirs.each.with_index do |dir, i|
   next unless dir
   diff = Dir.entries("Answer/#{dir}")
   diff.each do |file|
+    puts file.encode('sjis')
   	case file
   	when 'ExecuteSQL.c'
       FileUtils.cp("Answer/#{dir}/#{file}", 'Solution/TinySQL')
@@ -30,6 +31,6 @@ dirs.each.with_index do |dir, i|
   	  FileUtils.cp("Answer/#{dir}/#{file}", 'Solution/TinySQL')
   	end
   end  
-  puts `git add --all`
-  puts `git commit -m \"#{dir.encode('sjis')}\"`
+  puts `git add --all`.encode('sjis')
+  puts `git commit -m \"#{dir.encode('sjis')}\"`.encode('sjis')
 end
