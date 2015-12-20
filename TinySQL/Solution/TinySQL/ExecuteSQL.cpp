@@ -619,13 +619,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 
 		Token *tokenCursol = &tokens[0]; // 現在見ているトークンを指します。
 
-		Column selectColumns[MAX_TABLE_COUNT * MAX_COLUMN_COUNT]; // SELECT句に指定された列名です。
-		// selectColumnsを初期化します。
-		for (size_t i = 0; i < sizeof(selectColumns) / sizeof(selectColumns[0]); i++)
-		{
-			selectColumns[i] = Column();
-		}
-		int selectColumnsNum = 0; // SELECT句から現在読み込まれた列名の数です。
+		vector<Column> selectColumns; // SELECT句に指定された列名です。
 
 		Column orderByColumns[MAX_COLUMN_COUNT]; // ORDER句に指定された列名です。
 		// orderByColumnsを初期化します。
@@ -668,25 +662,21 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 					++tokenCursol;
 				}
 				if (tokenCursol->kind == TokenKind::IDENTIFIER){
-					if (MAX_COLUMN_COUNT <= selectColumnsNum){
-						throw ResultValue::ERR_MEMORY_OVER;
-					}
 					// テーブル名が指定されていない場合と仮定して読み込みます。
-					selectColumns[selectColumnsNum] = Column(tokenCursol->word);
+					selectColumns.push_back(Column(tokenCursol->word));
 					++tokenCursol;
 					if (tokenCursol->kind == TokenKind::DOT){
 						++tokenCursol;
 						if (tokenCursol->kind == TokenKind::IDENTIFIER){
 
 							// テーブル名が指定されていることがわかったので読み替えます。
-							selectColumns[selectColumnsNum] = Column(selectColumns[selectColumnsNum].columnName, tokenCursol->word);
+							selectColumns.back() = Column(selectColumns.back().columnName, tokenCursol->word);
 							++tokenCursol;
 						}
 						else{
 							throw ResultValue::ERR_SQL_SYNTAX;
 						}
 					}
-					++selectColumnsNum;
 				}
 				else{
 					throw ResultValue::ERR_SQL_SYNTAX;
@@ -1112,9 +1102,9 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 		}
 
 		// SELECT句の列名指定が*だった場合は、入力CSVの列名がすべて選択されます。
-		if (!selectColumnsNum){
+		if (selectColumns.empty()){
 			for (int i = 0; i < allInputColumnsNum; ++i){
-				selectColumns[selectColumnsNum++] = allInputColumns[i];
+				selectColumns.push_back(allInputColumns[i]);
 			}
 		}
 
@@ -1124,22 +1114,22 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 		// SELECT句で指定された列名が、何個目の入力ファイルの何列目に相当するかを判別します。
 		ColumnIndex selectColumnIndexes[MAX_TABLE_COUNT * MAX_COLUMN_COUNT]; // SELECT句で指定された列の、入力ファイルとしてのインデックスです。
 		int selectColumnIndexesNum = 0; // selectColumnIndexesの現在の数。
-		for (int i = 0; i < selectColumnsNum; ++i){
+		for (auto &selectColumn : selectColumns){
 			found = false;
-			for (size_t j = 0; j < tableNames.size(); ++j){
-				for (int k = 0; k < inputColumnNums[j]; ++k){
-					char* selectTableNameCursol = selectColumns[i].tableName;
-					char* inputTableNameCursol = inputColumns[j][k].tableName;
+			for (size_t i = 0; i < tableNames.size(); ++i){
+				for (int j = 0; j < inputColumnNums[i]; ++j){
+					char* selectTableNameCursol = selectColumn.tableName;
+					char* inputTableNameCursol = inputColumns[i][j].tableName;
 					while (*selectTableNameCursol && toupper(*selectTableNameCursol) == toupper(*inputTableNameCursol++)){
 						++selectTableNameCursol;
 					}
-					char* selectColumnNameCursol = selectColumns[i].columnName;
-					char* inputColumnNameCursol = inputColumns[j][k].columnName;
+					char* selectColumnNameCursol = selectColumn.columnName;
+					char* inputColumnNameCursol = inputColumns[i][j].columnName;
 					while (*selectColumnNameCursol && toupper(*selectColumnNameCursol) == toupper(*inputColumnNameCursol++)){
 						++selectColumnNameCursol;
 					}
 					if (!*selectColumnNameCursol && !*inputColumnNameCursol &&
-						(!*selectColumns[i].tableName || // テーブル名が設定されている場合のみテーブル名の比較を行います。
+						(!*selectColumn.tableName || // テーブル名が設定されている場合のみテーブル名の比較を行います。
 						!*selectTableNameCursol && !*inputTableNameCursol)){
 
 						// 既に見つかっているのにもう一つ見つかったらエラーです。
@@ -1151,7 +1141,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 						if (MAX_COLUMN_COUNT <= selectColumnIndexesNum){
 							throw ResultValue::ERR_MEMORY_OVER;
 						}
-						selectColumnIndexes[selectColumnIndexesNum++] = ColumnIndex(j, k);
+						selectColumnIndexes[selectColumnIndexesNum++] = ColumnIndex(i, j);
 					}
 				}
 			}
@@ -1162,7 +1152,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 		}
 
 		// 出力する列名を設定します。
-		for (int i = 0; i < selectColumnsNum; ++i){
+		for (size_t i = 0; i < selectColumns.size(); ++i){
 			outputColumns[outputColumnNum] = inputColumns[selectColumnIndexes[i].table][selectColumnIndexes[i].column];
 			++outputColumnNum;
 		}
@@ -1524,12 +1514,12 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 		}
 
 		// 出力ファイルに列名を出力します。
-		for (int i = 0; i < selectColumnsNum; ++i){
+		for (size_t i = 0; i < selectColumns.size(); ++i){
 			result = fputs(outputColumns[i].columnName, outputFile);
 			if (result == EOF){
 				throw ResultValue::ERR_FILE_WRITE;
 			}
-			if (i < selectColumnsNum - 1){
+			if (i < selectColumns.size() - 1){
 				result = fputs(",", outputFile);
 				if (result == EOF){
 					throw ResultValue::ERR_FILE_WRITE;
@@ -1547,7 +1537,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 		currentRow = outputData;
 		while (*currentRow){
 			Data **column = *currentRow;
-			for (int i = 0; i < selectColumnsNum; ++i){
+			for (size_t i = 0; i < selectColumns.size(); ++i){
 				char outputString[MAX_DATA_LENGTH] = "";
 				switch ((*column)->type){
 				case DataType::INTEGER:
@@ -1561,7 +1551,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 				if (result == EOF){
 					throw ResultValue::ERR_FILE_WRITE;
 				}
-				if (i < selectColumnsNum - 1){
+				if (i < selectColumns.size() - 1){
 					result = fputs(",", outputFile);
 					if (result == EOF){
 						throw ResultValue::ERR_FILE_WRITE;
