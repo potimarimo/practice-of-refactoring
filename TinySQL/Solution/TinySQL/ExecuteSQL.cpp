@@ -556,9 +556,19 @@ public:
 	void Column::SetAllColumns(const vector<const InputTable> &inputTables);
 };
 
-class OutputAllDataRow : public vector <const shared_ptr<const Data>>
+//! 出力するすべてのデータを含む行を表します。
+class OutputAllDataRow
 {
+	shared_ptr<const vector<const shared_ptr<const Data>>> data; //!< データを保持します。
+public:
+	//! OutputAllDataRowクラスの新しいインスタンスを初期化します。
+	//! @param [in] data OutputAllDataRowの持つデータです。
+	OutputAllDataRow(const shared_ptr<const vector<const shared_ptr<const Data>>> data);
 
+	//! インデックスで列を指定し、データを取得します。
+	//! @param [in] インデックス。
+	//! @return 指定したデータ。
+	const shared_ptr<const Data> operator[](const int & index) const;
 };
 
 //! WHERE句の条件の式木を表します。
@@ -1862,6 +1872,19 @@ void Column::SetAllColumns(const vector<const InputTable> &inputTables)
 	}
 }
 
+//! OutputAllDataRowクラスの新しいインスタンスを初期化します。
+//! @param [in] data OutputAllDataRowの持つデータです。
+OutputAllDataRow::OutputAllDataRow(const shared_ptr<const vector<const shared_ptr<const Data>>> data) : data(data)
+{}
+
+//! インデックスで列を指定し、データを取得します。
+//! @param [in] インデックス。
+//! @return 指定したデータ。
+const shared_ptr<const Data> OutputAllDataRow::operator[](const int & index) const
+{
+	return (*data)[index];
+}
+
 //! ExtensionTreeNodeクラスの新しいインスタンスを初期化します。
 ExtensionTreeNode::ExtensionTreeNode() : middleOperator(TokenKind::NOT_TOKEN, 0)
 {
@@ -2541,16 +2564,16 @@ const shared_ptr<vector<const OutputAllDataRow>> OutputData::GetAllRows() const
 
 	// 出力するデータを設定します。
 	while (true){
-		outputRows->push_back(OutputAllDataRow());
-		auto &outputRow = outputRows->back();// WHEREやORDERのためにすべての情報を含む行。rowとインデックスを共有します。
+		auto outputRow = make_shared<vector<const shared_ptr<const Data>>>();// WHEREやORDERのためにすべての情報を含む行。rowとインデックスを共有します。
 
 		// outputRowの列を設定します。
 		for (auto &currentRow : currentRows){
 			copy(
 				currentRow->begin(),
 				currentRow->end(),
-				back_inserter(outputRow));
+				back_inserter(*outputRow));
 		}
+		outputRows->push_back(OutputAllDataRow(outputRow));
 
 		// 各テーブルの行のすべての組み合わせを出力します。
 
