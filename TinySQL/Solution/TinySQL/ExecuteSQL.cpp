@@ -113,6 +113,10 @@ public:
 	//! データが整数型の場合の値を取得します。
 	//! @return データが整数型の場合の値です。
 	const int integer() const;
+
+	//! データが真偽値型の場合の値を取得します。
+	//! @return データが真偽値型の場合の値です。
+	const int boolean() const;
 };
 
 //! WHERE句に指定する演算子の情報を表します。
@@ -247,6 +251,13 @@ const char* Data::string() const
 const int Data::integer() const
 {
 	return value.integer;
+}
+
+//! データが真偽値型の場合の値を取得します。
+//! @return データが真偽値型の場合の値です。
+const int Data::boolean() const
+{
+	return value.boolean;
 }
 
 //! Operatorクラスの新しいインスタンスを初期化します。
@@ -1328,10 +1339,10 @@ int ExecuteSQL(const string sql, const string outputFileName)
 						// 比較結果を演算子によって計算方法を変えて、計算します。
 						switch (currentNode->middleOperator.kind){
 						case TokenKind::AND:
-							currentNode->value.value.boolean = currentNode->left->value.value.boolean && currentNode->right->value.value.boolean;
+							currentNode->value.value.boolean = currentNode->left->value.boolean() && currentNode->right->value.boolean();
 							break;
 						case TokenKind::OR:
-							currentNode->value.value.boolean = currentNode->left->value.value.boolean || currentNode->right->value.value.boolean;
+							currentNode->value.value.boolean = currentNode->left->value.boolean() || currentNode->right->value.boolean();
 							break;
 						}
 					}
@@ -1342,7 +1353,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 				}
 
 				// 条件に合わない行は出力から削除します。
-				if (!whereTopNode->value.value.boolean){
+				if (!whereTopNode->value.boolean()){
 					free(row);
 					free(allColumnsRow);
 					allColumnOutputData.pop_back();
