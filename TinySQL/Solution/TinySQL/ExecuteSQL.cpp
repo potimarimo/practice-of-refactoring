@@ -1280,22 +1280,22 @@ int ExecuteSQL(const string sql, const string outputFileName)
 						case DataType::STRING:
 							switch (currentNode->middleOperator.kind){
 							case TokenKind::EQUAL:
-								currentNode->value.value.boolean = strcmp(currentNode->left->value.string(), currentNode->right->value.string()) == 0;
+								currentNode->value = Data(strcmp(currentNode->left->value.string(), currentNode->right->value.string()) == 0);
 								break;
 							case TokenKind::GREATER_THAN:
-								currentNode->value.value.boolean = strcmp(currentNode->left->value.string(), currentNode->right->value.string()) > 0;
+								currentNode->value = Data(strcmp(currentNode->left->value.string(), currentNode->right->value.string()) > 0);
 								break;
 							case TokenKind::GREATER_THAN_OR_EQUAL:
-								currentNode->value.value.boolean = strcmp(currentNode->left->value.string(), currentNode->right->value.string()) >= 0;
+								currentNode->value = Data(strcmp(currentNode->left->value.string(), currentNode->right->value.string()) >= 0);
 								break;
 							case TokenKind::LESS_THAN:
-								currentNode->value.value.boolean = strcmp(currentNode->left->value.string(), currentNode->right->value.string()) < 0;
+								currentNode->value = Data(strcmp(currentNode->left->value.string(), currentNode->right->value.string()) < 0);
 								break;
 							case TokenKind::LESS_THAN_OR_EQUAL:
-								currentNode->value.value.boolean = strcmp(currentNode->left->value.string(), currentNode->right->value.string()) <= 0;
+								currentNode->value = Data(strcmp(currentNode->left->value.string(), currentNode->right->value.string()) <= 0);
 								break;
 							case TokenKind::NOT_EQUAL:
-								currentNode->value.value.boolean = strcmp(currentNode->left->value.string(), currentNode->right->value.string()) != 0;
+								currentNode->value = Data(strcmp(currentNode->left->value.string(), currentNode->right->value.string()) != 0);
 								break;
 							}
 							break;
