@@ -966,10 +966,12 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			for (size_t j = 0; j < inputColumns[i].size(); ++j){
 
 				// 全ての行のある列について、データ文字列から符号と数値以外の文字を探します。
-				currentRow = &inputData[i][0];
 				found = false;
-				while (*currentRow){
-					const char *currentChar = (*currentRow)[j]->string().c_str();
+				for (auto& inputRow : inputData[i]){
+					if (!inputRow){
+						break;
+					}
+					const char *currentChar = inputRow[j]->string().c_str();
 					while (*currentChar){
 						bool isNum = false;
 						const char *currentNum = signNum.c_str();
@@ -989,7 +991,6 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					if (found){
 						break;
 					}
-					++currentRow;
 				}
 
 				// 符号と数字以外が見つからない列については、数値列に変換します。
