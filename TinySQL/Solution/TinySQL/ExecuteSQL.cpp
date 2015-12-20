@@ -451,11 +451,11 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 
 	const char* charactorCursol = sql; // SQLをトークンに分割して読み込む時に現在読んでいる文字の場所を表します。
 
-	char tableNames[MAX_TABLE_COUNT][MAX_WORD_LENGTH]; // FROM句で指定しているテーブル名です。
+	string tableNames[MAX_TABLE_COUNT]; // FROM句で指定しているテーブル名です。
 	// tableNamesを初期化します。
 	for (size_t i = 0; i < sizeof(tableNames) / sizeof(tableNames[0]); i++)
 	{
-		strncpy(tableNames[i], "", MAX_WORD_LENGTH);
+		tableNames[i] = "";
 	}
 	int tableNamesNum = 0; // 現在読み込まれているテーブル名の数です。
 	try
@@ -954,7 +954,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 				if (MAX_TABLE_COUNT <= tableNamesNum){
 					throw ResultValue::ERR_MEMORY_OVER;
 				}
-				strncpy(tableNames[tableNamesNum++], tokenCursol->word, MAX_WORD_LENGTH);
+				tableNames[tableNamesNum++] = tokenCursol->word;
 				++tokenCursol;
 			}
 			else{
@@ -983,7 +983,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 			// 入力ファイル名を生成します。
 			const char csvExtension[] = ".csv"; // csvの拡張子です。
 			char fileName[MAX_WORD_LENGTH + sizeof(csvExtension) - 1] = ""; // 拡張子を含む、入力ファイルのファイル名です。
-			strncat(fileName, tableNames[i], MAX_WORD_LENGTH + sizeof(csvExtension) - 1);
+			strncat(fileName, tableNames[i].c_str(), MAX_WORD_LENGTH + sizeof(csvExtension) - 1);
 			strncat(fileName, csvExtension, MAX_WORD_LENGTH + sizeof(csvExtension) - 1);
 
 			// 入力ファイルを開きます。
@@ -1002,7 +1002,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 					if (MAX_COLUMN_COUNT <= inputColumnNums[i]){
 						throw ResultValue::ERR_MEMORY_OVER;
 					}
-					strncpy(inputColumns[i][inputColumnNums[i]].tableName, tableNames[i], MAX_WORD_LENGTH);
+					strncpy(inputColumns[i][inputColumnNums[i]].tableName, tableNames[i].c_str(), MAX_WORD_LENGTH);
 					char *writeCursol = inputColumns[i][inputColumnNums[i]++].columnName; // 列名の書き込みに利用するカーソルです。
 
 					// 列名を一つ読みます。
