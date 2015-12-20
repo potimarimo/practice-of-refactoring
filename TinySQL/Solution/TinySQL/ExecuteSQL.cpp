@@ -451,13 +451,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 
 	const char* charactorCursol = sql; // SQLをトークンに分割して読み込む時に現在読んでいる文字の場所を表します。
 
-	string tableNames[MAX_TABLE_COUNT]; // FROM句で指定しているテーブル名です。
-	// tableNamesを初期化します。
-	for (size_t i = 0; i < sizeof(tableNames) / sizeof(tableNames[0]); i++)
-	{
-		tableNames[i] = "";
-	}
-	int tableNamesNum = 0; // 現在読み込まれているテーブル名の数です。
+	vector<const string> tableNames; // FROM句で指定しているテーブル名です。
 	try
 	{
 		// SQLをトークンに分割て読み込みます。
@@ -593,7 +587,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 			// 識別子の最初の文字を確認します。
 			for (search = alpahUnder; *search && *charactorCursol != *search; ++search){};
 			if (*search){
-				Token identifier{ TokenKind::IDENTIFIER}; // 読み込んだ識別子の情報です。
+				Token identifier{ TokenKind::IDENTIFIER }; // 読み込んだ識別子の情報です。
 				int wordLength = 0; // 識別子に現在読み込んでいる文字の数です。
 				do {
 					// 二文字目以降は数字も許可して文字の種類を確認します。
@@ -742,7 +736,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 									++tokenCursol;
 								}
 								else{
-									throw ResultValue::ERR_SQL_SYNTAX;	
+									throw ResultValue::ERR_SQL_SYNTAX;
 								}
 							}
 
@@ -951,10 +945,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 				++tokenCursol;
 			}
 			if (tokenCursol->kind == TokenKind::IDENTIFIER){
-				if (MAX_TABLE_COUNT <= tableNamesNum){
-					throw ResultValue::ERR_MEMORY_OVER;
-				}
-				tableNames[tableNamesNum++] = tokenCursol->word;
+				tableNames.push_back(tokenCursol->word);
 				++tokenCursol;
 			}
 			else{
@@ -978,7 +969,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 		}
 		int inputColumnNums[MAX_TABLE_COUNT] = { 0 }; // 各テーブルごとの列の数です。
 
-		for (int i = 0; i < tableNamesNum; ++i){
+		for (size_t i = 0; i < tableNames.size(); ++i){
 
 			// 入力ファイル名を生成します。
 			const char csvExtension[] = ".csv"; // csvの拡張子です。
@@ -989,7 +980,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 			// 入力ファイルを開きます。
 			inputTableFiles.push_back(fopen(fileName, "r"));
 			if (!inputTableFiles.back()){
-				throw ResultValue::ERR_FILE_OPEN;	
+				throw ResultValue::ERR_FILE_OPEN;
 			}
 
 			// 入力CSVのヘッダ行を読み込みます。
@@ -1116,7 +1107,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 		// 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
 		for (size_t i = 0; i < tableNames.size(); ++i){
 			for (int j = 0; j < inputColumnNums[i]; ++j){
-				allInputColumns[allInputColumnsNum++] = Column(tableNames[i], inputColumns[i][j].columnName);
+				allInputColumns[allInputColumnsNum++] = Column(tableNames[i].c_str(), inputColumns[i][j].columnName);
 			}
 		}
 
@@ -1135,7 +1126,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 		int selectColumnIndexesNum = 0; // selectColumnIndexesの現在の数。
 		for (int i = 0; i < selectColumnsNum; ++i){
 			found = false;
-			for (int j = 0; j < tableNamesNum; ++j){
+			for (size_t j = 0; j < tableNames.size(); ++j){
 				for (int k = 0; k < inputColumnNums[j]; ++k){
 					char* selectTableNameCursol = selectColumns[i].tableName;
 					char* inputTableNameCursol = inputColumns[j][k].tableName;
@@ -1190,7 +1181,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 		int outputRowsNum = 0; // 出力データの現在の行数です。
 
 		Data ***currentRows[MAX_TABLE_COUNT] = { nullptr }; // 入力された各テーブルの、現在出力している行を指すカーソルです。
-		for (int i = 0; i < tableNamesNum; ++i){
+		for (size_t i = 0; i < tableNames.size(); ++i){
 			// 各テーブルの先頭行を設定します。
 			currentRows[i] = inputData[i];
 		}
@@ -1230,7 +1221,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 
 			// allColumnsRowの列を設定します。
 			int allColumnsNum = 0; // allColumnsRowの現在の列数です。
-			for (int i = 0; i < tableNamesNum; ++i){
+			for (size_t i = 0; i < tableNames.size(); ++i){
 				for (int j = 0; j < inputColumnNums[i]; ++j){
 					allColumnsRow[allColumnsNum] = (Data*)malloc(sizeof(Data));
 					if (!allColumnsRow[allColumnsNum]){
@@ -1427,10 +1418,10 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 			// 各テーブルの行のすべての組み合わせを出力します。
 
 			// 最後のテーブルのカレント行をインクリメントします。
-			++currentRows[tableNamesNum - 1];
+			++currentRows[tableNames.size() - 1];
 
 			// 最後のテーブルが最終行になっていた場合は先頭に戻し、順に前のテーブルのカレント行をインクリメントします。
-			for (int i = tableNamesNum - 1; !*currentRows[i] && 0 < i; --i){
+			for (int i = tableNames.size() - 1; !*currentRows[i] && 0 < i; --i){
 				++currentRows[i - 1];
 				currentRows[i] = inputData[i];
 			}
@@ -1606,7 +1597,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 		}
 
 		// メモリリソースを解放します。
-		for (int i = 0; i < tableNamesNum; ++i){
+		for (size_t i = 0; i < tableNames.size(); ++i){
 			currentRow = inputData[i];
 			while (*currentRow){
 				Data **dataCursol = *currentRow;
@@ -1653,7 +1644,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 		}
 
 		// メモリリソースを解放します。
-		for (int i = 0; i < tableNamesNum; ++i){
+		for (size_t i = 0; i < tableNames.size(); ++i){
 			currentRow = inputData[i];
 			while (*currentRow){
 				Data **dataCursol = *currentRow;
