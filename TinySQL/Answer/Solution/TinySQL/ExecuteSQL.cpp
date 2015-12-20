@@ -77,8 +77,9 @@ enum class TokenKind
 };
 
 //! 一つの値を持つデータです。
-typedef struct
+class Data
 {
+public:
 	DataType type; //!< データの型です。
 
 	//! 実際のデータを格納する共用体です。
@@ -88,7 +89,7 @@ typedef struct
 		int integer;                  //!< データが整数型の場合の値です。
 		bool boolean;                 //!< データが真偽値型の場合の値です。
 	} value;
-} Data;
+};
 
 //! WHERE句に指定する演算子の情報を表します。
 typedef struct
