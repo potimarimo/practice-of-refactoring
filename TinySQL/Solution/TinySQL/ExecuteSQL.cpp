@@ -227,14 +227,20 @@ public:
 	vector<const vector<const Data>> data; //! データです。
 };
 
-//! 数値リテラルトークンを読み込む機能を提供します。
-class IntLiteralReader
+class TokenReader
 {
+protected:
 	const string alpahUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ"; //!< 全てのアルファベットの大文字小文字とアンダーバーです。
 	const string alpahNumUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; //!< 全ての数字とアルファベットの大文字小文字とアンダーバーです。
 	const string signNum = "+-0123456789"; //!< 全ての符号と数字です。
 	const string num = "0123456789"; //!< 全ての数字です。
 	const string space = " \t\r\n"; //!< 全ての空白文字です。
+
+	//! 実際にトークンを読み込ます。
+	//! @param [in] cursol 読み込み開始位置です。
+	//! @param [in] end SQL全体の終了位置です。
+	//! @return 切り出されたトークンです。読み込みが失敗した場合はnullptrを返します。
+	virtual const shared_ptr<const Token> ReadCore(string::const_iterator &cursol, const string::const_iterator& end) const = 0;
 public:
 	//! トークンを読み込みます。
 	//! @param [in] cursol 読み込み開始位置です。
@@ -243,20 +249,26 @@ public:
 	const shared_ptr<const Token> Read(string::const_iterator &cursol, const string::const_iterator& end) const;
 };
 
-//! 文字列リテラルトークンを読み込む機能を提供します。
-class StringLiteralReader
+//! 数値リテラルトークンを読み込む機能を提供します。
+class IntLiteralReader : public TokenReader
 {
-	const string alpahUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ"; //!< 全てのアルファベットの大文字小文字とアンダーバーです。
-	const string alpahNumUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; //!< 全ての数字とアルファベットの大文字小文字とアンダーバーです。
-	const string signNum = "+-0123456789"; //!< 全ての符号と数字です。
-	const string num = "0123456789"; //!< 全ての数字です。
-	const string space = " \t\r\n"; //!< 全ての空白文字です。
-public:
-	//! トークンを読み込みます。
+protected:
+	//! 実際にトークンを読み込ます。
 	//! @param [in] cursol 読み込み開始位置です。
 	//! @param [in] end SQL全体の終了位置です。
 	//! @return 切り出されたトークンです。読み込みが失敗した場合はnullptrを返します。
-	const shared_ptr<const Token> Read(string::const_iterator &cursol, const string::const_iterator& end) const;
+	const shared_ptr<const Token> ReadCore(string::const_iterator &cursol, const string::const_iterator& end) const override;
+};
+
+//! 文字列リテラルトークンを読み込む機能を提供します。
+class StringLiteralReader : public TokenReader
+{
+protected:
+	//! 実際にトークンを読み込みます。
+	//! @param [in] cursol 読み込み開始位置です。
+	//! @param [in] end SQL全体の終了位置です。
+	//! @return 切り出されたトークンです。読み込みが失敗した場合はnullptrを返します。
+	const shared_ptr<const Token> ReadCore(string::const_iterator &cursol, const string::const_iterator& end) const override;
 };
 
 //! ファイルに対して実行するSQLを表すクラスです。
@@ -426,7 +438,16 @@ ColumnIndex::ColumnIndex(const int table, const int column) : table(table), colu
 //! @param [in] cursol 読み込み開始位置です。
 //! @param [in] end SQL全体の終了位置です。
 //! @return 切り出されたトークンです。読み込みが失敗した場合はnullptrを返します。
-const shared_ptr<const Token> IntLiteralReader::Read(string::const_iterator &cursol, const string::const_iterator &end) const
+const shared_ptr<const Token> TokenReader::Read(string::const_iterator &cursol, const string::const_iterator &end) const
+{
+	return ReadCore(cursol, end);
+}
+
+//! 実際にトークンを読み込みます。
+//! @param [in] cursol 読み込み開始位置です。
+//! @param [in] end SQL全体の終了位置です。
+//! @return 切り出されたトークンです。読み込みが失敗した場合はnullptrを返します。
+const shared_ptr<const Token> IntLiteralReader::ReadCore(string::const_iterator &cursol, const string::const_iterator &end) const
 {
 	auto backPoint = cursol;
 	cursol = find_if(cursol, end, [&](char c){return num.find(c) == string::npos; });
@@ -441,11 +462,11 @@ const shared_ptr<const Token> IntLiteralReader::Read(string::const_iterator &cur
 	}
 }
 
-//! トークンを読み込みます。
+//! 実際にトークンを読み込みます。
 //! @param [in] cursol 読み込み開始位置です。
 //! @param [in] end SQL全体の終了位置です。
 //! @return 切り出されたトークンです。読み込みが失敗した場合はnullptrを返します。
-const shared_ptr<const Token> StringLiteralReader::Read(string::const_iterator &cursol, const string::const_iterator &end) const
+const shared_ptr<const Token> StringLiteralReader::ReadCore(string::const_iterator &cursol, const string::const_iterator &end) const
 {
 	auto backPoint = cursol;
 	// 文字列リテラルを開始するシングルクォートを判別し、読み込みます。
@@ -513,13 +534,6 @@ const shared_ptr<const vector<const Token>> SqlQuery::GetTokens(const string sql
 			tokens->push_back(*token);
 			continue;
 		}
-		//sqlBackPoint = sqlCursol;
-
-		// 文字列リテラルを開始するシングルクォートを判別し、読み込みます。
-		//if (*sqlCursol == "\'"[0]){
-		//	++sqlCursol;
-		//	
-
 
 		// キーワードを読み込みます。
 		auto keyword = find_if(keywordConditions.begin(), keywordConditions.end(),
