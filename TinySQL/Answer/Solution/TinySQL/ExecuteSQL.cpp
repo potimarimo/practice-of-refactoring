@@ -415,7 +415,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 	vector<ifstream> inputTableFiles;                       // 読み込む入力ファイルの全てのファイルポインタです。
 	ofstream outputFile;                                   // 書き込むファイルのファイルポインタです。
 	bool found = false;                                     // 検索時に見つかったかどうかの結果を一時的に保存します。
-	vector<vector<Data**>> inputData;                       // 入力データです。
+	vector<vector<vector<Data*>>> inputData;                       // 入力データです。
 	vector<Data**> outputData;                              // 出力データです。
 	vector<Data**> allColumnOutputData;                     // 出力するデータに対応するインデックスを持ち、すべての入力データを保管します。
 
@@ -933,35 +933,26 @@ int ExecuteSQL(const string sql, const string outputFileName)
 
 			// 入力CSVのデータ行を読み込みます。
 
-			inputData.push_back(vector<Data**>());
+			inputData.push_back(vector<vector<Data*>>());
 
 			while (getline(inputTableFiles.back(), inputLine)){
-				inputData[i].push_back((Data**)malloc(MAX_COLUMN_COUNT * sizeof(Data*))); // 入力されている一行分のデータです。
-				Data** row = inputData[i].back();
-				// 生成した行を初期化します。
-				for (int j = 0; j < MAX_COLUMN_COUNT; ++j){
-					row[j] = nullptr;
-				}
+				inputData[i].push_back(vector<Data*>()); // 入力されている一行分のデータです。
+				vector<Data*> &row = inputData[i].back();
 
 				auto charactorCursol = inputLine.begin(); // データ入力行を検索するカーソルです。
 				auto lineEnd = inputLine.end(); // データ入力行のendを指します。
-				int columnNum = 0; // いま何列目を読み込んでいるか。0基底の数字となります。
 
 				// 読み込んだ行を最後まで読みます。
 				while (charactorCursol != lineEnd){
 
 					// 読み込んだデータを書き込む行のカラムを生成します。
-					if (MAX_COLUMN_COUNT <= columnNum){
-						throw ResultValue::ERR_MEMORY_OVER;
-					}
-					row[columnNum] = new Data;
-					if (!row[columnNum]){
-						throw ResultValue::ERR_MEMORY_ALLOCATE;
-					}
 					auto columnStart = charactorCursol; // 現在の列の最初を記録しておきます。
 					charactorCursol = find(charactorCursol, lineEnd, ',');
 
-					*row[columnNum++] = Data(string(columnStart, charactorCursol));
+					row.push_back(new Data(string(columnStart, charactorCursol)));
+					if (!row.back()){
+						throw ResultValue::ERR_MEMORY_ALLOCATE;
+					}
 
 					// 入力行のカンマの分を読み進めます。
 					if (charactorCursol != lineEnd){
@@ -977,7 +968,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 				if (none_of(
 					inputData[i].begin(),
 					inputData[i].end(),
-					[&](Data** inputRow){
+					[&](const vector<Data*> &inputRow){
 					return any_of(
 						inputRow[j]->string().begin(),
 						inputRow[j]->string().end(),
@@ -1054,7 +1045,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			}
 		}
 
-		vector<vector<Data**>::iterator> currentRows; // 入力された各テーブルの、現在出力している行を指すカーソルです。
+		vector<vector<vector<Data*>>::iterator> currentRows; // 入力された各テーブルの、現在出力している行を指すカーソルです。
 		for (size_t i = 0; i < tableNames.size(); ++i){
 			// 各テーブルの先頭行を設定します。
 			currentRows.push_back(inputData[i].begin());
@@ -1431,11 +1422,9 @@ int ExecuteSQL(const string sql, const string outputFileName)
 		// メモリリソースを解放します。
 		for (auto& inputTableData : inputData){
 			for (auto& inputRow : inputTableData){
-				Data **dataCursol = inputRow;
-				while (*dataCursol){
-					delete *dataCursol++;
+				for (auto& data : inputRow){
+					delete data;
 				}
-				free(inputRow);
 			}
 		}
 		for (auto& outputRow : outputData){
@@ -1463,11 +1452,9 @@ int ExecuteSQL(const string sql, const string outputFileName)
 		// メモリリソースを解放します。
 		for (auto& inputTableData : inputData){
 			for (auto& inputRow : inputTableData){
-				Data **dataCursol = inputRow;
-				while (*dataCursol){
-					free(*dataCursol++);
+				for (auto& data : inputRow){
+					delete data;
 				}
-				free(inputRow);
 			}
 		}
 		for (auto& outputRow : outputData){
