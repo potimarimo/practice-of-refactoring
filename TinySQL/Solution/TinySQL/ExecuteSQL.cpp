@@ -3005,21 +3005,22 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 		// 見つかった演算子の情報をもとにノードを入れ替えます。
 		shared_ptr<ExtensionTreeNode> tmp = currentNode; //ノードを入れ替えるために使う変数です。
 
-		shared_ptr<ExtensionTreeNode> searched = tmp; // 入れ替えるノードを探すためのカーソルです。
+		shared_ptr<ExtensionTreeNode> searched; // 入れ替えるノードを探すためのカーソルです。
 
 		//カッコにくくられていなかった場合に、演算子の優先順位を参考に結合するノードを探します。
-		bool first = true; // 演算子の優先順位を検索する最初のループです。
-		do{
-			if (!first){
-				tmp = tmp->parent;
-				searched = tmp;
-			}
+		auto ancestors = tmp->ancestors();
+		ancestors->insert(ancestors->begin(), tmp);
+		for (auto &ancestor : *ancestors){
+			searched = ancestor;
 			// 現在の読み込み場所をくくるカッコが開く場所を探します。
 			while (searched && !searched->parenOpenBeforeClose){
 				searched = searched->left;
 			}
-			first = false;
-		} while (!searched && tmp->parent && (tmp->parent->middleOperator.order <= foundOperator->order || tmp->parent->inParen));
+			tmp = ancestor;
+			if (searched || !ancestor->parent || !(ancestor->parent->middleOperator.order <= foundOperator->order || ancestor->parent->inParen)){
+				break;
+			}
+		}
 
 		// 演算子のノードを新しく生成します。
 		currentNode = make_shared<ExtensionTreeNode>();
