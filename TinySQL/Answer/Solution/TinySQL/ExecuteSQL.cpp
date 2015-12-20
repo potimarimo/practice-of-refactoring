@@ -505,6 +505,13 @@ bool Equali(const string str1, const string str2){
 //! @return 切り出されたトークンです。
 const shared_ptr<const vector<const Token>> SqlQuery::GetTokens(const string sql) const
 {
+	// トークンを読み込む方法の集合です。
+	vector<shared_ptr<TokenReader>> readers =
+	{
+		make_shared<IntLiteralReader>(),
+		make_shared<StringLiteralReader>(),
+	};
+
 	auto sqlBackPoint = sql.begin(); // SQLをトークンに分割して読み込む時に戻るポイントを記録しておきます。
 
 	auto sqlCursol = sql.begin(); // SQLをトークンに分割して読み込む時に現在読んでいる文字の場所を表します。
@@ -521,29 +528,19 @@ const shared_ptr<const vector<const Token>> SqlQuery::GetTokens(const string sql
 		if (sqlCursol == sqlEnd){
 			break;
 		}
-
-		// 数値リテラルを読み込みます。
-		IntLiteralReader reader;
-		auto token = reader.Read(sqlCursol, sqlEnd);
-		if (token){
-			tokens->push_back(*token);
+		// 各種トークンを読み込みます。
+		bool found = false;
+		for (auto &reader : readers){
+			auto token = reader->Read(sqlCursol, sqlEnd);
+			if (token){
+				tokens->push_back(*token);
+				found = true;
+				break;
+			}
+		}
+		if (found){
 			continue;
 		}
-
-		// 文字列リテラルを読み込みます。
-		StringLiteralReader reader2;
-		token = reader2.Read(sqlCursol, sqlEnd);
-		if (token){
-			tokens->push_back(*token);
-			continue;
-		}
-		//sqlBackPoint = sqlCursol;
-
-		// 文字列リテラルを開始するシングルクォートを判別し、読み込みます。
-		//if (*sqlCursol == "\'"[0]){
-		//	++sqlCursol;
-		//	
-
 
 		// キーワードを読み込みます。
 		auto keyword = find_if(keywordConditions.begin(), keywordConditions.end(),
