@@ -906,13 +906,10 @@ int ExecuteSQL(const string sql, const string outputFileName)
 				// 読み込んだ行を最後まで読みます。
 				while (charactorCursol != lineEnd){
 									
-					string columnName;
-
 					// 列名を一つ読みます。
-					while (charactorCursol != lineEnd && *charactorCursol != ','){
-						columnName.push_back(*charactorCursol++);
-					}
-					inputColumns[i].push_back(Column(tableNames[i], columnName));
+					auto columnStart = charactorCursol; // 現在の列の最初を記録しておきます。c
+					charactorCursol = find(charactorCursol, lineEnd, ',');
+					inputColumns[i].push_back(Column(tableNames[i], string(columnStart, charactorCursol)));
 
 					// 入力行のカンマの分を読み進めます。
 					if (charactorCursol != lineEnd){
