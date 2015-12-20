@@ -12,20 +12,20 @@ extern "C"{
 }
 
 
-//! ExecuteSQL�̖߂�l�̎�ނ�\���܂��B
+//! ExecuteSQLの戻り値の種類を表します。
 enum REAULT_VALUE
 {
-	OK = 0,                     //!< ���Ȃ��I�����܂����B
-	ERR_FILE_OPEN = 1,          //!< �t�@�C�����J�����ƂɎ��s���܂����B
-	ERR_FILE_WRITE = 2,         //!< �t�@�C���ɏ������݂��s�����ƂɎ��s���܂����B
-	ERR_FILE_CLOSE = 3,         //!< �t�@�C������邱�ƂɎ��s���܂����B
-	ERR_TOKEN_CANT_READ = 4,    //!< �g�[�N����͂Ɏ��s���܂����B
-	ERR_SQL_SYNTAX = 5,         //!< SQL�̍\����͂����s���܂����B
-	ERR_BAD_COLUMN_NAME = 6,    //!< �e�[�u���w����܂ޗ񖼂��K�؂ł͂���܂���B
-	ERR_WHERE_OPERAND_TYPE = 7, //!< ���Z�̍��E�̌^���K�؂ł͂���܂���B
-	ERR_CSV_SYNTAX = 8,         //!< CSV�̍\����͂����s���܂����B
-	ERR_MEMORY_ALLOCATE = 9,    //!< �������̎擾�Ɏ��s���܂����B
-	ERR_MEMORY_OVER = 10        //!< �p�ӂ����������̈�̏���𒴂��܂����B
+	OK = 0,                     //!< 問題なく終了しました。
+	ERR_FILE_OPEN = 1,          //!< ファイルを開くことに失敗しました。
+	ERR_FILE_WRITE = 2,         //!< ファイルに書き込みを行うことに失敗しました。
+	ERR_FILE_CLOSE = 3,         //!< ファイルを閉じることに失敗しました。
+	ERR_TOKEN_CANT_READ = 4,    //!< トークン解析に失敗しました。
+	ERR_SQL_SYNTAX = 5,         //!< SQLの構文解析が失敗しました。
+	ERR_BAD_COLUMN_NAME = 6,    //!< テーブル指定を含む列名が適切ではありません。
+	ERR_WHERE_OPERAND_TYPE = 7, //!< 演算の左右の型が適切ではありません。
+	ERR_CSV_SYNTAX = 8,         //!< CSVの構文解析が失敗しました。
+	ERR_MEMORY_ALLOCATE = 9,    //!< メモリの取得に失敗しました。
+	ERR_MEMORY_OVER = 10        //!< 用意したメモリ領域の上限を超えました。
 };
 
 using namespace std;
@@ -42,7 +42,7 @@ namespace Test
 		}
 	public:
 
-		TEST_METHOD_INITIALIZE(������)
+		TEST_METHOD_INITIALIZE(初期化)
 		{
 			ofstream o;
 			remove(testOutputPath);
@@ -106,7 +106,7 @@ namespace Test
 				<< "-6" << endl;
 		}
 
-		TEST_METHOD(ExecuteSQL�͒P����SQL�����s�ł��܂��B)
+		TEST_METHOD(ExecuteSQLは単純なSQLを実行できます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -124,7 +124,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL�͍Ō�ɋ󔒂������Ă����������삵�܂��B)
+		TEST_METHOD(ExecuteSQLは最後に空白があっても正しく動作します。)
 		{
 			char* sql =
 				"SELECT * "
@@ -142,7 +142,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL�͎��ʎq���ɐ����𗘗p�ł��܂��B)
+		TEST_METHOD(ExecuteSQLは識別子名に数字を利用できます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -153,7 +153,7 @@ namespace Test
 			Assert::AreEqual((int)OK, result);
 		}
 
-		TEST_METHOD(ExecuteSQL�͎��ʎq���ɐ����Ŏn�܂�P��͗��p�ł��܂���B)
+		TEST_METHOD(ExecuteSQLは識別子名に数字で始まる単語は利用できません。)
 		{
 			char* sql =
 				"SELECT * "
@@ -164,7 +164,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_TOKEN_CANT_READ, result);
 		}
 
-		TEST_METHOD(ExecuteSQL�͎��ʎq���̂Q�����ڂɐ����𗘗p�ł��܂��B)
+		TEST_METHOD(ExecuteSQLは識別子名の２文字目に数字を利用できます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -175,7 +175,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_FILE_OPEN, result);
 		}
 
-		TEST_METHOD(ExecuteSQL�͎��ʎq���̐擪�ɃA���_�[�o�[�𗘗p�ł��܂��B)
+		TEST_METHOD(ExecuteSQLは識別子名の先頭にアンダーバーを利用できます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -186,7 +186,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_FILE_OPEN, result);
 		}
 
-		TEST_METHOD(ExecuteSQL�͎��ʎq���̓񕶎��ڈȍ~�ɃA���_�[�o�[�𗘗p�ł��܂��B)
+		TEST_METHOD(ExecuteSQLは識別子名の二文字目以降にアンダーバーを利用できます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -197,7 +197,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_FILE_OPEN, result);
 		}
 
-		TEST_METHOD(ExecuteSQL�͕���������؂蕶���𗘗p�ł��܂��B)
+		TEST_METHOD(ExecuteSQLは複数個続く区切り文字を利用できます。)
 		{
 			char* sql =
 				"SELECT  *  "
@@ -215,7 +215,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL�͋�؂蕶���Ƃ��ăX�y�[�X��F�����܂��B)
+		TEST_METHOD(ExecuteSQLは区切り文字としてスペースを認識します。)
 		{
 			char* sql =
 				"SELECT * "
@@ -233,7 +233,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL�͋�؂蕶���Ƃ��ă^�u��F�����܂��B)
+		TEST_METHOD(ExecuteSQLは区切り文字としてタブを認識します。)
 		{
 			char* sql =
 				"SELECT\t*\t"
@@ -251,7 +251,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL�͋�؂蕶���Ƃ��ĉ��s��F�����܂��B)
+		TEST_METHOD(ExecuteSQLは区切り文字として改行を認識します。)
 		{
 			char* sql =
 				"SELECT\n*\r\n"
@@ -269,7 +269,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL�͔F���ł��Ȃ��g�[�N�����܂ތ���w�肵���Ƃ�ERR_TOKEN_CANT_READ�G���[�ƂȂ�܂��B)
+		TEST_METHOD(ExecuteSQLは認識できないトークンを含む語を指定したときERR_TOKEN_CANT_READエラーとなります。)
 		{
 			char* sql =
 				"?";
@@ -280,7 +280,7 @@ namespace Test
 		}
 
 
-		TEST_METHOD(ExecuteSQL�͎w�肵���e�[�u�������擾���A�Ή�����t�@�C�����Q�Ƃł��܂��B)
+		TEST_METHOD(ExecuteSQLは指定したテーブル名を取得し、対応するファイルを参照できます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -298,7 +298,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL�͓�̂̃e�[�u����ǂݍ��݁A�S�Ă̑g�ݍ��킹���o�͂��܂��B)
+		TEST_METHOD(ExecuteSQLは二つののテーブルを読み込み、全ての組み合わせを出力します。)
 		{
 			char* sql =
 				"SELECT * "
@@ -322,7 +322,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL�͎O�ȏ�̃e�[�u����ǂݍ��݁A�S�Ă̑g�ݍ��킹���o�͂��܂��B)
+		TEST_METHOD(ExecuteSQLは三つ以上のテーブルを読み込み、全ての組み合わせを出力します。)
 		{
 			char* sql =
 				"SELECT * "
@@ -355,7 +355,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��SQLECT��Ƀe�[�u���ƈꏏ�Ɏw�肵���񖼂��w�肵�ASQL�����s�ł��܂��B)
+		TEST_METHOD(ExecuteSQLはSQLECT句にテーブルと一緒に指定した列名を指定し、SQLを実行できます。)
 		{
 			char* sql =
 				"SELECT String "
@@ -373,7 +373,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��SQLECT��ɕ����̃e�[�u���ƈꏏ�Ɏw�肵���񖼂��w�肵�ASQL�����s�ł��܂��B)
+		TEST_METHOD(ExecuteSQLはSQLECT句に複数のテーブルと一緒に指定した列名を指定し、SQLを実行できます。)
 		{
 			char* sql =
 				"SELECT String,Integer "
@@ -391,7 +391,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��SQLECT��ɎO�ȏ�̃e�[�u���ƈꏏ�Ɏw�肵���񖼂��w�肵�ASQL�����s�ł��܂��B)
+		TEST_METHOD(ExecuteSQLはSQLECT句に三つ以上のテーブルと一緒に指定した列名を指定し、SQLを実行できます。)
 		{
 			char* sql =
 				"SELECT String,Integer,String,Integer "
@@ -409,7 +409,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��SELECT�̎w��Ƀe�[�u�������w��ł��܂��B)
+		TEST_METHOD(ExecuteSQLはSELECTの指定にテーブル名も指定できます。)
 		{
 			char* sql =
 				"SELECT TABLE1.Integer "
@@ -427,7 +427,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL�͕����̂̃e�[�u����ǂݍ��݁A�e�[�u�����ŋ�ʂ��ăe�[�u���ƈꏏ�Ɏw�肵���񖼂��w�肷�邱�Ƃ��ł��܂��B)
+		TEST_METHOD(ExecuteSQLは複数ののテーブルを読み込み、テーブル名で区別してテーブルと一緒に指定した列名を指定することができます。)
 		{
 			char* sql =
 				"SELECT Table1.Integer "
@@ -451,7 +451,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��SELECT��Ńe�[�u�������ڈȍ~�̃e�[�u���ƈꏏ�Ɏw�肵���񖼂Ɏw�肷�邱�Ƃ��ł��܂��B)
+		TEST_METHOD(ExecuteSQLはSELECT句でテーブル名を二つ目以降のテーブルと一緒に指定した列名に指定することができます。)
 		{
 			char* sql =
 				"SELECT Table1.Integer, Table2.String "
@@ -475,7 +475,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��SELECT�̃e�[�u���ƈꏏ�Ɏw�肵���񖼂̎w�肪�����܂��ȏꍇ��ERR_BAD_COLUMN_NAME�G���[�ƂȂ�܂��B)
+		TEST_METHOD(ExecuteSQLはSELECTのテーブルと一緒に指定した列名の指定があいまいな場合にERR_BAD_COLUMN_NAMEエラーとなります。)
 		{
 			char* sql =
 				"SELECT Integer "
@@ -486,7 +486,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��SELECT�Ŏw�肵���e�[�u���ƈꏏ�Ɏw�肵���񖼂̎w��̈ꕶ���ڂ̈Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはSELECTで指定したテーブルと一緒に指定した列名の指定の一文字目の違いを見分けます。)
 		{
 			char* sql =
 				"SELECT Ttring "
@@ -497,7 +497,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��SELECT�Ŏw�肵���e�[�u���ƈꏏ�Ɏw�肵���񖼂̎w��̓񕶎��ڂ̈Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはSELECTで指定したテーブルと一緒に指定した列名の指定の二文字目の違いを見分けます。)
 		{
 			char* sql =
 				"SELECT Suring "
@@ -508,7 +508,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��SELECT�Ŏw�肵���e�[�u���ƈꏏ�Ɏw�肵���񖼂̎w��̍ŏI�����̈Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはSELECTで指定したテーブルと一緒に指定した列名の指定の最終文字の違いを見分けます。)
 		{
 			char* sql =
 				"SELECT Surinh "
@@ -519,7 +519,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��SELECT�Ŏw�肵���e�[�u���ƈꏏ�Ɏw�肵���񖼂̎w�肪�ꕶ�������Ƃ����Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはSELECTで指定したテーブルと一緒に指定した列名の指定が一文字多いという違いを見分けます。)
 		{
 			char* sql =
 				"SELECT Suringg "
@@ -530,7 +530,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��SELECT�Ŏw�肵���e�[�u���ƈꏏ�Ɏw�肵���񖼂̎w��̈ꕶ�����Ȃ��Ƃ����Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはSELECTで指定したテーブルと一緒に指定した列名の指定の一文字少ないという違いを見分けます。)
 		{
 			char* sql =
 				"SELECT Surin "
@@ -541,7 +541,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��SELECT�Ŏw�肵���e�[�u�����̎w��̈ꕶ���ڂ̈Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはSELECTで指定したテーブル名の指定の一文字目の違いを見分けます。)
 		{
 			char* sql =
 				"SELECT UABLE1.Integer "
@@ -552,7 +552,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��SELECT�Ŏw�肵���e�[�u�����̎w��̓񕶎��ڂ̈Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはSELECTで指定したテーブル名の指定の二文字目の違いを見分けます。)
 		{
 			char* sql =
 				"SELECT TBBLE1.Integer "
@@ -563,7 +563,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��SELECT�Ŏw�肵���e�[�u�����̎w��̍ŏI�����̈Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはSELECTで指定したテーブル名の指定の最終文字の違いを見分けます。)
 		{
 			char* sql =
 				"SELECT TABLE2.Integer "
@@ -574,7 +574,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��SELECT�Ŏw�肵���e�[�u�����̎w�肪�ꕶ�������Ƃ����Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはSELECTで指定したテーブル名の指定が一文字多いという違いを見分けます。)
 		{
 			char* sql =
 				"SELECT TABLE1a.Integer "
@@ -585,7 +585,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��SELECT�Ŏw�肵���e�[�u�����̎w��̈ꕶ�����Ȃ��Ƃ����Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはSELECTで指定したテーブル名の指定の一文字少ないという違いを見分けます。)
 		{
 			char* sql =
 				"SELECT TABLE.Integer "
@@ -597,7 +597,7 @@ namespace Test
 		}
 
 
-		TEST_METHOD(ExecuteSQL��ORDER��ŕ�������������ŕ��בւ��܂��B)
+		TEST_METHOD(ExecuteSQLはORDER句で文字列を辞書順で並べ替えます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -619,7 +619,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��ORDER���SELECT�Ŏw�肳��Ȃ���������w�肷�邱�Ƃ��ł��܂��B)
+		TEST_METHOD(ExecuteSQLはORDER句にSELECTで指定されなかった列を指定することができます。)
 		{
 			char* sql =
 				"SELECT String "
@@ -641,7 +641,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��ORDER���SELECT�Ŏw�肳��Ȃ������A���͂̍Ō�̗���w�肷�邱�Ƃ��ł��܂��B)
+		TEST_METHOD(ExecuteSQLはORDER句にSELECTで指定されなかった、入力の最後の列を指定することができます。)
 		{
 			char* sql =
 				"SELECT Integer "
@@ -663,7 +663,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��ORDER��Ő������召���ŕ��בւ��܂��B)
+		TEST_METHOD(ExecuteSQLはORDER句で数字列を大小順で並べ替えます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -685,7 +685,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��ORDER��Ń}�C�i�X�̐��l�������܂��B)
+		TEST_METHOD(ExecuteSQLはORDER句でマイナスの数値を扱えます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -707,7 +707,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��ORDER��ŕ����̕�����������ɂ��ĕ��בւ��܂��B)
+		TEST_METHOD(ExecuteSQLはORDER句で複数の文字列を条件にして並べ替えます。)
 		{
 			char* sql =
 				"SELECT String1, String2 "
@@ -727,7 +727,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��ORDER��ŕ����̐��l��������ɂ��ĕ��בւ��܂��B)
+		TEST_METHOD(ExecuteSQLはORDER句で複数の数値列を条件にして並べ替えます。)
 		{
 			char* sql =
 				"SELECT Integer1, Integer2 "
@@ -747,7 +747,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��ORDER��ŕ����̏������w�肵���ꍇ�ɐ�Ɏw�肵��������D�悵�ĕ��בւ��܂��B)
+		TEST_METHOD(ExecuteSQLはORDER句で複数の条件を指定した場合に先に指定した条件を優先して並べ替えます。)
 		{
 			char* sql =
 				"SELECT String1, String2 "
@@ -767,7 +767,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��ORDER��ŏ������w��ł��܂��B)
+		TEST_METHOD(ExecuteSQLはORDER句で昇順を指定できます。)
 		{
 			char* sql =
 				"SELECT String1, String2 "
@@ -787,7 +787,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��ORDER��ō~�����w��ł��܂��B)
+		TEST_METHOD(ExecuteSQLはORDER句で降順を指定できます。)
 		{
 			char* sql =
 				"SELECT String1, String2 "
@@ -807,7 +807,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��ORDER��œ�ڈȍ~�̍��ڂɏ������w��ł��܂��B)
+		TEST_METHOD(ExecuteSQLはORDER句で二つ目以降の項目に昇順を指定できます。)
 		{
 			char* sql =
 				"SELECT String1, String2 "
@@ -827,7 +827,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��ORDER��œ�ڈȍ~�̍��ڂɍ~�����w��ł��܂��B)
+		TEST_METHOD(ExecuteSQLはORDER句で二つ目以降の項目に降順を指定できます。)
 		{
 			char* sql =
 				"SELECT String1, String2 "
@@ -847,7 +847,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��ORDER��Ƀe�[�u�����t�̃e�[�u���ƈꏏ�Ɏw�肵���񖼂��w�肷�邱�Ƃ��ł��܂��B)
+		TEST_METHOD(ExecuteSQLはORDER句にテーブル名付のテーブルと一緒に指定した列名を指定することができます。)
 		{
 			char* sql =
 				"SELECT String "
@@ -869,7 +869,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��ORDER��Ƀe�[�u�����t�̃e�[�u���ƈꏏ�Ɏw�肵���񖼂��w�肵�A�e�[�u����I�����邱�Ƃ��ł��܂��B)
+		TEST_METHOD(ExecuteSQLはORDER句にテーブル名付のテーブルと一緒に指定した列名を指定し、テーブルを選択することができます。)
 		{
 			char* sql =
 				"SELECT *"
@@ -894,7 +894,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��ORDERBY�w�肵���e�[�u���ƈꏏ�Ɏw�肵���񖼂̎w��̈ꕶ���ڂ̈Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはORDERBY指定したテーブルと一緒に指定した列名の指定の一文字目の違いを見分けます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -906,7 +906,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��ORDERBY�w�肵���e�[�u���ƈꏏ�Ɏw�肵���񖼂̎w��̓񕶎��ڂ̈Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはORDERBY指定したテーブルと一緒に指定した列名の指定の二文字目の違いを見分けます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -918,7 +918,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��ORDERBY�w�肵���e�[�u���ƈꏏ�Ɏw�肵���񖼂̎w��̍ŏI�����̈Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはORDERBY指定したテーブルと一緒に指定した列名の指定の最終文字の違いを見分けます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -930,7 +930,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��ORDERBY�w�肵���e�[�u���ƈꏏ�Ɏw�肵���񖼂̎w�肪�ꕶ�������Ƃ����Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはORDERBY指定したテーブルと一緒に指定した列名の指定が一文字多いという違いを見分けます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -942,7 +942,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��ORDERBY�w�肵���e�[�u���ƈꏏ�Ɏw�肵���񖼂̎w��̈ꕶ�����Ȃ��Ƃ����Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはORDERBY指定したテーブルと一緒に指定した列名の指定の一文字少ないという違いを見分けます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -954,7 +954,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��ORDERBY�w�肵���e�[�u�����̎w��̈ꕶ���ڂ̈Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはORDERBY指定したテーブル名の指定の一文字目の違いを見分けます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -966,7 +966,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��ORDERBY�w�肵���e�[�u�����̎w��̓񕶎��ڂ̈Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはORDERBY指定したテーブル名の指定の二文字目の違いを見分けます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -978,7 +978,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��ORDERBY�w�肵���e�[�u�����̎w��̍ŏI�����̈Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはORDERBY指定したテーブル名の指定の最終文字の違いを見分けます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -990,7 +990,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��ORDERBY�w�肵���e�[�u�����̎w�肪�ꕶ�������Ƃ����Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはORDERBY指定したテーブル名の指定が一文字多いという違いを見分けます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1002,7 +1002,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��ORDERBY�w�肵���e�[�u�����̎w��̈ꕶ�����Ȃ��Ƃ����Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはORDERBY指定したテーブル名の指定の一文字少ないという違いを見分けます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1014,7 +1014,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��ORDERBY�ŞB���ȃe�[�u���ƈꏏ�Ɏw�肵���񖼂��w�肵���ꍇ��ERR_BAD_COLUMN_NAME�G���[�ƂȂ�܂��B)
+		TEST_METHOD(ExecuteSQLはORDERBYで曖昧なテーブルと一緒に指定した列名を指定した場合にERR_BAD_COLUMN_NAMEエラーとなります。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1026,7 +1026,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��Ő��l��ɑ΂�������Ƃ��ĕ�����͎w��ł��܂���B)
+		TEST_METHOD(ExecuteSQLはWHERE句で数値列に対する条件として文字列は指定できません。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1039,7 +1039,7 @@ namespace Test
 		}
 
 
-		TEST_METHOD(ExecuteSQL��WHERE��Ő��l�Ƃ��ē����������̎w�肪�ł��܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で数値として等しい条件の指定ができます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1056,7 +1056,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��Ő��l�Ƃ��ē������Ȃ������̎w�肪�ł��܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で数値として等しくない条件の指定ができます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1074,7 +1074,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��Ő��l�Ƃ��đ傫�������̎w�肪�ł��܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で数値として大きい条件の指定ができます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1091,7 +1091,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��Ő��l�Ƃ��ď����������̎w�肪�ł��܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で数値として小さい条件の指定ができます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1108,7 +1108,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��Ő��l�Ƃ��Ĉȏ�̏����̎w�肪�ł��܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で数値として以上の条件の指定ができます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1127,7 +1127,7 @@ namespace Test
 		}
 
 
-		TEST_METHOD(ExecuteSQL��WHERE��Ő��l�Ƃ��Ĉȉ��̏����̎w�肪�ł��܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で数値として以下の条件の指定ができます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1145,7 +1145,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��Ń}�C�i�X�̐��l�������܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句でマイナスの数値が扱えます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1165,7 +1165,7 @@ namespace Test
 		}
 
 
-		TEST_METHOD(ExecuteSQL��WHERE��Ńv���X�𖾎������̐��l�������܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句でプラスを明示したの数値が扱えます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1183,7 +1183,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��Ń}�C�i�X���w�肵���̗񖼂������܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句でマイナスを指定したの列名が扱えます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1203,7 +1203,7 @@ namespace Test
 		}
 
 
-		TEST_METHOD(ExecuteSQL��WHERE��Ńv���X�𖾎������񖼂������܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句でプラスを明示した列名が扱えます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1221,7 +1221,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��ŕ�����Ƀ}�C�i�X�̎w��͂ł��܂���B)
+		TEST_METHOD(ExecuteSQLはWHERE句で文字列にマイナスの指定はできません。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1233,7 +1233,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��ŕ�����Ƀv���X�̎w��͂ł��܂���B)
+		TEST_METHOD(ExecuteSQLはWHERE句で文字列にプラスの指定はできません。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1245,7 +1245,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE���SELECT��Ŏw�肵�Ă��Ȃ���̏����̎w�肪�ł��܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句でSELECT句で指定していない列の条件の指定ができます。)
 		{
 			char* sql =
 				"SELECT String "
@@ -1262,7 +1262,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE���SELECT��Ŏw�肵�Ă��Ȃ��A���͂̍Ō�̗񂪃e�[�u�������w�肹���ɏ����̎w�肪�ł��܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句でSELECT句で指定していない、入力の最後の列がテーブル名を指定せずに条件の指定ができます。)
 		{
 			char* sql =
 				"SELECT Integer "
@@ -1279,7 +1279,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE���SELECT��Ŏw�肵�Ă��Ȃ��A���͂̍Ō�̗񂪃e�[�u�������w�肵�ď����̎w�肪�ł��܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句でSELECT句で指定していない、入力の最後の列がテーブル名を指定して条件の指定ができます。)
 		{
 			char* sql =
 				"SELECT Integer "
@@ -1296,7 +1296,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��ŕ�����Ɛ��l�̓����������̔�r�������ꍇ��ERR_WHERE_OPERAND_TYPE�G���[�ƂȂ�܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で文字列と数値の等しい条件の比較をした場合にERR_WHERE_OPERAND_TYPEエラーとなります。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1308,7 +1308,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��ŕ�����Ɛ��l�̓������Ȃ������̔�r�������ꍇ��ERR_WHERE_OPERAND_TYPE�G���[�ƂȂ�܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で文字列と数値の等しくない条件の比較をした場合にERR_WHERE_OPERAND_TYPEエラーとなります。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1320,7 +1320,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��ŕ�����Ɛ��l�̏����������̔�r�������ꍇ��ERR_WHERE_OPERAND_TYPE�G���[�ƂȂ�܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で文字列と数値の小さい条件の比較をした場合にERR_WHERE_OPERAND_TYPEエラーとなります。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1332,7 +1332,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��ŕ�����Ɛ��l�̈ȉ������̔�r�������ꍇ��ERR_WHERE_OPERAND_TYPE�G���[�ƂȂ�܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で文字列と数値の以下条件の比較をした場合にERR_WHERE_OPERAND_TYPEエラーとなります。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1344,7 +1344,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��ŕ�����Ɛ��l�̑傫�������̔�r�������ꍇ��ERR_WHERE_OPERAND_TYPE�G���[�ƂȂ�܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で文字列と数値の大きい条件の比較をした場合にERR_WHERE_OPERAND_TYPEエラーとなります。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1356,7 +1356,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��ŕ�����Ɛ��l�̈ȏ�����̔�r�������ꍇ��ERR_WHERE_OPERAND_TYPE�G���[�ƂȂ�܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で文字列と数値の以上条件の比較をした場合にERR_WHERE_OPERAND_TYPEエラーとなります。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1368,7 +1368,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��Ő��l�ƕ�����̓����������̔�r�������ꍇ��ERR_WHERE_OPERAND_TYPE�G���[�ƂȂ�܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で数値と文字列の等しい条件の比較をした場合にERR_WHERE_OPERAND_TYPEエラーとなります。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1380,7 +1380,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��Ő��l�ƕ�����̓������Ȃ������̔�r�������ꍇ��ERR_WHERE_OPERAND_TYPE�G���[�ƂȂ�܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で数値と文字列の等しくない条件の比較をした場合にERR_WHERE_OPERAND_TYPEエラーとなります。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1392,7 +1392,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��Ő��l�ƕ�����̏����������̔�r�������ꍇ��ERR_WHERE_OPERAND_TYPE�G���[�ƂȂ�܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で数値と文字列の小さい条件の比較をした場合にERR_WHERE_OPERAND_TYPEエラーとなります。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1404,7 +1404,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��Ő��l�ƕ�����̈ȉ������̔�r�������ꍇ��ERR_WHERE_OPERAND_TYPE�G���[�ƂȂ�܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で数値と文字列の以下条件の比較をした場合にERR_WHERE_OPERAND_TYPEエラーとなります。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1416,7 +1416,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��Ő��l�ƕ�����̑傫�������̔�r�������ꍇ��ERR_WHERE_OPERAND_TYPE�G���[�ƂȂ�܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で数値と文字列の大きい条件の比較をした場合にERR_WHERE_OPERAND_TYPEエラーとなります。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1428,7 +1428,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��Ő��l�ƕ�����̈ȏ�����̔�r�������ꍇ��ERR_WHERE_OPERAND_TYPE�G���[�ƂȂ�܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で数値と文字列の以上条件の比較をした場合にERR_WHERE_OPERAND_TYPEエラーとなります。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1440,7 +1440,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��ŕ�����Ƃ��ē����������̎w�肪�ł��܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で文字列として等しい条件の指定ができます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1457,7 +1457,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��ŕ�����Ƃ��ē������Ȃ������̎w�肪�ł��܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で文字列として等しくない条件の指定ができます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1475,7 +1475,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��ŕ�����Ƃ��đ傫�������̎w�肪�ł��܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で文字列として大きい条件の指定ができます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1492,7 +1492,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��ŕ�����Ƃ��ď����������̎w�肪�ł��܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で文字列として小さい条件の指定ができます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1509,7 +1509,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��ŕ�����Ƃ��Ĉȏ�̏����̎w�肪�ł��܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で文字列として以上の条件の指定ができます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1528,7 +1528,7 @@ namespace Test
 		}
 
 
-		TEST_METHOD(ExecuteSQL��WHERE��ŕ�����Ƃ��Ĉȉ��̏����̎w�肪�ł��܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で文字列として以下の条件の指定ができます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1546,7 +1546,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE�w�肵���e�[�u���ƈꏏ�Ɏw�肵���񖼂̎w��̈ꕶ���ڂ̈Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE指定したテーブルと一緒に指定した列名の指定の一文字目の違いを見分けます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1558,7 +1558,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE�w�肵���e�[�u���ƈꏏ�Ɏw�肵���񖼂̎w��̓񕶎��ڂ̈Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE指定したテーブルと一緒に指定した列名の指定の二文字目の違いを見分けます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1570,7 +1570,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE�w�肵���e�[�u���ƈꏏ�Ɏw�肵���񖼂̎w��̍ŏI�����̈Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE指定したテーブルと一緒に指定した列名の指定の最終文字の違いを見分けます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1582,7 +1582,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE�w�肵���e�[�u���ƈꏏ�Ɏw�肵���񖼂̎w�肪�ꕶ�������Ƃ����Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE指定したテーブルと一緒に指定した列名の指定が一文字多いという違いを見分けます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1594,7 +1594,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE�w�肵���e�[�u���ƈꏏ�Ɏw�肵���񖼂̎w��̈ꕶ�����Ȃ��Ƃ����Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE指定したテーブルと一緒に指定した列名の指定の一文字少ないという違いを見分けます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1606,7 +1606,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��Ŕ�r�̃e�[�u���ƈꏏ�Ɏw�肵���񖼂��E�ӂɎ����Ă��邱�Ƃ��ł��܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で比較のテーブルと一緒に指定した列名を右辺に持ってくることができます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1623,7 +1623,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��ŉ��Z���Z�q���g���܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で加算演算子が使えます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1640,7 +1640,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��̉��Z���Z�q�̍��ӂ����l�łȂ��ꍇ��ERR_WHERE_OPERAND_TYPE�G���[�ƂȂ�܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句の加算演算子の左辺が数値でない場合はERR_WHERE_OPERAND_TYPEエラーとなります。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1652,7 +1652,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��̉��Z���Z�q�̉E�ӂ����l�łȂ��ꍇ��ERR_WHERE_OPERAND_TYPE�G���[�ƂȂ�܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句の加算演算子の右辺が数値でない場合はERR_WHERE_OPERAND_TYPEエラーとなります。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1664,7 +1664,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��Ō��Z���Z�q���g���܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で減算演算子が使えます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1681,7 +1681,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��̌��Z���Z�q�̍��ӂ����l�łȂ��ꍇ��ERR_WHERE_OPERAND_TYPE�G���[�ƂȂ�܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句の減算演算子の左辺が数値でない場合はERR_WHERE_OPERAND_TYPEエラーとなります。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1693,7 +1693,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��̌��Z���Z�q�̉E�ӂ����l�łȂ��ꍇ��ERR_WHERE_OPERAND_TYPE�G���[�ƂȂ�܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句の減算演算子の右辺が数値でない場合はERR_WHERE_OPERAND_TYPEエラーとなります。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1705,7 +1705,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��ŏ�Z���Z�q���g���܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で乗算演算子が使えます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1722,7 +1722,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��̏�Z���Z�q�̍��ӂ����l�łȂ��ꍇ��ERR_WHERE_OPERAND_TYPE�G���[�ƂȂ�܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句の乗算演算子の左辺が数値でない場合はERR_WHERE_OPERAND_TYPEエラーとなります。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1734,7 +1734,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��̏�Z���Z�q�̉E�ӂ����l�łȂ��ꍇ��ERR_WHERE_OPERAND_TYPE�G���[�ƂȂ�܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句の乗算演算子の右辺が数値でない場合はERR_WHERE_OPERAND_TYPEエラーとなります。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1746,7 +1746,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��ŏ��Z���Z�q���g���܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で除算演算子が使えます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1763,7 +1763,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��̏��Z���Z�q�̍��ӂ����l�łȂ��ꍇ��ERR_WHERE_OPERAND_TYPE�G���[�ƂȂ�܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句の除算演算子の左辺が数値でない場合はERR_WHERE_OPERAND_TYPEエラーとなります。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1775,7 +1775,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��̏��Z���Z�q�̉E�ӂ����l�łȂ��ꍇ��ERR_WHERE_OPERAND_TYPE�G���[�ƂȂ�܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句の除算演算子の右辺が数値でない場合はERR_WHERE_OPERAND_TYPEエラーとなります。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1787,7 +1787,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE���AND���Z�q���g���܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句でAND演算子が使えます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1804,7 +1804,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE���AND���Z�q�̍��ӂ��^�U�l�łȂ��ꍇ��ERR_WHERE_OPERAND_TYPE�G���[�ƂȂ�܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句のAND演算子の左辺が真偽値でない場合はERR_WHERE_OPERAND_TYPEエラーとなります。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1816,7 +1816,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE���AND���Z�q�̉E�ӂ��^�U�l�łȂ��ꍇ��ERR_WHERE_OPERAND_TYPE�G���[�ƂȂ�܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句のAND演算子の右辺が真偽値でない場合はERR_WHERE_OPERAND_TYPEエラーとなります。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1828,7 +1828,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE���OR���Z�q���g���܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句でOR演算子が使えます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1846,7 +1846,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE���OR���Z�q�̍��ӂ��^�U�l�łȂ��ꍇ��ERR_WHERE_OPERAND_TYPE�G���[�ƂȂ�܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句のOR演算子の左辺が真偽値でない場合はERR_WHERE_OPERAND_TYPEエラーとなります。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1858,7 +1858,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE���OR���Z�q�̉E�ӂ��^�U�l�łȂ��ꍇ��ERR_WHERE_OPERAND_TYPE�G���[�ƂȂ�܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句のOR演算子の右辺が真偽値でない場合はERR_WHERE_OPERAND_TYPEエラーとなります。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1870,7 +1870,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��ŉ��Z�q�̗D�揇�ʂ��l������܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で演算子の優先順位が考慮されます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1887,7 +1887,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��ŉ��Z���Z�q�͌��Z���Z�q��苭���͂Ȃ��D�揇�ʂł��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で加算演算子は減算演算子より強くはない優先順位です。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1904,7 +1904,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��ŏ�Z���Z�q�͌��Z���Z�q��苭���D�揇�ʂł��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で乗算演算子は減算演算子より強い優先順位です。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1921,7 +1921,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��ŏ�Z���Z�q�͉��Z���Z�q��苭���D�揇�ʂł��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で乗算演算子は加算演算子より強い優先順位です。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1938,7 +1938,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��ŏ�Z���Z�q�͏��Z���Z�q�Ɠ����D�揇�ʂł��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で乗算演算子は除算演算子と同じ優先順位です。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1955,7 +1955,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��œ��������Z�q�͉��Z���Z�q���ア�D�揇�ʂł��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で等しい演算子は加算演算子より弱い優先順位です。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1972,7 +1972,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��œ������Ȃ����Z�q�͉��Z���Z�q���ア�D�揇�ʂł��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で等しくない演算子は加算演算子より弱い優先順位です。)
 		{
 			char* sql =
 				"SELECT * "
@@ -1990,7 +1990,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��ő傫�����Z�q�͉��Z���Z�q���ア�D�揇�ʂł��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で大きい演算子は加算演算子より弱い優先順位です。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2007,7 +2007,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��ŏ��������Z�q�͉��Z���Z�q���ア�D�揇�ʂł��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で小さい演算子は加算演算子より弱い優先順位です。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2024,7 +2024,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��ňȏ㉉�Z�q�͉��Z���Z�q���ア�D�揇�ʂł��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で以上演算子は加算演算子より弱い優先順位です。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2042,7 +2042,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��ňȉ����Z�q�͉��Z���Z�q���ア�D�揇�ʂł��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で以下演算子は加算演算子より弱い優先順位です。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2060,7 +2060,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE���AND���Z�q�͔�r���Z�q���ア�D�揇�ʂł��B)
+		TEST_METHOD(ExecuteSQLはWHERE句でAND演算子は比較演算子より弱い優先順位です。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2077,7 +2077,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE���OR���Z�q��AND���Z�q���ア�D�揇�ʂł��B)
+		TEST_METHOD(ExecuteSQLはWHERE句でOR演算子はAND演算子より弱い優先順位です。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2095,7 +2095,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��ŃJ�b�R�ɂ��D�揇�ʂ̎w�肪�ł��܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句でカッコによる優先順位の指定ができます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2112,7 +2112,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��ŃJ�b�R�ɂ�荶�����𐧌䂷�邱�Ƃ��ł��܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句でカッコにより左結合を制御することができます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2129,7 +2129,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��Ńl�X�g�����J�b�R�ɂ��D�揇�ʂ̎w�肪�ł��܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句でネストしたカッコによる優先順位の指定ができます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2146,7 +2146,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��ŃJ�b�R�����̉��Z�q�̗D�揇�ʂ̎w�肪�ł��܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句でカッコ内部の演算子の優先順位の指定ができます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2163,7 +2163,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��ŃJ�b�R�J����A���ŋL�q���邱�Ƃ��ł��܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句でカッコ開くを連続で記述することができます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2180,7 +2180,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��ŃJ�b�R�����A���ŋL�q���邱�Ƃ��ł��܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句でカッコ閉じるを連続で記述することができます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2197,7 +2197,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��Ńe�[�u�����̎w�肪�ł��܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句でテーブル名の指定ができます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2214,7 +2214,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��Ƀe�[�u�����t�̃e�[�u���ƈꏏ�Ɏw�肵���񖼂��w�肵�A�e�[�u����I�����邱�Ƃ��ł��܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句にテーブル名付のテーブルと一緒に指定した列名を指定し、テーブルを選択することができます。)
 		{
 			char* sql =
 				"SELECT *"
@@ -2233,7 +2233,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��𗘗p���Č������s�����Ƃ��ł��܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句を利用して結合を行うことができます。)
 		{
 			char* sql =
 				"SELECT PARENTS.Name, CHILDREN.Name "
@@ -2256,7 +2256,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��̃e�[�u���ƈꏏ�Ɏw�肵���񖼂̎w�肪�����܂��ȏꍇ��ERR_BAD_COLUMN_NAME�G���[�ƂȂ�܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句のテーブルと一緒に指定した列名の指定があいまいな場合にERR_BAD_COLUMN_NAMEエラーとなります。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2268,7 +2268,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��Ŏw�肵���e�[�u���ƈꏏ�Ɏw�肵���񖼂̎w��̈ꕶ���ڂ̈Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で指定したテーブルと一緒に指定した列名の指定の一文字目の違いを見分けます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2280,7 +2280,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��Ŏw�肵���e�[�u���ƈꏏ�Ɏw�肵���񖼂̎w��̓񕶎��ڂ̈Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で指定したテーブルと一緒に指定した列名の指定の二文字目の違いを見分けます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2292,7 +2292,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��Ŏw�肵���e�[�u���ƈꏏ�Ɏw�肵���񖼂̎w��̍ŏI�����̈Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で指定したテーブルと一緒に指定した列名の指定の最終文字の違いを見分けます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2304,7 +2304,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��Ŏw�肵���e�[�u���ƈꏏ�Ɏw�肵���񖼂̎w�肪�ꕶ�������Ƃ����Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で指定したテーブルと一緒に指定した列名の指定が一文字多いという違いを見分けます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2316,7 +2316,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��Ŏw�肵���e�[�u���ƈꏏ�Ɏw�肵���񖼂̎w��̈ꕶ�����Ȃ��Ƃ����Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で指定したテーブルと一緒に指定した列名の指定の一文字少ないという違いを見分けます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2328,7 +2328,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��Ŏw�肵���e�[�u�����̎w��̈ꕶ���ڂ̈Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で指定したテーブル名の指定の一文字目の違いを見分けます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2340,7 +2340,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��Ŏw�肵���e�[�u�����̎w��̓񕶎��ڂ̈Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で指定したテーブル名の指定の二文字目の違いを見分けます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2352,7 +2352,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��Ŏw�肵���e�[�u�����̎w��̍ŏI�����̈Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で指定したテーブル名の指定の最終文字の違いを見分けます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2364,7 +2364,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��Ŏw�肵���e�[�u�����̎w�肪�ꕶ�������Ƃ����Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で指定したテーブル名の指定が一文字多いという違いを見分けます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2376,7 +2376,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��Ŏw�肵���e�[�u�����̎w��̈ꕶ�����Ȃ��Ƃ����Ⴂ���������܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句で指定したテーブル名の指定の一文字少ないという違いを見分けます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2388,7 +2388,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��̌��ORDER����L�q���邱�Ƃ��ł��܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句の後にORDER句を記述することができます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2407,7 +2407,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��ORDER��̌��WHERE����L�q���邱�Ƃ��ł��܂��B)
+		TEST_METHOD(ExecuteSQLはORDER句の後にWHERE句を記述することができます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2426,7 +2426,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��FROM��̌��SQL����������ERR_SQL_SYNTAX�G���[�ƂȂ�܂��B)
+		TEST_METHOD(ExecuteSQLはFROM句の後にSQLが続いたらERR_SQL_SYNTAXエラーとなります。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2437,7 +2437,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE����x�L�q�����ERR_SQL_SYNTAX�G���[�ƂȂ�܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句を二度記述するとERR_SQL_SYNTAXエラーとなります。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2451,7 +2451,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��ORDER����x�L�q�����ERR_SQL_SYNTAX�G���[�ƂȂ�܂��B)
+		TEST_METHOD(ExecuteSQLはORDER句を二度記述するとERR_SQL_SYNTAXエラーとなります。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2465,7 +2465,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��SELECT�L�[���[�h���A�啶���ł��������ł����ʂ��܂��B)
+		TEST_METHOD(ExecuteSQLはSELECTキーワードを、大文字でも小文字でも識別します。)
 		{
 			char* sql =
 				"select * "
@@ -2483,7 +2483,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��FROM�L�[���[�h���A�啶���ł��������ł����ʂ��܂��B)
+		TEST_METHOD(ExecuteSQLはFROMキーワードを、大文字でも小文字でも識別します。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2501,7 +2501,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��ORDER�L�[���[�h���A�啶���ł��������ł����ʂ��܂��B)
+		TEST_METHOD(ExecuteSQLはORDERキーワードを、大文字でも小文字でも識別します。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2523,7 +2523,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��BY�L�[���[�h���A�啶���ł��������ł����ʂ��܂��B)
+		TEST_METHOD(ExecuteSQLはBYキーワードを、大文字でも小文字でも識別します。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2545,7 +2545,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��ASC�L�[���[�h���A�啶���ł��������ł����ʂ��܂��B)
+		TEST_METHOD(ExecuteSQLはASCキーワードを、大文字でも小文字でも識別します。)
 		{
 			char* sql =
 				"SELECT String1, String2 "
@@ -2565,7 +2565,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��DESC�L�[���[�h���A�啶���ł��������ł����ʂ��܂��B)
+		TEST_METHOD(ExecuteSQLはDESCキーワードを、大文字でも小文字でも識別します。)
 		{
 			char* sql =
 				"SELECT String1, String2 "
@@ -2585,7 +2585,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE�L�[���[�h���A�啶���ł��������ł����ʂ��܂��B)
+		TEST_METHOD(ExecuteSQLはWHEREキーワードを、大文字でも小文字でも識別します。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2602,7 +2602,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��AND�L�[���[�h���A�啶���ł��������ł����ʂ��܂��B)
+		TEST_METHOD(ExecuteSQLはANDキーワードを、大文字でも小文字でも識別します。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2618,7 +2618,7 @@ namespace Test
 			Assert::AreEqual((int)OK, result);
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
-		TEST_METHOD(ExecuteSQL��OR�L�[���[�h���A�啶���ł��������ł����ʂ��܂��B)
+		TEST_METHOD(ExecuteSQLはORキーワードを、大文字でも小文字でも識別します。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2637,7 +2637,7 @@ namespace Test
 		}
 
 
-		TEST_METHOD(ExecuteSQL��From��̃e�[�u�������A�啶���ł��������ł����ʂ��܂��B)
+		TEST_METHOD(ExecuteSQLはFrom句のテーブル名を、大文字でも小文字でも識別します。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2655,7 +2655,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��SELECT��̃e�[�u���ƈꏏ�Ɏw�肵���񖼂��A�啶���ł��������ł����ʂ��܂��B)
+		TEST_METHOD(ExecuteSQLはSELECT句のテーブルと一緒に指定した列名を、大文字でも小文字でも識別します。)
 		{
 			char* sql =
 				"SELECT sTRING "
@@ -2673,7 +2673,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��SELECT��̃e�[�u�������A�啶���ł��������ł����ʂ��܂��B)
+		TEST_METHOD(ExecuteSQLはSELECT句のテーブル名を、大文字でも小文字でも識別します。)
 		{
 			char* sql =
 				"SELECT table1.String "
@@ -2691,7 +2691,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��ORDER��̃e�[�u���ƈꏏ�Ɏw�肵���񖼂��A�啶���ł��������ł����ʂ����܂��B)
+		TEST_METHOD(ExecuteSQLはORDER句のテーブルと一緒に指定した列名を、大文字でも小文字でも識別しじます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2713,7 +2713,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��ORDER��̃e�[�u�������A�啶���ł��������ł����ʂ����܂��B)
+		TEST_METHOD(ExecuteSQLはORDER句のテーブル名を、大文字でも小文字でも識別しじます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2736,7 +2736,7 @@ namespace Test
 		}
 
 
-		TEST_METHOD(ExecuteSQL�͐擪��SELECT�ł͂Ȃ������ꍇ��ERR_SQL_SYNTAX��Ԃ��܂��B)
+		TEST_METHOD(ExecuteSQLは先頭がSELECTではなかった場合にERR_SQL_SYNTAXを返します。)
 		{
 			char* sql =
 				"a SELECT * "
@@ -2747,7 +2747,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��SELECT�̎��̌ꂪ���ʎq�ł��A�X�^���X�N�ł��Ȃ������ꍇ��ERR_SQL_SYNTAX��Ԃ��܂��B)
+		TEST_METHOD(ExecuteSQLはSELECTの次の語が識別子でもアスタリスクでもなかった場合にERR_SQL_SYNTAXを返します。)
 		{
 			char* sql =
 				"SELECT "
@@ -2758,7 +2758,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��SELECT��̃J���}�̌オ���ʎq�ł��A�X�^���X�N�ł��Ȃ������ꍇ��ERR_SQL_SYNTAX��Ԃ��܂��B)
+		TEST_METHOD(ExecuteSQLはSELECT句のカンマの後が識別子でもアスタリスクでもなかった場合にERR_SQL_SYNTAXを返します。)
 		{
 			char* sql =
 				"SELECT String, "
@@ -2769,7 +2769,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��SELECT��̃h�b�g�̌�Ƀe�[�u���ƈꏏ�Ɏw�肵���񖼂̋L�q���Ȃ������ꍇ��ERR_SQL_SYNTAX��Ԃ��܂��B)
+		TEST_METHOD(ExecuteSQLはSELECT句のドットの後にテーブルと一緒に指定した列名の記述がなかった場合にERR_SQL_SYNTAXを返します。)
 		{
 			char* sql =
 				"SELECT TABLE1. "
@@ -2780,7 +2780,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��SELECT��̃h�b�g�̑O�Ƀe�[�u�����̋L�q���Ȃ������ꍇ��ERR_SQL_SYNTAX��Ԃ��܂��B)
+		TEST_METHOD(ExecuteSQLはSELECT句のドットの前にテーブル名の記述がなかった場合にERR_SQL_SYNTAXを返します。)
 		{
 			char* sql =
 				"SELECT .String "
@@ -2791,7 +2791,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��ORDER�̌オBY�łȂ������ꍇ��ERR_SQL_SYNTAX��Ԃ��܂��B)
+		TEST_METHOD(ExecuteSQLはORDERの後がBYでなかった場合にERR_SQL_SYNTAXを返します。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2803,7 +2803,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��BY�̌オ���ʎq�łȂ������ꍇ��ERR_SQL_SYNTAX��Ԃ��܂��B)
+		TEST_METHOD(ExecuteSQLはBYの後が識別子でなかった場合にERR_SQL_SYNTAXを返します。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2815,7 +2815,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��ORDER��̃h�b�g�̌�Ƀe�[�u���ƈꏏ�Ɏw�肵���񖼂̋L�q���Ȃ������ꍇ��ERR_SQL_SYNTAX��Ԃ��܂��B)
+		TEST_METHOD(ExecuteSQLはORDER句のドットの後にテーブルと一緒に指定した列名の記述がなかった場合にERR_SQL_SYNTAXを返します。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2827,7 +2827,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��ORDER��̃h�b�g�̑O�Ƀe�[�u�����̋L�q���Ȃ������ꍇ��ERR_SQL_SYNTAX��Ԃ��܂��B)
+		TEST_METHOD(ExecuteSQLはORDER句のドットの前にテーブル名の記述がなかった場合にERR_SQL_SYNTAXを返します。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2839,7 +2839,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��ORDER��̃J���}�̌オ�̎��ʎq�łȂ������ꍇ��ERR_SQL_SYNTAX��Ԃ��܂��B)
+		TEST_METHOD(ExecuteSQLはORDER句のカンマの後がの識別子でなかった場合にERR_SQL_SYNTAXを返します。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2851,7 +2851,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE�̌オ���ʎq�ł����e�����ł��Ȃ������ꍇ��ERR_SQL_SYNTAX��Ԃ��܂��B)
+		TEST_METHOD(ExecuteSQLはWHEREの後が識別子でもリテラルでもなかった場合にERR_SQL_SYNTAXを返します。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2863,7 +2863,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��̃h�b�g�̌�Ƀe�[�u���ƈꏏ�Ɏw�肵���񖼂̋L�q���Ȃ������ꍇ��ERR_SQL_SYNTAX��Ԃ��܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句のドットの後にテーブルと一緒に指定した列名の記述がなかった場合にERR_SQL_SYNTAXを返します。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2875,7 +2875,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��̃h�b�g�̑O�Ƀe�[�u�����̋L�q���Ȃ������ꍇ��ERR_SQL_SYNTAX��Ԃ��܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句のドットの前にテーブル名の記述がなかった場合にERR_SQL_SYNTAXを返します。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2887,7 +2887,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��̍��ӂ̌オ���Z�q�ł͂Ȃ������ꍇ��ERR_SQL_SYNTAX��Ԃ��܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句の左辺の後が演算子ではなかった場合にERR_SQL_SYNTAXを返します。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2899,7 +2899,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE��̉��Z�q�̌オ���ʎq�ł����e�����ł��Ȃ������ꍇ��ERR_SQL_SYNTAX��Ԃ��܂��B)
+		TEST_METHOD(ExecuteSQLはWHERE句の演算子の後が識別子でもリテラルでもなかった場合にERR_SQL_SYNTAXを返します。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2911,7 +2911,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��FROM�傪�Ȃ������ꍇ��ERR_SQL_SYNTAX��Ԃ��܂��B)
+		TEST_METHOD(ExecuteSQLはFROM句がなかった場合にERR_SQL_SYNTAXを返します。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2922,7 +2922,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��FROM�̌�Ɏ��ʎq���Ȃ������ꍇ��ERR_SQL_SYNTAX��Ԃ��܂��B)
+		TEST_METHOD(ExecuteSQLはFROMの後に識別子がなかった場合にERR_SQL_SYNTAXを返します。)
 		{
 			char* sql =
 				"SELECT * "
@@ -2934,7 +2934,7 @@ namespace Test
 		}
 
 
-		TEST_METHOD(ExecuteSQL��SELECT�̌�ɃX�y�[�X���Ȃ��Ă����Ȃ������܂��B)
+		TEST_METHOD(ExecuteSQLはSELECTの後にスペースがなくても問題なく動きます。)
 		{
 			char* sql =
 				"SELECT* "
@@ -2952,7 +2952,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL�̓h�b�g�̌�ɃX�y�[�X�������Ă����Ȃ������܂��B)
+		TEST_METHOD(ExecuteSQLはドットの後にスペースがあっても問題なく動きます。)
 		{
 			char* sql =
 				"SELECT TABLE1. Integer "
@@ -2970,7 +2970,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL�̓h�b�g�̌�ɃX�y�[�X���Ȃ��Ă����Ȃ������܂��B)
+		TEST_METHOD(ExecuteSQLはドットの後にスペースがなくても問題なく動きます。)
 		{
 			char* sql =
 				"SELECT TABLE1.Integer "
@@ -2988,7 +2988,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL�̓J���}�̌�ɃX�y�[�X�������Ă����Ȃ������܂��B)
+		TEST_METHOD(ExecuteSQLはカンマの後にスペースがあっても問題なく動きます。)
 		{
 			char* sql =
 				"SELECT Integer, String "
@@ -3006,7 +3006,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL�̓J���}�̌�ɃX�y�[�X���Ȃ��Ă����Ȃ������܂��B)
+		TEST_METHOD(ExecuteSQLはカンマの後にスペースがなくても問題なく動きます。)
 		{
 			char* sql =
 				"SELECT Integer,String "
@@ -3024,7 +3024,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL�̓h�b�g�̌�ɃX�y�[�X�����܂��ɕ����������ƃL�[���[�h�Ƃ��ēǂݍ��܂�܂���B)
+		TEST_METHOD(ExecuteSQLはドットの後にスペースを挟まずに文字が続くとキーワードとして読み込まれません。)
 		{
 			char* sql =
 				"SELECTSTRING "
@@ -3035,7 +3035,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL�̓A�X�^���X�N�̌�ɃX�y�[�X���Ȃ��Ă����Ȃ������܂��B)
+		TEST_METHOD(ExecuteSQLはアスタリスクの後にスペースがなくても問題なく動きます。)
 		{
 			char* sql =
 				"SELECT *"
@@ -3053,7 +3053,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��ORDER�̌�ɃX�y�[�X�����܂��ɕ����������ƃL�[���[�h�Ƃ��ēǂݍ��܂�܂���B)
+		TEST_METHOD(ExecuteSQLはORDERの後にスペースを挟まずに文字が続くとキーワードとして読み込まれません。)
 		{
 			char* sql =
 				"SELECT * "
@@ -3065,7 +3065,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��BY�̌�ɃX�y�[�X�����܂��ɕ����������ƃL�[���[�h�Ƃ��ēǂݍ��܂�܂���B)
+		TEST_METHOD(ExecuteSQLはBYの後にスペースを挟まずに文字が続くとキーワードとして読み込まれません。)
 		{
 			char* sql =
 				"SELECT * "
@@ -3078,7 +3078,7 @@ namespace Test
 		}
 
 
-		TEST_METHOD(ExecuteSQL��ASC�̌�ɃX�y�[�X�����܂��ɕ����������ƃL�[���[�h�Ƃ��ēǂݍ��܂�܂���B)
+		TEST_METHOD(ExecuteSQLはASCの後にスペースを挟まずに文字が続くとキーワードとして読み込まれません。)
 		{
 			char* sql =
 				"SELECT * "
@@ -3090,7 +3090,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��DESC�̌�ɃX�y�[�X�����܂��ɕ����������ƃL�[���[�h�Ƃ��ēǂݍ��܂�܂���B)
+		TEST_METHOD(ExecuteSQLはDESCの後にスペースを挟まずに文字が続くとキーワードとして読み込まれません。)
 		{
 			char* sql =
 				"SELECT * "
@@ -3102,7 +3102,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE�̌�ɃX�y�[�X���Ȃ��Ă����Ȃ������܂��B)
+		TEST_METHOD(ExecuteSQLはWHEREの後にスペースがなくても問題なく動きます。)
 		{
 			char* sql =
 				"SELECT *"
@@ -3119,7 +3119,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��WHERE�̌�ɕ����������Ɛ������e�����Ƃ��ēǂݍ��܂�܂���B)
+		TEST_METHOD(ExecuteSQLはWHEREの後に文字が続くと整数リテラルとして読み込まれません。)
 		{
 			char* sql =
 				"SELECT *"
@@ -3131,7 +3131,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_TOKEN_CANT_READ, result);
 		}
 
-		TEST_METHOD(ExecuteSQL�͎��ʎq�̌�ɃX�y�[�X���Ȃ��Ă����Ȃ������܂��B)
+		TEST_METHOD(ExecuteSQLは識別子の後にスペースがなくても問題なく動きます。)
 		{
 			char* sql =
 				"SELECT *"
@@ -3148,7 +3148,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL�͐������e�����̌�ɕ����������Ɛ������e�����Ƃ��ēǂݍ��܂�܂���B)
+		TEST_METHOD(ExecuteSQLは整数リテラルの後に文字が続くと整数リテラルとして読み込まれません。)
 		{
 			char* sql =
 				"SELECT *"
@@ -3160,7 +3160,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_TOKEN_CANT_READ, result);
 		}
 
-		TEST_METHOD(ExecuteSQL�͕����񃊃e�����̌�ɃX�y�[�X���Ȃ��Ă����Ȃ������܂��B)
+		TEST_METHOD(ExecuteSQLは文字列リテラルの後にスペースがなくても問題なく動きます。)
 		{
 			char* sql =
 				"SELECT *"
@@ -3177,7 +3177,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL�͓������L���̌�ɃX�y�[�X���Ȃ��Ă����Ȃ������܂��B)
+		TEST_METHOD(ExecuteSQLは等しい記号の後にスペースがなくても問題なく動きます。)
 		{
 			char* sql =
 				"SELECT *"
@@ -3194,7 +3194,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL�͓������Ȃ��L���̌�ɃX�y�[�X���Ȃ��Ă����Ȃ������܂��B)
+		TEST_METHOD(ExecuteSQLは等しくない記号の後にスペースがなくても問題なく動きます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -3212,7 +3212,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL�͑�Ȃ�L���̌�ɃX�y�[�X���Ȃ��Ă����Ȃ������܂��B)
+		TEST_METHOD(ExecuteSQLは大なり記号の後にスペースがなくても問題なく動きます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -3229,7 +3229,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL�͏��Ȃ�L���̌�ɃX�y�[�X���Ȃ��Ă����Ȃ������܂��B)
+		TEST_METHOD(ExecuteSQLは小なり記号の後にスペースがなくても問題なく動きます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -3246,7 +3246,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL�͈ȏ�L���̌�ɃX�y�[�X���Ȃ��Ă����Ȃ������܂��B)
+		TEST_METHOD(ExecuteSQLは以上記号の後にスペースがなくても問題なく動きます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -3265,7 +3265,7 @@ namespace Test
 		}
 
 
-		TEST_METHOD(ExecuteSQL�͈ȉ��L���̌�ɃX�y�[�X���Ȃ��Ă����Ȃ������܂��B)
+		TEST_METHOD(ExecuteSQLは以下記号の後にスペースがなくても問題なく動きます。)
 		{
 			char* sql =
 				"SELECT * "
@@ -3283,7 +3283,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL�͉��Z�L���̌�ɃX�y�[�X���Ȃ��Ă����Ȃ������܂��B)
+		TEST_METHOD(ExecuteSQLは加算記号の後にスペースがなくても問題なく動きます。)
 		{
 			char* sql =
 				"SELECT *"
@@ -3300,7 +3300,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL�͌��Z�L���̌�ɃX�y�[�X���Ȃ��Ă����Ȃ������܂��B)
+		TEST_METHOD(ExecuteSQLは減算記号の後にスペースがなくても問題なく動きます。)
 		{
 			char* sql =
 				"SELECT *"
@@ -3317,7 +3317,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL�͏�Z�L���̌�ɃX�y�[�X���Ȃ��Ă����Ȃ������܂��B)
+		TEST_METHOD(ExecuteSQLは乗算記号の後にスペースがなくても問題なく動きます。)
 		{
 			char* sql =
 				"SELECT *"
@@ -3334,7 +3334,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL�͏��Z�L���̌�ɃX�y�[�X���Ȃ��Ă����Ȃ������܂��B)
+		TEST_METHOD(ExecuteSQLは除算記号の後にスペースがなくても問題なく動きます。)
 		{
 			char* sql =
 				"SELECT *"
@@ -3351,7 +3351,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��AND���Z�q�̌�ɃX�y�[�X���Ȃ��Ă����Ȃ������܂��B)
+		TEST_METHOD(ExecuteSQLはAND演算子の後にスペースがなくても問題なく動きます。)
 		{
 			char* sql =
 				"SELECT *"
@@ -3367,7 +3367,7 @@ namespace Test
 			Assert::AreEqual((int)OK, result);
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
-		TEST_METHOD(ExecuteSQL��AND���Z�q�̌�ɃX�y�[�X�����܂��ɕ����������ƃL�[���[�h�Ƃ��ēǂݍ��܂�܂���B)
+		TEST_METHOD(ExecuteSQLはAND演算子の後にスペースを挟まずに文字が続くとキーワードとして読み込まれません。)
 		{
 			char* sql =
 				"SELECT *"
@@ -3379,7 +3379,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL��OR���Z�q�̌�ɃX�y�[�X���Ȃ��Ă����Ȃ������܂��B)
+		TEST_METHOD(ExecuteSQLはOR演算子の後にスペースがなくても問題なく動きます。)
 		{
 			char* sql =
 				"SELECT *"
@@ -3396,7 +3396,7 @@ namespace Test
 			Assert::AreEqual((int)OK, result);
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
-		TEST_METHOD(ExecuteSQL��OR���Z�q�̌�ɃX�y�[�X�����܂��ɕ����������ƃL�[���[�h�Ƃ��ēǂݍ��܂�܂���B)
+		TEST_METHOD(ExecuteSQLはOR演算子の後にスペースを挟まずに文字が続くとキーワードとして読み込まれません。)
 		{
 			char* sql =
 				"SELECT *"
@@ -3408,7 +3408,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL�̓J�b�R�J���̌�ɃX�y�[�X���Ȃ��Ă����Ȃ������܂��B)
+		TEST_METHOD(ExecuteSQLはカッコ開くの後にスペースがなくても問題なく動きます。)
 		{
 			char* sql =
 				"SELECT *"
@@ -3425,7 +3425,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL�̓J�b�R�J���̌�ɃX�y�[�X�������Ă����Ȃ������܂��B)
+		TEST_METHOD(ExecuteSQLはカッコ開くの後にスペースがあっても問題なく動きます。)
 		{
 			char* sql =
 				"SELECT *"
@@ -3442,7 +3442,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL�̓J�b�R����̌�ɃX�y�[�X���Ȃ��Ă����Ȃ������܂��B)
+		TEST_METHOD(ExecuteSQLはカッコ閉じるの後にスペースがなくても問題なく動きます。)
 		{
 			char* sql =
 				"SELECT *"
@@ -3459,7 +3459,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL�̓J�b�R����̌�ɃX�y�[�X�������Ă����Ȃ������܂��B)
+		TEST_METHOD(ExecuteSQLはカッコ閉じるの後にスペースがあっても問題なく動きます。)
 		{
 			char* sql =
 				"SELECT *"
@@ -3476,7 +3476,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL��FROM�̌�ɃX�y�[�X�����܂��ɕ����������ƃL�[���[�h�Ƃ��ēǂݍ��܂�܂���B)
+		TEST_METHOD(ExecuteSQLはFROMの後にスペースを挟まずに文字が続くとキーワードとして読み込まれません。)
 		{
 			char* sql =
 				"SELECT *"

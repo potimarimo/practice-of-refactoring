@@ -9,384 +9,384 @@
 
 using namespace std;
 
-#define MAX_FILE_LINE_LENGTH 4096          //!< “Ç‚İ‚Şƒtƒ@ƒCƒ‹‚Ìˆês‚ÌÅ‘å’·‚Å‚·B
-#define MAX_WORD_LENGTH 256                //!< SQL‚ÌˆêŒê‚ÌÅ‘å’·‚Å‚·B
-#define MAX_DATA_LENGTH 256                //!< “üo—Í‚³‚ê‚éƒf[ƒ^‚ÌAŠe—ñ‚ÌÅ‘å’·‚Å‚·B
-#define MAX_COLUMN_COUNT 16                //!< “üo—Í‚³‚ê‚éƒf[ƒ^‚ÉŠÜ‚Ü‚ê‚é—ñ‚ÌÅ‘å”‚Å‚·B
-#define MAX_TABLE_COUNT 8                  //!< CSV‚Æ‚µ‚Ä“ü—Í‚³‚ê‚éƒe[ƒuƒ‹‚ÌÅ‘å”‚Å‚·B
+#define MAX_FILE_LINE_LENGTH 4096          //!< èª­ã¿è¾¼ã‚€ãƒ•ã‚¡ã‚¤ãƒ«ã®ä¸€è¡Œã®æœ€å¤§é•·ã§ã™ã€‚
+#define MAX_WORD_LENGTH 256                //!< SQLã®ä¸€èªã®æœ€å¤§é•·ã§ã™ã€‚
+#define MAX_DATA_LENGTH 256                //!< å…¥å‡ºåŠ›ã•ã‚Œã‚‹ãƒ‡ãƒ¼ã‚¿ã®ã€å„åˆ—ã®æœ€å¤§é•·ã§ã™ã€‚
+#define MAX_COLUMN_COUNT 16                //!< å…¥å‡ºåŠ›ã•ã‚Œã‚‹ãƒ‡ãƒ¼ã‚¿ã«å«ã¾ã‚Œã‚‹åˆ—ã®æœ€å¤§æ•°ã§ã™ã€‚
+#define MAX_TABLE_COUNT 8                  //!< CSVã¨ã—ã¦å…¥åŠ›ã•ã‚Œã‚‹ãƒ†ãƒ¼ãƒ–ãƒ«ã®æœ€å¤§æ•°ã§ã™ã€‚
 
-//! ƒJƒŒƒ“ƒgƒfƒBƒŒƒNƒgƒŠ‚É‚ ‚éCSV‚É‘Î‚µAŠÈˆÕ“I‚ÈSQL‚ğÀs‚µAŒ‹‰Ê‚ğƒtƒ@ƒCƒ‹‚Éo—Í‚µ‚Ü‚·B
-//! @param [in] sql Às‚·‚éSQL‚Å‚·B
-//! @param[in] outputFileName SQL‚ÌÀsŒ‹‰Ê‚ğCSV‚Æ‚µ‚Äo—Í‚·‚éƒtƒ@ƒCƒ‹–¼‚Å‚·BŠg’£q‚ğŠÜ‚İ‚Ü‚·B
-//! @return Às‚µ‚½Œ‹‰Ê‚Ìó‘Ô‚Å‚·B
+//! ã‚«ãƒ¬ãƒ³ãƒˆãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã«ã‚ã‚‹CSVã«å¯¾ã—ã€ç°¡æ˜“çš„ãªSQLã‚’å®Ÿè¡Œã—ã€çµæœã‚’ãƒ•ã‚¡ã‚¤ãƒ«ã«å‡ºåŠ›ã—ã¾ã™ã€‚
+//! @param [in] sql å®Ÿè¡Œã™ã‚‹SQLã§ã™ã€‚
+//! @param[in] outputFileName SQLã®å®Ÿè¡Œçµæœã‚’CSVã¨ã—ã¦å‡ºåŠ›ã™ã‚‹ãƒ•ã‚¡ã‚¤ãƒ«åã§ã™ã€‚æ‹¡å¼µå­ã‚’å«ã¿ã¾ã™ã€‚
+//! @return å®Ÿè¡Œã—ãŸçµæœã®çŠ¶æ…‹ã§ã™ã€‚
 int ExecuteSQL(const string, const string);
 
-//! ExecuteSQL‚Ì–ß‚è’l‚Ìí—Ş‚ğ•\‚µ‚Ü‚·B
+//! ExecuteSQLã®æˆ»ã‚Šå€¤ã®ç¨®é¡ã‚’è¡¨ã—ã¾ã™ã€‚
 enum class ResultValue
 {
-	OK = 0,                     //!< –â‘è‚È‚­I—¹‚µ‚Ü‚µ‚½B
-	ERR_FILE_OPEN = 1,          //!< ƒtƒ@ƒCƒ‹‚ğŠJ‚­‚±‚Æ‚É¸”s‚µ‚Ü‚µ‚½B
-	ERR_FILE_WRITE = 2,         //!< ƒtƒ@ƒCƒ‹‚É‘‚«‚İ‚ğs‚¤‚±‚Æ‚É¸”s‚µ‚Ü‚µ‚½B
-	ERR_FILE_CLOSE = 3,         //!< ƒtƒ@ƒCƒ‹‚ğ•Â‚¶‚é‚±‚Æ‚É¸”s‚µ‚Ü‚µ‚½B
-	ERR_TOKEN_CANT_READ = 4,    //!< ƒg[ƒNƒ“‰ğÍ‚É¸”s‚µ‚Ü‚µ‚½B
-	ERR_SQL_SYNTAX = 5,         //!< SQL‚Ì\•¶‰ğÍ‚ª¸”s‚µ‚Ü‚µ‚½B
-	ERR_BAD_COLUMN_NAME = 6,    //!< ƒe[ƒuƒ‹w’è‚ğŠÜ‚Ş—ñ–¼‚ª“KØ‚Å‚Í‚ ‚è‚Ü‚¹‚ñB
-	ERR_WHERE_OPERAND_TYPE = 7, //!< ‰‰Z‚Ì¶‰E‚ÌŒ^‚ª“KØ‚Å‚Í‚ ‚è‚Ü‚¹‚ñB
-	ERR_CSV_SYNTAX = 8,         //!< CSV‚Ì\•¶‰ğÍ‚ª¸”s‚µ‚Ü‚µ‚½B
-	ERR_MEMORY_ALLOCATE = 9,    //!< ƒƒ‚ƒŠ‚Ìæ“¾‚É¸”s‚µ‚Ü‚µ‚½B
-	ERR_MEMORY_OVER = 10        //!< —pˆÓ‚µ‚½ƒƒ‚ƒŠ—Ìˆæ‚ÌãŒÀ‚ğ’´‚¦‚Ü‚µ‚½B
+	OK = 0,                     //!< å•é¡Œãªãçµ‚äº†ã—ã¾ã—ãŸã€‚
+	ERR_FILE_OPEN = 1,          //!< ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ãã“ã¨ã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+	ERR_FILE_WRITE = 2,         //!< ãƒ•ã‚¡ã‚¤ãƒ«ã«æ›¸ãè¾¼ã¿ã‚’è¡Œã†ã“ã¨ã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+	ERR_FILE_CLOSE = 3,         //!< ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‰ã˜ã‚‹ã“ã¨ã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+	ERR_TOKEN_CANT_READ = 4,    //!< ãƒˆãƒ¼ã‚¯ãƒ³è§£æã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+	ERR_SQL_SYNTAX = 5,         //!< SQLã®æ§‹æ–‡è§£æãŒå¤±æ•—ã—ã¾ã—ãŸã€‚
+	ERR_BAD_COLUMN_NAME = 6,    //!< ãƒ†ãƒ¼ãƒ–ãƒ«æŒ‡å®šã‚’å«ã‚€åˆ—åãŒé©åˆ‡ã§ã¯ã‚ã‚Šã¾ã›ã‚“ã€‚
+	ERR_WHERE_OPERAND_TYPE = 7, //!< æ¼”ç®—ã®å·¦å³ã®å‹ãŒé©åˆ‡ã§ã¯ã‚ã‚Šã¾ã›ã‚“ã€‚
+	ERR_CSV_SYNTAX = 8,         //!< CSVã®æ§‹æ–‡è§£æãŒå¤±æ•—ã—ã¾ã—ãŸã€‚
+	ERR_MEMORY_ALLOCATE = 9,    //!< ãƒ¡ãƒ¢ãƒªã®å–å¾—ã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+	ERR_MEMORY_OVER = 10        //!< ç”¨æ„ã—ãŸãƒ¡ãƒ¢ãƒªé ˜åŸŸã®ä¸Šé™ã‚’è¶…ãˆã¾ã—ãŸã€‚
 };
 
-//! “ü—Í‚âo—ÍAŒo‰ß‚ÌŒvZ‚É—˜—p‚·‚éƒf[ƒ^‚Ìƒf[ƒ^Œ^‚Ìí—Ş‚ğ•\‚µ‚Ü‚·B
+//! å…¥åŠ›ã‚„å‡ºåŠ›ã€çµŒéã®è¨ˆç®—ã«åˆ©ç”¨ã™ã‚‹ãƒ‡ãƒ¼ã‚¿ã®ãƒ‡ãƒ¼ã‚¿å‹ã®ç¨®é¡ã‚’è¡¨ã—ã¾ã™ã€‚
 enum class DataType
 {
-	STRING,   //!< •¶š—ñŒ^‚Å‚·B
-	INTEGER,  //!< ®”Œ^‚Å‚·B
-	BOOLEAN   //!< ^‹U’lŒ^‚Å‚·B
+	STRING,   //!< æ–‡å­—åˆ—å‹ã§ã™ã€‚
+	INTEGER,  //!< æ•´æ•°å‹ã§ã™ã€‚
+	BOOLEAN   //!< çœŸå½å€¤å‹ã§ã™ã€‚
 };
 
-//! ƒg[ƒNƒ“‚Ìí—Ş‚ğ•\‚µ‚Ü‚·B
+//! ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã‚’è¡¨ã—ã¾ã™ã€‚
 enum class TokenKind
 {
-	NOT_TOKEN,              //!< ƒg[ƒNƒ“‚ğ•\‚µ‚Ü‚¹‚ñB
-	ASC,                    //!< ASCƒL[ƒ[ƒh‚Å‚·B
-	AND,                    //!< ANDƒL[ƒ[ƒh‚Å‚·B
-	BY,                     //!< BYƒL[ƒ[ƒh‚Å‚·B
-	DESC,                   //!< DESCƒL[ƒ[ƒh‚Å‚·B
-	FROM,                   //!< FROMƒL[ƒ[ƒh‚Å‚·B
-	OR,                     //!< ORƒL[ƒ[ƒh‚Å‚·B
-	ORDER,                  //!< ORDERƒL[ƒ[ƒh‚Å‚·B
-	SELECT,                 //!< SELECTƒL[ƒ[ƒh‚Å‚·B
-	WHERE,                  //!< WHEREƒL[ƒ[ƒh‚Å‚·B
-	ASTERISK,               //!< – ‹L†‚Å‚·B
-	COMMA,                  //!< C ‹L†‚Å‚·B
-	CLOSE_PAREN,            //!< j ‹L†‚Å‚·B
-	DOT,                    //!< D ‹L†‚Å‚·B
-	EQUAL,                  //!<  ‹L†‚Å‚·B
-	GREATER_THAN,           //!< „ ‹L†‚Å‚·B
-	GREATER_THAN_OR_EQUAL,  //!< „ ‹L†‚Å‚·B
-	LESS_THAN,              //!< ƒ ‹L†‚Å‚·B
-	LESS_THAN_OR_EQUAL,     //!< ƒ ‹L†‚Å‚·B
-	MINUS,                  //!< | ‹L†‚Å‚·B
-	NOT_EQUAL,              //!< ƒ„ ‹L†‚Å‚·B
-	OPEN_PAREN,             //!< i ‹L†‚Å‚·B
-	PLUS,                   //!< { ‹L†‚Å‚·B
-	SLASH,                  //!< ^ ‹L†‚Å‚·B
-	IDENTIFIER,             //!< ¯•Êq‚Å‚·B
-	INT_LITERAL,            //!< ®”ƒŠƒeƒ‰ƒ‹‚Å‚·B
-	STRING_LITERAL          //!< •¶š—ñƒŠƒeƒ‰ƒ‹‚Å‚·B
+	NOT_TOKEN,              //!< ãƒˆãƒ¼ã‚¯ãƒ³ã‚’è¡¨ã—ã¾ã›ã‚“ã€‚
+	ASC,                    //!< ASCã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã§ã™ã€‚
+	AND,                    //!< ANDã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã§ã™ã€‚
+	BY,                     //!< BYã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã§ã™ã€‚
+	DESC,                   //!< DESCã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã§ã™ã€‚
+	FROM,                   //!< FROMã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã§ã™ã€‚
+	OR,                     //!< ORã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã§ã™ã€‚
+	ORDER,                  //!< ORDERã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã§ã™ã€‚
+	SELECT,                 //!< SELECTã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã§ã™ã€‚
+	WHERE,                  //!< WHEREã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã§ã™ã€‚
+	ASTERISK,               //!< ï¼Š è¨˜å·ã§ã™ã€‚
+	COMMA,                  //!< ï¼Œ è¨˜å·ã§ã™ã€‚
+	CLOSE_PAREN,            //!< ï¼‰ è¨˜å·ã§ã™ã€‚
+	DOT,                    //!< ï¼ è¨˜å·ã§ã™ã€‚
+	EQUAL,                  //!< ï¼ è¨˜å·ã§ã™ã€‚
+	GREATER_THAN,           //!< ï¼ è¨˜å·ã§ã™ã€‚
+	GREATER_THAN_OR_EQUAL,  //!< ï¼ï¼ è¨˜å·ã§ã™ã€‚
+	LESS_THAN,              //!< ï¼œ è¨˜å·ã§ã™ã€‚
+	LESS_THAN_OR_EQUAL,     //!< ï¼œï¼ è¨˜å·ã§ã™ã€‚
+	MINUS,                  //!< ï¼ è¨˜å·ã§ã™ã€‚
+	NOT_EQUAL,              //!< ï¼œï¼ è¨˜å·ã§ã™ã€‚
+	OPEN_PAREN,             //!< ï¼ˆ è¨˜å·ã§ã™ã€‚
+	PLUS,                   //!< ï¼‹ è¨˜å·ã§ã™ã€‚
+	SLASH,                  //!< ï¼ è¨˜å·ã§ã™ã€‚
+	IDENTIFIER,             //!< è­˜åˆ¥å­ã§ã™ã€‚
+	INT_LITERAL,            //!< æ•´æ•°ãƒªãƒ†ãƒ©ãƒ«ã§ã™ã€‚
+	STRING_LITERAL          //!< æ–‡å­—åˆ—ãƒªãƒ†ãƒ©ãƒ«ã§ã™ã€‚
 };
 
-//! ˆê‚Â‚Ì’l‚ğ‚Âƒf[ƒ^‚Å‚·B
+//! ä¸€ã¤ã®å€¤ã‚’æŒã¤ãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 class Data
 {
 public:
-	DataType type = DataType::STRING; //!< ƒf[ƒ^‚ÌŒ^‚Å‚·B
+	DataType type = DataType::STRING; //!< ãƒ‡ãƒ¼ã‚¿ã®å‹ã§ã™ã€‚
 
-	//! ÀÛ‚Ìƒf[ƒ^‚ğŠi”[‚·‚é‹¤—p‘Ì‚Å‚·B
+	//! å®Ÿéš›ã®ãƒ‡ãƒ¼ã‚¿ã‚’æ ¼ç´ã™ã‚‹å…±ç”¨ä½“ã§ã™ã€‚
 	union
 	{
-		char string[MAX_DATA_LENGTH]; //!< ƒf[ƒ^‚ª•¶š—ñŒ^‚Ìê‡‚Ì’l‚Å‚·B
-		int integer;                  //!< ƒf[ƒ^‚ª®”Œ^‚Ìê‡‚Ì’l‚Å‚·B
-		bool boolean;                 //!< ƒf[ƒ^‚ª^‹U’lŒ^‚Ìê‡‚Ì’l‚Å‚·B
+		char string[MAX_DATA_LENGTH]; //!< ãƒ‡ãƒ¼ã‚¿ãŒæ–‡å­—åˆ—å‹ã®å ´åˆã®å€¤ã§ã™ã€‚
+		int integer;                  //!< ãƒ‡ãƒ¼ã‚¿ãŒæ•´æ•°å‹ã®å ´åˆã®å€¤ã§ã™ã€‚
+		bool boolean;                 //!< ãƒ‡ãƒ¼ã‚¿ãŒçœŸå½å€¤å‹ã®å ´åˆã®å€¤ã§ã™ã€‚
 	} value;
 
-	//! DataƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
+	//! Dataã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 	Data();
 
-	//! DataƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] value ƒf[ƒ^‚Ì’l‚Å‚·B
+	//! Dataã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] value ãƒ‡ãƒ¼ã‚¿ã®å€¤ã§ã™ã€‚
 	Data(const char* value);
 
-	//! DataƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] value ƒf[ƒ^‚Ì’l‚Å‚·B
+	//! Dataã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] value ãƒ‡ãƒ¼ã‚¿ã®å€¤ã§ã™ã€‚
 	Data(const int value);
 
-	//! DataƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] value ƒf[ƒ^‚Ì’l‚Å‚·B
+	//! Dataã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] value ãƒ‡ãƒ¼ã‚¿ã®å€¤ã§ã™ã€‚
 	Data(const bool value);
 };
 
-//! WHERE‹å‚Éw’è‚·‚é‰‰Zq‚Ìî•ñ‚ğ•\‚µ‚Ü‚·B
+//! WHEREå¥ã«æŒ‡å®šã™ã‚‹æ¼”ç®—å­ã®æƒ…å ±ã‚’è¡¨ã—ã¾ã™ã€‚
 class Operator
 {
 public:
-	TokenKind kind = TokenKind::NOT_TOKEN; //!< ‰‰Zq‚Ìí—Ş‚ğA‰‰Zq‚ğ‹Lq‚·‚éƒg[ƒNƒ“‚Ìí—Ş‚Å•\‚µ‚Ü‚·B
-	int order = 0; //!< ‰‰Zq‚Ì—Dæ‡ˆÊ‚Å‚·B
+	TokenKind kind = TokenKind::NOT_TOKEN; //!< æ¼”ç®—å­ã®ç¨®é¡ã‚’ã€æ¼”ç®—å­ã‚’è¨˜è¿°ã™ã‚‹ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§è¡¨ã—ã¾ã™ã€‚
+	int order = 0; //!< æ¼”ç®—å­ã®å„ªå…ˆé †ä½ã§ã™ã€‚
 
-	//! OperatorƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
+	//! Operatorã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 	Operator();
 
-	//! OperatorƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] kind ‰‰Zq‚Ìí—Ş‚ğA‰‰Zq‚ğ‹Lq‚·‚éƒg[ƒNƒ“‚Ìí—Ş‚Å•\‚µ‚Ü‚·B
-	//! @param [in] order ‰‰Zq‚Ì—Dæ‡ˆÊ‚Å‚·B
+	//! Operatorã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] kind æ¼”ç®—å­ã®ç¨®é¡ã‚’ã€æ¼”ç®—å­ã‚’è¨˜è¿°ã™ã‚‹ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§è¡¨ã—ã¾ã™ã€‚
+	//! @param [in] order æ¼”ç®—å­ã®å„ªå…ˆé †ä½ã§ã™ã€‚
 	Operator(const TokenKind kind, const int order);
 };
 
-//! ƒg[ƒNƒ“‚ğ•\‚µ‚Ü‚·B
+//! ãƒˆãƒ¼ã‚¯ãƒ³ã‚’è¡¨ã—ã¾ã™ã€‚
 class Token
 {
 public:
-	TokenKind kind; //!< ƒg[ƒNƒ“‚Ìí—Ş‚Å‚·B
-	char word[MAX_WORD_LENGTH]; //!< ‹L˜^‚³‚ê‚Ä‚¢‚éƒg[ƒNƒ“‚Ì•¶š—ñ‚Å‚·B‹L˜^‚Ì•K—v‚ª‚È‚¯‚ê‚Î‹ó”’‚Å‚·B
+	TokenKind kind; //!< ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§ã™ã€‚
+	char word[MAX_WORD_LENGTH]; //!< è¨˜éŒ²ã•ã‚Œã¦ã„ã‚‹ãƒˆãƒ¼ã‚¯ãƒ³ã®æ–‡å­—åˆ—ã§ã™ã€‚è¨˜éŒ²ã®å¿…è¦ãŒãªã‘ã‚Œã°ç©ºç™½ã§ã™ã€‚
 
-	//! TokenƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
+	//! Tokenã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 	Token();
 
-	//! TokenƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] kind ƒg[ƒNƒ“‚Ìí—Ş‚Å‚·B
+	//! Tokenã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] kind ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§ã™ã€‚
 	Token(const TokenKind kind);
 
-	//! TokenƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] kind ƒg[ƒNƒ“‚Ìí—Ş‚Å‚·B
-	//! @param [in] word ‹L˜^‚³‚ê‚Ä‚¢‚éƒg[ƒNƒ“‚Ì•¶š—ñ‚Å‚·B‹L˜^‚Ì•K—v‚ª‚È‚¯‚ê‚Î‹ó”’‚Å‚·B
+	//! Tokenã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] kind ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§ã™ã€‚
+	//! @param [in] word è¨˜éŒ²ã•ã‚Œã¦ã„ã‚‹ãƒˆãƒ¼ã‚¯ãƒ³ã®æ–‡å­—åˆ—ã§ã™ã€‚è¨˜éŒ²ã®å¿…è¦ãŒãªã‘ã‚Œã°ç©ºç™½ã§ã™ã€‚
 	Token(const TokenKind kind, const char *word);
 };
 
-//! w’è‚³‚ê‚½—ñ‚Ìî•ñ‚Å‚·B‚Ç‚Ìƒe[ƒuƒ‹‚ÉŠ‘®‚·‚é‚©‚Ìî•ñ‚àŠÜ‚İ‚Ü‚·B
+//! æŒ‡å®šã•ã‚ŒãŸåˆ—ã®æƒ…å ±ã§ã™ã€‚ã©ã®ãƒ†ãƒ¼ãƒ–ãƒ«ã«æ‰€å±ã™ã‚‹ã‹ã®æƒ…å ±ã‚‚å«ã¿ã¾ã™ã€‚
 class Column
 {
 public:
-	char tableName[MAX_WORD_LENGTH]; //!< —ñ‚ªŠ‘®‚·‚éƒe[ƒuƒ‹–¼‚Å‚·Bw’è‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Í‹ó•¶š—ñ‚Æ‚È‚è‚Ü‚·B
-	char columnName[MAX_WORD_LENGTH]; //!< w’è‚³‚ê‚½—ñ‚Ì—ñ–¼‚Å‚·B
+	char tableName[MAX_WORD_LENGTH]; //!< åˆ—ãŒæ‰€å±ã™ã‚‹ãƒ†ãƒ¼ãƒ–ãƒ«åã§ã™ã€‚æŒ‡å®šã•ã‚Œã¦ã„ãªã„å ´åˆã¯ç©ºæ–‡å­—åˆ—ã¨ãªã‚Šã¾ã™ã€‚
+	char columnName[MAX_WORD_LENGTH]; //!< æŒ‡å®šã•ã‚ŒãŸåˆ—ã®åˆ—åã§ã™ã€‚
 
-	//! ColumnƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
+	//! Columnã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 	Column();
 
-	//! ColumnƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] columnName w’è‚³‚ê‚½—ñ‚Ì—ñ–¼‚Å‚·B
+	//! Columnã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] columnName æŒ‡å®šã•ã‚ŒãŸåˆ—ã®åˆ—åã§ã™ã€‚
 	Column(const char* columnName);
 
-	//! ColumnƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] tableName —ñ‚ªŠ‘®‚·‚éƒe[ƒuƒ‹–¼‚Å‚·Bw’è‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Í‹ó•¶š—ñ‚Æ‚È‚è‚Ü‚·B
-	//! @param [in] columnName w’è‚³‚ê‚½—ñ‚Ì—ñ–¼‚Å‚·B
+	//! Columnã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] tableName åˆ—ãŒæ‰€å±ã™ã‚‹ãƒ†ãƒ¼ãƒ–ãƒ«åã§ã™ã€‚æŒ‡å®šã•ã‚Œã¦ã„ãªã„å ´åˆã¯ç©ºæ–‡å­—åˆ—ã¨ãªã‚Šã¾ã™ã€‚
+	//! @param [in] columnName æŒ‡å®šã•ã‚ŒãŸåˆ—ã®åˆ—åã§ã™ã€‚
 	Column(const char* tableName, const char* columnName);
 };
 
-//! WHERE‹å‚ÌğŒ‚Ì®–Ø‚ğ•\‚µ‚Ü‚·B
+//! WHEREå¥ã®æ¡ä»¶ã®å¼æœ¨ã‚’è¡¨ã—ã¾ã™ã€‚
 class ExtensionTreeNode
 {
 public:
-	ExtensionTreeNode *parent = nullptr; //!< e‚Æ‚È‚éƒm[ƒh‚Å‚·Bª‚Ì®–Ø‚Ìê‡‚Ínullptr‚Æ‚È‚è‚Ü‚·B
-	ExtensionTreeNode *left = nullptr;   //!< ¶‚Ìq‚Æ‚È‚éƒm[ƒh‚Å‚·B©g‚ª––’[‚Ì—t‚Æ‚È‚é®–Ø‚Ìê‡‚Ínullptr‚Æ‚È‚è‚Ü‚·B
-	Operator middleOperator;             //!< ’†’u‚³‚ê‚é‰‰Zq‚Å‚·B©g‚ª––’[‚Ì‚Æ‚È‚é®–Ø‚Ìê‡‚Ìí—Ş‚ÍNOT_TOKEN‚Æ‚È‚è‚Ü‚·B
-	ExtensionTreeNode *right = nullptr;  //!< ‰E‚Ìq‚Æ‚È‚éƒm[ƒh‚Å‚·B©g‚ª––’[‚Ì—t‚Æ‚È‚é®–Ø‚Ìê‡‚Ínullptr‚Æ‚È‚è‚Ü‚·B
-	bool inParen = false;                //!< ©g‚ª‚©‚Á‚±‚É‚­‚é‚Ü‚ê‚Ä‚¢‚é‚©‚Ç‚¤‚©‚Å‚·B
-	int parenOpenBeforeClose = 0;        //!< –Ø‚Ì\’z’†‚É0ˆÈŠO‚Æ‚È‚èA©g‚Ì¶‚É‚ ‚èA‚Ü‚¾•Â‚¶‚Ä‚È‚¢ƒJƒbƒR‚ÌŠJn‚Ì”‚Æ‚È‚è‚Ü‚·B
-	int signCoefficient = 1;             //!< ©g‚ª—t‚É‚ ‚èAƒ}ƒCƒiƒX’P€‰‰Zq‚ª‚Â‚¢‚Ä‚¢‚éê‡‚Í-1A‚»‚êˆÈŠO‚Í1‚Æ‚È‚è‚Ü‚·B
-	Column column;                       //!< —ñêw’è‚³‚ê‚Ä‚¢‚éê‡‚ÉA‚»‚Ì—ñ‚ğ•\‚µ‚Ü‚·B—ñw’è‚Å‚Í‚È‚¢ê‡‚ÍcolumnName‚ª‹ó•¶š—ñ‚Æ‚È‚è‚Ü‚·B
-	bool calculated = false;             //!< ®‚Ì’l‚ğŒvZ’†‚ÉAŒvZÏ‚İ‚©‚Ç‚¤‚©‚Å‚·B
-	Data value;                          //!< w’è‚³‚ê‚½A‚à‚µ‚­‚ÍŒvZ‚³‚ê‚½’l‚Å‚·B
+	ExtensionTreeNode *parent = nullptr; //!< è¦ªã¨ãªã‚‹ãƒãƒ¼ãƒ‰ã§ã™ã€‚æ ¹ã®å¼æœ¨ã®å ´åˆã¯nullptrã¨ãªã‚Šã¾ã™ã€‚
+	ExtensionTreeNode *left = nullptr;   //!< å·¦ã®å­ã¨ãªã‚‹ãƒãƒ¼ãƒ‰ã§ã™ã€‚è‡ªèº«ãŒæœ«ç«¯ã®è‘‰ã¨ãªã‚‹å¼æœ¨ã®å ´åˆã¯nullptrã¨ãªã‚Šã¾ã™ã€‚
+	Operator middleOperator;             //!< ä¸­ç½®ã•ã‚Œã‚‹æ¼”ç®—å­ã§ã™ã€‚è‡ªèº«ãŒæœ«ç«¯ã®ã¨ãªã‚‹å¼æœ¨ã®å ´åˆã®ç¨®é¡ã¯NOT_TOKENã¨ãªã‚Šã¾ã™ã€‚
+	ExtensionTreeNode *right = nullptr;  //!< å³ã®å­ã¨ãªã‚‹ãƒãƒ¼ãƒ‰ã§ã™ã€‚è‡ªèº«ãŒæœ«ç«¯ã®è‘‰ã¨ãªã‚‹å¼æœ¨ã®å ´åˆã¯nullptrã¨ãªã‚Šã¾ã™ã€‚
+	bool inParen = false;                //!< è‡ªèº«ãŒã‹ã£ã“ã«ãã‚‹ã¾ã‚Œã¦ã„ã‚‹ã‹ã©ã†ã‹ã§ã™ã€‚
+	int parenOpenBeforeClose = 0;        //!< æœ¨ã®æ§‹ç¯‰ä¸­ã«0ä»¥å¤–ã¨ãªã‚Šã€è‡ªèº«ã®å·¦ã«ã‚ã‚Šã€ã¾ã é–‰ã˜ã¦ãªã„ã‚«ãƒƒã‚³ã®é–‹å§‹ã®æ•°ã¨ãªã‚Šã¾ã™ã€‚
+	int signCoefficient = 1;             //!< è‡ªèº«ãŒè‘‰ã«ã‚ã‚Šã€ãƒã‚¤ãƒŠã‚¹å˜é …æ¼”ç®—å­ãŒã¤ã„ã¦ã„ã‚‹å ´åˆã¯-1ã€ãã‚Œä»¥å¤–ã¯1ã¨ãªã‚Šã¾ã™ã€‚
+	Column column;                       //!< åˆ—å ´æŒ‡å®šã•ã‚Œã¦ã„ã‚‹å ´åˆã«ã€ãã®åˆ—ã‚’è¡¨ã—ã¾ã™ã€‚åˆ—æŒ‡å®šã§ã¯ãªã„å ´åˆã¯columnNameãŒç©ºæ–‡å­—åˆ—ã¨ãªã‚Šã¾ã™ã€‚
+	bool calculated = false;             //!< å¼ã®å€¤ã‚’è¨ˆç®—ä¸­ã«ã€è¨ˆç®—æ¸ˆã¿ã‹ã©ã†ã‹ã§ã™ã€‚
+	Data value;                          //!< æŒ‡å®šã•ã‚ŒãŸã€ã‚‚ã—ãã¯è¨ˆç®—ã•ã‚ŒãŸå€¤ã§ã™ã€‚
 
-	//! ExtensionTreeNodeƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
+	//! ExtensionTreeNodeã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 	ExtensionTreeNode();
 };
 
-//! s‚Ìî•ñ‚ğ“ü—Í‚Ìƒe[ƒuƒ‹ƒCƒ“ƒfƒbƒNƒXA—ñƒCƒ“ƒfƒbƒNƒX‚ÌŒ`‚Å‚¿‚Ü‚·B
+//! è¡Œã®æƒ…å ±ã‚’å…¥åŠ›ã®ãƒ†ãƒ¼ãƒ–ãƒ«ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã€åˆ—ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã®å½¢ã§æŒã¡ã¾ã™ã€‚
 class ColumnIndex
 {
 public:
-	int table;  //!< —ñ‚ª“ü—Í‚Ì‰½ƒe[ƒuƒ‹–Ú‚Ì—ñ‚©‚Å‚·B
-	int column; //!< —ñ‚ª“ü—Í‚Ìƒe[ƒuƒ‹‚Ì‰½—ñ–Ú‚©‚Å‚·B
+	int table;  //!< åˆ—ãŒå…¥åŠ›ã®ä½•ãƒ†ãƒ¼ãƒ–ãƒ«ç›®ã®åˆ—ã‹ã§ã™ã€‚
+	int column; //!< åˆ—ãŒå…¥åŠ›ã®ãƒ†ãƒ¼ãƒ–ãƒ«ã®ä½•åˆ—ç›®ã‹ã§ã™ã€‚
 
-	//! ColumnƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
+	//! Columnã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 	ColumnIndex();
 
-	//! ColumnƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] table —ñ‚ª“ü—Í‚Ì‰½ƒe[ƒuƒ‹–Ú‚Ì—ñ‚©‚Å‚·B
-	//! @param [in] column —ñ‚ª“ü—Í‚Ìƒe[ƒuƒ‹‚Ì‰½—ñ–Ú‚©‚Å‚·B
+	//! Columnã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] table åˆ—ãŒå…¥åŠ›ã®ä½•ãƒ†ãƒ¼ãƒ–ãƒ«ç›®ã®åˆ—ã‹ã§ã™ã€‚
+	//! @param [in] column åˆ—ãŒå…¥åŠ›ã®ãƒ†ãƒ¼ãƒ–ãƒ«ã®ä½•åˆ—ç›®ã‹ã§ã™ã€‚
 	ColumnIndex(const int table, const int column);
 };
 
-// ˆÈãƒwƒbƒ_‚É‘Š“–‚·‚é•”•ªB
+// ä»¥ä¸Šãƒ˜ãƒƒãƒ€ã«ç›¸å½“ã™ã‚‹éƒ¨åˆ†ã€‚
 
-//! DataƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
+//! Dataã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 Data::Data() :value({ "" })
 {
 }
 
-//! DataƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] value ƒf[ƒ^‚Ì’l‚Å‚·B
+//! Dataã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] value ãƒ‡ãƒ¼ã‚¿ã®å€¤ã§ã™ã€‚
 Data::Data(const char* value) : value({ "" })
 {
 	strncpy(this->value.string, value, max(MAX_DATA_LENGTH, MAX_WORD_LENGTH));
 }
 
-//! DataƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] value ƒf[ƒ^‚Ì’l‚Å‚·B
+//! Dataã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] value ãƒ‡ãƒ¼ã‚¿ã®å€¤ã§ã™ã€‚
 Data::Data(const int value) : type(DataType::INTEGER)
 {
 	this->value.integer = value;
 }
 
-//! DataƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] value ƒf[ƒ^‚Ì’l‚Å‚·B
+//! Dataã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] value ãƒ‡ãƒ¼ã‚¿ã®å€¤ã§ã™ã€‚
 Data::Data(const bool value) : type(DataType::BOOLEAN)
 {
 	this->value.boolean = value;
 }
 
-//! OperatorƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
+//! Operatorã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 Operator::Operator()
 {
 }
 
-//! OperatorƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] kind ‰‰Zq‚Ìí—Ş‚ğA‰‰Zq‚ğ‹Lq‚·‚éƒg[ƒNƒ“‚Ìí—Ş‚Å•\‚µ‚Ü‚·B
-//! @param [in] order ‰‰Zq‚Ì—Dæ‡ˆÊ‚Å‚·B
+//! Operatorã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] kind æ¼”ç®—å­ã®ç¨®é¡ã‚’ã€æ¼”ç®—å­ã‚’è¨˜è¿°ã™ã‚‹ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§è¡¨ã—ã¾ã™ã€‚
+//! @param [in] order æ¼”ç®—å­ã®å„ªå…ˆé †ä½ã§ã™ã€‚
 Operator::Operator(const TokenKind kind, const int order) : kind(kind), order(order)
 {
 }
 
-//! TokenƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
+//! Tokenã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 Token::Token() : Token(TokenKind::NOT_TOKEN, "")
 {
 }
 
-//! TokenƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] kind ƒg[ƒNƒ“‚Ìí—Ş‚Å‚·B
+//! Tokenã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] kind ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§ã™ã€‚
 Token::Token(const TokenKind kind) : Token(kind, "")
 {
 }
 
-//! TokenƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] kind ƒg[ƒNƒ“‚Ìí—Ş‚Å‚·B
-//! @param [in] word ‹L˜^‚³‚ê‚Ä‚¢‚éƒg[ƒNƒ“‚Ì•¶š—ñ‚Å‚·B‹L˜^‚Ì•K—v‚ª‚È‚¯‚ê‚Î‹ó”’‚Å‚·B
+//! Tokenã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] kind ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§ã™ã€‚
+//! @param [in] word è¨˜éŒ²ã•ã‚Œã¦ã„ã‚‹ãƒˆãƒ¼ã‚¯ãƒ³ã®æ–‡å­—åˆ—ã§ã™ã€‚è¨˜éŒ²ã®å¿…è¦ãŒãªã‘ã‚Œã°ç©ºç™½ã§ã™ã€‚
 Token::Token(const TokenKind kind, const char *word) :kind(kind)
 {
 	strncpy(this->word, word, max(MAX_DATA_LENGTH, MAX_WORD_LENGTH));
 }
 
-//! ColumnƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
+//! Columnã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 Column::Column() : Column("", "")
 {
 
 }
 
-//! ColumnƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] columnName w’è‚³‚ê‚½—ñ‚Ì—ñ–¼‚Å‚·B
+//! Columnã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] columnName æŒ‡å®šã•ã‚ŒãŸåˆ—ã®åˆ—åã§ã™ã€‚
 Column::Column(const char* columnName) : Column("", columnName)
 {
 }
 
-//! ColumnƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] tableName —ñ‚ªŠ‘®‚·‚éƒe[ƒuƒ‹–¼‚Å‚·Bw’è‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Í‹ó•¶š—ñ‚Æ‚È‚è‚Ü‚·B
-//! @param [in] columnName w’è‚³‚ê‚½—ñ‚Ì—ñ–¼‚Å‚·B
+//! Columnã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] tableName åˆ—ãŒæ‰€å±ã™ã‚‹ãƒ†ãƒ¼ãƒ–ãƒ«åã§ã™ã€‚æŒ‡å®šã•ã‚Œã¦ã„ãªã„å ´åˆã¯ç©ºæ–‡å­—åˆ—ã¨ãªã‚Šã¾ã™ã€‚
+//! @param [in] columnName æŒ‡å®šã•ã‚ŒãŸåˆ—ã®åˆ—åã§ã™ã€‚
 Column::Column(const char* tableName, const char* columnName)
 {
 	strncpy(this->tableName, tableName, max(MAX_DATA_LENGTH, MAX_WORD_LENGTH));
 	strncpy(this->columnName, columnName, max(MAX_DATA_LENGTH, MAX_WORD_LENGTH));
 }
 
-//! ExtensionTreeNodeƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
+//! ExtensionTreeNodeã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 ExtensionTreeNode::ExtensionTreeNode()
 {
 }
 
-//! ColumnƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
+//! Columnã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 ColumnIndex::ColumnIndex() : ColumnIndex(0, 0)
 {
 }
 
-//! ColumnƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] table —ñ‚ª“ü—Í‚Ì‰½ƒe[ƒuƒ‹–Ú‚Ì—ñ‚©‚Å‚·B
-//! @param [in] column —ñ‚ª“ü—Í‚Ìƒe[ƒuƒ‹‚Ì‰½—ñ–Ú‚©‚Å‚·B
+//! Columnã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] table åˆ—ãŒå…¥åŠ›ã®ä½•ãƒ†ãƒ¼ãƒ–ãƒ«ç›®ã®åˆ—ã‹ã§ã™ã€‚
+//! @param [in] column åˆ—ãŒå…¥åŠ›ã®ãƒ†ãƒ¼ãƒ–ãƒ«ã®ä½•åˆ—ç›®ã‹ã§ã™ã€‚
 ColumnIndex::ColumnIndex(const int table, const int column) : table(table), column(column)
 {
 }
 
-//! ƒJƒŒƒ“ƒgƒfƒBƒŒƒNƒgƒŠ‚É‚ ‚éCSV‚É‘Î‚µAŠÈˆÕ“I‚ÈSQL‚ğÀs‚µAŒ‹‰Ê‚ğƒtƒ@ƒCƒ‹‚Éo—Í‚µ‚Ü‚·B
-//! @param [in] sql Às‚·‚éSQL‚Å‚·B
-//! @param[in] outputFileName SQL‚ÌÀsŒ‹‰Ê‚ğCSV‚Æ‚µ‚Äo—Í‚·‚éƒtƒ@ƒCƒ‹–¼‚Å‚·BŠg’£q‚ğŠÜ‚İ‚Ü‚·B
-//! @return Às‚µ‚½Œ‹‰Ê‚Ìó‘Ô‚Å‚·B
-//! @retval OK=0                      –â‘è‚È‚­I—¹‚µ‚Ü‚µ‚½B
-//! @retval ERR_FILE_OPEN=1           ƒtƒ@ƒCƒ‹‚ğŠJ‚­‚±‚Æ‚É¸”s‚µ‚Ü‚µ‚½B
-//! @retval ERR_FILE_WRITE=2          ƒtƒ@ƒCƒ‹‚É‘‚«‚İ‚ğs‚¤‚±‚Æ‚É¸”s‚µ‚Ü‚µ‚½B
-//! @retval ERR_FILE_CLOSE=3          ƒtƒ@ƒCƒ‹‚ğ•Â‚¶‚é‚±‚Æ‚É¸”s‚µ‚Ü‚µ‚½B
-//! @retval ERR_TOKEN_CANT_READ=4     ƒg[ƒNƒ“‰ğÍ‚É¸”s‚µ‚Ü‚µ‚½B
-//! @retval ERR_SQL_SYNTAX=5          SQL‚Ì\•¶‰ğÍ‚ª¸”s‚µ‚Ü‚µ‚½B
-//! @retval ERR_BAD_COLUMN_NAME=6     ƒe[ƒuƒ‹w’è‚ğŠÜ‚Ş—ñ–¼‚ª“KØ‚Å‚Í‚ ‚è‚Ü‚¹‚ñB
-//! @retval ERR_WHERE_OPERAND_TYPE=7  ‰‰Z‚Ì¶‰E‚ÌŒ^‚ª“KØ‚Å‚Í‚ ‚è‚Ü‚¹‚ñB
-//! @retval ERR_CSV_SYNTAX=8          CSV‚Ì\•¶‰ğÍ‚ª¸”s‚µ‚Ü‚µ‚½B
-//! @retval ERR_MEMORY_ALLOCATE=9     ƒƒ‚ƒŠ‚Ìæ“¾‚É¸”s‚µ‚Ü‚µ‚½B
-//! @retval ERR_MEMORY_OVER=10        —pˆÓ‚µ‚½ƒƒ‚ƒŠ—Ìˆæ‚ÌãŒÀ‚ğ’´‚¦‚Ü‚µ‚½B
+//! ã‚«ãƒ¬ãƒ³ãƒˆãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã«ã‚ã‚‹CSVã«å¯¾ã—ã€ç°¡æ˜“çš„ãªSQLã‚’å®Ÿè¡Œã—ã€çµæœã‚’ãƒ•ã‚¡ã‚¤ãƒ«ã«å‡ºåŠ›ã—ã¾ã™ã€‚
+//! @param [in] sql å®Ÿè¡Œã™ã‚‹SQLã§ã™ã€‚
+//! @param[in] outputFileName SQLã®å®Ÿè¡Œçµæœã‚’CSVã¨ã—ã¦å‡ºåŠ›ã™ã‚‹ãƒ•ã‚¡ã‚¤ãƒ«åã§ã™ã€‚æ‹¡å¼µå­ã‚’å«ã¿ã¾ã™ã€‚
+//! @return å®Ÿè¡Œã—ãŸçµæœã®çŠ¶æ…‹ã§ã™ã€‚
+//! @retval OK=0                      å•é¡Œãªãçµ‚äº†ã—ã¾ã—ãŸã€‚
+//! @retval ERR_FILE_OPEN=1           ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ãã“ã¨ã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+//! @retval ERR_FILE_WRITE=2          ãƒ•ã‚¡ã‚¤ãƒ«ã«æ›¸ãè¾¼ã¿ã‚’è¡Œã†ã“ã¨ã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+//! @retval ERR_FILE_CLOSE=3          ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‰ã˜ã‚‹ã“ã¨ã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+//! @retval ERR_TOKEN_CANT_READ=4     ãƒˆãƒ¼ã‚¯ãƒ³è§£æã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+//! @retval ERR_SQL_SYNTAX=5          SQLã®æ§‹æ–‡è§£æãŒå¤±æ•—ã—ã¾ã—ãŸã€‚
+//! @retval ERR_BAD_COLUMN_NAME=6     ãƒ†ãƒ¼ãƒ–ãƒ«æŒ‡å®šã‚’å«ã‚€åˆ—åãŒé©åˆ‡ã§ã¯ã‚ã‚Šã¾ã›ã‚“ã€‚
+//! @retval ERR_WHERE_OPERAND_TYPE=7  æ¼”ç®—ã®å·¦å³ã®å‹ãŒé©åˆ‡ã§ã¯ã‚ã‚Šã¾ã›ã‚“ã€‚
+//! @retval ERR_CSV_SYNTAX=8          CSVã®æ§‹æ–‡è§£æãŒå¤±æ•—ã—ã¾ã—ãŸã€‚
+//! @retval ERR_MEMORY_ALLOCATE=9     ãƒ¡ãƒ¢ãƒªã®å–å¾—ã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+//! @retval ERR_MEMORY_OVER=10        ç”¨æ„ã—ãŸãƒ¡ãƒ¢ãƒªé ˜åŸŸã®ä¸Šé™ã‚’è¶…ãˆã¾ã—ãŸã€‚
 //! @details 
-//! QÆ‚·‚éƒe[ƒuƒ‹‚ÍAƒe[ƒuƒ‹–¼.csv‚ÌŒ`‚Åì¬‚µ‚Ü‚·B                                                     @n
-//! ˆês–Ú‚Íƒwƒbƒ_s‚ÅA‚»‚Ìs‚É—ñ–¼‚ğ‘‚«‚Ü‚·B                                                             @n
-//! ‘OŒã‚ÌƒXƒy[ƒX“Ç‚İ”ò‚Î‚µ‚âƒ_ƒuƒ‹ƒNƒH[ƒe[ƒVƒ‡ƒ“‚Å‚­‚­‚é‚È‚Ç‚Ì‹@”\‚Í‚ ‚è‚Ü‚¹‚ñB                         @n
-//! —ñ‚ÌŒ^‚Ì’è‹`‚Í‚Å‚«‚È‚¢‚Ì‚ÅA—ñ‚Ì‚·‚×‚Ä‚Ìƒf[ƒ^‚Ì’l‚ª”’l‚Æ‚µ‚Ä‰ğß‚Å‚«‚é—ñ‚Ìƒf[ƒ^‚ğ®”‚Æ‚µ‚Äˆµ‚¢‚Ü‚·B @n
-//! Às‚·‚éSQL‚Åg‚¦‚é‹@”\‚ğˆÈ‰º‚É—á‚Æ‚µ‚Ä‚ ‚°‚Ü‚·B                                                        @n
-//! —á1:                                                                                                     @n
+//! å‚ç…§ã™ã‚‹ãƒ†ãƒ¼ãƒ–ãƒ«ã¯ã€ãƒ†ãƒ¼ãƒ–ãƒ«å.csvã®å½¢ã§ä½œæˆã—ã¾ã™ã€‚                                                     @n
+//! ä¸€è¡Œç›®ã¯ãƒ˜ãƒƒãƒ€è¡Œã§ã€ãã®è¡Œã«åˆ—åã‚’æ›¸ãã¾ã™ã€‚                                                             @n
+//! å‰å¾Œã®ã‚¹ãƒšãƒ¼ã‚¹èª­ã¿é£›ã°ã—ã‚„ãƒ€ãƒ–ãƒ«ã‚¯ã‚©ãƒ¼ãƒ†ãƒ¼ã‚·ãƒ§ãƒ³ã§ããã‚‹ãªã©ã®æ©Ÿèƒ½ã¯ã‚ã‚Šã¾ã›ã‚“ã€‚                         @n
+//! åˆ—ã®å‹ã®å®šç¾©ã¯ã§ããªã„ã®ã§ã€åˆ—ã®ã™ã¹ã¦ã®ãƒ‡ãƒ¼ã‚¿ã®å€¤ãŒæ•°å€¤ã¨ã—ã¦è§£é‡ˆã§ãã‚‹åˆ—ã®ãƒ‡ãƒ¼ã‚¿ã‚’æ•´æ•°ã¨ã—ã¦æ‰±ã„ã¾ã™ã€‚ @n
+//! å®Ÿè¡Œã™ã‚‹SQLã§ä½¿ãˆã‚‹æ©Ÿèƒ½ã‚’ä»¥ä¸‹ã«ä¾‹ã¨ã—ã¦ã‚ã’ã¾ã™ã€‚                                                        @n
+//! ä¾‹1:                                                                                                     @n
 //! SELECT *                                                                                                 @n
 //! FROM USERS                                                                                               @n
 //!                                                                                                          @n
-//! —á2: ‘å•¶š¬•¶š‚Í‹æ•Ê‚µ‚Ü‚¹‚ñB                                                                        @n
+//! ä¾‹2: å¤§æ–‡å­—å°æ–‡å­—ã¯åŒºåˆ¥ã—ã¾ã›ã‚“ã€‚                                                                        @n
 //! select *                                                                                                 @n
 //! from users                                                                                               @n
 //!                                                                                                          @n
-//! —á3: —ñ‚Ìw’è‚ª‚Å‚«‚Ü‚·B                                                                                @n
+//! ä¾‹3: åˆ—ã®æŒ‡å®šãŒã§ãã¾ã™ã€‚                                                                                @n
 //! SELECT Id, Name                                                                                          @n
 //! FROM USERS                                                                                               @n
 //!                                                                                                          @n
-//! —á4: ƒe[ƒuƒ‹–¼‚ğw’è‚µ‚Ä—ñ‚Ìw’è‚ª‚Å‚«‚Ü‚·B                                                            @n
+//! ä¾‹4: ãƒ†ãƒ¼ãƒ–ãƒ«åã‚’æŒ‡å®šã—ã¦åˆ—ã®æŒ‡å®šãŒã§ãã¾ã™ã€‚                                                            @n
 //! SELECT USERS.Id                                                                                          @n
 //! FROM USERS                                                                                               @n
 //!                                                                                                          @n
-//! —á5: ORDER‹å‚ªg‚¦‚Ü‚·B                                                                                 @n
+//! ä¾‹5: ORDERå¥ãŒä½¿ãˆã¾ã™ã€‚                                                                                 @n
 //! SELECT *                                                                                                 @n
 //! ORDER BY NAME                                                                                            @n
 //! FROM USERS                                                                                               @n
 //!                                                                                                          @n
-//! —á6: ORDER‹å‚É•¡”—ñ‚â¸‡A~‡‚Ìw’è‚ª‚Å‚«‚Ü‚·B                                                       @n
+//! ä¾‹6: ORDERå¥ã«è¤‡æ•°åˆ—ã‚„æ˜‡é †ã€é™é †ã®æŒ‡å®šãŒã§ãã¾ã™ã€‚                                                       @n
 //! SELECT *                                                                                                 @n
 //! ORDER BY AGE DESC, Name ASC                                                                              @n
 //!                                                                                                          @n
-//! —á7: WHERE‹å‚ªg‚¦‚Ü‚·B                                                                                 @n
+//! ä¾‹7: WHEREå¥ãŒä½¿ãˆã¾ã™ã€‚                                                                                 @n
 //! SELECT *                                                                                                 @n
 //! WHERE AGE >= 20                                                                                          @n
 //! FROM USERS                                                                                               @n
 //!                                                                                                          @n
-//! —á8: WHERE‹å‚Å‚Í•¶š—ñ‚Ì”äŠr‚àg‚¦‚Ü‚·B                                                                 @n
+//! ä¾‹8: WHEREå¥ã§ã¯æ–‡å­—åˆ—ã®æ¯”è¼ƒã‚‚ä½¿ãˆã¾ã™ã€‚                                                                 @n
 //! SELECT *                                                                                                 @n
 //! WHERE NAME >= 'N'                                                                                        @n
 //! FROM USERS                                                                                               @n
 //!                                                                                                          @n
-//! —á9: WHERE‹å‚É‚Íl‘¥‰‰ZAƒJƒbƒRAANDAOR‚È‚Ç‚ğŠÜ‚Ş•¡G‚È®‚ª—˜—p‚Å‚«‚Ü‚·B                              @n
+//! ä¾‹9: WHEREå¥ã«ã¯å››å‰‡æ¼”ç®—ã€ã‚«ãƒƒã‚³ã€ANDã€ORãªã©ã‚’å«ã‚€è¤‡é›‘ãªå¼ãŒåˆ©ç”¨ã§ãã¾ã™ã€‚                              @n
 //! SELECT *                                                                                                 @n
 //! WHERE AGE >= 20 AND (AGE <= 40 || WEIGHT < 100)                                                          @n
 //! FROM USERS                                                                                               @n
 //!                                                                                                          @n
-//! —á10: FROM‹å‚É•¡”‚Ìƒe[ƒuƒ‹‚ªw’è‚Å‚«‚Ü‚·B‚»‚Ìê‡‚ÍƒNƒƒX‚ÅŒ‹‡‚µ‚Ü‚·B                               @n
+//! ä¾‹10: FROMå¥ã«è¤‡æ•°ã®ãƒ†ãƒ¼ãƒ–ãƒ«ãŒæŒ‡å®šã§ãã¾ã™ã€‚ãã®å ´åˆã¯ã‚¯ãƒ­ã‚¹ã§çµåˆã—ã¾ã™ã€‚                               @n
 //! SELECT *                                                                                                 @n
 //! FROM USERS, CHILDREN                                                                                     @n
 //!                                                                                                          @n
-//! —á11: WHERE‚ÅğŒ‚ğ‚Â‚¯‚é‚±‚Æ‚É‚æ‚èAƒe[ƒuƒ‹‚ÌŒ‹‡‚ª‚Å‚«‚Ü‚·B                                          @n
+//! ä¾‹11: WHEREã§æ¡ä»¶ã‚’ã¤ã‘ã‚‹ã“ã¨ã«ã‚ˆã‚Šã€ãƒ†ãƒ¼ãƒ–ãƒ«ã®çµåˆãŒã§ãã¾ã™ã€‚                                          @n
 //! SELECT USERS.NAME, CHILDREN.NAME                                                                         @n
 //! WHERE USERS.ID = CHILDREN.PARENTID                                                                       @n
 //! FROM USERS, CHILDREN                                                                                     @n
 int ExecuteSQL(const string sql, const string outputFileName)
 {
-	vector<FILE*> inputTableFiles;                          // “Ç‚İ‚Ş“ü—Íƒtƒ@ƒCƒ‹‚Ì‘S‚Ä‚Ìƒtƒ@ƒCƒ‹ƒ|ƒCƒ“ƒ^‚Å‚·B
-	FILE *outputFile = nullptr;                             // ‘‚«‚Şƒtƒ@ƒCƒ‹‚Ìƒtƒ@ƒCƒ‹ƒ|ƒCƒ“ƒ^‚Å‚·B
-	int result = 0;                                         // ŠÖ”‚Ì–ß‚è’l‚ğˆê“I‚É•Û‘¶‚µ‚Ü‚·B
-	bool found = false;                                     // ŒŸõ‚ÉŒ©‚Â‚©‚Á‚½‚©‚Ç‚¤‚©‚ÌŒ‹‰Ê‚ğˆê“I‚É•Û‘¶‚µ‚Ü‚·B
-	const char *search = nullptr;                           // •¶š—ñŒŸõ‚É—˜—p‚·‚éƒ|ƒCƒ“ƒ^‚Å‚·B
-	Data ***currentRow = nullptr;                           // ƒf[ƒ^ŒŸõ‚ÉŒ»İŒ©‚Ä‚¢‚és‚ğ•\‚µ‚Ü‚·B
-	vector<vector<Data**>> inputData;                       // “ü—Íƒf[ƒ^‚Å‚·B
-	vector<Data**> outputData;                              // o—Íƒf[ƒ^‚Å‚·B
-	vector<Data**> allColumnOutputData;                     // o—Í‚·‚éƒf[ƒ^‚É‘Î‰‚·‚éƒCƒ“ƒfƒbƒNƒX‚ğ‚¿A‚·‚×‚Ä‚Ì“ü—Íƒf[ƒ^‚ğ•ÛŠÇ‚µ‚Ü‚·B
+	vector<FILE*> inputTableFiles;                          // èª­ã¿è¾¼ã‚€å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã®å…¨ã¦ã®ãƒ•ã‚¡ã‚¤ãƒ«ãƒã‚¤ãƒ³ã‚¿ã§ã™ã€‚
+	FILE *outputFile = nullptr;                             // æ›¸ãè¾¼ã‚€ãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ•ã‚¡ã‚¤ãƒ«ãƒã‚¤ãƒ³ã‚¿ã§ã™ã€‚
+	int result = 0;                                         // é–¢æ•°ã®æˆ»ã‚Šå€¤ã‚’ä¸€æ™‚çš„ã«ä¿å­˜ã—ã¾ã™ã€‚
+	bool found = false;                                     // æ¤œç´¢æ™‚ã«è¦‹ã¤ã‹ã£ãŸã‹ã©ã†ã‹ã®çµæœã‚’ä¸€æ™‚çš„ã«ä¿å­˜ã—ã¾ã™ã€‚
+	const char *search = nullptr;                           // æ–‡å­—åˆ—æ¤œç´¢ã«åˆ©ç”¨ã™ã‚‹ãƒã‚¤ãƒ³ã‚¿ã§ã™ã€‚
+	Data ***currentRow = nullptr;                           // ãƒ‡ãƒ¼ã‚¿æ¤œç´¢æ™‚ã«ç¾åœ¨è¦‹ã¦ã„ã‚‹è¡Œã‚’è¡¨ã—ã¾ã™ã€‚
+	vector<vector<Data**>> inputData;                       // å…¥åŠ›ãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
+	vector<Data**> outputData;                              // å‡ºåŠ›ãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
+	vector<Data**> allColumnOutputData;                     // å‡ºåŠ›ã™ã‚‹ãƒ‡ãƒ¼ã‚¿ã«å¯¾å¿œã™ã‚‹ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã‚’æŒã¡ã€ã™ã¹ã¦ã®å…¥åŠ›ãƒ‡ãƒ¼ã‚¿ã‚’ä¿ç®¡ã—ã¾ã™ã€‚
 
-	const string alpahUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ"; // ‘S‚Ä‚ÌƒAƒ‹ƒtƒ@ƒxƒbƒg‚Ì‘å•¶š¬•¶š‚ÆƒAƒ“ƒ_[ƒo[‚Å‚·B
-	const string alpahNumUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; // ‘S‚Ä‚Ì”š‚ÆƒAƒ‹ƒtƒ@ƒxƒbƒg‚Ì‘å•¶š¬•¶š‚ÆƒAƒ“ƒ_[ƒo[‚Å‚·B
-	const string signNum = "+-0123456789"; // ‘S‚Ä‚Ì•„†‚Æ”š‚Å‚·B
-	const string num = "0123456789"; // ‘S‚Ä‚Ì”š‚Å‚·B
-	const char* space = " \t\r\n"; // ‘S‚Ä‚Ì‹ó”’•¶š‚Å‚·B
+	const string alpahUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ"; // å…¨ã¦ã®ã‚¢ãƒ«ãƒ•ã‚¡ãƒ™ãƒƒãƒˆã®å¤§æ–‡å­—å°æ–‡å­—ã¨ã‚¢ãƒ³ãƒ€ãƒ¼ãƒãƒ¼ã§ã™ã€‚
+	const string alpahNumUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; // å…¨ã¦ã®æ•°å­—ã¨ã‚¢ãƒ«ãƒ•ã‚¡ãƒ™ãƒƒãƒˆã®å¤§æ–‡å­—å°æ–‡å­—ã¨ã‚¢ãƒ³ãƒ€ãƒ¼ãƒãƒ¼ã§ã™ã€‚
+	const string signNum = "+-0123456789"; // å…¨ã¦ã®ç¬¦å·ã¨æ•°å­—ã§ã™ã€‚
+	const string num = "0123456789"; // å…¨ã¦ã®æ•°å­—ã§ã™ã€‚
+	const char* space = " \t\r\n"; // å…¨ã¦ã®ç©ºç™½æ–‡å­—ã§ã™ã€‚
 
-	// SQL‚©‚çƒg[ƒNƒ“‚ğ“Ç‚İ‚İ‚Ü‚·B
+	// SQLã‹ã‚‰ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 
-	// keywordConditions‚ÆsignConditions‚Íæ“ª‚©‚ç‡‚ÉŒŸõ‚³‚ê‚é‚Ì‚ÅA‘O•ûˆê’v‚Æ‚È‚é“ñ‚Â‚Ì€–Ú‚Í‡”Ô‚É‹C‚ğ‚Â‚¯‚Ä“o˜^‚µ‚È‚­‚Ä‚Í‚¢‚¯‚Ü‚¹‚ñB
+	// keywordConditionsã¨signConditionsã¯å…ˆé ­ã‹ã‚‰é †ã«æ¤œç´¢ã•ã‚Œã‚‹ã®ã§ã€å‰æ–¹ä¸€è‡´ã¨ãªã‚‹äºŒã¤ã®é …ç›®ã¯é †ç•ªã«æ°—ã‚’ã¤ã‘ã¦ç™»éŒ²ã—ãªãã¦ã¯ã„ã‘ã¾ã›ã‚“ã€‚
 
-	// ƒL[ƒ[ƒh‚ğƒg[ƒNƒ“‚Æ‚µ‚Ä”F¯‚·‚é‚½‚ß‚ÌƒL[ƒ[ƒhˆê——î•ñ‚Å‚·B
+	// ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã‚’ãƒˆãƒ¼ã‚¯ãƒ³ã¨ã—ã¦èªè­˜ã™ã‚‹ãŸã‚ã®ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ä¸€è¦§æƒ…å ±ã§ã™ã€‚
 	const vector<const Token> keywordConditions =
 	{
 		{ TokenKind::AND, "AND" },
@@ -400,7 +400,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 		{ TokenKind::WHERE, "WHERE" }
 	};
 
-	// ‹L†‚ğƒg[ƒNƒ“‚Æ‚µ‚Ä”F¯‚·‚é‚½‚ß‚Ì‹L†ˆê——î•ñ‚Å‚·B
+	// è¨˜å·ã‚’ãƒˆãƒ¼ã‚¯ãƒ³ã¨ã—ã¦èªè­˜ã™ã‚‹ãŸã‚ã®è¨˜å·ä¸€è¦§æƒ…å ±ã§ã™ã€‚
 	const vector<const Token> signConditions =
 	{
 		{ TokenKind::GREATER_THAN_OR_EQUAL, ">=" },
@@ -419,9 +419,9 @@ int ExecuteSQL(const string sql, const string outputFileName)
 		{ TokenKind::SLASH, "/" },
 	};
 
-	vector<const Token> tokens; // SQL‚ğ•ªŠ„‚µ‚½ƒg[ƒNƒ“‚Å‚·B
+	vector<const Token> tokens; // SQLã‚’åˆ†å‰²ã—ãŸãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚
 
-	// ‰‰Zq‚Ìî•ñ‚Å‚·B
+	// æ¼”ç®—å­ã®æƒ…å ±ã§ã™ã€‚
 	const vector<const Operator> operators =
 	{
 		{ TokenKind::ASTERISK, 1 },
@@ -438,33 +438,33 @@ int ExecuteSQL(const string sql, const string outputFileName)
 		{ TokenKind::OR, 5 },
 	};
 
-	const char* charactorBackPoint = nullptr; // SQL‚ğƒg[ƒNƒ“‚É•ªŠ„‚µ‚Ä“Ç‚İ‚Ş‚É–ß‚éƒ|ƒCƒ“ƒg‚ğ‹L˜^‚µ‚Ä‚¨‚«‚Ü‚·B
+	const char* charactorBackPoint = nullptr; // SQLã‚’ãƒˆãƒ¼ã‚¯ãƒ³ã«åˆ†å‰²ã—ã¦èª­ã¿è¾¼ã‚€æ™‚ã«æˆ»ã‚‹ãƒã‚¤ãƒ³ãƒˆã‚’è¨˜éŒ²ã—ã¦ãŠãã¾ã™ã€‚
 
-	const char* charactorCursol = sql.c_str(); // SQL‚ğƒg[ƒNƒ“‚É•ªŠ„‚µ‚Ä“Ç‚İ‚Ş‚ÉŒ»İ“Ç‚ñ‚Å‚¢‚é•¶š‚ÌêŠ‚ğ•\‚µ‚Ü‚·B
+	const char* charactorCursol = sql.c_str(); // SQLã‚’ãƒˆãƒ¼ã‚¯ãƒ³ã«åˆ†å‰²ã—ã¦èª­ã¿è¾¼ã‚€æ™‚ã«ç¾åœ¨èª­ã‚“ã§ã„ã‚‹æ–‡å­—ã®å ´æ‰€ã‚’è¡¨ã—ã¾ã™ã€‚
 
-	vector<const string> tableNames; // FROM‹å‚Åw’è‚µ‚Ä‚¢‚éƒe[ƒuƒ‹–¼‚Å‚·B
+	vector<const string> tableNames; // FROMå¥ã§æŒ‡å®šã—ã¦ã„ã‚‹ãƒ†ãƒ¼ãƒ–ãƒ«åã§ã™ã€‚
 	try
 	{
-		// SQL‚ğƒg[ƒNƒ“‚É•ªŠ„‚Ä“Ç‚İ‚İ‚Ü‚·B
+		// SQLã‚’ãƒˆãƒ¼ã‚¯ãƒ³ã«åˆ†å‰²ã¦èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 		while (*charactorCursol){
 
-			// ‹ó”’‚ğ“Ç‚İ”ò‚Î‚µ‚Ü‚·B
+			// ç©ºç™½ã‚’èª­ã¿é£›ã°ã—ã¾ã™ã€‚
 			for (search = space; *search && *charactorCursol != *search; ++search){}
 			if (*search){
 				charactorCursol++;
 				continue;
 			}
 
-			// ”’lƒŠƒeƒ‰ƒ‹‚ğ“Ç‚İ‚İ‚Ü‚·B
+			// æ•°å€¤ãƒªãƒ†ãƒ©ãƒ«ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 
-			// æ“ª•¶š‚ª”š‚Å‚ ‚é‚©‚Ç‚¤‚©‚ğŠm”F‚µ‚Ü‚·B
+			// å…ˆé ­æ–‡å­—ãŒæ•°å­—ã§ã‚ã‚‹ã‹ã©ã†ã‹ã‚’ç¢ºèªã—ã¾ã™ã€‚
 			charactorBackPoint = charactorCursol;
 			for (search = num.c_str(); *search && *charactorCursol != *search; ++search){}
 			if (*search){
-				Token literal{TokenKind::INT_LITERAL}; // “Ç‚İ‚ñ‚¾”’lƒŠƒeƒ‰ƒ‹‚Ìî•ñ‚Å‚·B
-				int wordLength = 0; // ”’lƒŠƒeƒ‰ƒ‹‚ÉŒ»İ“Ç‚İ‚ñ‚Å‚¢‚é•¶š‚Ì”‚Å‚·B
+				Token literal{TokenKind::INT_LITERAL}; // èª­ã¿è¾¼ã‚“ã æ•°å€¤ãƒªãƒ†ãƒ©ãƒ«ã®æƒ…å ±ã§ã™ã€‚
+				int wordLength = 0; // æ•°å€¤ãƒªãƒ†ãƒ©ãƒ«ã«ç¾åœ¨èª­ã¿è¾¼ã‚“ã§ã„ã‚‹æ–‡å­—ã®æ•°ã§ã™ã€‚
 
-				// ”š‚ª‘±‚­ŠÔA•¶š‚ğ“Ç‚İ‚İ‘±‚¯‚Ü‚·B
+				// æ•°å­—ãŒç¶šãé–“ã€æ–‡å­—ã‚’èª­ã¿è¾¼ã¿ç¶šã‘ã¾ã™ã€‚
 				do {
 					for (search = num.c_str(); *search && *charactorCursol != *search; ++search){}
 					if (*search){
@@ -476,7 +476,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					}
 				} while (*search);
 
-				// ”š‚ÌŒã‚É‚·‚®‚É¯•Êq‚ª‘±‚­‚Ì‚Í•´‚ç‚í‚µ‚¢‚Ì‚Å”’lƒŠƒeƒ‰ƒ‹‚Æ‚Íˆµ‚¢‚Ü‚¹‚ñB
+				// æ•°å­—ã®å¾Œã«ã™ãã«è­˜åˆ¥å­ãŒç¶šãã®ã¯ç´›ã‚‰ã‚ã—ã„ã®ã§æ•°å€¤ãƒªãƒ†ãƒ©ãƒ«ã¨ã¯æ‰±ã„ã¾ã›ã‚“ã€‚
 				for (search = alpahUnder.c_str(); *search && *charactorCursol != *search; ++search){}
 				if (!*search){
 					literal.word[wordLength] = '\0';
@@ -488,16 +488,16 @@ int ExecuteSQL(const string sql, const string outputFileName)
 				}
 			}
 
-			// •¶š—ñƒŠƒeƒ‰ƒ‹‚ğ“Ç‚İ‚İ‚Ü‚·B
+			// æ–‡å­—åˆ—ãƒªãƒ†ãƒ©ãƒ«ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 
-			// •¶š—ñƒŠƒeƒ‰ƒ‹‚ğŠJn‚·‚éƒVƒ“ƒOƒ‹ƒNƒH[ƒg‚ğ”»•Ê‚µA“Ç‚İ‚İ‚Ü‚·B
-			// ƒƒgƒŠƒNƒX‘ª’èƒc[ƒ‹‚Ìcccc‚ÍƒVƒ“ƒOƒ‹ƒNƒH[ƒg‚Ì•¶šƒŠƒeƒ‰ƒ‹’†‚ÌƒGƒXƒP[ƒv‚ğ”F¯‚µ‚È‚¢‚½‚ßA•¶šƒŠƒeƒ‰ƒ‹‚ğg‚í‚È‚¢‚±‚Æ‚Å‰ñ”ğ‚µ‚Ä‚¢‚Ü‚·B
+			// æ–‡å­—åˆ—ãƒªãƒ†ãƒ©ãƒ«ã‚’é–‹å§‹ã™ã‚‹ã‚·ãƒ³ã‚°ãƒ«ã‚¯ã‚©ãƒ¼ãƒˆã‚’åˆ¤åˆ¥ã—ã€èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+			// ãƒ¡ãƒˆãƒªã‚¯ã‚¹æ¸¬å®šãƒ„ãƒ¼ãƒ«ã®ccccã¯ã‚·ãƒ³ã‚°ãƒ«ã‚¯ã‚©ãƒ¼ãƒˆã®æ–‡å­—ãƒªãƒ†ãƒ©ãƒ«ä¸­ã®ã‚¨ã‚¹ã‚±ãƒ¼ãƒ—ã‚’èªè­˜ã—ãªã„ãŸã‚ã€æ–‡å­—ãƒªãƒ†ãƒ©ãƒ«ã‚’ä½¿ã‚ãªã„ã“ã¨ã§å›é¿ã—ã¦ã„ã¾ã™ã€‚
 			if (*charactorCursol == "\'"[0]){
 				++charactorCursol;
-				Token literal{TokenKind::STRING_LITERAL, "\'"}; // “Ç‚İ‚ñ‚¾•¶š—ñƒŠƒeƒ‰ƒ‹‚Ìî•ñ‚Å‚·B
-				int wordLength = 1; // •¶š—ñƒŠƒeƒ‰ƒ‹‚ÉŒ»İ“Ç‚İ‚ñ‚Å‚¢‚é•¶š‚Ì”‚Å‚·B‰Šú’l‚Ì’iŠK‚ÅÅ‰‚ÌƒVƒ“ƒOƒ‹ƒNƒH[ƒg‚Í“Ç‚İ‚ñ‚Å‚¢‚Ü‚·B
+				Token literal{TokenKind::STRING_LITERAL, "\'"}; // èª­ã¿è¾¼ã‚“ã æ–‡å­—åˆ—ãƒªãƒ†ãƒ©ãƒ«ã®æƒ…å ±ã§ã™ã€‚
+				int wordLength = 1; // æ–‡å­—åˆ—ãƒªãƒ†ãƒ©ãƒ«ã«ç¾åœ¨èª­ã¿è¾¼ã‚“ã§ã„ã‚‹æ–‡å­—ã®æ•°ã§ã™ã€‚åˆæœŸå€¤ã®æ®µéšã§æœ€åˆã®ã‚·ãƒ³ã‚°ãƒ«ã‚¯ã‚©ãƒ¼ãƒˆã¯èª­ã¿è¾¼ã‚“ã§ã„ã¾ã™ã€‚
 
-				// Ÿ‚ÌƒVƒ“ƒOƒ‹ƒNƒH[ƒg‚ª‚­‚é‚Ü‚Å•¶š‚ğ“Ç‚İ‚İ‘±‚¯‚Ü‚·B
+				// æ¬¡ã®ã‚·ãƒ³ã‚°ãƒ«ã‚¯ã‚©ãƒ¼ãƒˆãŒãã‚‹ã¾ã§æ–‡å­—ã‚’èª­ã¿è¾¼ã¿ç¶šã‘ã¾ã™ã€‚
 				while (*charactorCursol && *charactorCursol != "\'"[0]){
 					if (MAX_WORD_LENGTH - 1 <= wordLength){
 						throw ResultValue::ERR_MEMORY_OVER;
@@ -508,10 +508,10 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					if (MAX_WORD_LENGTH - 1 <= wordLength){
 						throw ResultValue::ERR_MEMORY_OVER;
 					}
-					// ÅŒã‚ÌƒVƒ“ƒOƒ‹ƒNƒH[ƒg‚ğ“Ç‚İ‚İ‚Ü‚·B
+					// æœ€å¾Œã®ã‚·ãƒ³ã‚°ãƒ«ã‚¯ã‚©ãƒ¼ãƒˆã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 					literal.word[wordLength++] = *charactorCursol++;
 
-					// •¶š—ñ‚ÌI’[•¶š‚ğ‚Â‚¯‚Ü‚·B
+					// æ–‡å­—åˆ—ã®çµ‚ç«¯æ–‡å­—ã‚’ã¤ã‘ã¾ã™ã€‚
 					literal.word[wordLength] = '\0';
 					tokens.push_back(literal);
 					continue;
@@ -521,23 +521,23 @@ int ExecuteSQL(const string sql, const string outputFileName)
 				}
 			}
 
-			// ƒL[ƒ[ƒh‚ğ“Ç‚İ‚İ‚Ü‚·B
+			// ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 			found = false;
 			for (auto & keywordCondition : keywordConditions){
 				charactorBackPoint = charactorCursol;
-				const char *wordCursol = keywordCondition.word; // Šm”F‚·‚éƒL[ƒ[ƒh‚Ì•¶š—ñ‚Ì‚¤‚¿AŒ»İŠm”F‚µ‚Ä‚¢‚éˆê•¶š‚ğw‚µ‚Ü‚·B
+				const char *wordCursol = keywordCondition.word; // ç¢ºèªã™ã‚‹ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã®æ–‡å­—åˆ—ã®ã†ã¡ã€ç¾åœ¨ç¢ºèªã—ã¦ã„ã‚‹ä¸€æ–‡å­—ã‚’æŒ‡ã—ã¾ã™ã€‚
 
-				// ƒL[ƒ[ƒh‚ªw’è‚µ‚½•¶š—ñ‚Æ‚È‚Á‚Ä‚¢‚é‚©Šm”F‚µ‚Ü‚·B
+				// ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ãŒæŒ‡å®šã—ãŸæ–‡å­—åˆ—ã¨ãªã£ã¦ã„ã‚‹ã‹ç¢ºèªã—ã¾ã™ã€‚
 				while (*wordCursol && toupper(*charactorCursol++) == *wordCursol){
 					++wordCursol;
 				}
 
-				// ƒL[ƒ[ƒh‚É¯•Êq‚ª‹æØ‚è‚È‚µ‚É‘±‚¢‚Ä‚¢‚È‚¢‚©‚ğŠm”F‚·‚é‚½‚ßAƒL[ƒ[ƒh‚ÌI‚í‚Á‚½ˆê•¶š‚ ‚Æ‚ğ’²‚×‚Ü‚·B
+				// ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã«è­˜åˆ¥å­ãŒåŒºåˆ‡ã‚Šãªã—ã«ç¶šã„ã¦ã„ãªã„ã‹ã‚’ç¢ºèªã™ã‚‹ãŸã‚ã€ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã®çµ‚ã‚ã£ãŸä¸€æ–‡å­—ã‚ã¨ã‚’èª¿ã¹ã¾ã™ã€‚
 				for (search = alpahNumUnder.c_str(); *search && *charactorCursol != *search; ++search){};
 
 				if (!*wordCursol && !*search){
 
-					// Œ©‚Â‚©‚Á‚½ƒL[ƒ[ƒh‚ğ¶¬‚µ‚Ü‚·B
+					// è¦‹ã¤ã‹ã£ãŸã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã‚’ç”Ÿæˆã—ã¾ã™ã€‚
 					tokens.push_back(Token(keywordCondition.kind));
 					found = true;
 				}
@@ -549,19 +549,19 @@ int ExecuteSQL(const string sql, const string outputFileName)
 				continue;
 			}
 
-			// ‹L†‚ğ“Ç‚İ‚İ‚Ü‚·B
+			// è¨˜å·ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 			found = false;
 			for (auto &signCondition : signConditions){
 				charactorBackPoint = charactorCursol;
-				const char *wordCursol = signCondition.word; // Šm”F‚·‚é‹L†‚Ì•¶š—ñ‚Ì‚¤‚¿AŒ»İŠm”F‚µ‚Ä‚¢‚éˆê•¶š‚ğw‚µ‚Ü‚·B
+				const char *wordCursol = signCondition.word; // ç¢ºèªã™ã‚‹è¨˜å·ã®æ–‡å­—åˆ—ã®ã†ã¡ã€ç¾åœ¨ç¢ºèªã—ã¦ã„ã‚‹ä¸€æ–‡å­—ã‚’æŒ‡ã—ã¾ã™ã€‚
 
-				// ‹L†‚ªw’è‚µ‚½•¶š—ñ‚Æ‚È‚Á‚Ä‚¢‚é‚©Šm”F‚µ‚Ü‚·B
+				// è¨˜å·ãŒæŒ‡å®šã—ãŸæ–‡å­—åˆ—ã¨ãªã£ã¦ã„ã‚‹ã‹ç¢ºèªã—ã¾ã™ã€‚
 				while (*wordCursol && toupper(*charactorCursol++) == *wordCursol){
 					++wordCursol;
 				}
 				if (!*wordCursol){
 
-					// Œ©‚Â‚©‚Á‚½‹L†‚ğ¶¬‚µ‚Ü‚·B
+					// è¦‹ã¤ã‹ã£ãŸè¨˜å·ã‚’ç”Ÿæˆã—ã¾ã™ã€‚
 					tokens.push_back(Token(signCondition.kind));
 					found = true;
 				}
@@ -573,15 +573,15 @@ int ExecuteSQL(const string sql, const string outputFileName)
 				continue;
 			}
 
-			// ¯•Êq‚ğ“Ç‚İ‚İ‚Ü‚·B
+			// è­˜åˆ¥å­ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 
-			// ¯•Êq‚ÌÅ‰‚Ì•¶š‚ğŠm”F‚µ‚Ü‚·B
+			// è­˜åˆ¥å­ã®æœ€åˆã®æ–‡å­—ã‚’ç¢ºèªã—ã¾ã™ã€‚
 			for (search = alpahUnder.c_str(); *search && *charactorCursol != *search; ++search){};
 			if (*search){
-				Token identifier{ TokenKind::IDENTIFIER }; // “Ç‚İ‚ñ‚¾¯•Êq‚Ìî•ñ‚Å‚·B
-				int wordLength = 0; // ¯•Êq‚ÉŒ»İ“Ç‚İ‚ñ‚Å‚¢‚é•¶š‚Ì”‚Å‚·B
+				Token identifier{ TokenKind::IDENTIFIER }; // èª­ã¿è¾¼ã‚“ã è­˜åˆ¥å­ã®æƒ…å ±ã§ã™ã€‚
+				int wordLength = 0; // è­˜åˆ¥å­ã«ç¾åœ¨èª­ã¿è¾¼ã‚“ã§ã„ã‚‹æ–‡å­—ã®æ•°ã§ã™ã€‚
 				do {
-					// “ñ•¶š–ÚˆÈ~‚Í”š‚à‹–‰Â‚µ‚Ä•¶š‚Ìí—Ş‚ğŠm”F‚µ‚Ü‚·B
+					// äºŒæ–‡å­—ç›®ä»¥é™ã¯æ•°å­—ã‚‚è¨±å¯ã—ã¦æ–‡å­—ã®ç¨®é¡ã‚’ç¢ºèªã—ã¾ã™ã€‚
 					for (search = alpahNumUnder.c_str(); *search && *charactorCursol != *search; ++search){};
 					if (*search){
 						if (MAX_WORD_LENGTH - 1 <= wordLength){
@@ -592,10 +592,10 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					}
 				} while (*search);
 
-				// ¯•Êq‚Ì•¶š—ñ‚ÌI’[•¶š‚ğİ’è‚µ‚Ü‚·B
+				// è­˜åˆ¥å­ã®æ–‡å­—åˆ—ã®çµ‚ç«¯æ–‡å­—ã‚’è¨­å®šã—ã¾ã™ã€‚
 				identifier.word[wordLength] = '\0';
 
-				// “Ç‚İ‚ñ‚¾¯•Êq‚ğ“o˜^‚µ‚Ü‚·B
+				// èª­ã¿è¾¼ã‚“ã è­˜åˆ¥å­ã‚’ç™»éŒ²ã—ã¾ã™ã€‚
 				tokens.push_back(identifier);
 				continue;
 			}
@@ -606,23 +606,23 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			throw ResultValue::ERR_TOKEN_CANT_READ;
 		}
 
-		// ƒg[ƒNƒ“—ñ‚ğ‰ğÍ‚µA\•¶‚ğ“Ç‚İæ‚è‚Ü‚·B
+		// ãƒˆãƒ¼ã‚¯ãƒ³åˆ—ã‚’è§£æã—ã€æ§‹æ–‡ã‚’èª­ã¿å–ã‚Šã¾ã™ã€‚
 
-		Token *tokenCursol = &tokens[0]; // Œ»İŒ©‚Ä‚¢‚éƒg[ƒNƒ“‚ğw‚µ‚Ü‚·B
+		Token *tokenCursol = &tokens[0]; // ç¾åœ¨è¦‹ã¦ã„ã‚‹ãƒˆãƒ¼ã‚¯ãƒ³ã‚’æŒ‡ã—ã¾ã™ã€‚
 
-		vector<Column> selectColumns; // SELECT‹å‚Éw’è‚³‚ê‚½—ñ–¼‚Å‚·B
+		vector<Column> selectColumns; // SELECTå¥ã«æŒ‡å®šã•ã‚ŒãŸåˆ—åã§ã™ã€‚
 
-		vector<Column> orderByColumns; // ORDER‹å‚Éw’è‚³‚ê‚½—ñ–¼‚Å‚·B
+		vector<Column> orderByColumns; // ORDERå¥ã«æŒ‡å®šã•ã‚ŒãŸåˆ—åã§ã™ã€‚
 
-		vector<TokenKind> orders; // “¯‚¶ƒCƒ“ƒfƒbƒNƒX‚ÌorderByColumns‚É‘Î‰‚µ‚Ä‚¢‚éA¸‡A~‡‚Ìw’è‚Å‚·B
+		vector<TokenKind> orders; // åŒã˜ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã®orderByColumnsã«å¯¾å¿œã—ã¦ã„ã‚‹ã€æ˜‡é †ã€é™é †ã®æŒ‡å®šã§ã™ã€‚
 
-		list<ExtensionTreeNode> whereExtensionNodes; // WHERE‚Éw’è‚³‚ê‚½–Ø‚Ìƒm[ƒh‚ğA–Ø\‘¢‚Æ‚Í–³ŠÖŒW‚ÉŠi”[‚µ‚Ü‚·B
+		list<ExtensionTreeNode> whereExtensionNodes; // WHEREã«æŒ‡å®šã•ã‚ŒãŸæœ¨ã®ãƒãƒ¼ãƒ‰ã‚’ã€æœ¨æ§‹é€ ã¨ã¯ç„¡é–¢ä¿‚ã«æ ¼ç´ã—ã¾ã™ã€‚
 
-		ExtensionTreeNode *whereTopNode = nullptr; // ®–Ø‚Ìª‚Æ‚È‚éƒm[ƒh‚Å‚·B
+		ExtensionTreeNode *whereTopNode = nullptr; // å¼æœ¨ã®æ ¹ã¨ãªã‚‹ãƒãƒ¼ãƒ‰ã§ã™ã€‚
 
-		// SQL‚Ì\•¶‚ğ‰ğÍ‚µA•K—v‚Èî•ñ‚ğæ“¾‚µ‚Ü‚·B
+		// SQLã®æ§‹æ–‡ã‚’è§£æã—ã€å¿…è¦ãªæƒ…å ±ã‚’å–å¾—ã—ã¾ã™ã€‚
 
-		// SELECT‹å‚ğ“Ç‚İ‚İ‚Ü‚·B
+		// SELECTå¥ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 		if (tokenCursol->kind == TokenKind::SELECT){
 			++tokenCursol;
 		}
@@ -635,20 +635,20 @@ int ExecuteSQL(const string sql, const string outputFileName)
 		}
 		else
 		{
-			bool first = true; // SELECT‹å‚ÉÅ‰‚Éw’è‚³‚ê‚½—ñ–¼‚Ì“Ç‚İ‚İ‚©‚Ç‚¤‚©‚Å‚·B
+			bool first = true; // SELECTå¥ã«æœ€åˆã«æŒ‡å®šã•ã‚ŒãŸåˆ—åã®èª­ã¿è¾¼ã¿ã‹ã©ã†ã‹ã§ã™ã€‚
 			while (tokenCursol->kind == TokenKind::COMMA || first){
 				if (tokenCursol->kind == TokenKind::COMMA){
 					++tokenCursol;
 				}
 				if (tokenCursol->kind == TokenKind::IDENTIFIER){
-					// ƒe[ƒuƒ‹–¼‚ªw’è‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Æ‰¼’è‚µ‚Ä“Ç‚İ‚İ‚Ü‚·B
+					// ãƒ†ãƒ¼ãƒ–ãƒ«åãŒæŒ‡å®šã•ã‚Œã¦ã„ãªã„å ´åˆã¨ä»®å®šã—ã¦èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 					selectColumns.push_back(Column(tokenCursol->word));
 					++tokenCursol;
 					if (tokenCursol->kind == TokenKind::DOT){
 						++tokenCursol;
 						if (tokenCursol->kind == TokenKind::IDENTIFIER){
 
-							// ƒe[ƒuƒ‹–¼‚ªw’è‚³‚ê‚Ä‚¢‚é‚±‚Æ‚ª‚í‚©‚Á‚½‚Ì‚Å“Ç‚İ‘Ö‚¦‚Ü‚·B
+							// ãƒ†ãƒ¼ãƒ–ãƒ«åãŒæŒ‡å®šã•ã‚Œã¦ã„ã‚‹ã“ã¨ãŒã‚ã‹ã£ãŸã®ã§èª­ã¿æ›¿ãˆã¾ã™ã€‚
 							selectColumns.back() = Column(selectColumns.back().columnName, tokenCursol->word);
 							++tokenCursol;
 						}
@@ -664,40 +664,40 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			}
 		}
 
-		// ORDER‹å‚ÆWHERE‹å‚ğ“Ç‚İ‚İ‚Ü‚·BÅ‘åŠeˆê‰ñ‚¸‚Â‘‚­‚±‚Æ‚ª‚Å‚«‚Ü‚·B
-		bool readOrder = false; // ‚·‚Å‚ÉORDER‹å‚ª“Ç‚İ‚İÏ‚İ‚©‚Ç‚¤‚©‚Å‚·B
-		bool readWhere = false; // ‚·‚Å‚ÉWHERE‹å‚ª“Ç‚İ‚İÏ‚İ‚©‚Ç‚¤‚©‚Å‚·B
+		// ORDERå¥ã¨WHEREå¥ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚æœ€å¤§å„ä¸€å›ãšã¤æ›¸ãã“ã¨ãŒã§ãã¾ã™ã€‚
+		bool readOrder = false; // ã™ã§ã«ORDERå¥ãŒèª­ã¿è¾¼ã¿æ¸ˆã¿ã‹ã©ã†ã‹ã§ã™ã€‚
+		bool readWhere = false; // ã™ã§ã«WHEREå¥ãŒèª­ã¿è¾¼ã¿æ¸ˆã¿ã‹ã©ã†ã‹ã§ã™ã€‚
 		while (tokenCursol->kind == TokenKind::ORDER || tokenCursol->kind == TokenKind::WHERE){
 
-			// “ñ“x–Ú‚ÌORDER‹å‚ÍƒGƒ‰[‚Å‚·B
+			// äºŒåº¦ç›®ã®ORDERå¥ã¯ã‚¨ãƒ©ãƒ¼ã§ã™ã€‚
 			if (readOrder && tokenCursol->kind == TokenKind::ORDER){
 				throw ResultValue::ERR_SQL_SYNTAX;
 			}
 
-			// “ñ“x–Ú‚ÌWHERE‹å‚ÍƒGƒ‰[‚Å‚·B
+			// äºŒåº¦ç›®ã®WHEREå¥ã¯ã‚¨ãƒ©ãƒ¼ã§ã™ã€‚
 			if (readWhere && tokenCursol->kind == TokenKind::WHERE){
 				throw ResultValue::ERR_SQL_SYNTAX;
 			}
-			// ORDER‹å‚ğ“Ç‚İ‚İ‚Ü‚·B
+			// ORDERå¥ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 			if (tokenCursol->kind == TokenKind::ORDER){
 				readOrder = true;
 				++tokenCursol;
 				if (tokenCursol->kind == TokenKind::BY){
 					++tokenCursol;
-					bool first = true; // ORDER‹å‚ÌÅ‰‚Ì—ñ–¼‚Ì“Ç‚İ‚İ‚©‚Ç‚¤‚©‚Å‚·B
+					bool first = true; // ORDERå¥ã®æœ€åˆã®åˆ—åã®èª­ã¿è¾¼ã¿ã‹ã©ã†ã‹ã§ã™ã€‚
 					while (tokenCursol->kind == TokenKind::COMMA || first){
 						if (tokenCursol->kind == TokenKind::COMMA){
 							++tokenCursol;
 						}
 						if (tokenCursol->kind == TokenKind::IDENTIFIER){
-							// ƒe[ƒuƒ‹–¼‚ªw’è‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Æ‰¼’è‚µ‚Ä“Ç‚İ‚İ‚Ü‚·B
+							// ãƒ†ãƒ¼ãƒ–ãƒ«åãŒæŒ‡å®šã•ã‚Œã¦ã„ãªã„å ´åˆã¨ä»®å®šã—ã¦èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 							orderByColumns.push_back(Column(tokenCursol->word));
 							++tokenCursol;
 							if (tokenCursol->kind == TokenKind::DOT){
 								++tokenCursol;
 								if (tokenCursol->kind == TokenKind::IDENTIFIER){
 
-									// ƒe[ƒuƒ‹–¼‚ªw’è‚³‚ê‚Ä‚¢‚é‚±‚Æ‚ª‚í‚©‚Á‚½‚Ì‚Å“Ç‚İ‘Ö‚¦‚Ü‚·B
+									// ãƒ†ãƒ¼ãƒ–ãƒ«åãŒæŒ‡å®šã•ã‚Œã¦ã„ã‚‹ã“ã¨ãŒã‚ã‹ã£ãŸã®ã§èª­ã¿æ›¿ãˆã¾ã™ã€‚
 									orderByColumns.back() = Column(orderByColumns.back().columnName, tokenCursol->word);
 									++tokenCursol;
 								}
@@ -706,7 +706,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 								}
 							}
 
-							// •À‚Ñ‘Ö‚¦‚Ì¸‡A~‡‚ğw’è‚µ‚Ü‚·B
+							// ä¸¦ã³æ›¿ãˆã®æ˜‡é †ã€é™é †ã‚’æŒ‡å®šã—ã¾ã™ã€‚
 							if (tokenCursol->kind == TokenKind::ASC){
 								orders.push_back(TokenKind::ASC);
 								++tokenCursol;
@@ -716,7 +716,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 								++tokenCursol;
 							}
 							else{
-								// w’è‚ª‚È‚¢ê‡‚Í¸‡‚Æ‚È‚è‚Ü‚·B
+								// æŒ‡å®šãŒãªã„å ´åˆã¯æ˜‡é †ã¨ãªã‚Šã¾ã™ã€‚
 								orders.push_back(TokenKind::ASC);
 							}
 						}
@@ -731,37 +731,37 @@ int ExecuteSQL(const string sql, const string outputFileName)
 				}
 			}
 
-			// WHERE‹å‚ğ“Ç‚İ‚İ‚Ü‚·B
+			// WHEREå¥ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 			if (tokenCursol->kind == TokenKind::WHERE){
 				readWhere = true;
 				++tokenCursol;
-				ExtensionTreeNode *currentNode = nullptr; // Œ»İ“Ç‚İ‚ñ‚Å‚¢‚éƒm[ƒh‚Å‚·B
+				ExtensionTreeNode *currentNode = nullptr; // ç¾åœ¨èª­ã¿è¾¼ã‚“ã§ã„ã‚‹ãƒãƒ¼ãƒ‰ã§ã™ã€‚
 				while (true){
-					// ƒIƒyƒ‰ƒ“ƒh‚ğ“Ç‚İ‚İ‚Ü‚·B
+					// ã‚ªãƒšãƒ©ãƒ³ãƒ‰ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 
-					// ƒIƒyƒ‰ƒ“ƒh‚Ìƒm[ƒh‚ğV‚µ‚­¶¬‚µ‚Ü‚·B
+					// ã‚ªãƒšãƒ©ãƒ³ãƒ‰ã®ãƒãƒ¼ãƒ‰ã‚’æ–°ã—ãç”Ÿæˆã—ã¾ã™ã€‚
 					whereExtensionNodes.push_back(ExtensionTreeNode());
 					if (currentNode){
-						// Œ»İ‚Ìƒm[ƒh‚ğ‰E‚Ìq‚É‚¸‚ç‚µAŒ³‚ÌˆÊ’u‚ÉV‚µ‚¢ƒm[ƒh‚ğ‘}“ü‚µ‚Ü‚·B
+						// ç¾åœ¨ã®ãƒãƒ¼ãƒ‰ã‚’å³ã®å­ã«ãšã‚‰ã—ã€å…ƒã®ä½ç½®ã«æ–°ã—ã„ãƒãƒ¼ãƒ‰ã‚’æŒ¿å…¥ã—ã¾ã™ã€‚
 						currentNode->right = &whereExtensionNodes.back();
 						currentNode->right->parent = currentNode;
 						currentNode = currentNode->right;
 					}
 					else{
-						// Å‰‚ÍƒJƒŒƒ“ƒgƒm[ƒh‚ÉV‚µ‚¢ƒm[ƒh‚ğ“ü‚ê‚Ü‚·B
+						// æœ€åˆã¯ã‚«ãƒ¬ãƒ³ãƒˆãƒãƒ¼ãƒ‰ã«æ–°ã—ã„ãƒãƒ¼ãƒ‰ã‚’å…¥ã‚Œã¾ã™ã€‚
 						currentNode = &whereExtensionNodes.back();
 					}
 
-					// ƒJƒbƒRŠJ‚­‚ğ“Ç‚İ‚İ‚Ü‚·B
+					// ã‚«ãƒƒã‚³é–‹ãã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 					while (tokenCursol->kind == TokenKind::OPEN_PAREN){
 						++currentNode->parenOpenBeforeClose;
 						++tokenCursol;
 					}
 
-					// ƒIƒyƒ‰ƒ“ƒh‚É‘O’u‚³‚ê‚é+‚©-‚ğ“Ç‚İ‚İ‚Ü‚·B
+					// ã‚ªãƒšãƒ©ãƒ³ãƒ‰ã«å‰ç½®ã•ã‚Œã‚‹+ã‹-ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 					if (tokenCursol->kind == TokenKind::PLUS || tokenCursol->kind == TokenKind::MINUS){
 
-						// +-‚ğ‘O’u‚·‚é‚Ì‚Í—ñ–¼‚Æ”’lƒŠƒeƒ‰ƒ‹‚Ì‚İ‚Å‚·B
+						// +-ã‚’å‰ç½®ã™ã‚‹ã®ã¯åˆ—åã¨æ•°å€¤ãƒªãƒ†ãƒ©ãƒ«ã®ã¿ã§ã™ã€‚
 						if (tokenCursol[1].kind != TokenKind::IDENTIFIER && tokenCursol[1].kind != TokenKind::INT_LITERAL){
 							throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 						}
@@ -771,17 +771,17 @@ int ExecuteSQL(const string sql, const string outputFileName)
 						++tokenCursol;
 					}
 
-					// —ñ–¼A®”ƒŠƒeƒ‰ƒ‹A•¶š—ñƒŠƒeƒ‰ƒ‹‚Ì‚¢‚¸‚ê‚©‚ğƒIƒyƒ‰ƒ“ƒh‚Æ‚µ‚Ä“Ç‚İ‚İ‚Ü‚·B
+					// åˆ—åã€æ•´æ•°ãƒªãƒ†ãƒ©ãƒ«ã€æ–‡å­—åˆ—ãƒªãƒ†ãƒ©ãƒ«ã®ã„ãšã‚Œã‹ã‚’ã‚ªãƒšãƒ©ãƒ³ãƒ‰ã¨ã—ã¦èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 					if (tokenCursol->kind == TokenKind::IDENTIFIER){
 
-						// ƒe[ƒuƒ‹–¼‚ªw’è‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Æ‰¼’è‚µ‚Ä“Ç‚İ‚İ‚Ü‚·B
+						// ãƒ†ãƒ¼ãƒ–ãƒ«åãŒæŒ‡å®šã•ã‚Œã¦ã„ãªã„å ´åˆã¨ä»®å®šã—ã¦èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 						currentNode->column = Column(tokenCursol->word);
 						++tokenCursol;
 						if (tokenCursol->kind == TokenKind::DOT){
 							++tokenCursol;
 							if (tokenCursol->kind == TokenKind::IDENTIFIER){
 
-								// ƒe[ƒuƒ‹–¼‚ªw’è‚³‚ê‚Ä‚¢‚é‚±‚Æ‚ª‚í‚©‚Á‚½‚Ì‚Å“Ç‚İ‘Ö‚¦‚Ü‚·B
+								// ãƒ†ãƒ¼ãƒ–ãƒ«åãŒæŒ‡å®šã•ã‚Œã¦ã„ã‚‹ã“ã¨ãŒã‚ã‹ã£ãŸã®ã§èª­ã¿æ›¿ãˆã¾ã™ã€‚
 								currentNode->column = Column(currentNode->column.columnName, tokenCursol->word);
 								++tokenCursol;
 							}
@@ -797,7 +797,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					else if (tokenCursol->kind == TokenKind::STRING_LITERAL){
 						currentNode->value = Data();
 
-						// ‘OŒã‚ÌƒVƒ“ƒOƒ‹ƒNƒH[ƒg‚ğæ‚è‹‚Á‚½•¶š—ñ‚ğƒf[ƒ^‚Æ‚µ‚Ä“Ç‚İ‚İ‚Ü‚·B
+						// å‰å¾Œã®ã‚·ãƒ³ã‚°ãƒ«ã‚¯ã‚©ãƒ¼ãƒˆã‚’å–ã‚Šå»ã£ãŸæ–‡å­—åˆ—ã‚’ãƒ‡ãƒ¼ã‚¿ã¨ã—ã¦èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 						strncpy(currentNode->value.value.string, tokenCursol->word + 1, std::min(MAX_WORD_LENGTH, MAX_DATA_LENGTH));
 						currentNode->value.value.string[MAX_DATA_LENGTH - 1] = '\0';
 						currentNode->value.value.string[strlen(currentNode->value.value.string) - 1] = '\0';
@@ -807,18 +807,18 @@ int ExecuteSQL(const string sql, const string outputFileName)
 						throw ResultValue::ERR_SQL_SYNTAX;
 					}
 
-					// ƒIƒyƒ‰ƒ“ƒh‚Ì‰E‚ÌƒJƒbƒR•Â‚¶‚é‚ğ“Ç‚İ‚İ‚Ü‚·B
+					// ã‚ªãƒšãƒ©ãƒ³ãƒ‰ã®å³ã®ã‚«ãƒƒã‚³é–‰ã˜ã‚‹ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 					while (tokenCursol->kind == TokenKind::CLOSE_PAREN){
-						ExtensionTreeNode *searchedAncestor = currentNode->parent; // ƒJƒbƒR•Â‚¶‚é‚Æ‘Î‰‚·‚éƒJƒbƒRŠJ‚­‚ğ—¼•ûŠÜ‚Ş‘cæƒm[ƒh‚ğ’T‚·‚½‚ß‚ÌƒJ[ƒ\ƒ‹‚Å‚·B
+						ExtensionTreeNode *searchedAncestor = currentNode->parent; // ã‚«ãƒƒã‚³é–‰ã˜ã‚‹ã¨å¯¾å¿œã™ã‚‹ã‚«ãƒƒã‚³é–‹ãã‚’ä¸¡æ–¹å«ã‚€ç¥–å…ˆãƒãƒ¼ãƒ‰ã‚’æ¢ã™ãŸã‚ã®ã‚«ãƒ¼ã‚½ãƒ«ã§ã™ã€‚
 						while (searchedAncestor){
 
-							// searchedAncestor‚Ì¶‚Ìq‚É‘Î‰‚·‚éƒJƒbƒRŠJ‚­‚ª‚È‚¢‚©‚ğŒŸõ‚µ‚Ü‚·B
-							ExtensionTreeNode *searched = searchedAncestor; // searchedAncestor‚Ì“à•”‚©‚çƒJƒbƒRŠJ‚­‚ğŒŸõ‚·‚é‚½‚ß‚ÌƒJ[ƒ\ƒ‹‚Å‚·B
+							// searchedAncestorã®å·¦ã®å­ã«å¯¾å¿œã™ã‚‹ã‚«ãƒƒã‚³é–‹ããŒãªã„ã‹ã‚’æ¤œç´¢ã—ã¾ã™ã€‚
+							ExtensionTreeNode *searched = searchedAncestor; // searchedAncestorã®å†…éƒ¨ã‹ã‚‰ã‚«ãƒƒã‚³é–‹ãã‚’æ¤œç´¢ã™ã‚‹ãŸã‚ã®ã‚«ãƒ¼ã‚½ãƒ«ã§ã™ã€‚
 							while (searched && !searched->parenOpenBeforeClose){
 								searched = searched->left;
 							}
 							if (searched){
-								// ‘Î‰•t‚¯‚ç‚ê‚Ä‚¢‚È‚¢ƒJƒbƒRŠJ‚­‚ğˆê‚Âíœ‚µAƒm[ƒh‚ªƒJƒbƒR‚ÉˆÍ‚Ü‚ê‚Ä‚¢‚é‚±‚Æ‚ğ‹L˜^‚µ‚Ü‚·B
+								// å¯¾å¿œä»˜ã‘ã‚‰ã‚Œã¦ã„ãªã„ã‚«ãƒƒã‚³é–‹ãã‚’ä¸€ã¤å‰Šé™¤ã—ã€ãƒãƒ¼ãƒ‰ãŒã‚«ãƒƒã‚³ã«å›²ã¾ã‚Œã¦ã„ã‚‹ã“ã¨ã‚’è¨˜éŒ²ã—ã¾ã™ã€‚
 								--searched->parenOpenBeforeClose;
 								searchedAncestor->inParen = true;
 								break;
@@ -831,10 +831,10 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					}
 
 
-					// ‰‰Zq(ƒIƒyƒŒ[ƒ^[‚ğ“Ç‚İ‚İ‚Ü‚·B
-					Operator middleOperator; // Œ»İ“Ç‚İ‚ñ‚Å‚¢‚é‰‰Zq‚Ìî•ñ‚Å‚·B
+					// æ¼”ç®—å­(ã‚ªãƒšãƒ¬ãƒ¼ã‚¿ãƒ¼ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+					Operator middleOperator; // ç¾åœ¨èª­ã¿è¾¼ã‚“ã§ã„ã‚‹æ¼”ç®—å­ã®æƒ…å ±ã§ã™ã€‚
 
-					// Œ»İŒ©‚Ä‚¢‚é‰‰Zq‚Ìî•ñ‚ğ’T‚µ‚Ü‚·B
+					// ç¾åœ¨è¦‹ã¦ã„ã‚‹æ¼”ç®—å­ã®æƒ…å ±ã‚’æ¢ã—ã¾ã™ã€‚
 					found = false;
 					for (auto &anOperator : operators){
 						if (anOperator.kind == tokenCursol->kind){
@@ -845,31 +845,31 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					}
 					if (found)
 					{
-						// Œ©‚Â‚©‚Á‚½‰‰Zq‚Ìî•ñ‚ğ‚à‚Æ‚Éƒm[ƒh‚ğ“ü‚ê‘Ö‚¦‚Ü‚·B
-						ExtensionTreeNode *tmp = currentNode; //ƒm[ƒh‚ğ“ü‚ê‘Ö‚¦‚é‚½‚ß‚Ég‚¤•Ï”‚Å‚·B
+						// è¦‹ã¤ã‹ã£ãŸæ¼”ç®—å­ã®æƒ…å ±ã‚’ã‚‚ã¨ã«ãƒãƒ¼ãƒ‰ã‚’å…¥ã‚Œæ›¿ãˆã¾ã™ã€‚
+						ExtensionTreeNode *tmp = currentNode; //ãƒãƒ¼ãƒ‰ã‚’å…¥ã‚Œæ›¿ãˆã‚‹ãŸã‚ã«ä½¿ã†å¤‰æ•°ã§ã™ã€‚
 
-						ExtensionTreeNode *searched = tmp; // “ü‚ê‘Ö‚¦‚éƒm[ƒh‚ğ’T‚·‚½‚ß‚ÌƒJ[ƒ\ƒ‹‚Å‚·B
+						ExtensionTreeNode *searched = tmp; // å…¥ã‚Œæ›¿ãˆã‚‹ãƒãƒ¼ãƒ‰ã‚’æ¢ã™ãŸã‚ã®ã‚«ãƒ¼ã‚½ãƒ«ã§ã™ã€‚
 
-						//ƒJƒbƒR‚É‚­‚­‚ç‚ê‚Ä‚¢‚È‚©‚Á‚½ê‡‚ÉA‰‰Zq‚Ì—Dæ‡ˆÊ‚ğQl‚ÉŒ‹‡‚·‚éƒm[ƒh‚ğ’T‚µ‚Ü‚·B
-						bool first = true; // ‰‰Zq‚Ì—Dæ‡ˆÊ‚ğŒŸõ‚·‚éÅ‰‚Ìƒ‹[ƒv‚Å‚·B
+						//ã‚«ãƒƒã‚³ã«ããã‚‰ã‚Œã¦ã„ãªã‹ã£ãŸå ´åˆã«ã€æ¼”ç®—å­ã®å„ªå…ˆé †ä½ã‚’å‚è€ƒã«çµåˆã™ã‚‹ãƒãƒ¼ãƒ‰ã‚’æ¢ã—ã¾ã™ã€‚
+						bool first = true; // æ¼”ç®—å­ã®å„ªå…ˆé †ä½ã‚’æ¤œç´¢ã™ã‚‹æœ€åˆã®ãƒ«ãƒ¼ãƒ—ã§ã™ã€‚
 						do{
 							if (!first){
 								tmp = tmp->parent;
 								searched = tmp;
 							}
-							// Œ»İ‚Ì“Ç‚İ‚İêŠ‚ğ‚­‚­‚éƒJƒbƒR‚ªŠJ‚­êŠ‚ğ’T‚µ‚Ü‚·B
+							// ç¾åœ¨ã®èª­ã¿è¾¼ã¿å ´æ‰€ã‚’ããã‚‹ã‚«ãƒƒã‚³ãŒé–‹ãå ´æ‰€ã‚’æ¢ã—ã¾ã™ã€‚
 							while (searched && !searched->parenOpenBeforeClose){
 								searched = searched->left;
 							}
 							first = false;
 						} while (!searched && tmp->parent && (tmp->parent->middleOperator.order <= middleOperator.order || tmp->parent->inParen));
 
-						// ‰‰Zq‚Ìƒm[ƒh‚ğV‚µ‚­¶¬‚µ‚Ü‚·B
+						// æ¼”ç®—å­ã®ãƒãƒ¼ãƒ‰ã‚’æ–°ã—ãç”Ÿæˆã—ã¾ã™ã€‚
 						whereExtensionNodes.push_back(ExtensionTreeNode());
 						currentNode = &whereExtensionNodes.back();
 						currentNode->middleOperator = middleOperator;
 
-						// Œ©‚Â‚©‚Á‚½êŠ‚ÉV‚µ‚¢ƒm[ƒh‚ğ”z’u‚µ‚Ü‚·B‚±‚ê‚Ü‚Å‚»‚ÌˆÊ’u‚É‚ ‚Á‚½ƒm[ƒh‚Í¶‚Ìq‚Æ‚È‚é‚æ‚¤Aeƒm[ƒh‚Æqƒm[ƒh‚Ìƒ|ƒCƒ“ƒ^‚ğ‚Â‚¯‚©‚¦‚Ü‚·B
+						// è¦‹ã¤ã‹ã£ãŸå ´æ‰€ã«æ–°ã—ã„ãƒãƒ¼ãƒ‰ã‚’é…ç½®ã—ã¾ã™ã€‚ã“ã‚Œã¾ã§ãã®ä½ç½®ã«ã‚ã£ãŸãƒãƒ¼ãƒ‰ã¯å·¦ã®å­ã¨ãªã‚‹ã‚ˆã†ã€è¦ªãƒãƒ¼ãƒ‰ã¨å­ãƒãƒ¼ãƒ‰ã®ãƒã‚¤ãƒ³ã‚¿ã‚’ã¤ã‘ã‹ãˆã¾ã™ã€‚
 						currentNode->parent = tmp->parent;
 						if (currentNode->parent){
 							currentNode->parent->right = currentNode;
@@ -880,12 +880,12 @@ int ExecuteSQL(const string sql, const string outputFileName)
 						++tokenCursol;
 					}
 					else{
-						// Œ»İŒ©‚Ä‚¢‚éí—Ş‚ª‰‰Zq‚Ìˆê——‚©‚çŒ©‚Â‚©‚ç‚È‚¯‚ê‚ÎAWHERE‹å‚ÍI‚í‚è‚Ü‚·B
+						// ç¾åœ¨è¦‹ã¦ã„ã‚‹ç¨®é¡ãŒæ¼”ç®—å­ã®ä¸€è¦§ã‹ã‚‰è¦‹ã¤ã‹ã‚‰ãªã‘ã‚Œã°ã€WHEREå¥ã¯çµ‚ã‚ã‚Šã¾ã™ã€‚
 						break;
 					}
 				}
 
-				// –Ø‚ğª‚ÉŒü‚©‚Á‚Ä‚³‚©‚Ì‚Ú‚èAª‚Ìƒm[ƒh‚ğİ’è‚µ‚Ü‚·B
+				// æœ¨ã‚’æ ¹ã«å‘ã‹ã£ã¦ã•ã‹ã®ã¼ã‚Šã€æ ¹ã®ãƒãƒ¼ãƒ‰ã‚’è¨­å®šã—ã¾ã™ã€‚
 				whereTopNode = currentNode;
 				while (whereTopNode->parent){
 					whereTopNode = whereTopNode->parent;
@@ -893,14 +893,14 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			}
 		}
 
-		// FROM‹å‚ğ“Ç‚İ‚İ‚Ü‚·B
+		// FROMå¥ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 		if (tokenCursol->kind == TokenKind::FROM){
 			++tokenCursol;
 		}
 		else{
 			throw ResultValue::ERR_SQL_SYNTAX;
 		}
-		bool first = true; // FROM‹å‚ÌÅ‰‚Ìƒe[ƒuƒ‹–¼‚ğ“Ç‚İ‚İ’†‚©‚Ç‚¤‚©‚Å‚·B
+		bool first = true; // FROMå¥ã®æœ€åˆã®ãƒ†ãƒ¼ãƒ–ãƒ«åã‚’èª­ã¿è¾¼ã¿ä¸­ã‹ã©ã†ã‹ã§ã™ã€‚
 		while (tokenCursol->kind == TokenKind::COMMA || first){
 			if (tokenCursol->kind == TokenKind::COMMA){
 				++tokenCursol;
@@ -915,45 +915,45 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			first = false;
 		}
 
-		// ÅŒã‚Ìƒg[ƒNƒ“‚Ü‚Å“Ç‚İ‚İ‚ªi‚ñ‚Å‚¢‚È‚©‚Á‚½‚çƒGƒ‰[‚Å‚·B
+		// æœ€å¾Œã®ãƒˆãƒ¼ã‚¯ãƒ³ã¾ã§èª­ã¿è¾¼ã¿ãŒé€²ã‚“ã§ã„ãªã‹ã£ãŸã‚‰ã‚¨ãƒ©ãƒ¼ã§ã™ã€‚
 		if (tokenCursol <= &tokens.back()){
 			throw ResultValue::ERR_SQL_SYNTAX;
 		}
-		vector<vector<Column>> inputColumns; // “ü—Í‚³‚ê‚½CSV‚Ìs‚Ìî•ñ‚Å‚·B
+		vector<vector<Column>> inputColumns; // å…¥åŠ›ã•ã‚ŒãŸCSVã®è¡Œã®æƒ…å ±ã§ã™ã€‚
 		
 		for (size_t i = 0; i < tableNames.size(); ++i){
 
-			// “ü—Íƒtƒ@ƒCƒ‹–¼‚ğ¶¬‚µ‚Ü‚·B
-			const char csvExtension[] = ".csv"; // csv‚ÌŠg’£q‚Å‚·B
-			char fileName[MAX_WORD_LENGTH + sizeof(csvExtension) - 1] = ""; // Šg’£q‚ğŠÜ‚ŞA“ü—Íƒtƒ@ƒCƒ‹‚Ìƒtƒ@ƒCƒ‹–¼‚Å‚·B
+			// å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«åã‚’ç”Ÿæˆã—ã¾ã™ã€‚
+			const char csvExtension[] = ".csv"; // csvã®æ‹¡å¼µå­ã§ã™ã€‚
+			char fileName[MAX_WORD_LENGTH + sizeof(csvExtension) - 1] = ""; // æ‹¡å¼µå­ã‚’å«ã‚€ã€å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ•ã‚¡ã‚¤ãƒ«åã§ã™ã€‚
 			strncat(fileName, tableNames[i].c_str(), MAX_WORD_LENGTH + sizeof(csvExtension) - 1);
 			strncat(fileName, csvExtension, MAX_WORD_LENGTH + sizeof(csvExtension) - 1);
 
-			// “ü—Íƒtƒ@ƒCƒ‹‚ğŠJ‚«‚Ü‚·B
+			// å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ãã¾ã™ã€‚
 			inputTableFiles.push_back(fopen(fileName, "r"));
 			if (!inputTableFiles.back()){
 				throw ResultValue::ERR_FILE_OPEN;
 			}
 
-			// “ü—ÍCSV‚Ìƒwƒbƒ_s‚ğ“Ç‚İ‚İ‚Ü‚·B
+			// å…¥åŠ›CSVã®ãƒ˜ãƒƒãƒ€è¡Œã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 			inputColumns.push_back(vector<Column>());
-			char inputLine[MAX_FILE_LINE_LENGTH] = ""; // ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İ‚ñ‚¾s•¶š—ñ‚Å‚·B
+			char inputLine[MAX_FILE_LINE_LENGTH] = ""; // ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿è¾¼ã‚“ã è¡Œæ–‡å­—åˆ—ã§ã™ã€‚
 			if (fgets(inputLine, MAX_FILE_LINE_LENGTH, inputTableFiles.back())){
 				charactorCursol = inputLine;
 
-				// “Ç‚İ‚ñ‚¾s‚ğÅŒã‚Ü‚Å“Ç‚İ‚Ü‚·B
+				// èª­ã¿è¾¼ã‚“ã è¡Œã‚’æœ€å¾Œã¾ã§èª­ã¿ã¾ã™ã€‚
 				while (*charactorCursol && *charactorCursol != '\r' && *charactorCursol != '\n'){
 					inputColumns[i].push_back(Column(tableNames[i].c_str(), ""));					
-					char *writeCursol = inputColumns[i].back().columnName; // —ñ–¼‚Ì‘‚«‚İ‚É—˜—p‚·‚éƒJ[ƒ\ƒ‹‚Å‚·B
+					char *writeCursol = inputColumns[i].back().columnName; // åˆ—åã®æ›¸ãè¾¼ã¿ã«åˆ©ç”¨ã™ã‚‹ã‚«ãƒ¼ã‚½ãƒ«ã§ã™ã€‚
 
-					// —ñ–¼‚ğˆê‚Â“Ç‚İ‚Ü‚·B
+					// åˆ—åã‚’ä¸€ã¤èª­ã¿ã¾ã™ã€‚
 					while (*charactorCursol && *charactorCursol != ',' && *charactorCursol != '\r'&& *charactorCursol != '\n'){
 						*writeCursol++ = *charactorCursol++;
 					}
-					// ‘‚«‚ñ‚Å‚¢‚é—ñ–¼‚Ì•¶š—ñ‚ÉI’[•¶š‚ğ‘‚«‚İ‚Ü‚·B
+					// æ›¸ãè¾¼ã‚“ã§ã„ã‚‹åˆ—åã®æ–‡å­—åˆ—ã«çµ‚ç«¯æ–‡å­—ã‚’æ›¸ãè¾¼ã¿ã¾ã™ã€‚
 					writeCursol[1] = '\0';
 
-					// “ü—Ís‚ÌƒJƒ“ƒ}‚Ì•ª‚ğ“Ç‚İi‚ß‚Ü‚·B
+					// å…¥åŠ›è¡Œã®ã‚«ãƒ³ãƒã®åˆ†ã‚’èª­ã¿é€²ã‚ã¾ã™ã€‚
 					++charactorCursol;
 				}
 			}
@@ -961,25 +961,25 @@ int ExecuteSQL(const string sql, const string outputFileName)
 				throw ResultValue::ERR_CSV_SYNTAX;
 			}
 
-			// “ü—ÍCSV‚Ìƒf[ƒ^s‚ğ“Ç‚İ‚İ‚Ü‚·B
+			// å…¥åŠ›CSVã®ãƒ‡ãƒ¼ã‚¿è¡Œã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 
 			inputData.push_back(vector<Data**>());
 
 			while (fgets(inputLine, MAX_FILE_LINE_LENGTH, inputTableFiles.back())){
-				inputData[i].push_back((Data**)malloc(MAX_COLUMN_COUNT * sizeof(Data*))); // “ü—Í‚³‚ê‚Ä‚¢‚éˆês•ª‚Ìƒf[ƒ^‚Å‚·B
+				inputData[i].push_back((Data**)malloc(MAX_COLUMN_COUNT * sizeof(Data*))); // å…¥åŠ›ã•ã‚Œã¦ã„ã‚‹ä¸€è¡Œåˆ†ã®ãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 				Data** row = inputData[i].back();
-				// ¶¬‚µ‚½s‚ğ‰Šú‰»‚µ‚Ü‚·B
+				// ç”Ÿæˆã—ãŸè¡Œã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 				for (int j = 0; j < MAX_COLUMN_COUNT; ++j){
 					row[j] = nullptr;
 				}
 
 				charactorCursol = inputLine;
-				int columnNum = 0; // ‚¢‚Ü‰½—ñ–Ú‚ğ“Ç‚İ‚ñ‚Å‚¢‚é‚©B0Šî’ê‚Ì”š‚Æ‚È‚è‚Ü‚·B
+				int columnNum = 0; // ã„ã¾ä½•åˆ—ç›®ã‚’èª­ã¿è¾¼ã‚“ã§ã„ã‚‹ã‹ã€‚0åŸºåº•ã®æ•°å­—ã¨ãªã‚Šã¾ã™ã€‚
 
-				// “Ç‚İ‚ñ‚¾s‚ğÅŒã‚Ü‚Å“Ç‚İ‚Ü‚·B
+				// èª­ã¿è¾¼ã‚“ã è¡Œã‚’æœ€å¾Œã¾ã§èª­ã¿ã¾ã™ã€‚
 				while (*charactorCursol && *charactorCursol != '\r'&& *charactorCursol != '\n'){
 
-					// “Ç‚İ‚ñ‚¾ƒf[ƒ^‚ğ‘‚«‚Şs‚ÌƒJƒ‰ƒ€‚ğ¶¬‚µ‚Ü‚·B
+					// èª­ã¿è¾¼ã‚“ã ãƒ‡ãƒ¼ã‚¿ã‚’æ›¸ãè¾¼ã‚€è¡Œã®ã‚«ãƒ©ãƒ ã‚’ç”Ÿæˆã—ã¾ã™ã€‚
 					if (MAX_COLUMN_COUNT <= columnNum){
 						throw ResultValue::ERR_MEMORY_OVER;
 					}
@@ -988,26 +988,26 @@ int ExecuteSQL(const string sql, const string outputFileName)
 						throw ResultValue::ERR_MEMORY_ALLOCATE;
 					}
 					*row[columnNum] = Data("");
-					char *writeCursol = row[columnNum++]->value.string; // ƒf[ƒ^•¶š—ñ‚Ì‘‚«‚İ‚É—˜—p‚·‚éƒJ[ƒ\ƒ‹‚Å‚·B
+					char *writeCursol = row[columnNum++]->value.string; // ãƒ‡ãƒ¼ã‚¿æ–‡å­—åˆ—ã®æ›¸ãè¾¼ã¿ã«åˆ©ç”¨ã™ã‚‹ã‚«ãƒ¼ã‚½ãƒ«ã§ã™ã€‚
 
-					// ƒf[ƒ^•¶š—ñ‚ğˆê‚Â“Ç‚İ‚Ü‚·B
+					// ãƒ‡ãƒ¼ã‚¿æ–‡å­—åˆ—ã‚’ä¸€ã¤èª­ã¿ã¾ã™ã€‚
 					while (*charactorCursol && *charactorCursol != ',' && *charactorCursol != '\r'&& *charactorCursol != '\n'){
 						*writeCursol++ = *charactorCursol++;
 					}
-					// ‘‚«‚ñ‚Å‚¢‚é—ñ–¼‚Ì•¶š—ñ‚ÉI’[•¶š‚ğ‘‚«‚İ‚Ü‚·B
+					// æ›¸ãè¾¼ã‚“ã§ã„ã‚‹åˆ—åã®æ–‡å­—åˆ—ã«çµ‚ç«¯æ–‡å­—ã‚’æ›¸ãè¾¼ã¿ã¾ã™ã€‚
 					writeCursol[1] = '\0';
 
-					// “ü—Ís‚ÌƒJƒ“ƒ}‚Ì•ª‚ğ“Ç‚İi‚ß‚Ü‚·B
+					// å…¥åŠ›è¡Œã®ã‚«ãƒ³ãƒã®åˆ†ã‚’èª­ã¿é€²ã‚ã¾ã™ã€‚
 					++charactorCursol;
 				}
 			}
-			// ”Ô•º‚Æ‚È‚énullptr‚ğ“o˜^‚µ‚Ü‚·B
+			// ç•ªå…µã¨ãªã‚‹nullptrã‚’ç™»éŒ²ã—ã¾ã™ã€‚
 			inputData[i].push_back(nullptr);
 
-			// ‘S‚Ä‚ª”’l‚Æ‚È‚é—ñ‚Í”’l—ñ‚É•ÏŠ·‚µ‚Ü‚·B
+			// å…¨ã¦ãŒæ•°å€¤ã¨ãªã‚‹åˆ—ã¯æ•°å€¤åˆ—ã«å¤‰æ›ã—ã¾ã™ã€‚
 			for (size_t j = 0; j < inputColumns[i].size(); ++j){
 
-				// ‘S‚Ä‚Ìs‚Ì‚ ‚é—ñ‚É‚Â‚¢‚ÄAƒf[ƒ^•¶š—ñ‚©‚ç•„†‚Æ”’lˆÈŠO‚Ì•¶š‚ğ’T‚µ‚Ü‚·B
+				// å…¨ã¦ã®è¡Œã®ã‚ã‚‹åˆ—ã«ã¤ã„ã¦ã€ãƒ‡ãƒ¼ã‚¿æ–‡å­—åˆ—ã‹ã‚‰ç¬¦å·ã¨æ•°å€¤ä»¥å¤–ã®æ–‡å­—ã‚’æ¢ã—ã¾ã™ã€‚
 				currentRow = &inputData[i][0];
 				found = false;
 				while (*currentRow){
@@ -1034,7 +1034,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					++currentRow;
 				}
 
-				// •„†‚Æ”šˆÈŠO‚ªŒ©‚Â‚©‚ç‚È‚¢—ñ‚É‚Â‚¢‚Ä‚ÍA”’l—ñ‚É•ÏŠ·‚µ‚Ü‚·B
+				// ç¬¦å·ã¨æ•°å­—ä»¥å¤–ãŒè¦‹ã¤ã‹ã‚‰ãªã„åˆ—ã«ã¤ã„ã¦ã¯ã€æ•°å€¤åˆ—ã«å¤‰æ›ã—ã¾ã™ã€‚
 				if (!found){
 					currentRow = &inputData[i][0];
 					while (*currentRow){
@@ -1045,26 +1045,26 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			}
 		}
 
-		vector<Column> allInputColumns; // “ü—Í‚ÉŠÜ‚Ü‚ê‚é‚·‚×‚Ä‚Ì—ñ‚Ìˆê——‚Å‚·B
+		vector<Column> allInputColumns; // å…¥åŠ›ã«å«ã¾ã‚Œã‚‹ã™ã¹ã¦ã®åˆ—ã®ä¸€è¦§ã§ã™ã€‚
 
-		// “ü—Íƒtƒ@ƒCƒ‹‚É‘‚¢‚Ä‚ ‚Á‚½‚·‚×‚Ä‚Ì—ñ‚ğallInputColumns‚Éİ’è‚µ‚Ü‚·B
+		// å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã«æ›¸ã„ã¦ã‚ã£ãŸã™ã¹ã¦ã®åˆ—ã‚’allInputColumnsã«è¨­å®šã—ã¾ã™ã€‚
 		for (size_t i = 0; i < tableNames.size(); ++i){
 			for (auto &inputColumn : inputColumns[i]){
 				allInputColumns.push_back(Column(tableNames[i].c_str(), inputColumn.columnName));
 			}
 		}
 
-		// SELECT‹å‚Ì—ñ–¼w’è‚ª*‚¾‚Á‚½ê‡‚ÍA“ü—ÍCSV‚Ì—ñ–¼‚ª‚·‚×‚Ä‘I‘ğ‚³‚ê‚Ü‚·B
+		// SELECTå¥ã®åˆ—åæŒ‡å®šãŒ*ã ã£ãŸå ´åˆã¯ã€å…¥åŠ›CSVã®åˆ—åãŒã™ã¹ã¦é¸æŠã•ã‚Œã¾ã™ã€‚
 		if (selectColumns.empty()){
 			for (auto &inputColumn : allInputColumns){
 				selectColumns.push_back(inputColumn);
 			}
 		}
 
-		vector<Column> outputColumns; // o—Í‚·‚é‚·‚×‚Ä‚Ìs‚Ìî•ñ‚Å‚·B
+		vector<Column> outputColumns; // å‡ºåŠ›ã™ã‚‹ã™ã¹ã¦ã®è¡Œã®æƒ…å ±ã§ã™ã€‚
 
-		// SELECT‹å‚Åw’è‚³‚ê‚½—ñ–¼‚ªA‰½ŒÂ–Ú‚Ì“ü—Íƒtƒ@ƒCƒ‹‚Ì‰½—ñ–Ú‚É‘Š“–‚·‚é‚©‚ğ”»•Ê‚µ‚Ü‚·B
-		vector<ColumnIndex> selectColumnIndexes; // SELECT‹å‚Åw’è‚³‚ê‚½—ñ‚ÌA“ü—Íƒtƒ@ƒCƒ‹‚Æ‚µ‚Ä‚ÌƒCƒ“ƒfƒbƒNƒX‚Å‚·B
+		// SELECTå¥ã§æŒ‡å®šã•ã‚ŒãŸåˆ—åãŒã€ä½•å€‹ç›®ã®å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã®ä½•åˆ—ç›®ã«ç›¸å½“ã™ã‚‹ã‹ã‚’åˆ¤åˆ¥ã—ã¾ã™ã€‚
+		vector<ColumnIndex> selectColumnIndexes; // SELECTå¥ã§æŒ‡å®šã•ã‚ŒãŸåˆ—ã®ã€å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã¨ã—ã¦ã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã§ã™ã€‚
 
 		for (auto &selectColumn : selectColumns){
 			found = false;
@@ -1082,33 +1082,33 @@ int ExecuteSQL(const string sql, const string outputFileName)
 						++selectColumnNameCursol;
 					}
 					if (!*selectColumnNameCursol && !*inputColumnNameCursol &&
-						(!*selectColumn.tableName || // ƒe[ƒuƒ‹–¼‚ªİ’è‚³‚ê‚Ä‚¢‚éê‡‚Ì‚İƒe[ƒuƒ‹–¼‚Ì”äŠr‚ğs‚¢‚Ü‚·B
+						(!*selectColumn.tableName || // ãƒ†ãƒ¼ãƒ–ãƒ«åãŒè¨­å®šã•ã‚Œã¦ã„ã‚‹å ´åˆã®ã¿ãƒ†ãƒ¼ãƒ–ãƒ«åã®æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
 						!*selectTableNameCursol && !*inputTableNameCursol)){
 
-						// Šù‚ÉŒ©‚Â‚©‚Á‚Ä‚¢‚é‚Ì‚É‚à‚¤ˆê‚ÂŒ©‚Â‚©‚Á‚½‚çƒGƒ‰[‚Å‚·B
+						// æ—¢ã«è¦‹ã¤ã‹ã£ã¦ã„ã‚‹ã®ã«ã‚‚ã†ä¸€ã¤è¦‹ã¤ã‹ã£ãŸã‚‰ã‚¨ãƒ©ãƒ¼ã§ã™ã€‚
 						if (found){
 							throw ResultValue::ERR_BAD_COLUMN_NAME;
 						}
 						found = true;
-						// Œ©‚Â‚©‚Á‚½’l‚ğ‚Â—ñ‚Ìƒf[ƒ^‚ğ¶¬‚µ‚Ü‚·B
+						// è¦‹ã¤ã‹ã£ãŸå€¤ã‚’æŒã¤åˆ—ã®ãƒ‡ãƒ¼ã‚¿ã‚’ç”Ÿæˆã—ã¾ã™ã€‚
 						selectColumnIndexes.push_back(ColumnIndex(i, j));
 					}
 					++j;
 				}
 			}
-			// ˆê‚Â‚àŒ©‚Â‚©‚ç‚È‚­‚Ä‚àƒGƒ‰[‚Å‚·B
+			// ä¸€ã¤ã‚‚è¦‹ã¤ã‹ã‚‰ãªãã¦ã‚‚ã‚¨ãƒ©ãƒ¼ã§ã™ã€‚
 			if (!found){
 				throw ResultValue::ERR_BAD_COLUMN_NAME;
 			}
 		}
 
-		// o—Í‚·‚é—ñ–¼‚ğİ’è‚µ‚Ü‚·B
+		// å‡ºåŠ›ã™ã‚‹åˆ—åã‚’è¨­å®šã—ã¾ã™ã€‚
 		for (size_t i = 0; i < selectColumns.size(); ++i){
 			outputColumns.push_back(inputColumns[selectColumnIndexes[i].table][selectColumnIndexes[i].column]);
 		}
 
 		if (whereTopNode){
-			// Šù‘¶”’l‚Ì•„†‚ğŒvZ‚µ‚Ü‚·B
+			// æ—¢å­˜æ•°å€¤ã®ç¬¦å·ã‚’è¨ˆç®—ã—ã¾ã™ã€‚
 			for (auto &whereExtensionNode : whereExtensionNodes){
 				if (whereExtensionNode.middleOperator.kind == TokenKind::NOT_TOKEN &&
 					!*whereExtensionNode.column.columnName &&
@@ -1118,26 +1118,26 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			}
 		}
 
-		vector<Data***> currentRows; // “ü—Í‚³‚ê‚½Šeƒe[ƒuƒ‹‚ÌAŒ»İo—Í‚µ‚Ä‚¢‚és‚ğw‚·ƒJ[ƒ\ƒ‹‚Å‚·B
+		vector<Data***> currentRows; // å…¥åŠ›ã•ã‚ŒãŸå„ãƒ†ãƒ¼ãƒ–ãƒ«ã®ã€ç¾åœ¨å‡ºåŠ›ã—ã¦ã„ã‚‹è¡Œã‚’æŒ‡ã™ã‚«ãƒ¼ã‚½ãƒ«ã§ã™ã€‚
 		for (size_t i = 0; i < tableNames.size(); ++i){
-			// Šeƒe[ƒuƒ‹‚Ìæ“ªs‚ğİ’è‚µ‚Ü‚·B
+			// å„ãƒ†ãƒ¼ãƒ–ãƒ«ã®å…ˆé ­è¡Œã‚’è¨­å®šã—ã¾ã™ã€‚
 			currentRows.push_back(&inputData[i][0]);
 		}
 
-		// o—Í‚·‚éƒf[ƒ^‚ğİ’è‚µ‚Ü‚·B
+		// å‡ºåŠ›ã™ã‚‹ãƒ‡ãƒ¼ã‚¿ã‚’è¨­å®šã—ã¾ã™ã€‚
 		while (true){
 			outputData.push_back((Data**)malloc(MAX_COLUMN_COUNT * sizeof(Data*)));
-			Data **row = outputData.back(); // o—Í‚µ‚Ä‚¢‚éˆês•ª‚Ìƒf[ƒ^‚Å‚·B
+			Data **row = outputData.back(); // å‡ºåŠ›ã—ã¦ã„ã‚‹ä¸€è¡Œåˆ†ã®ãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 			if (!row){
 				throw ResultValue::ERR_MEMORY_ALLOCATE;
 			}
 
-			// ¶¬‚µ‚½s‚ğ‰Šú‰»‚µ‚Ü‚·B
+			// ç”Ÿæˆã—ãŸè¡Œã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 			for (int i = 0; i < MAX_COLUMN_COUNT; ++i){
 				row[i] = nullptr;
 			}
 
-			// s‚ÌŠe—ñ‚Ìƒf[ƒ^‚ğ“ü—Í‚©‚ç‚Á‚Ä‚«‚Äİ’è‚µ‚Ü‚·B
+			// è¡Œã®å„åˆ—ã®ãƒ‡ãƒ¼ã‚¿ã‚’å…¥åŠ›ã‹ã‚‰æŒã£ã¦ãã¦è¨­å®šã—ã¾ã™ã€‚
 			for (size_t i = 0; i < selectColumnIndexes.size(); ++i){
 				row[i] = (Data*)malloc(sizeof(Data));
 				if (!row[i]){
@@ -1147,17 +1147,17 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			}
 
 			allColumnOutputData.push_back((Data**)malloc(MAX_TABLE_COUNT * MAX_COLUMN_COUNT * sizeof(Data*)));
-			Data **allColumnsRow = allColumnOutputData.back();// WHERE‚âORDER‚Ì‚½‚ß‚É‚·‚×‚Ä‚Ìî•ñ‚ğŠÜ‚ŞsBrow‚ÆƒCƒ“ƒfƒbƒNƒX‚ğ‹¤—L‚µ‚Ü‚·B
+			Data **allColumnsRow = allColumnOutputData.back();// WHEREã‚„ORDERã®ãŸã‚ã«ã™ã¹ã¦ã®æƒ…å ±ã‚’å«ã‚€è¡Œã€‚rowã¨ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã‚’å…±æœ‰ã—ã¾ã™ã€‚
 			if (!allColumnsRow){
 				throw ResultValue::ERR_MEMORY_ALLOCATE;
 			}
-			// ¶¬‚µ‚½s‚ğ‰Šú‰»‚µ‚Ü‚·B
+			// ç”Ÿæˆã—ãŸè¡Œã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 			for (int i = 0; i < MAX_TABLE_COUNT * MAX_COLUMN_COUNT; ++i){
 				allColumnsRow[i] = nullptr;
 			}
 
-			// allColumnsRow‚Ì—ñ‚ğİ’è‚µ‚Ü‚·B
-			int allColumnsNum = 0; // allColumnsRow‚ÌŒ»İ‚Ì—ñ”‚Å‚·B
+			// allColumnsRowã®åˆ—ã‚’è¨­å®šã—ã¾ã™ã€‚
+			int allColumnsNum = 0; // allColumnsRowã®ç¾åœ¨ã®åˆ—æ•°ã§ã™ã€‚
 			for (size_t i = 0; i < tableNames.size(); ++i){
 				for (size_t j = 0; j < inputColumns[i].size(); ++j){
 					allColumnsRow[allColumnsNum] = (Data*)malloc(sizeof(Data));
@@ -1167,11 +1167,11 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					*allColumnsRow[allColumnsNum++] = *(*currentRows[i])[j];
 				}
 			}
-			// WHERE‚ÌğŒ‚Æ‚È‚é’l‚ğÄ‹A“I‚ÉŒvZ‚µ‚Ü‚·B
+			// WHEREã®æ¡ä»¶ã¨ãªã‚‹å€¤ã‚’å†å¸°çš„ã«è¨ˆç®—ã—ã¾ã™ã€‚
 			if (whereTopNode){
-				ExtensionTreeNode *currentNode = whereTopNode; // Œ»İŒ©‚Ä‚¢‚éƒm[ƒh‚Å‚·B
+				ExtensionTreeNode *currentNode = whereTopNode; // ç¾åœ¨è¦‹ã¦ã„ã‚‹ãƒãƒ¼ãƒ‰ã§ã™ã€‚
 				while (currentNode){
-					// qƒm[ƒh‚ÌŒvZ‚ªI‚í‚Á‚Ä‚È‚¢ê‡‚ÍA‚Ü‚¸‚»‚¿‚ç‚ÌŒvZ‚ğs‚¢‚Ü‚·B
+					// å­ãƒãƒ¼ãƒ‰ã®è¨ˆç®—ãŒçµ‚ã‚ã£ã¦ãªã„å ´åˆã¯ã€ã¾ãšãã¡ã‚‰ã®è¨ˆç®—ã‚’è¡Œã„ã¾ã™ã€‚
 					if (currentNode->left && !currentNode->left->calculated){
 						currentNode = currentNode->left;
 						continue;
@@ -1181,12 +1181,12 @@ int ExecuteSQL(const string sql, const string outputFileName)
 						continue;
 					}
 
-					// ©ƒm[ƒh‚Ì’l‚ğŒvZ‚µ‚Ü‚·B
+					// è‡ªãƒãƒ¼ãƒ‰ã®å€¤ã‚’è¨ˆç®—ã—ã¾ã™ã€‚
 					switch (currentNode->middleOperator.kind){
 					case TokenKind::NOT_TOKEN:
-						// ƒm[ƒh‚Éƒf[ƒ^‚ªİ’è‚³‚ê‚Ä‚¢‚éê‡‚Å‚·B
+						// ãƒãƒ¼ãƒ‰ã«ãƒ‡ãƒ¼ã‚¿ãŒè¨­å®šã•ã‚Œã¦ã„ã‚‹å ´åˆã§ã™ã€‚
 
-						// ƒf[ƒ^‚ª—ñ–¼‚Åw’è‚³‚ê‚Ä‚¢‚éê‡A¡ˆµ‚Á‚Ä‚¢‚és‚Ìƒf[ƒ^‚ğİ’è‚µ‚Ü‚·B
+						// ãƒ‡ãƒ¼ã‚¿ãŒåˆ—åã§æŒ‡å®šã•ã‚Œã¦ã„ã‚‹å ´åˆã€ä»Šæ‰±ã£ã¦ã„ã‚‹è¡Œã®ãƒ‡ãƒ¼ã‚¿ã‚’è¨­å®šã—ã¾ã™ã€‚
 						if (*currentNode->column.columnName){
 							found = false;
 							for (size_t i = 0; i < allInputColumns.size(); ++i){
@@ -1201,9 +1201,9 @@ int ExecuteSQL(const string sql, const string outputFileName)
 									++whereColumnNameCursol;
 								}
 								if (!*whereColumnNameCursol && !*allInputColumnNameCursol &&
-									(!*currentNode->column.tableName || // ƒe[ƒuƒ‹–¼‚ªİ’è‚³‚ê‚Ä‚¢‚éê‡‚Ì‚İƒe[ƒuƒ‹–¼‚Ì”äŠr‚ğs‚¢‚Ü‚·B
+									(!*currentNode->column.tableName || // ãƒ†ãƒ¼ãƒ–ãƒ«åãŒè¨­å®šã•ã‚Œã¦ã„ã‚‹å ´åˆã®ã¿ãƒ†ãƒ¼ãƒ–ãƒ«åã®æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
 									!*whereTableNameCursol && !*allInputTableNameCursol)){
-									// Šù‚ÉŒ©‚Â‚©‚Á‚Ä‚¢‚é‚Ì‚É‚à‚¤ˆê‚ÂŒ©‚Â‚©‚Á‚½‚çƒGƒ‰[‚Å‚·B
+									// æ—¢ã«è¦‹ã¤ã‹ã£ã¦ã„ã‚‹ã®ã«ã‚‚ã†ä¸€ã¤è¦‹ã¤ã‹ã£ãŸã‚‰ã‚¨ãƒ©ãƒ¼ã§ã™ã€‚
 									if (found){
 										throw ResultValue::ERR_BAD_COLUMN_NAME;
 									}
@@ -1211,12 +1211,12 @@ int ExecuteSQL(const string sql, const string outputFileName)
 									currentNode->value = *allColumnsRow[i];
 								}
 							}
-							// ˆê‚Â‚àŒ©‚Â‚©‚ç‚È‚­‚Ä‚àƒGƒ‰[‚Å‚·B
+							// ä¸€ã¤ã‚‚è¦‹ã¤ã‹ã‚‰ãªãã¦ã‚‚ã‚¨ãƒ©ãƒ¼ã§ã™ã€‚
 							if (!found){
 								throw ResultValue::ERR_BAD_COLUMN_NAME;
 							}
 							;
-							// •„†‚ğl—¶‚µ‚Ä’l‚ğŒvZ‚µ‚Ü‚·B
+							// ç¬¦å·ã‚’è€ƒæ…®ã—ã¦å€¤ã‚’è¨ˆç®—ã—ã¾ã™ã€‚
 							if (currentNode->value.type == DataType::INTEGER){
 								currentNode->value.value.integer *= currentNode->signCoefficient;
 							}
@@ -1228,16 +1228,16 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					case TokenKind::LESS_THAN:
 					case TokenKind::LESS_THAN_OR_EQUAL:
 					case TokenKind::NOT_EQUAL:
-						// ”äŠr‰‰Zq‚Ìê‡‚Å‚·B
+						// æ¯”è¼ƒæ¼”ç®—å­ã®å ´åˆã§ã™ã€‚
 
-						// ”äŠr‚Å‚«‚é‚Ì‚Í•¶š—ñŒ^‚©®”Œ^‚ÅA‚©‚Â¶‰E‚ÌŒ^‚ª“¯‚¶ê‡‚Å‚·B
+						// æ¯”è¼ƒã§ãã‚‹ã®ã¯æ–‡å­—åˆ—å‹ã‹æ•´æ•°å‹ã§ã€ã‹ã¤å·¦å³ã®å‹ãŒåŒã˜å ´åˆã§ã™ã€‚
 						if (currentNode->left->value.type != DataType::INTEGER && currentNode->left->value.type != DataType::STRING ||
 							currentNode->left->value.type != currentNode->right->value.type){
 							throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 						}
 						currentNode->value.type = DataType::BOOLEAN;
 
-						// ”äŠrŒ‹‰Ê‚ğŒ^‚Æ‰‰Zq‚É‚æ‚Á‚ÄŒvZ•û–@‚ğ•Ï‚¦‚ÄAŒvZ‚µ‚Ü‚·B
+						// æ¯”è¼ƒçµæœã‚’å‹ã¨æ¼”ç®—å­ã«ã‚ˆã£ã¦è¨ˆç®—æ–¹æ³•ã‚’å¤‰ãˆã¦ã€è¨ˆç®—ã—ã¾ã™ã€‚
 						switch (currentNode->left->value.type){
 						case DataType::INTEGER:
 							switch (currentNode->middleOperator.kind){
@@ -1289,15 +1289,15 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					case TokenKind::MINUS:
 					case TokenKind::ASTERISK:
 					case TokenKind::SLASH:
-						// l‘¥‰‰Z‚Ìê‡‚Å‚·B
+						// å››å‰‡æ¼”ç®—ã®å ´åˆã§ã™ã€‚
 
-						// ‰‰Z‚Å‚«‚é‚Ì‚Í®”Œ^“¯m‚Ìê‡‚Ì‚İ‚Å‚·B
+						// æ¼”ç®—ã§ãã‚‹ã®ã¯æ•´æ•°å‹åŒå£«ã®å ´åˆã®ã¿ã§ã™ã€‚
 						if (currentNode->left->value.type != DataType::INTEGER || currentNode->right->value.type != DataType::INTEGER){
 							throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 						}
 						currentNode->value.type = DataType::INTEGER;
 
-						// ”äŠrŒ‹‰Ê‚ğ‰‰Zq‚É‚æ‚Á‚ÄŒvZ•û–@‚ğ•Ï‚¦‚ÄAŒvZ‚µ‚Ü‚·B
+						// æ¯”è¼ƒçµæœã‚’æ¼”ç®—å­ã«ã‚ˆã£ã¦è¨ˆç®—æ–¹æ³•ã‚’å¤‰ãˆã¦ã€è¨ˆç®—ã—ã¾ã™ã€‚
 						switch (currentNode->middleOperator.kind){
 						case TokenKind::PLUS:
 							currentNode->value.value.integer = currentNode->left->value.value.integer + currentNode->right->value.value.integer;
@@ -1315,15 +1315,15 @@ int ExecuteSQL(const string sql, const string outputFileName)
 						break;
 					case TokenKind::AND:
 					case TokenKind::OR:
-						// ˜_—‰‰Z‚Ìê‡‚Å‚·B
+						// è«–ç†æ¼”ç®—ã®å ´åˆã§ã™ã€‚
 
-						// ‰‰Z‚Å‚«‚é‚Ì‚Í^‹U’lŒ^“¯m‚Ìê‡‚Ì‚İ‚Å‚·B
+						// æ¼”ç®—ã§ãã‚‹ã®ã¯çœŸå½å€¤å‹åŒå£«ã®å ´åˆã®ã¿ã§ã™ã€‚
 						if (currentNode->left->value.type != DataType::BOOLEAN || currentNode->right->value.type != DataType::BOOLEAN){
 							throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 						}
 						currentNode->value.type = DataType::BOOLEAN;
 
-						// ”äŠrŒ‹‰Ê‚ğ‰‰Zq‚É‚æ‚Á‚ÄŒvZ•û–@‚ğ•Ï‚¦‚ÄAŒvZ‚µ‚Ü‚·B
+						// æ¯”è¼ƒçµæœã‚’æ¼”ç®—å­ã«ã‚ˆã£ã¦è¨ˆç®—æ–¹æ³•ã‚’å¤‰ãˆã¦ã€è¨ˆç®—ã—ã¾ã™ã€‚
 						switch (currentNode->middleOperator.kind){
 						case TokenKind::AND:
 							currentNode->value.value.boolean = currentNode->left->value.value.boolean && currentNode->right->value.value.boolean;
@@ -1335,48 +1335,48 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					}
 					currentNode->calculated = true;
 
-					// ©g‚ÌŒvZ‚ªI‚í‚Á‚½Œã‚Íe‚ÌŒvZ‚É–ß‚è‚Ü‚·B
+					// è‡ªèº«ã®è¨ˆç®—ãŒçµ‚ã‚ã£ãŸå¾Œã¯è¦ªã®è¨ˆç®—ã«æˆ»ã‚Šã¾ã™ã€‚
 					currentNode = currentNode->parent;
 				}
 
-				// ğŒ‚É‡‚í‚È‚¢s‚Ío—Í‚©‚çíœ‚µ‚Ü‚·B
+				// æ¡ä»¶ã«åˆã‚ãªã„è¡Œã¯å‡ºåŠ›ã‹ã‚‰å‰Šé™¤ã—ã¾ã™ã€‚
 				if (!whereTopNode->value.value.boolean){
 					free(row);
 					free(allColumnsRow);
 					allColumnOutputData.pop_back();
 					outputData.pop_back();
 				}
-				// WHEREğŒ‚ÌŒvZŒ‹‰Ê‚ğƒŠƒZƒbƒg‚µ‚Ü‚·B
+				// WHEREæ¡ä»¶ã®è¨ˆç®—çµæœã‚’ãƒªã‚»ãƒƒãƒˆã—ã¾ã™ã€‚
 				for (auto &whereExtensionNode : whereExtensionNodes){
 					whereExtensionNode.calculated = false;
 				}
 			}
 
-			// Šeƒe[ƒuƒ‹‚Ìs‚Ì‚·‚×‚Ä‚Ì‘g‚İ‡‚í‚¹‚ğo—Í‚µ‚Ü‚·B
+			// å„ãƒ†ãƒ¼ãƒ–ãƒ«ã®è¡Œã®ã™ã¹ã¦ã®çµ„ã¿åˆã‚ã›ã‚’å‡ºåŠ›ã—ã¾ã™ã€‚
 
-			// ÅŒã‚Ìƒe[ƒuƒ‹‚ÌƒJƒŒƒ“ƒgs‚ğƒCƒ“ƒNƒŠƒƒ“ƒg‚µ‚Ü‚·B
+			// æœ€å¾Œã®ãƒ†ãƒ¼ãƒ–ãƒ«ã®ã‚«ãƒ¬ãƒ³ãƒˆè¡Œã‚’ã‚¤ãƒ³ã‚¯ãƒªãƒ¡ãƒ³ãƒˆã—ã¾ã™ã€‚
 			++currentRows[tableNames.size() - 1];
 
-			// ÅŒã‚Ìƒe[ƒuƒ‹‚ªÅIs‚É‚È‚Á‚Ä‚¢‚½ê‡‚Íæ“ª‚É–ß‚µA‡‚É‘O‚Ìƒe[ƒuƒ‹‚ÌƒJƒŒƒ“ƒgs‚ğƒCƒ“ƒNƒŠƒƒ“ƒg‚µ‚Ü‚·B
+			// æœ€å¾Œã®ãƒ†ãƒ¼ãƒ–ãƒ«ãŒæœ€çµ‚è¡Œã«ãªã£ã¦ã„ãŸå ´åˆã¯å…ˆé ­ã«æˆ»ã—ã€é †ã«å‰ã®ãƒ†ãƒ¼ãƒ–ãƒ«ã®ã‚«ãƒ¬ãƒ³ãƒˆè¡Œã‚’ã‚¤ãƒ³ã‚¯ãƒªãƒ¡ãƒ³ãƒˆã—ã¾ã™ã€‚
 			for (int i = tableNames.size() - 1; !*currentRows[i] && 0 < i; --i){
 				++currentRows[i - 1];
 				currentRows[i] = &inputData[i][0];
 			}
 
-			// Å‰‚Ìƒe[ƒuƒ‹‚ªÅŒã‚Ìs‚ğ’´‚¦‚½‚È‚ço—Ís‚Ì¶¬‚ÍI‚í‚è‚Å‚·B
+			// æœ€åˆã®ãƒ†ãƒ¼ãƒ–ãƒ«ãŒæœ€å¾Œã®è¡Œã‚’è¶…ãˆãŸãªã‚‰å‡ºåŠ›è¡Œã®ç”Ÿæˆã¯çµ‚ã‚ã‚Šã§ã™ã€‚
 			if (!*currentRows[0]){
 				break;
 			}
 		}
 
-		// ”Ô•º‚Æ‚È‚énullptr‚ğ“o˜^‚µ‚Ü‚·B
+		// ç•ªå…µã¨ãªã‚‹nullptrã‚’ç™»éŒ²ã—ã¾ã™ã€‚
 		outputData.push_back(nullptr);
 		allColumnOutputData.push_back(nullptr);
 
-		// ORDER‹å‚É‚æ‚é•À‚Ñ‘Ö‚¦‚Ìˆ—‚ğs‚¢‚Ü‚·B
+		// ORDERå¥ã«ã‚ˆã‚‹ä¸¦ã³æ›¿ãˆã®å‡¦ç†ã‚’è¡Œã„ã¾ã™ã€‚
 		if (!orderByColumns.empty()){
-			// ORDER‹å‚Åw’è‚³‚ê‚Ä‚¢‚é—ñ‚ªA‘S‚Ä‚Ì“ü—Ís‚Ì’†‚Ì‚Ç‚Ìs‚È‚Ì‚©‚ğŒvZ‚µ‚Ü‚·B
-			vector<int> orderByColumnIndexes; // ORDER‹å‚Åw’è‚³‚ê‚½—ñ‚ÌA‚·‚×‚Ä‚Ìs‚Ì’†‚Å‚ÌƒCƒ“ƒfƒbƒNƒX‚Å‚·B
+			// ORDERå¥ã§æŒ‡å®šã•ã‚Œã¦ã„ã‚‹åˆ—ãŒã€å…¨ã¦ã®å…¥åŠ›è¡Œã®ä¸­ã®ã©ã®è¡Œãªã®ã‹ã‚’è¨ˆç®—ã—ã¾ã™ã€‚
+			vector<int> orderByColumnIndexes; // ORDERå¥ã§æŒ‡å®šã•ã‚ŒãŸåˆ—ã®ã€ã™ã¹ã¦ã®è¡Œã®ä¸­ã§ã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã§ã™ã€‚
 			
 			for (auto &orderByColumn : orderByColumns){
 				found = false;
@@ -1394,9 +1394,9 @@ int ExecuteSQL(const string sql, const string outputFileName)
 						++allInputColumnNameCursol;
 					}
 					if (!*orderByColumnNameCursol && !*allInputColumnNameCursol &&
-						(!*orderByColumn.tableName || // ƒe[ƒuƒ‹–¼‚ªİ’è‚³‚ê‚Ä‚¢‚éê‡‚Ì‚İƒe[ƒuƒ‹–¼‚Ì”äŠr‚ğs‚¢‚Ü‚·B
+						(!*orderByColumn.tableName || // ãƒ†ãƒ¼ãƒ–ãƒ«åãŒè¨­å®šã•ã‚Œã¦ã„ã‚‹å ´åˆã®ã¿ãƒ†ãƒ¼ãƒ–ãƒ«åã®æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
 						!*orderByTableNameCursol && !*allInputTableNameCursol)){
-						// Šù‚ÉŒ©‚Â‚©‚Á‚Ä‚¢‚é‚Ì‚É‚à‚¤ˆê‚ÂŒ©‚Â‚©‚Á‚½‚çƒGƒ‰[‚Å‚·B
+						// æ—¢ã«è¦‹ã¤ã‹ã£ã¦ã„ã‚‹ã®ã«ã‚‚ã†ä¸€ã¤è¦‹ã¤ã‹ã£ãŸã‚‰ã‚¨ãƒ©ãƒ¼ã§ã™ã€‚
 						if (found){
 							throw ResultValue::ERR_BAD_COLUMN_NAME;
 						}
@@ -1404,21 +1404,21 @@ int ExecuteSQL(const string sql, const string outputFileName)
 						orderByColumnIndexes.push_back(i);
 					}
 				}
-				// ˆê‚Â‚àŒ©‚Â‚©‚ç‚È‚­‚Ä‚àƒGƒ‰[‚Å‚·B
+				// ä¸€ã¤ã‚‚è¦‹ã¤ã‹ã‚‰ãªãã¦ã‚‚ã‚¨ãƒ©ãƒ¼ã§ã™ã€‚
 				if (!found){
 					throw ResultValue::ERR_BAD_COLUMN_NAME;
 				}
 			}
 
-			// outputData‚ÆallColumnOutputData‚Ìƒ\[ƒg‚ğˆê‚És‚¢‚Ü‚·BŠÈ•Ö‚Ì‚½‚ß‹Ã‚Á‚½ƒ\[ƒg‚Íg‚í‚¸A‘I‘ğƒ\[ƒg‚ğ—˜—p‚µ‚Ü‚·B
+			// outputDataã¨allColumnOutputDataã®ã‚½ãƒ¼ãƒˆã‚’ä¸€ç·’ã«è¡Œã„ã¾ã™ã€‚ç°¡ä¾¿ã®ãŸã‚å‡ã£ãŸã‚½ãƒ¼ãƒˆã¯ä½¿ã‚ãšã€é¸æŠã‚½ãƒ¼ãƒˆã‚’åˆ©ç”¨ã—ã¾ã™ã€‚
 			for (size_t i = 0; i < outputData.size() - 1; ++i){
-				int minIndex = i; // Œ»İ‚Ü‚Å‚ÅÅ¬‚Ìs‚ÌƒCƒ“ƒfƒbƒNƒX‚Å‚·B
+				int minIndex = i; // ç¾åœ¨ã¾ã§ã§æœ€å°ã®è¡Œã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã§ã™ã€‚
 				for (size_t j = i + 1; j < outputData.size() - 1; ++j){
-					bool jLessThanMin = false; // ƒCƒ“ƒfƒbƒNƒX‚ªj‚Ì’l‚ªAminIndex‚Ì’l‚æ‚è¬‚³‚¢‚©‚Ç‚¤‚©‚Å‚·B
+					bool jLessThanMin = false; // ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ãŒjã®å€¤ãŒã€minIndexã®å€¤ã‚ˆã‚Šå°ã•ã„ã‹ã©ã†ã‹ã§ã™ã€‚
 					for (size_t k = 0; k < orderByColumnIndexes.size(); ++k){
-						Data *mData = allColumnOutputData[minIndex][orderByColumnIndexes[k]]; // ƒCƒ“ƒfƒbƒNƒX‚ªminIndex‚Ìƒf[ƒ^‚Å‚·B
-						Data *jData = allColumnOutputData[j][orderByColumnIndexes[k]]; // ƒCƒ“ƒfƒbƒNƒX‚ªj‚Ìƒf[ƒ^‚Å‚·B
-						int cmp = 0; // ”äŠrŒ‹‰Ê‚Å‚·B“™‚µ‚¯‚ê‚Î0AƒCƒ“ƒfƒbƒNƒXj‚Ìs‚ª‘å‚«‚¯‚ê‚Îƒvƒ‰ƒXAƒCƒ“ƒfƒbƒNƒXminIndex‚Ìs‚ª‘å‚«‚¯‚ê‚Îƒ}ƒCƒiƒX‚Æ‚È‚è‚Ü‚·B
+						Data *mData = allColumnOutputData[minIndex][orderByColumnIndexes[k]]; // ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ãŒminIndexã®ãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
+						Data *jData = allColumnOutputData[j][orderByColumnIndexes[k]]; // ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ãŒjã®ãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
+						int cmp = 0; // æ¯”è¼ƒçµæœã§ã™ã€‚ç­‰ã—ã‘ã‚Œã°0ã€ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹jã®è¡ŒãŒå¤§ãã‘ã‚Œã°ãƒ—ãƒ©ã‚¹ã€ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹minIndexã®è¡ŒãŒå¤§ãã‘ã‚Œã°ãƒã‚¤ãƒŠã‚¹ã¨ãªã‚Šã¾ã™ã€‚
 						switch (mData->type)
 						{
 						case DataType::INTEGER:
@@ -1429,7 +1429,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 							break;
 						}
 
-						// ~‡‚È‚çcmp‚Ì‘å¬‚ğ“ü‚ê‘Ö‚¦‚Ü‚·B
+						// é™é †ãªã‚‰cmpã®å¤§å°ã‚’å…¥ã‚Œæ›¿ãˆã¾ã™ã€‚
 						if (orders[k] == TokenKind::DESC){
 							cmp *= -1;
 						}
@@ -1455,13 +1455,13 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			}
 		}
 
-		// o—Íƒtƒ@ƒCƒ‹‚ğŠJ‚«‚Ü‚·B
+		// å‡ºåŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ãã¾ã™ã€‚
 		outputFile = fopen(outputFileName.c_str(), "w");
 		if (outputFile == nullptr){
 			throw ResultValue::ERR_FILE_OPEN;
 		}
 
-		// o—Íƒtƒ@ƒCƒ‹‚É—ñ–¼‚ğo—Í‚µ‚Ü‚·B
+		// å‡ºåŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã«åˆ—åã‚’å‡ºåŠ›ã—ã¾ã™ã€‚
 		for (size_t i = 0; i < selectColumns.size(); ++i){
 			result = fputs(outputColumns[i].columnName, outputFile);
 			if (result == EOF){
@@ -1481,7 +1481,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			}
 		}
 
-		// o—Íƒtƒ@ƒCƒ‹‚Éƒf[ƒ^‚ğo—Í‚µ‚Ü‚·B
+		// å‡ºåŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã«ãƒ‡ãƒ¼ã‚¿ã‚’å‡ºåŠ›ã—ã¾ã™ã€‚
 		currentRow = &outputData[0];
 		while (*currentRow){
 			Data **column = *currentRow;
@@ -1516,9 +1516,9 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			++currentRow;
 		}
 
-		// ³í‚ÌŒãˆ—‚Å‚·B
+		// æ­£å¸¸æ™‚ã®å¾Œå‡¦ç†ã§ã™ã€‚
 
-		// ƒtƒ@ƒCƒ‹ƒŠƒ\[ƒX‚ğ‰ğ•ú‚µ‚Ü‚·B
+		// ãƒ•ã‚¡ã‚¤ãƒ«ãƒªã‚½ãƒ¼ã‚¹ã‚’è§£æ”¾ã—ã¾ã™ã€‚
 		for (auto &inputTableFile : inputTableFiles){
 			if (inputTableFile){
 				fclose(inputTableFile);
@@ -1534,7 +1534,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			}
 		}
 
-		// ƒƒ‚ƒŠƒŠƒ\[ƒX‚ğ‰ğ•ú‚µ‚Ü‚·B
+		// ãƒ¡ãƒ¢ãƒªãƒªã‚½ãƒ¼ã‚¹ã‚’è§£æ”¾ã—ã¾ã™ã€‚
 		for (auto& inputTableData : inputData){
 			if (inputTableData.empty()){
 				continue;
@@ -1572,11 +1572,11 @@ int ExecuteSQL(const string sql, const string outputFileName)
 
 		return static_cast<int>(ResultValue::OK);
 	}
-	catch (ResultValue error) // ”­¶‚µ‚½ƒGƒ‰[‚Ìí—Ş‚Å‚·B
+	catch (ResultValue error) // ç™ºç”Ÿã—ãŸã‚¨ãƒ©ãƒ¼ã®ç¨®é¡ã§ã™ã€‚
 	{
-		// ƒGƒ‰[‚Ìˆ—‚Å‚·B
+		// ã‚¨ãƒ©ãƒ¼æ™‚ã®å‡¦ç†ã§ã™ã€‚
 
-		// ƒtƒ@ƒCƒ‹ƒŠƒ\[ƒX‚ğ‰ğ•ú‚µ‚Ü‚·B
+		// ãƒ•ã‚¡ã‚¤ãƒ«ãƒªã‚½ãƒ¼ã‚¹ã‚’è§£æ”¾ã—ã¾ã™ã€‚
 		for (auto &inputTableFile : inputTableFiles){
 			if (inputTableFile){
 				fclose(inputTableFile);
@@ -1586,7 +1586,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			fclose(outputFile);
 		}
 
-		// ƒƒ‚ƒŠƒŠƒ\[ƒX‚ğ‰ğ•ú‚µ‚Ü‚·B
+		// ãƒ¡ãƒ¢ãƒªãƒªã‚½ãƒ¼ã‚¹ã‚’è§£æ”¾ã—ã¾ã™ã€‚
 		for (auto& inputTableData : inputData){
 			if (inputTableData.empty()){
 				continue;

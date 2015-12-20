@@ -14,1084 +14,1084 @@
 using namespace std;
 
 
-//! ƒJƒŒƒ“ƒgƒfƒBƒŒƒNƒgƒŠ‚É‚ ‚éCSV‚É‘Î‚µAŠÈˆÕ“I‚ÈSQL‚ğÀs‚µAŒ‹‰Ê‚ğƒtƒ@ƒCƒ‹‚Éo—Í‚µ‚Ü‚·B
-//! @param [in] sql Às‚·‚éSQL‚Å‚·B
-//! @param[in] outputFileName SQL‚ÌÀsŒ‹‰Ê‚ğCSV‚Æ‚µ‚Äo—Í‚·‚éƒtƒ@ƒCƒ‹–¼‚Å‚·BŠg’£q‚ğŠÜ‚İ‚Ü‚·B
-//! @return Às‚µ‚½Œ‹‰Ê‚Ìó‘Ô‚Å‚·B
+//! ã‚«ãƒ¬ãƒ³ãƒˆãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã«ã‚ã‚‹CSVã«å¯¾ã—ã€ç°¡æ˜“çš„ãªSQLã‚’å®Ÿè¡Œã—ã€çµæœã‚’ãƒ•ã‚¡ã‚¤ãƒ«ã«å‡ºåŠ›ã—ã¾ã™ã€‚
+//! @param [in] sql å®Ÿè¡Œã™ã‚‹SQLã§ã™ã€‚
+//! @param[in] outputFileName SQLã®å®Ÿè¡Œçµæœã‚’CSVã¨ã—ã¦å‡ºåŠ›ã™ã‚‹ãƒ•ã‚¡ã‚¤ãƒ«åã§ã™ã€‚æ‹¡å¼µå­ã‚’å«ã¿ã¾ã™ã€‚
+//! @return å®Ÿè¡Œã—ãŸçµæœã®çŠ¶æ…‹ã§ã™ã€‚
 int ExecuteSQL(const string, const string);
 
-//! ExecuteSQL‚Ì–ß‚è’l‚Ìí—Ş‚ğ•\‚µ‚Ü‚·B
+//! ExecuteSQLã®æˆ»ã‚Šå€¤ã®ç¨®é¡ã‚’è¡¨ã—ã¾ã™ã€‚
 enum class ResultValue
 {
-	OK = 0,                     //!< –â‘è‚È‚­I—¹‚µ‚Ü‚µ‚½B
-	ERR_FILE_OPEN = 1,          //!< ƒtƒ@ƒCƒ‹‚ğŠJ‚­‚±‚Æ‚É¸”s‚µ‚Ü‚µ‚½B
-	ERR_FILE_WRITE = 2,         //!< ƒtƒ@ƒCƒ‹‚É‘‚«‚İ‚ğs‚¤‚±‚Æ‚É¸”s‚µ‚Ü‚µ‚½B
-	ERR_FILE_CLOSE = 3,         //!< ƒtƒ@ƒCƒ‹‚ğ•Â‚¶‚é‚±‚Æ‚É¸”s‚µ‚Ü‚µ‚½B
-	ERR_TOKEN_CANT_READ = 4,    //!< ƒg[ƒNƒ“‰ğÍ‚É¸”s‚µ‚Ü‚µ‚½B
-	ERR_SQL_SYNTAX = 5,         //!< SQL‚Ì\•¶‰ğÍ‚ª¸”s‚µ‚Ü‚µ‚½B
-	ERR_BAD_COLUMN_NAME = 6,    //!< ƒe[ƒuƒ‹w’è‚ğŠÜ‚Ş—ñ–¼‚ª“KØ‚Å‚Í‚ ‚è‚Ü‚¹‚ñB
-	ERR_WHERE_OPERAND_TYPE = 7, //!< ‰‰Z‚Ì¶‰E‚ÌŒ^‚ª“KØ‚Å‚Í‚ ‚è‚Ü‚¹‚ñB
-	ERR_CSV_SYNTAX = 8,         //!< CSV‚Ì\•¶‰ğÍ‚ª¸”s‚µ‚Ü‚µ‚½B
-	ERR_MEMORY_ALLOCATE = 9,    //!< ƒƒ‚ƒŠ‚Ìæ“¾‚É¸”s‚µ‚Ü‚µ‚½B
-	ERR_MEMORY_OVER = 10        //!< —pˆÓ‚µ‚½ƒƒ‚ƒŠ—Ìˆæ‚ÌãŒÀ‚ğ’´‚¦‚Ü‚µ‚½B
+	OK = 0,                     //!< å•é¡Œãªãçµ‚äº†ã—ã¾ã—ãŸã€‚
+	ERR_FILE_OPEN = 1,          //!< ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ãã“ã¨ã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+	ERR_FILE_WRITE = 2,         //!< ãƒ•ã‚¡ã‚¤ãƒ«ã«æ›¸ãè¾¼ã¿ã‚’è¡Œã†ã“ã¨ã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+	ERR_FILE_CLOSE = 3,         //!< ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‰ã˜ã‚‹ã“ã¨ã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+	ERR_TOKEN_CANT_READ = 4,    //!< ãƒˆãƒ¼ã‚¯ãƒ³è§£æã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+	ERR_SQL_SYNTAX = 5,         //!< SQLã®æ§‹æ–‡è§£æãŒå¤±æ•—ã—ã¾ã—ãŸã€‚
+	ERR_BAD_COLUMN_NAME = 6,    //!< ãƒ†ãƒ¼ãƒ–ãƒ«æŒ‡å®šã‚’å«ã‚€åˆ—åãŒé©åˆ‡ã§ã¯ã‚ã‚Šã¾ã›ã‚“ã€‚
+	ERR_WHERE_OPERAND_TYPE = 7, //!< æ¼”ç®—ã®å·¦å³ã®å‹ãŒé©åˆ‡ã§ã¯ã‚ã‚Šã¾ã›ã‚“ã€‚
+	ERR_CSV_SYNTAX = 8,         //!< CSVã®æ§‹æ–‡è§£æãŒå¤±æ•—ã—ã¾ã—ãŸã€‚
+	ERR_MEMORY_ALLOCATE = 9,    //!< ãƒ¡ãƒ¢ãƒªã®å–å¾—ã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+	ERR_MEMORY_OVER = 10        //!< ç”¨æ„ã—ãŸãƒ¡ãƒ¢ãƒªé ˜åŸŸã®ä¸Šé™ã‚’è¶…ãˆã¾ã—ãŸã€‚
 };
 
-//! “ü—Í‚âo—ÍAŒo‰ß‚ÌŒvZ‚É—˜—p‚·‚éƒf[ƒ^‚Ìƒf[ƒ^Œ^‚Ìí—Ş‚ğ•\‚µ‚Ü‚·B
+//! å…¥åŠ›ã‚„å‡ºåŠ›ã€çµŒéã®è¨ˆç®—ã«åˆ©ç”¨ã™ã‚‹ãƒ‡ãƒ¼ã‚¿ã®ãƒ‡ãƒ¼ã‚¿å‹ã®ç¨®é¡ã‚’è¡¨ã—ã¾ã™ã€‚
 enum class DataType
 {
-	STRING,   //!< •¶š—ñŒ^‚Å‚·B
-	INTEGER,  //!< ®”Œ^‚Å‚·B
-	BOOLEAN   //!< ^‹U’lŒ^‚Å‚·B
+	STRING,   //!< æ–‡å­—åˆ—å‹ã§ã™ã€‚
+	INTEGER,  //!< æ•´æ•°å‹ã§ã™ã€‚
+	BOOLEAN   //!< çœŸå½å€¤å‹ã§ã™ã€‚
 };
 
-//! ƒg[ƒNƒ“‚Ìí—Ş‚ğ•\‚µ‚Ü‚·B
+//! ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã‚’è¡¨ã—ã¾ã™ã€‚
 enum class TokenKind
 {
-	NOT_TOKEN,              //!< ƒg[ƒNƒ“‚ğ•\‚µ‚Ü‚¹‚ñB
-	ASC,                    //!< ASCƒL[ƒ[ƒh‚Å‚·B
-	AND,                    //!< ANDƒL[ƒ[ƒh‚Å‚·B
-	BY,                     //!< BYƒL[ƒ[ƒh‚Å‚·B
-	DESC,                   //!< DESCƒL[ƒ[ƒh‚Å‚·B
-	FROM,                   //!< FROMƒL[ƒ[ƒh‚Å‚·B
-	OR,                     //!< ORƒL[ƒ[ƒh‚Å‚·B
-	ORDER,                  //!< ORDERƒL[ƒ[ƒh‚Å‚·B
-	SELECT,                 //!< SELECTƒL[ƒ[ƒh‚Å‚·B
-	WHERE,                  //!< WHEREƒL[ƒ[ƒh‚Å‚·B
-	ASTERISK,               //!< – ‹L†‚Å‚·B
-	COMMA,                  //!< C ‹L†‚Å‚·B
-	CLOSE_PAREN,            //!< j ‹L†‚Å‚·B
-	DOT,                    //!< D ‹L†‚Å‚·B
-	EQUAL,                  //!<  ‹L†‚Å‚·B
-	GREATER_THAN,           //!< „ ‹L†‚Å‚·B
-	GREATER_THAN_OR_EQUAL,  //!< „ ‹L†‚Å‚·B
-	LESS_THAN,              //!< ƒ ‹L†‚Å‚·B
-	LESS_THAN_OR_EQUAL,     //!< ƒ ‹L†‚Å‚·B
-	MINUS,                  //!< | ‹L†‚Å‚·B
-	NOT_EQUAL,              //!< ƒ„ ‹L†‚Å‚·B
-	OPEN_PAREN,             //!< i ‹L†‚Å‚·B
-	PLUS,                   //!< { ‹L†‚Å‚·B
-	SLASH,                  //!< ^ ‹L†‚Å‚·B
-	IDENTIFIER,             //!< ¯•Êq‚Å‚·B
-	INT_LITERAL,            //!< ®”ƒŠƒeƒ‰ƒ‹‚Å‚·B
-	STRING_LITERAL          //!< •¶š—ñƒŠƒeƒ‰ƒ‹‚Å‚·B
+	NOT_TOKEN,              //!< ãƒˆãƒ¼ã‚¯ãƒ³ã‚’è¡¨ã—ã¾ã›ã‚“ã€‚
+	ASC,                    //!< ASCã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã§ã™ã€‚
+	AND,                    //!< ANDã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã§ã™ã€‚
+	BY,                     //!< BYã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã§ã™ã€‚
+	DESC,                   //!< DESCã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã§ã™ã€‚
+	FROM,                   //!< FROMã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã§ã™ã€‚
+	OR,                     //!< ORã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã§ã™ã€‚
+	ORDER,                  //!< ORDERã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã§ã™ã€‚
+	SELECT,                 //!< SELECTã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã§ã™ã€‚
+	WHERE,                  //!< WHEREã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã§ã™ã€‚
+	ASTERISK,               //!< ï¼Š è¨˜å·ã§ã™ã€‚
+	COMMA,                  //!< ï¼Œ è¨˜å·ã§ã™ã€‚
+	CLOSE_PAREN,            //!< ï¼‰ è¨˜å·ã§ã™ã€‚
+	DOT,                    //!< ï¼ è¨˜å·ã§ã™ã€‚
+	EQUAL,                  //!< ï¼ è¨˜å·ã§ã™ã€‚
+	GREATER_THAN,           //!< ï¼ è¨˜å·ã§ã™ã€‚
+	GREATER_THAN_OR_EQUAL,  //!< ï¼ï¼ è¨˜å·ã§ã™ã€‚
+	LESS_THAN,              //!< ï¼œ è¨˜å·ã§ã™ã€‚
+	LESS_THAN_OR_EQUAL,     //!< ï¼œï¼ è¨˜å·ã§ã™ã€‚
+	MINUS,                  //!< ï¼ è¨˜å·ã§ã™ã€‚
+	NOT_EQUAL,              //!< ï¼œï¼ è¨˜å·ã§ã™ã€‚
+	OPEN_PAREN,             //!< ï¼ˆ è¨˜å·ã§ã™ã€‚
+	PLUS,                   //!< ï¼‹ è¨˜å·ã§ã™ã€‚
+	SLASH,                  //!< ï¼ è¨˜å·ã§ã™ã€‚
+	IDENTIFIER,             //!< è­˜åˆ¥å­ã§ã™ã€‚
+	INT_LITERAL,            //!< æ•´æ•°ãƒªãƒ†ãƒ©ãƒ«ã§ã™ã€‚
+	STRING_LITERAL          //!< æ–‡å­—åˆ—ãƒªãƒ†ãƒ©ãƒ«ã§ã™ã€‚
 };
 
-//! ˆê‚Â‚Ì’l‚ğ‚Âƒf[ƒ^‚Å‚·B
+//! ä¸€ã¤ã®å€¤ã‚’æŒã¤ãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 class Data
 {
-	DataType m_type = DataType::STRING; //!< ƒf[ƒ^‚ÌŒ^‚Å‚·B
+	DataType m_type = DataType::STRING; //!< ãƒ‡ãƒ¼ã‚¿ã®å‹ã§ã™ã€‚
 
-	const string defaultString = ""; //!< ƒf[ƒ^‚ª•¶š—ñ‚ğ‚½‚È‚¢ê‡‚Éstring()‚ª•Ô‚·’lB
+	const string defaultString = ""; //!< ãƒ‡ãƒ¼ã‚¿ãŒæ–‡å­—åˆ—ã‚’æŒãŸãªã„å ´åˆã«string()ãŒè¿”ã™å€¤ã€‚
 protected:
-	//! DataƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
+	//! Dataã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 	Data();
 public:
-	//! DataŒ^‚Ì‹ïÛƒNƒ‰ƒX‚ÌƒCƒ“ƒXƒ^ƒ“ƒX‚ğ•Ô‚µ‚Ü‚·B
-	//! @param [in] value ƒf[ƒ^‚ÌÀÛ‚Ì’l‚Å‚·B
+	//! Dataå‹ã®å…·è±¡ã‚¯ãƒ©ã‚¹ã®ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’è¿”ã—ã¾ã™ã€‚
+	//! @param [in] value ãƒ‡ãƒ¼ã‚¿ã®å®Ÿéš›ã®å€¤ã§ã™ã€‚
 	static shared_ptr<Data> New(const string value);
 
-	//! DataŒ^‚Ì‹ïÛƒNƒ‰ƒX‚ÌƒCƒ“ƒXƒ^ƒ“ƒX‚ğ•Ô‚µ‚Ü‚·B
-	//! @param [in] value ƒf[ƒ^‚ÌÀÛ‚Ì’l‚Å‚·B
+	//! Dataå‹ã®å…·è±¡ã‚¯ãƒ©ã‚¹ã®ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’è¿”ã—ã¾ã™ã€‚
+	//! @param [in] value ãƒ‡ãƒ¼ã‚¿ã®å®Ÿéš›ã®å€¤ã§ã™ã€‚
 	static shared_ptr<Data> New(const int value);
 
-	//! DataŒ^‚Ì‹ïÛƒNƒ‰ƒX‚ÌƒCƒ“ƒXƒ^ƒ“ƒX‚ğ•Ô‚µ‚Ü‚·B
-	//! @param [in] value ƒf[ƒ^‚ÌÀÛ‚Ì’l‚Å‚·B
+	//! Dataå‹ã®å…·è±¡ã‚¯ãƒ©ã‚¹ã®ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’è¿”ã—ã¾ã™ã€‚
+	//! @param [in] value ãƒ‡ãƒ¼ã‚¿ã®å®Ÿéš›ã®å€¤ã§ã™ã€‚
 	static shared_ptr<Data> New(const bool value);
 
-	//! ƒf[ƒ^‚ÌŒ^‚ğæ“¾‚µ‚Ü‚·B
-	//! @return ƒf[ƒ^‚ÌŒ^‚Å‚·B
+	//! ãƒ‡ãƒ¼ã‚¿ã®å‹ã‚’å–å¾—ã—ã¾ã™ã€‚
+	//! @return ãƒ‡ãƒ¼ã‚¿ã®å‹ã§ã™ã€‚
 	virtual const DataType type() const = 0;
 
-	//! ƒf[ƒ^‚ª•¶š—ñŒ^‚Ìê‡‚Ì’l‚ğæ“¾‚µ‚Ü‚·B
-	//! @return ƒf[ƒ^‚ª•¶š—ñŒ^‚Ìê‡‚Ì’l‚Å‚·B
+	//! ãƒ‡ãƒ¼ã‚¿ãŒæ–‡å­—åˆ—å‹ã®å ´åˆã®å€¤ã‚’å–å¾—ã—ã¾ã™ã€‚
+	//! @return ãƒ‡ãƒ¼ã‚¿ãŒæ–‡å­—åˆ—å‹ã®å ´åˆã®å€¤ã§ã™ã€‚
 	virtual const string& string() const;
 
-	//! ƒf[ƒ^‚ª®”Œ^‚Ìê‡‚Ì’l‚ğæ“¾‚µ‚Ü‚·B
-	//! @return ƒf[ƒ^‚ª®”Œ^‚Ìê‡‚Ì’l‚Å‚·B
+	//! ãƒ‡ãƒ¼ã‚¿ãŒæ•´æ•°å‹ã®å ´åˆã®å€¤ã‚’å–å¾—ã—ã¾ã™ã€‚
+	//! @return ãƒ‡ãƒ¼ã‚¿ãŒæ•´æ•°å‹ã®å ´åˆã®å€¤ã§ã™ã€‚
 	virtual const int integer() const;
 
-	//! ƒf[ƒ^‚ª^‹U’lŒ^‚Ìê‡‚Ì’l‚ğæ“¾‚µ‚Ü‚·B
-	//! @return ƒf[ƒ^‚ª^‹U’lŒ^‚Ìê‡‚Ì’l‚Å‚·B
+	//! ãƒ‡ãƒ¼ã‚¿ãŒçœŸå½å€¤å‹ã®å ´åˆã®å€¤ã‚’å–å¾—ã—ã¾ã™ã€‚
+	//! @return ãƒ‡ãƒ¼ã‚¿ãŒçœŸå½å€¤å‹ã®å ´åˆã®å€¤ã§ã™ã€‚
 	virtual const bool boolean() const;
 
-	//! ‰ÁZ‰‰Z‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ‰ÁZ‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! åŠ ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return åŠ ç®—ã—ãŸçµæœã§ã™ã€‚
 	virtual const shared_ptr<const Data> operator+(const shared_ptr<const Data>& right) const = 0;
 
-	//! Œ¸Z‰‰Z‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return Œ¸Z‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! æ¸›ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¸›ç®—ã—ãŸçµæœã§ã™ã€‚
 	virtual const shared_ptr<const Data> operator-(const shared_ptr<const Data>& right) const = 0;
 
-	//! æZ‰‰Z‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return æZ‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! ä¹—ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return ä¹—ç®—ã—ãŸçµæœã§ã™ã€‚
 	virtual const shared_ptr<const Data> operator*(const shared_ptr<const Data>& right) const = 0;
 
-	//! œZ‰‰Z‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return œZ‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! é™¤ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return é™¤ç®—ã—ãŸçµæœã§ã™ã€‚
 	virtual const shared_ptr<const Data> operator/(const shared_ptr<const Data>& right) const = 0;
 
-	//! “™’l”äŠr‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! ç­‰å€¤æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 	virtual const shared_ptr<const Data> operator==(const shared_ptr<const Data>& right) const = 0;
 
-	//! •s“™”äŠr‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! ä¸ç­‰æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 	virtual const shared_ptr<const Data> operator!=(const shared_ptr<const Data>& right) const = 0;
 
-	//! ˆÈã”äŠr‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! ä»¥ä¸Šæ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 	virtual const shared_ptr<const Data> operator>=(const shared_ptr<const Data>& right) const = 0;
 
-	//! ‘å‚«‚¢”äŠr‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! å¤§ãã„æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 	virtual const shared_ptr<const Data> operator>(const shared_ptr<const Data>& right) const = 0;
 
-	//! ˆÈ‰º”äŠr‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! ä»¥ä¸‹æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 	virtual const shared_ptr<const Data> operator<=(const shared_ptr<const Data>& right) const = 0;
 
-	//! ¬‚³‚¢”äŠr‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! å°ã•ã„æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 	virtual const shared_ptr<const Data> operator<(const shared_ptr<const Data>& right) const = 0;
 
-	//! AND‰‰Z‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ‰‰Z‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! ANDæ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¼”ç®—ã—ãŸçµæœã§ã™ã€‚
 	virtual const shared_ptr<const Data> operator&&(const shared_ptr<const Data>& right) const = 0;
 
-	//! OR‰‰Z‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ‰‰Z‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! ORæ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¼”ç®—ã—ãŸçµæœã§ã™ã€‚
 	virtual const shared_ptr<const Data> operator||(const shared_ptr<const Data>& right) const = 0;
 };
 
-//! •¶š—ñ‚Ì’l‚ğ‚ÂData‚Å‚·B
+//! æ–‡å­—åˆ—ã®å€¤ã‚’æŒã¤Dataã§ã™ã€‚
 class StringData : public Data
 {
-	std::string m_string; //!< ƒf[ƒ^‚ª•¶š—ñŒ^‚Ìê‡‚Ì’l‚Å‚·B
+	std::string m_string; //!< ãƒ‡ãƒ¼ã‚¿ãŒæ–‡å­—åˆ—å‹ã®å ´åˆã®å€¤ã§ã™ã€‚
 
 public:
-	//! DataƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] value ƒf[ƒ^‚Ì’l‚Å‚·B
+	//! Dataã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] value ãƒ‡ãƒ¼ã‚¿ã®å€¤ã§ã™ã€‚
 	StringData(const std::string value);
 
-	//! ƒf[ƒ^‚ÌŒ^‚ğæ“¾‚µ‚Ü‚·B
-	//! @return ƒf[ƒ^	‚ÌŒ^‚Å‚·B
+	//! ãƒ‡ãƒ¼ã‚¿ã®å‹ã‚’å–å¾—ã—ã¾ã™ã€‚
+	//! @return ãƒ‡ãƒ¼ã‚¿	ã®å‹ã§ã™ã€‚
 	const DataType type() const override;
 
-	//! ƒf[ƒ^‚ª•¶š—ñŒ^‚Ìê‡‚Ì’l‚ğæ“¾‚µ‚Ü‚·B
-	//! @return ƒf[ƒ^‚ª•¶š—ñŒ^‚Ìê‡‚Ì’l‚Å‚·B
+	//! ãƒ‡ãƒ¼ã‚¿ãŒæ–‡å­—åˆ—å‹ã®å ´åˆã®å€¤ã‚’å–å¾—ã—ã¾ã™ã€‚
+	//! @return ãƒ‡ãƒ¼ã‚¿ãŒæ–‡å­—åˆ—å‹ã®å ´åˆã®å€¤ã§ã™ã€‚
 	const std::string& string() const override;
 
-	//! ‰ÁZ‰‰Z‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ‰ÁZ‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! åŠ ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return åŠ ç®—ã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator+(const shared_ptr<const Data>& right) const override;
 
-	//! Œ¸Z‰‰Z‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return Œ¸Z‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! æ¸›ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¸›ç®—ã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator-(const shared_ptr<const Data>& right) const override;
 
-	//! æZ‰‰Z‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return æZ‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! ä¹—ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return ä¹—ç®—ã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator*(const shared_ptr<const Data>& right) const override;
 
-	//! œZ‰‰Z‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return œZ‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! é™¤ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return é™¤ç®—ã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator/(const shared_ptr<const Data>& right) const override;
 
-	//! “™’l”äŠr‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! ç­‰å€¤æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator==(const shared_ptr<const Data>& right) const override;
 
-	//! •s“™”äŠr‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! ä¸ç­‰æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator!=(const shared_ptr<const Data>& right) const override;
 
-	//! ˆÈã”äŠr‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! ä»¥ä¸Šæ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator>=(const shared_ptr<const Data>& right) const override;
 
-	//! ‘å‚«‚¢”äŠr‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! å¤§ãã„æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator>(const shared_ptr<const Data>& right) const override;
 
-	//! ˆÈ‰º”äŠr‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! ä»¥ä¸‹æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator<=(const shared_ptr<const Data>& right) const override;
 
-	//! ¬‚³‚¢”äŠr‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! å°ã•ã„æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator<(const shared_ptr<const Data>& right) const override;
 
-	//! AND‰‰Z‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ‰‰Z‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! ANDæ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¼”ç®—ã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator&&(const shared_ptr<const Data>& right) const override;
 
-	//! OR‰‰Z‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ‰‰Z‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! ORæ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¼”ç®—ã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator||(const shared_ptr<const Data>& right) const override;
 };
 
-//! ®”‚Ì’l‚ğ‚ÂData‚Å‚·B
+//! æ•´æ•°ã®å€¤ã‚’æŒã¤Dataã§ã™ã€‚
 class IntegerData : public Data
 {
-	int m_integer;                  //!< ƒf[ƒ^‚ª®”Œ^‚Ìê‡‚Ì’l‚Å‚·B
+	int m_integer;                  //!< ãƒ‡ãƒ¼ã‚¿ãŒæ•´æ•°å‹ã®å ´åˆã®å€¤ã§ã™ã€‚
 
 public:
-	//! DataƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] value ƒf[ƒ^‚Ì’l‚Å‚·B
+	//! Dataã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] value ãƒ‡ãƒ¼ã‚¿ã®å€¤ã§ã™ã€‚
 	IntegerData(const int value);
 
-	//! ƒf[ƒ^‚ÌŒ^‚ğæ“¾‚µ‚Ü‚·B
-	//! @return ƒf[ƒ^‚ÌŒ^‚Å‚·B
+	//! ãƒ‡ãƒ¼ã‚¿ã®å‹ã‚’å–å¾—ã—ã¾ã™ã€‚
+	//! @return ãƒ‡ãƒ¼ã‚¿ã®å‹ã§ã™ã€‚
 	const DataType type() const override;
 
-	//! ƒf[ƒ^‚ª®”Œ^‚Ìê‡‚Ì’l‚ğæ“¾‚µ‚Ü‚·B
-	//! @return ƒf[ƒ^‚ª®”Œ^‚Ìê‡‚Ì’l‚Å‚·B
+	//! ãƒ‡ãƒ¼ã‚¿ãŒæ•´æ•°å‹ã®å ´åˆã®å€¤ã‚’å–å¾—ã—ã¾ã™ã€‚
+	//! @return ãƒ‡ãƒ¼ã‚¿ãŒæ•´æ•°å‹ã®å ´åˆã®å€¤ã§ã™ã€‚
 	const int integer() const override;
 
-	//! ‰ÁZ‰‰Z‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ‰ÁZ‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! åŠ ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return åŠ ç®—ã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator+(const shared_ptr<const Data>& right) const override;
 
-	//! Œ¸Z‰‰Z‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return Œ¸Z‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! æ¸›ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¸›ç®—ã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator-(const shared_ptr<const Data>& right) const override;
 
-	//! æZ‰‰Z‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return æZ‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! ä¹—ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return ä¹—ç®—ã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator*(const shared_ptr<const Data>& right) const override;
 
-	//! œZ‰‰Z‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return œZ‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! é™¤ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return é™¤ç®—ã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator/(const shared_ptr<const Data>& right) const override;
 
-	//! “™’l”äŠr‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! ç­‰å€¤æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator==(const shared_ptr<const Data>& right) const override;
 
-	//! •s“™”äŠr‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! ä¸ç­‰æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator!=(const shared_ptr<const Data>& right) const override;
 
-	//! ˆÈã”äŠr‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! ä»¥ä¸Šæ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator>=(const shared_ptr<const Data>& right) const override;
 
-	//! ‘å‚«‚¢”äŠr‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! å¤§ãã„æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator>(const shared_ptr<const Data>& right) const override;
 
-	//! ˆÈ‰º”äŠr‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! ä»¥ä¸‹æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator<=(const shared_ptr<const Data>& right) const override;
 
-	//! ¬‚³‚¢”äŠr‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! å°ã•ã„æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator<(const shared_ptr<const Data>& right) const override;
 
-	//! AND‰‰Z‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ‰‰Z‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! ANDæ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¼”ç®—ã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator&&(const shared_ptr<const Data>& right) const override;
 
-	//! OR‰‰Z‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ‰‰Z‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! ORæ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¼”ç®—ã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator||(const shared_ptr<const Data>& right) const override;
 };
 
-//! ^‹U’l‚Ì’l‚ğ‚ÂData‚Å‚·B
+//! çœŸå½å€¤ã®å€¤ã‚’æŒã¤Dataã§ã™ã€‚
 class BooleanData : public Data
 {
-	bool m_boolean;                  //!< ƒf[ƒ^‚ª^‹U’lŒ^‚Ìê‡‚Ì’l‚Å‚·B
+	bool m_boolean;                  //!< ãƒ‡ãƒ¼ã‚¿ãŒçœŸå½å€¤å‹ã®å ´åˆã®å€¤ã§ã™ã€‚
 
 public:
-	//! DataƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] value ƒf[ƒ^‚Ì’l‚Å‚·B
+	//! Dataã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] value ãƒ‡ãƒ¼ã‚¿ã®å€¤ã§ã™ã€‚
 	BooleanData(const bool value);
 
-	//! ƒf[ƒ^‚ÌŒ^‚ğæ“¾‚µ‚Ü‚·B
-	//! @return ƒf[ƒ^‚ÌŒ^‚Å‚·B
+	//! ãƒ‡ãƒ¼ã‚¿ã®å‹ã‚’å–å¾—ã—ã¾ã™ã€‚
+	//! @return ãƒ‡ãƒ¼ã‚¿ã®å‹ã§ã™ã€‚
 	const DataType type() const override;
 
-	//! ƒf[ƒ^‚ª®”Œ^‚Ìê‡‚Ì’l‚ğæ“¾‚µ‚Ü‚·B
-	//! @return ƒf[ƒ^‚ª®”Œ^‚Ìê‡‚Ì’l‚Å‚·B
+	//! ãƒ‡ãƒ¼ã‚¿ãŒæ•´æ•°å‹ã®å ´åˆã®å€¤ã‚’å–å¾—ã—ã¾ã™ã€‚
+	//! @return ãƒ‡ãƒ¼ã‚¿ãŒæ•´æ•°å‹ã®å ´åˆã®å€¤ã§ã™ã€‚
 	const bool boolean() const override;
 
-	//! ‰ÁZ‰‰Z‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ‰ÁZ‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! åŠ ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return åŠ ç®—ã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator+(const shared_ptr<const Data>& right) const override;
 
-	//! Œ¸Z‰‰Z‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return Œ¸Z‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! æ¸›ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¸›ç®—ã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator-(const shared_ptr<const Data>& right) const override;
 
-	//! æZ‰‰Z‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return æZ‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! ä¹—ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return ä¹—ç®—ã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator*(const shared_ptr<const Data>& right) const override;
 
-	//! œZ‰‰Z‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return œZ‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! é™¤ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return é™¤ç®—ã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator/(const shared_ptr<const Data>& right) const override;
 
-	//! “™’l”äŠr‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! ç­‰å€¤æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator==(const shared_ptr<const Data>& right) const override;
 
-	//! •s“™”äŠr‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! ä¸ç­‰æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator!=(const shared_ptr<const Data>& right) const override;
 
-	//! ˆÈã”äŠr‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! ä»¥ä¸Šæ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator>=(const shared_ptr<const Data>& right) const override;
 
-	//! ‘å‚«‚¢”äŠr‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! å¤§ãã„æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator>(const shared_ptr<const Data>& right) const override;
 
-	//! ˆÈ‰º”äŠr‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! ä»¥ä¸‹æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator<=(const shared_ptr<const Data>& right) const override;
 
-	//! ¬‚³‚¢”äŠr‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! å°ã•ã„æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator<(const shared_ptr<const Data>& right) const override;
 
-	//! AND‰‰Z‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ‰‰Z‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! ANDæ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¼”ç®—ã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator&&(const shared_ptr<const Data>& right) const override;
 
-	//! OR‰‰Z‚ğs‚¢‚Ü‚·B
-	//! @param [in] right ‰E•Ó‚Å‚·B
-	//! @return ‰‰Z‚µ‚½Œ‹‰Ê‚Å‚·B
+	//! ORæ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] right å³è¾ºã§ã™ã€‚
+	//! @return æ¼”ç®—ã—ãŸçµæœã§ã™ã€‚
 	const shared_ptr<const Data> operator||(const shared_ptr<const Data>& right) const override;
 };
 
-//! ‰ÁZ‰‰Z‚ğs‚¢‚Ü‚·B
-//! @param [in] left ¶•Ó‚Å‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ‰ÁZ‚µ‚½Œ‹‰Ê‚Å‚·B
+//! åŠ ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] left å·¦è¾ºã§ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return åŠ ç®—ã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> operator+(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right);
 
-//! Œ¸Z‰‰Z‚ğs‚¢‚Ü‚·B
-//! @param [in] left ¶•Ó‚Å‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return Œ¸Z‚µ‚½Œ‹‰Ê‚Å‚·B
+//! æ¸›ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] left å·¦è¾ºã§ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¸›ç®—ã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> operator-(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right);
 
 
-//! æZ‰‰Z‚ğs‚¢‚Ü‚·B
-//! @param [in] left ¶•Ó‚Å‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return æZ‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ä¹—ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] left å·¦è¾ºã§ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return ä¹—ç®—ã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> operator*(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right);
 
-//! œZ‰‰Z‚ğs‚¢‚Ü‚·B
-//! @param [in] left ¶•Ó‚Å‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return œZ‚µ‚½Œ‹‰Ê‚Å‚·B
+//! é™¤ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] left å·¦è¾ºã§ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return é™¤ç®—ã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> operator/(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right);
 
-//! “™’l”äŠr‚ğs‚¢‚Ü‚·B
-//! @param [in] left ¶•Ó‚Å‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ç­‰å€¤æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] left å·¦è¾ºã§ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> operator==(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right);
 
-//! •s“™”äŠr‚ğs‚¢‚Ü‚·B
-//! @param [in] left ¶•Ó‚Å‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ä¸ç­‰æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] left å·¦è¾ºã§ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> operator!=(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right);
 
-//! ˆÈã”äŠr‚ğs‚¢‚Ü‚·B
-//! @param [in] left ¶•Ó‚Å‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ä»¥ä¸Šæ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] left å·¦è¾ºã§ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> operator>=(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right);
 
-//! ‘å‚«‚¢”äŠr‚ğs‚¢‚Ü‚·B
-//! @param [in] left ¶•Ó‚Å‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+//! å¤§ãã„æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] left å·¦è¾ºã§ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> operator>(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right);
 
-//! ˆÈ‰º”äŠr‚ğs‚¢‚Ü‚·B
-//! @param [in] left ¶•Ó‚Å‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ä»¥ä¸‹æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] left å·¦è¾ºã§ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> operator<=(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right);
 
-//! ¬‚³‚¢”äŠr‚ğs‚¢‚Ü‚·B
-//! @param [in] left ¶•Ó‚Å‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+//! å°ã•ã„æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] left å·¦è¾ºã§ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> operator<(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right);
 
-//! AND‰‰Z‚ğs‚¢‚Ü‚·B
-//! @param [in] left ¶•Ó‚Å‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ‰‰Z‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ANDæ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] left å·¦è¾ºã§ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¼”ç®—ã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> operator&&(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right);
 
-//! OR‰‰Z‚ğs‚¢‚Ü‚·B
-//! @param [in] left ¶•Ó‚Å‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ‰‰Z‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ORæ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] left å·¦è¾ºã§ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¼”ç®—ã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> operator||(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right);
-//! WHERE‹å‚Éw’è‚·‚é‰‰Zq‚Ìî•ñ‚ğ•\‚µ‚Ü‚·B
+//! WHEREå¥ã«æŒ‡å®šã™ã‚‹æ¼”ç®—å­ã®æƒ…å ±ã‚’è¡¨ã—ã¾ã™ã€‚
 class Operator
 {
 public:
-	TokenKind kind = TokenKind::NOT_TOKEN; //!< ‰‰Zq‚Ìí—Ş‚ğA‰‰Zq‚ğ‹Lq‚·‚éƒg[ƒNƒ“‚Ìí—Ş‚Å•\‚µ‚Ü‚·B
-	int order = 0; //!< ‰‰Zq‚Ì—Dæ‡ˆÊ‚Å‚·B
+	TokenKind kind = TokenKind::NOT_TOKEN; //!< æ¼”ç®—å­ã®ç¨®é¡ã‚’ã€æ¼”ç®—å­ã‚’è¨˜è¿°ã™ã‚‹ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§è¡¨ã—ã¾ã™ã€‚
+	int order = 0; //!< æ¼”ç®—å­ã®å„ªå…ˆé †ä½ã§ã™ã€‚
 
-	//! OperatorƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
+	//! Operatorã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 	Operator();
 
-	//! OperatorƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] kind ‰‰Zq‚Ìí—Ş‚ğA‰‰Zq‚ğ‹Lq‚·‚éƒg[ƒNƒ“‚Ìí—Ş‚Å•\‚µ‚Ü‚·B
-	//! @param [in] order ‰‰Zq‚Ì—Dæ‡ˆÊ‚Å‚·B
+	//! Operatorã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] kind æ¼”ç®—å­ã®ç¨®é¡ã‚’ã€æ¼”ç®—å­ã‚’è¨˜è¿°ã™ã‚‹ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§è¡¨ã—ã¾ã™ã€‚
+	//! @param [in] order æ¼”ç®—å­ã®å„ªå…ˆé †ä½ã§ã™ã€‚
 	Operator(const TokenKind kind, const int order);
 };
 
-//! ƒg[ƒNƒ“‚ğ•\‚µ‚Ü‚·B
+//! ãƒˆãƒ¼ã‚¯ãƒ³ã‚’è¡¨ã—ã¾ã™ã€‚
 class Token
 {
 public:
-	TokenKind kind; //!< ƒg[ƒNƒ“‚Ìí—Ş‚Å‚·B
-	string word; //!< ‹L˜^‚³‚ê‚Ä‚¢‚éƒg[ƒNƒ“‚Ì•¶š—ñ‚Å‚·B‹L˜^‚Ì•K—v‚ª‚È‚¯‚ê‚Î‹ó”’‚Å‚·B
+	TokenKind kind; //!< ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§ã™ã€‚
+	string word; //!< è¨˜éŒ²ã•ã‚Œã¦ã„ã‚‹ãƒˆãƒ¼ã‚¯ãƒ³ã®æ–‡å­—åˆ—ã§ã™ã€‚è¨˜éŒ²ã®å¿…è¦ãŒãªã‘ã‚Œã°ç©ºç™½ã§ã™ã€‚
 
-	//! TokenƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
+	//! Tokenã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 	Token();
 
-	//! TokenƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] kind ƒg[ƒNƒ“‚Ìí—Ş‚Å‚·B
+	//! Tokenã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] kind ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§ã™ã€‚
 	Token(const TokenKind kind);
 
-	//! TokenƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] kind ƒg[ƒNƒ“‚Ìí—Ş‚Å‚·B
-	//! @param [in] word ‹L˜^‚³‚ê‚Ä‚¢‚éƒg[ƒNƒ“‚Ì•¶š—ñ‚Å‚·B‹L˜^‚Ì•K—v‚ª‚È‚¯‚ê‚Î‹ó”’‚Å‚·B
+	//! Tokenã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] kind ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§ã™ã€‚
+	//! @param [in] word è¨˜éŒ²ã•ã‚Œã¦ã„ã‚‹ãƒˆãƒ¼ã‚¯ãƒ³ã®æ–‡å­—åˆ—ã§ã™ã€‚è¨˜éŒ²ã®å¿…è¦ãŒãªã‘ã‚Œã°ç©ºç™½ã§ã™ã€‚
 	Token(const TokenKind kind, const string word);
 };
 
 class InputTable;
-//! w’è‚³‚ê‚½—ñ‚Ìî•ñ‚Å‚·B‚Ç‚Ìƒe[ƒuƒ‹‚ÉŠ‘®‚·‚é‚©‚Ìî•ñ‚àŠÜ‚İ‚Ü‚·B
+//! æŒ‡å®šã•ã‚ŒãŸåˆ—ã®æƒ…å ±ã§ã™ã€‚ã©ã®ãƒ†ãƒ¼ãƒ–ãƒ«ã«æ‰€å±ã™ã‚‹ã‹ã®æƒ…å ±ã‚‚å«ã¿ã¾ã™ã€‚
 class Column
 {
 public:
-	string tableName; //!< —ñ‚ªŠ‘®‚·‚éƒe[ƒuƒ‹–¼‚Å‚·Bw’è‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Í‹ó•¶š—ñ‚Æ‚È‚è‚Ü‚·B
-	string columnName; //!< w’è‚³‚ê‚½—ñ‚Ì—ñ–¼‚Å‚·B
-	int allColumnsIndex; //!< ‘S‚Ä‚Ìƒe[ƒuƒ‹‚Ì‚·‚×‚Ä‚Ì—ñ‚Ì’†‚ÅA‚±‚Ì—ñ‚ª‰½”Ô–Ú‚©‚Å‚·B
-	string outputName; //!< ‚±‚Ì—ñ‚ğo—Í‚·‚é‚Ì•\¦–¼‚Å‚·B
+	string tableName; //!< åˆ—ãŒæ‰€å±ã™ã‚‹ãƒ†ãƒ¼ãƒ–ãƒ«åã§ã™ã€‚æŒ‡å®šã•ã‚Œã¦ã„ãªã„å ´åˆã¯ç©ºæ–‡å­—åˆ—ã¨ãªã‚Šã¾ã™ã€‚
+	string columnName; //!< æŒ‡å®šã•ã‚ŒãŸåˆ—ã®åˆ—åã§ã™ã€‚
+	int allColumnsIndex; //!< å…¨ã¦ã®ãƒ†ãƒ¼ãƒ–ãƒ«ã®ã™ã¹ã¦ã®åˆ—ã®ä¸­ã§ã€ã“ã®åˆ—ãŒä½•ç•ªç›®ã‹ã§ã™ã€‚
+	string outputName; //!< ã“ã®åˆ—ã‚’å‡ºåŠ›ã™ã‚‹æ™‚ã®è¡¨ç¤ºåã§ã™ã€‚
 
-	//! ColumnƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
+	//! Columnã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 	Column();
 
-	//! ColumnƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] columnName w’è‚³‚ê‚½—ñ‚Ì—ñ–¼‚Å‚·B
+	//! Columnã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] columnName æŒ‡å®šã•ã‚ŒãŸåˆ—ã®åˆ—åã§ã™ã€‚
 	Column(const string columnName);
 
-	//! ColumnƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] tableName —ñ‚ªŠ‘®‚·‚éƒe[ƒuƒ‹–¼‚Å‚·Bw’è‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Í‹ó•¶š—ñ‚Æ‚È‚è‚Ü‚·B
-	//! @param [in] columnName w’è‚³‚ê‚½—ñ‚Ì—ñ–¼‚Å‚·B
+	//! Columnã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] tableName åˆ—ãŒæ‰€å±ã™ã‚‹ãƒ†ãƒ¼ãƒ–ãƒ«åã§ã™ã€‚æŒ‡å®šã•ã‚Œã¦ã„ãªã„å ´åˆã¯ç©ºæ–‡å­—åˆ—ã¨ãªã‚Šã¾ã™ã€‚
+	//! @param [in] columnName æŒ‡å®šã•ã‚ŒãŸåˆ—ã®åˆ—åã§ã™ã€‚
 	Column(const string tableName, const string columnName);
 
-	//! ƒf[ƒ^‚ÌŒŸõ‚É—˜—p‚·‚é‚½‚ßA‘S‚Ä‚Ìƒe[ƒuƒ‹‚Ì—ñ‚Ìî•ñ‚ğ“o˜^‚µ‚Ü‚·B
-	//! @param [in] queryInfo SQL‚É‹Lq‚³‚ê‚½î•ñ‚Å‚·B
-	//! @param [in] inputTables ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İæ‚Á‚½ƒf[ƒ^‚Å‚·B
+	//! ãƒ‡ãƒ¼ã‚¿ã®æ¤œç´¢ã«åˆ©ç”¨ã™ã‚‹ãŸã‚ã€å…¨ã¦ã®ãƒ†ãƒ¼ãƒ–ãƒ«ã®åˆ—ã®æƒ…å ±ã‚’ç™»éŒ²ã—ã¾ã™ã€‚
+	//! @param [in] queryInfo SQLã«è¨˜è¿°ã•ã‚ŒãŸæƒ…å ±ã§ã™ã€‚
+	//! @param [in] inputTables ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿å–ã£ãŸãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 	void Column::SetAllColumns(const vector<const InputTable> &inputTables);
 };
 
-//! WHERE‹å‚ÌğŒ‚Ì®–Ø‚ğ•\‚µ‚Ü‚·B
+//! WHEREå¥ã®æ¡ä»¶ã®å¼æœ¨ã‚’è¡¨ã—ã¾ã™ã€‚
 class ExtensionTreeNode
 {
-	//! ƒJƒ‰ƒ€–¼‚Åw’è‚³‚ê‚½ƒf[ƒ^‚ğ‚Âƒm[ƒh‚©‚Ç‚¤‚©‚Å‚·B
-	//! @return ƒJƒ‰ƒ€–¼‚Åw’è‚³‚ê‚½ƒf[ƒ^‚ğ‚Âƒm[ƒh‚©‚Ç‚¤‚©B
+	//! ã‚«ãƒ©ãƒ åã§æŒ‡å®šã•ã‚ŒãŸãƒ‡ãƒ¼ã‚¿ã‚’æŒã¤ãƒãƒ¼ãƒ‰ã‹ã©ã†ã‹ã§ã™ã€‚
+	//! @return ã‚«ãƒ©ãƒ åã§æŒ‡å®šã•ã‚ŒãŸãƒ‡ãƒ¼ã‚¿ã‚’æŒã¤ãƒãƒ¼ãƒ‰ã‹ã©ã†ã‹ã€‚
 	bool ExtensionTreeNode::isDataNodeAsColumnName();
 public:
-	shared_ptr<ExtensionTreeNode> parent;//!< e‚Æ‚È‚éƒm[ƒh‚Å‚·Bª‚Ì®–Ø‚Ìê‡‚Ínullptr‚Æ‚È‚è‚Ü‚·B
-	shared_ptr<ExtensionTreeNode> left;  //!< ¶‚Ìq‚Æ‚È‚éƒm[ƒh‚Å‚·B©g‚ª––’[‚Ì—t‚Æ‚È‚é®–Ø‚Ìê‡‚Ínullptr‚Æ‚È‚è‚Ü‚·B
-	Operator middleOperator;             //!< ’†’u‚³‚ê‚é‰‰Zq‚Å‚·B©g‚ª––’[‚Ì‚Æ‚È‚é®–Ø‚Ìê‡‚Ìí—Ş‚ÍNOT_TOKEN‚Æ‚È‚è‚Ü‚·B
-	shared_ptr<ExtensionTreeNode>right;   //!< ‰E‚Ìq‚Æ‚È‚éƒm[ƒh‚Å‚·B©g‚ª––’[‚Ì—t‚Æ‚È‚é®–Ø‚Ìê‡‚Ínullptr‚Æ‚È‚è‚Ü‚·B
-	bool inParen = false;                //!< ©g‚ª‚©‚Á‚±‚É‚­‚é‚Ü‚ê‚Ä‚¢‚é‚©‚Ç‚¤‚©‚Å‚·B
-	int parenOpenBeforeClose = 0;        //!< –Ø‚Ì\’z’†‚É0ˆÈŠO‚Æ‚È‚èA©g‚Ì¶‚É‚ ‚èA‚Ü‚¾•Â‚¶‚Ä‚È‚¢ƒJƒbƒR‚ÌŠJn‚Ì”‚Æ‚È‚è‚Ü‚·B
-	int signCoefficient = 1;             //!< ©g‚ª—t‚É‚ ‚èAƒ}ƒCƒiƒX’P€‰‰Zq‚ª‚Â‚¢‚Ä‚¢‚éê‡‚Í-1A‚»‚êˆÈŠO‚Í1‚Æ‚È‚è‚Ü‚·B
-	Column column;                       //!< —ñêw’è‚³‚ê‚Ä‚¢‚éê‡‚ÉA‚»‚Ì—ñ‚ğ•\‚µ‚Ü‚·B—ñw’è‚Å‚Í‚È‚¢ê‡‚ÍcolumnName‚ª‹ó•¶š—ñ‚Æ‚È‚è‚Ü‚·B
-	shared_ptr<const Data> value;                          //!< w’è‚³‚ê‚½A‚à‚µ‚­‚ÍŒvZ‚³‚ê‚½’l‚Å‚·B
+	shared_ptr<ExtensionTreeNode> parent;//!< è¦ªã¨ãªã‚‹ãƒãƒ¼ãƒ‰ã§ã™ã€‚æ ¹ã®å¼æœ¨ã®å ´åˆã¯nullptrã¨ãªã‚Šã¾ã™ã€‚
+	shared_ptr<ExtensionTreeNode> left;  //!< å·¦ã®å­ã¨ãªã‚‹ãƒãƒ¼ãƒ‰ã§ã™ã€‚è‡ªèº«ãŒæœ«ç«¯ã®è‘‰ã¨ãªã‚‹å¼æœ¨ã®å ´åˆã¯nullptrã¨ãªã‚Šã¾ã™ã€‚
+	Operator middleOperator;             //!< ä¸­ç½®ã•ã‚Œã‚‹æ¼”ç®—å­ã§ã™ã€‚è‡ªèº«ãŒæœ«ç«¯ã®ã¨ãªã‚‹å¼æœ¨ã®å ´åˆã®ç¨®é¡ã¯NOT_TOKENã¨ãªã‚Šã¾ã™ã€‚
+	shared_ptr<ExtensionTreeNode>right;   //!< å³ã®å­ã¨ãªã‚‹ãƒãƒ¼ãƒ‰ã§ã™ã€‚è‡ªèº«ãŒæœ«ç«¯ã®è‘‰ã¨ãªã‚‹å¼æœ¨ã®å ´åˆã¯nullptrã¨ãªã‚Šã¾ã™ã€‚
+	bool inParen = false;                //!< è‡ªèº«ãŒã‹ã£ã“ã«ãã‚‹ã¾ã‚Œã¦ã„ã‚‹ã‹ã©ã†ã‹ã§ã™ã€‚
+	int parenOpenBeforeClose = 0;        //!< æœ¨ã®æ§‹ç¯‰ä¸­ã«0ä»¥å¤–ã¨ãªã‚Šã€è‡ªèº«ã®å·¦ã«ã‚ã‚Šã€ã¾ã é–‰ã˜ã¦ãªã„ã‚«ãƒƒã‚³ã®é–‹å§‹ã®æ•°ã¨ãªã‚Šã¾ã™ã€‚
+	int signCoefficient = 1;             //!< è‡ªèº«ãŒè‘‰ã«ã‚ã‚Šã€ãƒã‚¤ãƒŠã‚¹å˜é …æ¼”ç®—å­ãŒã¤ã„ã¦ã„ã‚‹å ´åˆã¯-1ã€ãã‚Œä»¥å¤–ã¯1ã¨ãªã‚Šã¾ã™ã€‚
+	Column column;                       //!< åˆ—å ´æŒ‡å®šã•ã‚Œã¦ã„ã‚‹å ´åˆã«ã€ãã®åˆ—ã‚’è¡¨ã—ã¾ã™ã€‚åˆ—æŒ‡å®šã§ã¯ãªã„å ´åˆã¯columnNameãŒç©ºæ–‡å­—åˆ—ã¨ãªã‚Šã¾ã™ã€‚
+	shared_ptr<const Data> value;                          //!< æŒ‡å®šã•ã‚ŒãŸã€ã‚‚ã—ãã¯è¨ˆç®—ã•ã‚ŒãŸå€¤ã§ã™ã€‚
 
-	//! ExtensionTreeNodeƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
+	//! ExtensionTreeNodeã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 	ExtensionTreeNode();
 
-	// left‚Æright‚ğmiddleOperator‚Å‰‰Z‚µ‚Ü‚·B
+	// leftã¨rightã‚’middleOperatorã§æ¼”ç®—ã—ã¾ã™ã€‚
 	void Operate();
 
-	//! ÀÛ‚Éo—Í‚·‚és‚É‡‚í‚¹‚Ä—ñ‚Éƒf[ƒ^‚ğİ’è‚µ‚Ü‚·B
-	//! @param [in] inputTables ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İæ‚Á‚½ƒf[ƒ^‚Å‚·B
-	//! @param [in] ÀÛ‚Éo—Í‚·‚és‚Å‚·B
+	//! å®Ÿéš›ã«å‡ºåŠ›ã™ã‚‹è¡Œã«åˆã‚ã›ã¦åˆ—ã«ãƒ‡ãƒ¼ã‚¿ã‚’è¨­å®šã—ã¾ã™ã€‚
+	//! @param [in] inputTables ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿å–ã£ãŸãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
+	//! @param [in] å®Ÿéš›ã«å‡ºåŠ›ã™ã‚‹è¡Œã§ã™ã€‚
 	void SetColumnData(const vector<const shared_ptr<const Data>> &outputRow);
 };
 
-//! ˆø”‚Æ‚µ‚Ä“n‚µ‚½ƒm[ƒh‹y‚Ñ‚»‚Ìq‘·‚Ìƒm[ƒh‚ğæ“¾‚µ‚Ü‚·B‡˜‚Í‹A‚è‚ª‚¯‡‚Å‚·B
-//! @param [in] –ß‚è’l‚Ìƒ‹[ƒg‚Æ‚È‚éƒm[ƒh‚Å‚·B
-//! @return ©g‹y‚Ñq‘·‚Ìƒm[ƒh‚Å‚·B
+//! å¼•æ•°ã¨ã—ã¦æ¸¡ã—ãŸãƒãƒ¼ãƒ‰åŠã³ãã®å­å­«ã®ãƒãƒ¼ãƒ‰ã‚’å–å¾—ã—ã¾ã™ã€‚é †åºã¯å¸°ã‚ŠãŒã‘é †ã§ã™ã€‚
+//! @param [in] æˆ»ã‚Šå€¤ã®ãƒ«ãƒ¼ãƒˆã¨ãªã‚‹ãƒãƒ¼ãƒ‰ã§ã™ã€‚
+//! @return è‡ªèº«åŠã³å­å­«ã®ãƒãƒ¼ãƒ‰ã§ã™ã€‚
 const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> SelfAndDescendants(shared_ptr<ExtensionTreeNode>);
 
-//! Order‹å‚Ì—ñ‚Æ‡˜‚Ìw’è‚ğ•\‚µ‚Ü‚·B
+//! Orderå¥ã®åˆ—ã¨é †åºã®æŒ‡å®šã‚’è¡¨ã—ã¾ã™ã€‚
 class Order
 {
 public:
-	Column column; //<! ORDER‹å‚Éw’è‚³‚ê‚½—ñ–¼‚Å‚·B
-	const bool isAsc = true; //<! ORDER‘w’è‚³‚ê‚½‡˜‚ª¸‡‚©‚Ç‚¤‚©‚Å‚·B
+	Column column; //<! ORDERå¥ã«æŒ‡å®šã•ã‚ŒãŸåˆ—åã§ã™ã€‚
+	const bool isAsc = true; //<! ORDERå›½æŒ‡å®šã•ã‚ŒãŸé †åºãŒæ˜‡é †ã‹ã©ã†ã‹ã§ã™ã€‚
 
-	//! OrderƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] column ORDER‹å‚Éw’è‚³‚ê‚½—ñ–¼‚Å‚·B
-	//! @param [in] isAsc ORDER‘w’è‚³‚ê‚½‡˜‚ª¸‡‚©‚Ç‚¤‚©‚Å‚·B
+	//! Orderã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] column ORDERå¥ã«æŒ‡å®šã•ã‚ŒãŸåˆ—åã§ã™ã€‚
+	//! @param [in] isAsc ORDERå›½æŒ‡å®šã•ã‚ŒãŸé †åºãŒæ˜‡é †ã‹ã©ã†ã‹ã§ã™ã€‚
 	Order(Column column, const bool isAsc);
 };
 
-//! SqlQuery‚Ì\•¶î•ñ‚ğˆµ‚¤ƒNƒ‰ƒX‚Å‚·B
+//! SqlQueryã®æ§‹æ–‡æƒ…å ±ã‚’æ‰±ã†ã‚¯ãƒ©ã‚¹ã§ã™ã€‚
 class SqlQueryInfo
 {
 public:
-	vector<const string> tableNames; //!< FROM‹å‚Åw’è‚µ‚Ä‚¢‚éƒe[ƒuƒ‹–¼‚Å‚·B
-	vector<Column> selectColumns; //!< SELECT‹å‚Éw’è‚³‚ê‚½—ñ–¼‚Å‚·B
-	vector<Order> orders; //!< ORDER‹å‚Éw’è‚³‚ê‚½‡˜‚Ìî•ñ‚Å‚·B
-	shared_ptr<ExtensionTreeNode> whereTopNode; //!< ®–Ø‚Ìª‚Æ‚È‚éƒm[ƒh‚Å‚·B
+	vector<const string> tableNames; //!< FROMå¥ã§æŒ‡å®šã—ã¦ã„ã‚‹ãƒ†ãƒ¼ãƒ–ãƒ«åã§ã™ã€‚
+	vector<Column> selectColumns; //!< SELECTå¥ã«æŒ‡å®šã•ã‚ŒãŸåˆ—åã§ã™ã€‚
+	vector<Order> orders; //!< ORDERå¥ã«æŒ‡å®šã•ã‚ŒãŸé †åºã®æƒ…å ±ã§ã™ã€‚
+	shared_ptr<ExtensionTreeNode> whereTopNode; //!< å¼æœ¨ã®æ ¹ã¨ãªã‚‹ãƒãƒ¼ãƒ‰ã§ã™ã€‚
 };
 
-//! CSV‚Æ‚µ‚Ä“ü—Í‚³‚ê‚½ƒtƒ@ƒCƒ‹‚Ì“à—e‚ğ•\‚µ‚Ü‚·B
+//! CSVã¨ã—ã¦å…¥åŠ›ã•ã‚ŒãŸãƒ•ã‚¡ã‚¤ãƒ«ã®å†…å®¹ã‚’è¡¨ã—ã¾ã™ã€‚
 class InputTable
 {
-	const string signNum = "+-0123456789"; //!< ‘S‚Ä‚Ì•„†‚Æ”š‚Å‚·B
+	const string signNum = "+-0123456789"; //!< å…¨ã¦ã®ç¬¦å·ã¨æ•°å­—ã§ã™ã€‚
 
-	const shared_ptr<const vector<const Column>> m_columns; //!< —ñ‚Ìî•ñ‚Å‚·B
-	const shared_ptr<vector<const vector<const shared_ptr<const Data>>>> m_data; //! ƒf[ƒ^‚Å‚·B
+	const shared_ptr<const vector<const Column>> m_columns; //!< åˆ—ã®æƒ…å ±ã§ã™ã€‚
+	const shared_ptr<vector<const vector<const shared_ptr<const Data>>>> m_data; //! ãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 
-	//! ‘S‚Ä‚ª”’l‚Æ‚È‚é—ñ‚Í”’l—ñ‚É•ÏŠ·‚µ‚Ü‚·B
+	//! å…¨ã¦ãŒæ•°å€¤ã¨ãªã‚‹åˆ—ã¯æ•°å€¤åˆ—ã«å¤‰æ›ã—ã¾ã™ã€‚
 	void InputTable::InitializeIntegerColumn();
 public:
-	//! InputTableƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] columns “Ç‚İ‚ñ‚¾ƒwƒbƒ_î•ñ‚Å‚·B
-	//! @param [in] data “Ç‚İ‚ñ‚¾ƒf[ƒ^‚Å‚·B
+	//! InputTableã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] columns èª­ã¿è¾¼ã‚“ã ãƒ˜ãƒƒãƒ€æƒ…å ±ã§ã™ã€‚
+	//! @param [in] data èª­ã¿è¾¼ã‚“ã ãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 	InputTable(const shared_ptr<const vector<const Column>> columns, const shared_ptr<vector<const vector<const shared_ptr<const Data>>>> data);
 
-	//! —ñ‚Ìî•ñ‚ğæ“¾‚µ‚Ü‚·B
-	//! @return —ñ‚Ìî•ñ‚Å‚·B
+	//! åˆ—ã®æƒ…å ±ã‚’å–å¾—ã—ã¾ã™ã€‚
+	//! @return åˆ—ã®æƒ…å ±ã§ã™ã€‚
 	const shared_ptr<const vector<const Column>> columns() const;
 
-	//! ƒf[ƒ^‚ğæ“¾‚µ‚Ü‚·B
-	//! @return ƒf[ƒ^‚Å‚·B
+	//! ãƒ‡ãƒ¼ã‚¿ã‚’å–å¾—ã—ã¾ã™ã€‚
+	//! @return ãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 	const shared_ptr<vector<const vector<const shared_ptr<const Data>>>> data() const;
 };
 
 class TokenReader
 {
 protected:
-	const string alpahUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ"; //!< ‘S‚Ä‚ÌƒAƒ‹ƒtƒ@ƒxƒbƒg‚Ì‘å•¶š¬•¶š‚ÆƒAƒ“ƒ_[ƒo[‚Å‚·B
-	const string alpahNumUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; //!< ‘S‚Ä‚Ì”š‚ÆƒAƒ‹ƒtƒ@ƒxƒbƒg‚Ì‘å•¶š¬•¶š‚ÆƒAƒ“ƒ_[ƒo[‚Å‚·B
-	const string num = "0123456789"; //!< ‘S‚Ä‚Ì”š‚Å‚·B
+	const string alpahUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ"; //!< å…¨ã¦ã®ã‚¢ãƒ«ãƒ•ã‚¡ãƒ™ãƒƒãƒˆã®å¤§æ–‡å­—å°æ–‡å­—ã¨ã‚¢ãƒ³ãƒ€ãƒ¼ãƒãƒ¼ã§ã™ã€‚
+	const string alpahNumUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; //!< å…¨ã¦ã®æ•°å­—ã¨ã‚¢ãƒ«ãƒ•ã‚¡ãƒ™ãƒƒãƒˆã®å¤§æ–‡å­—å°æ–‡å­—ã¨ã‚¢ãƒ³ãƒ€ãƒ¼ãƒãƒ¼ã§ã™ã€‚
+	const string num = "0123456789"; //!< å…¨ã¦ã®æ•°å­—ã§ã™ã€‚
 
-	//! ÀÛ‚Éƒg[ƒNƒ“‚ğ“Ç‚İ‚Ü‚·B
-	//! @param [in] cursol “Ç‚İ‚İŠJnˆÊ’u‚Å‚·B
-	//! @param [in] end SQL‘S‘Ì‚ÌI—¹ˆÊ’u‚Å‚·B
-	//! @return Ø‚èo‚³‚ê‚½ƒg[ƒNƒ“‚Å‚·B“Ç‚İ‚İ‚ª¸”s‚µ‚½ê‡‚Ínullptr‚ğ•Ô‚µ‚Ü‚·B
+	//! å®Ÿéš›ã«ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã¾ã™ã€‚
+	//! @param [in] cursol èª­ã¿è¾¼ã¿é–‹å§‹ä½ç½®ã§ã™ã€‚
+	//! @param [in] end SQLå…¨ä½“ã®çµ‚äº†ä½ç½®ã§ã™ã€‚
+	//! @return åˆ‡ã‚Šå‡ºã•ã‚ŒãŸãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚èª­ã¿è¾¼ã¿ãŒå¤±æ•—ã—ãŸå ´åˆã¯nullptrã‚’è¿”ã—ã¾ã™ã€‚
 	virtual const shared_ptr<const Token> ReadCore(string::const_iterator &cursol, const string::const_iterator& end) const = 0;
 public:
-	//! ƒg[ƒNƒ“‚ğ“Ç‚İ‚İ‚Ü‚·B
-	//! @param [in] cursol “Ç‚İ‚İŠJnˆÊ’u‚Å‚·B
-	//! @param [in] end SQL‘S‘Ì‚ÌI—¹ˆÊ’u‚Å‚·B
-	//! @return Ø‚èo‚³‚ê‚½ƒg[ƒNƒ“‚Å‚·B“Ç‚İ‚İ‚ª¸”s‚µ‚½ê‡‚Ínullptr‚ğ•Ô‚µ‚Ü‚·B
+	//! ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+	//! @param [in] cursol èª­ã¿è¾¼ã¿é–‹å§‹ä½ç½®ã§ã™ã€‚
+	//! @param [in] end SQLå…¨ä½“ã®çµ‚äº†ä½ç½®ã§ã™ã€‚
+	//! @return åˆ‡ã‚Šå‡ºã•ã‚ŒãŸãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚èª­ã¿è¾¼ã¿ãŒå¤±æ•—ã—ãŸå ´åˆã¯nullptrã‚’è¿”ã—ã¾ã™ã€‚
 	const shared_ptr<const Token> Read(string::const_iterator &cursol, const string::const_iterator& end) const;
 };
 
-//! ”’lƒŠƒeƒ‰ƒ‹ƒg[ƒNƒ“‚ğ“Ç‚İ‚Ş‹@”\‚ğ’ñ‹Ÿ‚µ‚Ü‚·B
+//! æ•°å€¤ãƒªãƒ†ãƒ©ãƒ«ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã‚€æ©Ÿèƒ½ã‚’æä¾›ã—ã¾ã™ã€‚
 class IntLiteralReader : public TokenReader
 {
 protected:
-	//! ÀÛ‚Éƒg[ƒNƒ“‚ğ“Ç‚İ‚Ü‚·B
-	//! @param [in] cursol “Ç‚İ‚İŠJnˆÊ’u‚Å‚·B
-	//! @param [in] end SQL‘S‘Ì‚ÌI—¹ˆÊ’u‚Å‚·B
-	//! @return Ø‚èo‚³‚ê‚½ƒg[ƒNƒ“‚Å‚·B“Ç‚İ‚İ‚ª¸”s‚µ‚½ê‡‚Ínullptr‚ğ•Ô‚µ‚Ü‚·B
+	//! å®Ÿéš›ã«ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã¾ã™ã€‚
+	//! @param [in] cursol èª­ã¿è¾¼ã¿é–‹å§‹ä½ç½®ã§ã™ã€‚
+	//! @param [in] end SQLå…¨ä½“ã®çµ‚äº†ä½ç½®ã§ã™ã€‚
+	//! @return åˆ‡ã‚Šå‡ºã•ã‚ŒãŸãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚èª­ã¿è¾¼ã¿ãŒå¤±æ•—ã—ãŸå ´åˆã¯nullptrã‚’è¿”ã—ã¾ã™ã€‚
 	const shared_ptr<const Token> ReadCore(string::const_iterator &cursol, const string::const_iterator& end) const override;
 };
 
-//! •¶š—ñƒŠƒeƒ‰ƒ‹ƒg[ƒNƒ“‚ğ“Ç‚İ‚Ş‹@”\‚ğ’ñ‹Ÿ‚µ‚Ü‚·B
+//! æ–‡å­—åˆ—ãƒªãƒ†ãƒ©ãƒ«ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã‚€æ©Ÿèƒ½ã‚’æä¾›ã—ã¾ã™ã€‚
 class StringLiteralReader : public TokenReader
 {
 protected:
-	//! ÀÛ‚Éƒg[ƒNƒ“‚ğ“Ç‚İ‚İ‚Ü‚·B
-	//! @param [in] cursol “Ç‚İ‚İŠJnˆÊ’u‚Å‚·B
-	//! @param [in] end SQL‘S‘Ì‚ÌI—¹ˆÊ’u‚Å‚·B
-	//! @return Ø‚èo‚³‚ê‚½ƒg[ƒNƒ“‚Å‚·B“Ç‚İ‚İ‚ª¸”s‚µ‚½ê‡‚Ínullptr‚ğ•Ô‚µ‚Ü‚·B
+	//! å®Ÿéš›ã«ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+	//! @param [in] cursol èª­ã¿è¾¼ã¿é–‹å§‹ä½ç½®ã§ã™ã€‚
+	//! @param [in] end SQLå…¨ä½“ã®çµ‚äº†ä½ç½®ã§ã™ã€‚
+	//! @return åˆ‡ã‚Šå‡ºã•ã‚ŒãŸãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚èª­ã¿è¾¼ã¿ãŒå¤±æ•—ã—ãŸå ´åˆã¯nullptrã‚’è¿”ã—ã¾ã™ã€‚
 	const shared_ptr<const Token> ReadCore(string::const_iterator &cursol, const string::const_iterator& end) const override;
 };
 
-//! ƒL[ƒ[ƒhƒg[ƒNƒ“‚ğ“Ç‚İ‚Ş‹@”\‚ğ’ñ‹Ÿ‚µ‚Ü‚·B
+//! ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã‚€æ©Ÿèƒ½ã‚’æä¾›ã—ã¾ã™ã€‚
 class KeywordReader : public TokenReader
 {
 protected:
-	Token keyword; //!< “Ç‚İ‚ŞƒL[ƒ[ƒhƒg[ƒNƒ“‚Æ“™‚µ‚¢ƒg[ƒNƒ“‚Å‚·B
+	Token keyword; //!< èª­ã¿è¾¼ã‚€ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ãƒˆãƒ¼ã‚¯ãƒ³ã¨ç­‰ã—ã„ãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚
 
-	//! ÀÛ‚Éƒg[ƒNƒ“‚ğ“Ç‚İ‚İ‚Ü‚·B
-	//! @param [in] cursol “Ç‚İ‚İŠJnˆÊ’u‚Å‚·B
-	//! @param [in] end SQL‘S‘Ì‚ÌI—¹ˆÊ’u‚Å‚·B
-	//! @return Ø‚èo‚³‚ê‚½ƒg[ƒNƒ“‚Å‚·B“Ç‚İ‚İ‚ª¸”s‚µ‚½ê‡‚Ínullptr‚ğ•Ô‚µ‚Ü‚·B
+	//! å®Ÿéš›ã«ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+	//! @param [in] cursol èª­ã¿è¾¼ã¿é–‹å§‹ä½ç½®ã§ã™ã€‚
+	//! @param [in] end SQLå…¨ä½“ã®çµ‚äº†ä½ç½®ã§ã™ã€‚
+	//! @return åˆ‡ã‚Šå‡ºã•ã‚ŒãŸãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚èª­ã¿è¾¼ã¿ãŒå¤±æ•—ã—ãŸå ´åˆã¯nullptrã‚’è¿”ã—ã¾ã™ã€‚
 	const shared_ptr<const Token> ReadCore(string::const_iterator &cursol, const string::const_iterator& end) const override;
 
-	//! ƒL[ƒ[ƒh‚ÌŸ‚Ì•¶š‚Ìƒ`ƒFƒbƒN‚ğs‚¢‚Ü‚·B
-	//! @param [in] next ƒ`ƒFƒbƒN‘ÎÛ‚Æ‚È‚éŸ‚Ì•¶š‚ÌƒCƒeƒŒ[ƒ^‚Å‚·B
-	//! @param [in] next endƒCƒeƒŒ[ƒ^‚Å‚·B
+	//! ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã®æ¬¡ã®æ–‡å­—ã®ãƒã‚§ãƒƒã‚¯ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] next ãƒã‚§ãƒƒã‚¯å¯¾è±¡ã¨ãªã‚‹æ¬¡ã®æ–‡å­—ã®ã‚¤ãƒ†ãƒ¬ãƒ¼ã‚¿ã§ã™ã€‚
+	//! @param [in] next endã‚¤ãƒ†ãƒ¬ãƒ¼ã‚¿ã§ã™ã€‚
 	virtual const bool CheckNextChar(const string::const_iterator& next, const string::const_iterator& end) const;
 public:
-	//! KeywordReaderƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] kind ƒg[ƒNƒ“‚Ìí—Ş‚Å‚·B
-	//! @param [in] word ƒL[ƒ[ƒh‚Ì•¶š—ñ‚Å‚·B
+	//! KeywordReaderã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] kind ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§ã™ã€‚
+	//! @param [in] word ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã®æ–‡å­—åˆ—ã§ã™ã€‚
 	KeywordReader(const TokenKind kind, const string word);
 };
 
-//! ‹L†ƒg[ƒNƒ“‚ğ“Ç‚İ‚Ş‹@”\‚ğ’ñ‹Ÿ‚µ‚Ü‚·B
+//! è¨˜å·ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã‚€æ©Ÿèƒ½ã‚’æä¾›ã—ã¾ã™ã€‚
 class SignReader : public KeywordReader
 {
 protected:
-	//! ƒL[ƒ[ƒh‚ÌŸ‚Ì•¶š‚Ìƒ`ƒFƒbƒN‚ğs‚¢‚Ü‚·B
-	//! @param [in] next ƒ`ƒFƒbƒN‘ÎÛ‚Æ‚È‚éŸ‚Ì•¶š‚ÌƒCƒeƒŒ[ƒ^‚Å‚·B
-	//! @param [in] next endƒCƒeƒŒ[ƒ^‚Å‚·B
+	//! ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã®æ¬¡ã®æ–‡å­—ã®ãƒã‚§ãƒƒã‚¯ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] next ãƒã‚§ãƒƒã‚¯å¯¾è±¡ã¨ãªã‚‹æ¬¡ã®æ–‡å­—ã®ã‚¤ãƒ†ãƒ¬ãƒ¼ã‚¿ã§ã™ã€‚
+	//! @param [in] next endã‚¤ãƒ†ãƒ¬ãƒ¼ã‚¿ã§ã™ã€‚
 	const bool CheckNextChar(const string::const_iterator& next, const string::const_iterator& end) const override;
 
 public:
-	//! KeywordReaderƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] kind ƒg[ƒNƒ“‚Ìí—Ş‚Å‚·B
-	//! @param [in] word ƒL[ƒ[ƒh‚Ì•¶š—ñ‚Å‚·B
+	//! KeywordReaderã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] kind ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§ã™ã€‚
+	//! @param [in] word ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã®æ–‡å­—åˆ—ã§ã™ã€‚
 	SignReader(const TokenKind kind, const string word);
 };
 
-//! ¯•Êqƒg[ƒNƒ“‚ğ“Ç‚İ‚Ş‹@”\‚ğ’ñ‹Ÿ‚µ‚Ü‚·B
+//! è­˜åˆ¥å­ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã‚€æ©Ÿèƒ½ã‚’æä¾›ã—ã¾ã™ã€‚
 class IdentifierReader : public TokenReader
 {
 protected:
-	//! ÀÛ‚Éƒg[ƒNƒ“‚ğ“Ç‚İ‚İ‚Ü‚·B
-	//! @param [in] cursol “Ç‚İ‚İŠJnˆÊ’u‚Å‚·B
-	//! @param [in] end SQL‘S‘Ì‚ÌI—¹ˆÊ’u‚Å‚·B
-	//! @return Ø‚èo‚³‚ê‚½ƒg[ƒNƒ“‚Å‚·B“Ç‚İ‚İ‚ª¸”s‚µ‚½ê‡‚Ínullptr‚ğ•Ô‚µ‚Ü‚·B
+	//! å®Ÿéš›ã«ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+	//! @param [in] cursol èª­ã¿è¾¼ã¿é–‹å§‹ä½ç½®ã§ã™ã€‚
+	//! @param [in] end SQLå…¨ä½“ã®çµ‚äº†ä½ç½®ã§ã™ã€‚
+	//! @return åˆ‡ã‚Šå‡ºã•ã‚ŒãŸãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚èª­ã¿è¾¼ã¿ãŒå¤±æ•—ã—ãŸå ´åˆã¯nullptrã‚’è¿”ã—ã¾ã™ã€‚
 	const shared_ptr<const Token> ReadCore(string::const_iterator &cursol, const string::const_iterator& end) const override;
 };
 
 class SequenceParser;
-//! ‚³‚Ü‚´‚Ü‚Èƒp[ƒT[‚ÌŠî’êƒNƒ‰ƒX‚Æ‚È‚é’ŠÛƒNƒ‰ƒX‚Å‚·B
+//! ã•ã¾ã–ã¾ãªãƒ‘ãƒ¼ã‚µãƒ¼ã®åŸºåº•ã‚¯ãƒ©ã‚¹ã¨ãªã‚‹æŠ½è±¡ã‚¯ãƒ©ã‚¹ã§ã™ã€‚
 class Parser
 {
 public:
-	//! ƒg[ƒNƒ“‚É‘Î‚·‚éƒp[ƒX‚ğs‚¢‚Ü‚·B
-	//! @params [in] cursol Œ»İ‚Ì“Ç‚İæ‚èˆÊ’u‚ğ•\‚·ƒJ[ƒ\ƒ‹‚Å‚·B
-	//! @return ƒp[ƒX‚ª¬Œ÷‚µ‚½‚©‚Ç‚¤‚©‚Å‚·B
+	//! ãƒˆãƒ¼ã‚¯ãƒ³ã«å¯¾ã™ã‚‹ãƒ‘ãƒ¼ã‚¹ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @params [in] cursol ç¾åœ¨ã®èª­ã¿å–ã‚Šä½ç½®ã‚’è¡¨ã™ã‚«ãƒ¼ã‚½ãƒ«ã§ã™ã€‚
+	//! @return ãƒ‘ãƒ¼ã‚¹ãŒæˆåŠŸã—ãŸã‹ã©ã†ã‹ã§ã™ã€‚
 	virtual const bool Parse(vector<const Token>::const_iterator& cursol, vector<const Token>::const_iterator& end) const = 0;
 };
 
-//! ƒg[ƒNƒ“‚ğ‚Ğ‚Æ‚Â“Ç‚İæ‚éƒp[ƒT[‚Å‚·B
+//! ãƒˆãƒ¼ã‚¯ãƒ³ã‚’ã²ã¨ã¤èª­ã¿å–ã‚‹ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
 class TokenParser : public Parser
 {
-	const vector<const TokenKind> m_kinds; //!< “Ç‚İæ‚éƒg[ƒNƒ“‚Ìí—Ş‚Å‚·B
-	function<void(const Token)> m_action; //!< “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·B
+	const vector<const TokenKind> m_kinds; //!< èª­ã¿å–ã‚‹ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§ã™ã€‚
+	function<void(const Token)> m_action; //!< èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚
 public:
-	//! TokenParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·B
-	//! @params [in] kind “Ç‚İæ‚éƒg[ƒNƒ“‚Ìí—Ş‚Å‚·B
+	//! TokenParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚
+	//! @params [in] kind èª­ã¿å–ã‚‹ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§ã™ã€‚
 	TokenParser(const function<void(const Token)> action, const vector<const TokenKind> kinds);
 
-	//! TokenParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @params [in] kind “Ç‚İæ‚éƒg[ƒNƒ“‚Ìí—Ş‚Å‚·B
+	//! TokenParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @params [in] kind èª­ã¿å–ã‚‹ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§ã™ã€‚
 	TokenParser(const vector<const TokenKind> kinds);
 
-	//! TokenParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @params [in] kind “Ç‚İæ‚éƒg[ƒNƒ“‚Ìí—Ş‚Å‚·B
+	//! TokenParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @params [in] kind èª­ã¿å–ã‚‹ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§ã™ã€‚
 	TokenParser(const TokenKind kind);
 
-	//! ƒg[ƒNƒ“‚É‘Î‚·‚éƒp[ƒX‚ğs‚¢‚Ü‚·B
-	//! @params [in] cursol Œ»İ‚Ì“Ç‚İæ‚èˆÊ’u‚ğ•\‚·ƒJ[ƒ\ƒ‹‚Å‚·B
-	//! @return ƒp[ƒX‚ª¬Œ÷‚µ‚½‚©‚Ç‚¤‚©‚Å‚·B
+	//! ãƒˆãƒ¼ã‚¯ãƒ³ã«å¯¾ã™ã‚‹ãƒ‘ãƒ¼ã‚¹ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @params [in] cursol ç¾åœ¨ã®èª­ã¿å–ã‚Šä½ç½®ã‚’è¡¨ã™ã‚«ãƒ¼ã‚½ãƒ«ã§ã™ã€‚
+	//! @return ãƒ‘ãƒ¼ã‚¹ãŒæˆåŠŸã—ãŸã‹ã©ã†ã‹ã§ã™ã€‚
 	const bool Parse(vector<const Token>::const_iterator& cursol, vector<const Token>::const_iterator& end) const override;
 
-	//! “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚ğ“o˜^‚µ‚Ü‚·B
-	//! @param [in] “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·B
+	//! èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã‚’ç™»éŒ²ã—ã¾ã™ã€‚
+	//! @param [in] èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚
 	const shared_ptr<const TokenParser> Action(const function<void(const Token)> action) const;
 
-	//! “ñ‚Â‚ÌTokenPerser‚ğŒ³‚É•¡”‚Ìí—Ş‚ğ‚Æ‚éTokenParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @params [in] parser ’Ç‰Á‚·‚éí—Ş‚Ì‚ÌParser‚Å‚·B
+	//! äºŒã¤ã®TokenPerserã‚’å…ƒã«è¤‡æ•°ã®ç¨®é¡ã‚’ã¨ã‚‹TokenParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @params [in] parser è¿½åŠ ã™ã‚‹ç¨®é¡ã®ã®Parserã§ã™ã€‚
 	const shared_ptr<const TokenParser> or(const shared_ptr<const TokenParser> parser) const;
 };
 
-//! ƒg[ƒNƒ“‚Ìƒp[ƒT[‚ğ¶¬‚µ‚Ü‚·B
-//! @params [in] kind “Ç‚İæ‚éƒg[ƒNƒ“‚Ìí—Ş‚Å‚·B
+//! ãƒˆãƒ¼ã‚¯ãƒ³ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã‚’ç”Ÿæˆã—ã¾ã™ã€‚
+//! @params [in] kind èª­ã¿å–ã‚‹ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§ã™ã€‚
 const shared_ptr<TokenParser> token(TokenKind kind);
 
-//! ‰½‚à“Ç‚İæ‚ç‚¸‚ÉƒAƒNƒVƒ‡ƒ“‚¾‚¯Às‚·‚éƒp[ƒT[‚Å‚·B
+//! ä½•ã‚‚èª­ã¿å–ã‚‰ãšã«ã‚¢ã‚¯ã‚·ãƒ§ãƒ³ã ã‘å®Ÿè¡Œã™ã‚‹ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
 class NoTokenParser : public Parser
 {
-	function<void(void)> m_action; //!< “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·B
+	function<void(void)> m_action; //!< èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚
 public:
-	//! NoTokenParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·B
+	//! NoTokenParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚
 	NoTokenParser(const function<void(void)> action);
 
-	//! ƒg[ƒNƒ“‚É‘Î‚·‚éƒp[ƒX‚ğs‚¢‚Ü‚·B
-	//! @params [in] cursol Œ»İ‚Ì“Ç‚İæ‚èˆÊ’u‚ğ•\‚·ƒJ[ƒ\ƒ‹‚Å‚·B
-	//! @return ƒp[ƒX‚ª¬Œ÷‚µ‚½‚©‚Ç‚¤‚©‚Å‚·B
+	//! ãƒˆãƒ¼ã‚¯ãƒ³ã«å¯¾ã™ã‚‹ãƒ‘ãƒ¼ã‚¹ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @params [in] cursol ç¾åœ¨ã®èª­ã¿å–ã‚Šä½ç½®ã‚’è¡¨ã™ã‚«ãƒ¼ã‚½ãƒ«ã§ã™ã€‚
+	//! @return ãƒ‘ãƒ¼ã‚¹ãŒæˆåŠŸã—ãŸã‹ã©ã†ã‹ã§ã™ã€‚
 	const bool Parse(vector<const Token>::const_iterator& cursol, vector<const Token>::const_iterator& end) const override;
 
-	//! “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚ğ“o˜^‚µ‚Ü‚·B
-	//! @param [in] “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·B
+	//! èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã‚’ç™»éŒ²ã—ã¾ã™ã€‚
+	//! @param [in] èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚
 	const shared_ptr<const NoTokenParser> Action(const function<void(void)> action) const;
 };
 
-//! ‰½‚à“Ç‚İæ‚ç‚¸‚ÉƒAƒNƒVƒ‡ƒ“‚¾‚¯Às‚·‚éƒp[ƒT[‚ğ¶¬‚µ‚Ü‚·B
+//! ä½•ã‚‚èª­ã¿å–ã‚‰ãšã«ã‚¢ã‚¯ã‚·ãƒ§ãƒ³ã ã‘å®Ÿè¡Œã™ã‚‹ãƒ‘ãƒ¼ã‚µãƒ¼ã‚’ç”Ÿæˆã—ã¾ã™ã€‚
 const shared_ptr<NoTokenParser> action(function<void(void)> action);
 
-//! “ñ‚Â‚Ì‹K‘¥‚ğ‡”Ô‚É‘g‚İ‡‚í‚¹‚½‹K‘¥‚ğ‡‚É“Ç‚İæ‚éƒp[ƒT[‚Å‚·B
+//! äºŒã¤ã®è¦å‰‡ã‚’é †ç•ªã«çµ„ã¿åˆã‚ã›ãŸè¦å‰‡ã‚’é †ã«èª­ã¿å–ã‚‹ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
 class SequenceParser : public Parser
 {
-	const shared_ptr<const Parser> m_parser1; //!< ˆê‚Â–Ú‚Ìƒp[ƒT[‚Å‚·B
-	const shared_ptr<const Parser> m_parser2; //!< “ñ‚Â–Ú‚Ìƒp[ƒT[‚Å‚·B
-	const function<void(void)> m_action; //!< “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·B
+	const shared_ptr<const Parser> m_parser1; //!< ä¸€ã¤ç›®ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
+	const shared_ptr<const Parser> m_parser2; //!< äºŒã¤ç›®ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
+	const function<void(void)> m_action; //!< èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚
 public:
-	//! SequenceParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·B
-	//! @params [in] parser1 ˆê‚Â–Ú‚ÌParser‚Å‚·B
-	//! @params [in] parser2 “ñ‚Â–Ú–Ú‚ÌParser‚Å‚·B
+	//! SequenceParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚
+	//! @params [in] parser1 ä¸€ã¤ç›®ã®Parserã§ã™ã€‚
+	//! @params [in] parser2 äºŒã¤ç›®ç›®ã®Parserã§ã™ã€‚
 	SequenceParser(const function<void(void)> action, const shared_ptr<const Parser> parser1, const shared_ptr<const Parser> parser2);
 
-	//! SequenceParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @params [in] parser1 ˆê‚Â–Ú‚ÌParser‚Å‚·B
-	//! @params [in] parser2 “ñ‚Â–Ú‚ÌParser‚Å‚·B
+	//! SequenceParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @params [in] parser1 ä¸€ã¤ç›®ã®Parserã§ã™ã€‚
+	//! @params [in] parser2 äºŒã¤ç›®ã®Parserã§ã™ã€‚
 	SequenceParser(const shared_ptr<const Parser> parser1, const shared_ptr<const Parser> parser2);
 
-	//! “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚ğ“o˜^‚µ‚Ü‚·B
-	//! @param [in] “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·B
+	//! èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã‚’ç™»éŒ²ã—ã¾ã™ã€‚
+	//! @param [in] èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚
 	const shared_ptr<const SequenceParser> Action(const function<void(void)> action) const;
 
-	//! “ñ‚Â‚Ì‹K‘¥‚É‘Î‚·‚éƒp[ƒX‚ğs‚¢‚Ü‚·B
-	//! @params [in] cursol Œ»İ‚Ì“Ç‚İæ‚èˆÊ’u‚ğ•\‚·ƒJ[ƒ\ƒ‹‚Å‚·B
-	//! @return ƒp[ƒX‚ª¬Œ÷‚µ‚½‚©‚Ç‚¤‚©‚Å‚·B
+	//! äºŒã¤ã®è¦å‰‡ã«å¯¾ã™ã‚‹ãƒ‘ãƒ¼ã‚¹ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @params [in] cursol ç¾åœ¨ã®èª­ã¿å–ã‚Šä½ç½®ã‚’è¡¨ã™ã‚«ãƒ¼ã‚½ãƒ«ã§ã™ã€‚
+	//! @return ãƒ‘ãƒ¼ã‚¹ãŒæˆåŠŸã—ãŸã‹ã©ã†ã‹ã§ã™ã€‚
 	const bool Parse(vector<const Token>::const_iterator& cursol, vector<const Token>::const_iterator& end) const override;
 };
 
-//! SequenceParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ¶¬‚µ‚Ü‚·B
-//! @params [in] parser1 ˆê‚Â–Ú‚ÌParser‚Å‚·B
-//! @params [in] parser2 “ñ‚Â–Ú‚ÌParser‚Å‚·B
+//! SequenceParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’ç”Ÿæˆã—ã¾ã™ã€‚
+//! @params [in] parser1 ä¸€ã¤ç›®ã®Parserã§ã™ã€‚
+//! @params [in] parser2 äºŒã¤ç›®ã®Parserã§ã™ã€‚
 const shared_ptr<const SequenceParser> operator>>(const shared_ptr<const Parser> parser1, const shared_ptr<const Parser> parser2);
 
-//! “ñ‚Â‚Ì‹K‘¥‚Ì‚Ç‚¿‚ç‚©‚ğ“Ç‚İæ‚éƒp[ƒT[‚Å‚·B
+//! äºŒã¤ã®è¦å‰‡ã®ã©ã¡ã‚‰ã‹ã‚’èª­ã¿å–ã‚‹ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
 class OrderedChoiceParser : public Parser
 {
-	const shared_ptr<const Parser> m_parser1; //!< ˆê‚Â–Ú‚Ìƒp[ƒT[‚Å‚·B
-	const shared_ptr<const Parser> m_parser2; //!< “ñ‚Â–Ú‚Ìƒp[ƒT[‚Å‚·B
-	const function<void(void)> m_action; //!< “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·B
+	const shared_ptr<const Parser> m_parser1; //!< ä¸€ã¤ç›®ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
+	const shared_ptr<const Parser> m_parser2; //!< äºŒã¤ç›®ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
+	const function<void(void)> m_action; //!< èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚
 public:
-	//! OrderedChoiceParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·B
-	//! @params [in] parser1 ˆê‚Â–Ú‚ÌParser‚Å‚·B
-	//! @params [in] parser2 “ñ‚Â–Ú–Ú‚ÌParser‚Å‚·B
+	//! OrderedChoiceParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚
+	//! @params [in] parser1 ä¸€ã¤ç›®ã®Parserã§ã™ã€‚
+	//! @params [in] parser2 äºŒã¤ç›®ç›®ã®Parserã§ã™ã€‚
 	OrderedChoiceParser(const function<void(void)> action, const shared_ptr<const Parser> parser1, const shared_ptr<const Parser> parser2);
 
-	//! OrderedChoiceParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @params [in] parser1 ˆê‚Â–Ú‚ÌParser‚Å‚·B
-	//! @params [in] parser2 “ñ‚Â–Ú‚ÌParser‚Å‚·B
+	//! OrderedChoiceParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @params [in] parser1 ä¸€ã¤ç›®ã®Parserã§ã™ã€‚
+	//! @params [in] parser2 äºŒã¤ç›®ã®Parserã§ã™ã€‚
 	OrderedChoiceParser(const shared_ptr<const Parser> parser1, const shared_ptr<const Parser> parser2);
 
-	//! “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚ğ“o˜^‚µ‚Ü‚·B
-	//! @param [in] “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·B
+	//! èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã‚’ç™»éŒ²ã—ã¾ã™ã€‚
+	//! @param [in] èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚
 	const shared_ptr<const OrderedChoiceParser> Action(const function<void(void)> action) const;
 
-	//! “ñ‚Â‚Ì‹K‘¥‚É‘Î‚·‚éƒp[ƒX‚ğs‚¢‚Ü‚·B
-	//! @params [in] cursol Œ»İ‚Ì“Ç‚İæ‚èˆÊ’u‚ğ•\‚·ƒJ[ƒ\ƒ‹‚Å‚·B
-	//! @return ƒp[ƒX‚ª¬Œ÷‚µ‚½‚©‚Ç‚¤‚©‚Å‚·B
+	//! äºŒã¤ã®è¦å‰‡ã«å¯¾ã™ã‚‹ãƒ‘ãƒ¼ã‚¹ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @params [in] cursol ç¾åœ¨ã®èª­ã¿å–ã‚Šä½ç½®ã‚’è¡¨ã™ã‚«ãƒ¼ã‚½ãƒ«ã§ã™ã€‚
+	//! @return ãƒ‘ãƒ¼ã‚¹ãŒæˆåŠŸã—ãŸã‹ã©ã†ã‹ã§ã™ã€‚
 	const bool Parse(vector<const Token>::const_iterator& cursol, vector<const Token>::const_iterator& end) const override;
 };
 
-//! OrderedChoiceParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ¶¬‚µ‚Ü‚·B
-//! @params [in] parser1 ˆê‚Â–Ú‚ÌParser‚Å‚·B
-//! @params [in] parser2 “ñ‚Â–Ú‚ÌParser‚Å‚·B
+//! OrderedChoiceParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’ç”Ÿæˆã—ã¾ã™ã€‚
+//! @params [in] parser1 ä¸€ã¤ç›®ã®Parserã§ã™ã€‚
+//! @params [in] parser2 äºŒã¤ç›®ã®Parserã§ã™ã€‚
 const shared_ptr<const OrderedChoiceParser> operator|(const shared_ptr<const Parser> parser1, const shared_ptr<const Parser> parser2);
 
-//! ‘¶İ‚µ‚È‚­‚Ä‚à¸”s‚Æ‚È‚ç‚È‚¢‹K‘¥‚ğ“Ç‚İæ‚éƒp[ƒT[‚Å‚·B
+//! å­˜åœ¨ã—ãªãã¦ã‚‚å¤±æ•—ã¨ãªã‚‰ãªã„è¦å‰‡ã‚’èª­ã¿å–ã‚‹ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
 class OptionalParser : public Parser
 {
-	const shared_ptr<const Parser> m_optional; //!< ‘¶İ‚µ‚Ä‚à‚µ‚È‚­‚Ä‚à‚æ‚¢‹K‘¥‚Å‚·B
-	const function<void(void)> m_action; //!< “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·B
+	const shared_ptr<const Parser> m_optional; //!< å­˜åœ¨ã—ã¦ã‚‚ã—ãªãã¦ã‚‚ã‚ˆã„è¦å‰‡ã§ã™ã€‚
+	const function<void(void)> m_action; //!< èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚
 public:
-	//! OptionalParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·B
-	//! @params [in] optional ‘¶İ‚µ‚Ä‚à‚µ‚È‚­‚Ä‚à‚æ‚¢‹K‘¥‚Å‚·B
+	//! OptionalParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚
+	//! @params [in] optional å­˜åœ¨ã—ã¦ã‚‚ã—ãªãã¦ã‚‚ã‚ˆã„è¦å‰‡ã§ã™ã€‚
 	OptionalParser(const function<void(void)> action, const shared_ptr<const Parser> optional);
 
-	//! OptionalParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @params [in] optional ‘¶İ‚µ‚Ä‚à‚µ‚È‚­‚Ä‚à‚æ‚¢‹K‘¥‚Å‚·B
+	//! OptionalParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @params [in] optional å­˜åœ¨ã—ã¦ã‚‚ã—ãªãã¦ã‚‚ã‚ˆã„è¦å‰‡ã§ã™ã€‚
 	OptionalParser(const shared_ptr<const Parser> optional);
 
-	//! “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚ğ“o˜^‚µ‚Ü‚·B
-	//! @param [in] “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·B
+	//! èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã‚’ç™»éŒ²ã—ã¾ã™ã€‚
+	//! @param [in] èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚
 	const shared_ptr<const OptionalParser> Action(const function<void(void)> action) const;
 
-	//! ƒIƒvƒVƒ‡ƒiƒ‹‚Èƒp[ƒX‚ğs‚¢‚Ü‚·B
-	//! @params [in] cursol Œ»İ‚Ì“Ç‚İæ‚èˆÊ’u‚ğ•\‚·ƒJ[ƒ\ƒ‹‚Å‚·B
-	//! @return ƒp[ƒX‚ª¬Œ÷‚µ‚½‚©‚Ç‚¤‚©‚Å‚·B
+	//! ã‚ªãƒ—ã‚·ãƒ§ãƒŠãƒ«ãªãƒ‘ãƒ¼ã‚¹ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @params [in] cursol ç¾åœ¨ã®èª­ã¿å–ã‚Šä½ç½®ã‚’è¡¨ã™ã‚«ãƒ¼ã‚½ãƒ«ã§ã™ã€‚
+	//! @return ãƒ‘ãƒ¼ã‚¹ãŒæˆåŠŸã—ãŸã‹ã©ã†ã‹ã§ã™ã€‚
 	const bool Parse(vector<const Token>::const_iterator& cursol, vector<const Token>::const_iterator& end) const override;
 };
 
-//! OptionalParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ¶¬‚µ‚Ü‚·B
-//! @params [in] optional ‘¶İ‚µ‚Ä‚à‚µ‚È‚­‚Ä‚à‚æ‚¢‹K‘¥‚Å‚·B
+//! OptionalParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’ç”Ÿæˆã—ã¾ã™ã€‚
+//! @params [in] optional å­˜åœ¨ã—ã¦ã‚‚ã—ãªãã¦ã‚‚ã‚ˆã„è¦å‰‡ã§ã™ã€‚
 const shared_ptr<const OptionalParser> operator-(const shared_ptr<const Parser> optional);
 
-//! 0‰ñˆÈã‚ÌŒJ‚è•Ô‚µ‚ğ“Ç‚İæ‚éƒp[ƒT[‚Å‚·B
+//! 0å›ä»¥ä¸Šã®ç¹°ã‚Šè¿”ã—ã‚’èª­ã¿å–ã‚‹ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
 class ZeroOrMoreParser : public Parser
 {
-	const shared_ptr<const Parser> m_once; //!< ŒJ‚è•Ô‚µ‚Ìˆê‰ñ•ª‚Æ‚È‚é‹K‘¥‚Å‚·B
-	const function<void(void)> m_action; //!< “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·B
+	const shared_ptr<const Parser> m_once; //!< ç¹°ã‚Šè¿”ã—ã®ä¸€å›åˆ†ã¨ãªã‚‹è¦å‰‡ã§ã™ã€‚
+	const function<void(void)> m_action; //!< èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚
 public:
-	//! ZeroOrMoreParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·B
-	//! @params [in] once ŒJ‚è•Ô‚µ‚Ìˆê‰ñ•ª‚Æ‚È‚é‹K‘¥‚Å‚·B
+	//! ZeroOrMoreParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚
+	//! @params [in] once ç¹°ã‚Šè¿”ã—ã®ä¸€å›åˆ†ã¨ãªã‚‹è¦å‰‡ã§ã™ã€‚
 	ZeroOrMoreParser(const function<void(void)> action, const shared_ptr<const Parser> once);
 
-	//! ZeroOrMoreParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @params [in] once ŒJ‚è•Ô‚µ‚Ìˆê‰ñ•ª‚Æ‚È‚é‹K‘¥‚Å‚·B
+	//! ZeroOrMoreParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @params [in] once ç¹°ã‚Šè¿”ã—ã®ä¸€å›åˆ†ã¨ãªã‚‹è¦å‰‡ã§ã™ã€‚
 	ZeroOrMoreParser(const shared_ptr<const Parser> once);
 
-	//! “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚ğ“o˜^‚µ‚Ü‚·B
-	//! @param [in] “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·B
+	//! èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã‚’ç™»éŒ²ã—ã¾ã™ã€‚
+	//! @param [in] èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚
 	const shared_ptr<const ZeroOrMoreParser> Action(const function<void(void)> action) const;
 
-	//! ŒJ‚è•Ô‚µ‚Ìƒp[ƒX‚ğs‚¢‚Ü‚·B
-	//! @params [in] cursol Œ»İ‚Ì“Ç‚İæ‚èˆÊ’u‚ğ•\‚·ƒJ[ƒ\ƒ‹‚Å‚·B
-	//! @return ƒp[ƒX‚ª¬Œ÷‚µ‚½‚©‚Ç‚¤‚©‚Å‚·B
+	//! ç¹°ã‚Šè¿”ã—ã®ãƒ‘ãƒ¼ã‚¹ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @params [in] cursol ç¾åœ¨ã®èª­ã¿å–ã‚Šä½ç½®ã‚’è¡¨ã™ã‚«ãƒ¼ã‚½ãƒ«ã§ã™ã€‚
+	//! @return ãƒ‘ãƒ¼ã‚¹ãŒæˆåŠŸã—ãŸã‹ã©ã†ã‹ã§ã™ã€‚
 	const bool Parse(vector<const Token>::const_iterator& cursol, vector<const Token>::const_iterator& end) const override;
 };
 
-////! ZeroOrMoreParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ¶¬‚µ‚Ü‚·B
-////! @params [in] once ŒJ‚è•Ô‚µ‚Ìˆê‰ñ•ª‚Æ‚È‚é‹K‘¥‚Å‚·B
+////! ZeroOrMoreParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’ç”Ÿæˆã—ã¾ã™ã€‚
+////! @params [in] once ç¹°ã‚Šè¿”ã—ã®ä¸€å›åˆ†ã¨ãªã‚‹è¦å‰‡ã§ã™ã€‚
 const shared_ptr<const Parser> operator~(const shared_ptr<const Parser> once);
 
-//! æ“Ç‚İ‚ğs‚¢AƒJ[ƒ\ƒ‹‚ği‚ß‚¸æ‚É‚»‚Ì‹K‘¥‚Ì•¶–@‚ª‘¶İ‚·‚é‚©‚Ç‚¤‚©‚ğ•Ô‚·ƒp[ƒT[‚Å‚·B
+//! å…ˆèª­ã¿ã‚’è¡Œã„ã€ã‚«ãƒ¼ã‚½ãƒ«ã‚’é€²ã‚ãšå…ˆã«ãã®è¦å‰‡ã®æ–‡æ³•ãŒå­˜åœ¨ã™ã‚‹ã‹ã©ã†ã‹ã‚’è¿”ã™ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
 class AndPredicateParser : public Parser
 {
-	const shared_ptr<const Parser> m_parser; //!< æ“Ç‚İ‚·‚é‹K‘¥‚Å‚·B
-	const function<void(bool)> m_action; //!< æ“Ç‚İ‚ğÀs‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·Bæ“Ç‚İ‚ª¬Œ÷‚µ‚½‚©‚Ç‚¤‚©‚ğó‚¯æ‚è‚Ü‚·B
+	const shared_ptr<const Parser> m_parser; //!< å…ˆèª­ã¿ã™ã‚‹è¦å‰‡ã§ã™ã€‚
+	const function<void(bool)> m_action; //!< å…ˆèª­ã¿ã‚’å®Ÿè¡Œã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚å…ˆèª­ã¿ãŒæˆåŠŸã—ãŸã‹ã©ã†ã‹ã‚’å—ã‘å–ã‚Šã¾ã™ã€‚
 public:
-	//! AndPredicateParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] æ“Ç‚İ‚ğÀs‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·Bæ“Ç‚İ‚ª¬Œ÷‚µ‚½‚©‚Ç‚¤‚©‚ğó‚¯æ‚è‚Ü‚·B
-	//! @params [in] parser æ“Ç‚İ‚·‚é‹K‘¥‚Å‚·B
+	//! AndPredicateParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] å…ˆèª­ã¿ã‚’å®Ÿè¡Œã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚å…ˆèª­ã¿ãŒæˆåŠŸã—ãŸã‹ã©ã†ã‹ã‚’å—ã‘å–ã‚Šã¾ã™ã€‚
+	//! @params [in] parser å…ˆèª­ã¿ã™ã‚‹è¦å‰‡ã§ã™ã€‚
 	AndPredicateParser(const function<void(bool)> action, const shared_ptr<const Parser> parser);
 
-	//! AndPredicateParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @params [in] parser æ“Ç‚İ‚·‚é‹K‘¥‚Å‚·B
+	//! AndPredicateParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @params [in] parser å…ˆèª­ã¿ã™ã‚‹è¦å‰‡ã§ã™ã€‚
 	AndPredicateParser(const shared_ptr<const Parser> parser);
 
-	//! “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚ğ“o˜^‚µ‚Ü‚·B
-	//! @param [in] æ“Ç‚İ‚ğÀs‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·Bæ“Ç‚İ‚ª¬Œ÷‚µ‚½‚©‚Ç‚¤‚©‚ğó‚¯æ‚è‚Ü‚·B
+	//! èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã‚’ç™»éŒ²ã—ã¾ã™ã€‚
+	//! @param [in] å…ˆèª­ã¿ã‚’å®Ÿè¡Œã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚å…ˆèª­ã¿ãŒæˆåŠŸã—ãŸã‹ã©ã†ã‹ã‚’å—ã‘å–ã‚Šã¾ã™ã€‚
 	const shared_ptr<const AndPredicateParser> Action(const function<void(bool)> action) const;
 
-	//! ŒJ‚è•Ô‚µ‚Ìƒp[ƒX‚ğs‚¢‚Ü‚·B
-	//! @params [in] cursol Œ»İ‚Ì“Ç‚İæ‚èˆÊ’u‚ğ•\‚·ƒJ[ƒ\ƒ‹‚Å‚·B
-	//! @return ƒp[ƒX‚ª¬Œ÷‚µ‚½‚©‚Ç‚¤‚©‚Å‚·B
+	//! ç¹°ã‚Šè¿”ã—ã®ãƒ‘ãƒ¼ã‚¹ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @params [in] cursol ç¾åœ¨ã®èª­ã¿å–ã‚Šä½ç½®ã‚’è¡¨ã™ã‚«ãƒ¼ã‚½ãƒ«ã§ã™ã€‚
+	//! @return ãƒ‘ãƒ¼ã‚¹ãŒæˆåŠŸã—ãŸã‹ã©ã†ã‹ã§ã™ã€‚
 	const bool Parse(vector<const Token>::const_iterator& cursol, vector<const Token>::const_iterator& end) const;
 };
 
-//! AndPredicateParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @params [in] parser æ“Ç‚İ‚·‚é‹K‘¥‚Å‚·B
+//! AndPredicateParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @params [in] parser å…ˆèª­ã¿ã™ã‚‹è¦å‰‡ã§ã™ã€‚
 const shared_ptr<const AndPredicateParser> operator&(const shared_ptr<const Parser> parser);
 
-//! o—Í‚·‚éƒf[ƒ^‚ğŠÇ—‚µ‚Ü‚·B
+//! å‡ºåŠ›ã™ã‚‹ãƒ‡ãƒ¼ã‚¿ã‚’ç®¡ç†ã—ã¾ã™ã€‚
 class OutputData
 {
-	SqlQueryInfo queryInfo; //!< SQL‚É‹Lq‚³‚ê‚½“à—e‚Å‚·B
-	vector<Column> allInputColumns; //!< “ü—Í‚ÉŠÜ‚Ü‚ê‚é‚·‚×‚Ä‚Ì—ñ‚Ìˆê——‚Å‚·B
+	SqlQueryInfo queryInfo; //!< SQLã«è¨˜è¿°ã•ã‚ŒãŸå†…å®¹ã§ã™ã€‚
+	vector<Column> allInputColumns; //!< å…¥åŠ›ã«å«ã¾ã‚Œã‚‹ã™ã¹ã¦ã®åˆ—ã®ä¸€è¦§ã§ã™ã€‚
 
-	const vector<const InputTable> &inputTables; //!< ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İæ‚Á‚½ƒf[ƒ^‚Å‚·B
+	const vector<const InputTable> &inputTables; //!< ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿å–ã£ãŸãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 
-	//! “ü—Íƒtƒ@ƒCƒ‹‚É‘‚¢‚Ä‚ ‚Á‚½‚·‚×‚Ä‚Ì—ñ‚ğallInputColumns‚Éİ’è‚µ‚Ü‚·B
+	//! å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã«æ›¸ã„ã¦ã‚ã£ãŸã™ã¹ã¦ã®åˆ—ã‚’allInputColumnsã«è¨­å®šã—ã¾ã™ã€‚
 	void InitializeAllInputColumns();
 
-	//! SELECT‹å‚Ì—ñ–¼w’è‚ª*‚¾‚Á‚½ê‡‚ÍA“ü—ÍCSV‚Ì—ñ–¼‚ª‚·‚×‚Ä‘I‘ğ‚³‚ê‚Ü‚·B
+	//! SELECTå¥ã®åˆ—åæŒ‡å®šãŒ*ã ã£ãŸå ´åˆã¯ã€å…¥åŠ›CSVã®åˆ—åãŒã™ã¹ã¦é¸æŠã•ã‚Œã¾ã™ã€‚
 	void OpenSelectAsterisk();
 
-	//! SELECT‹å‚Åw’è‚³‚ê‚½—ñ–¼‚ªA‰½ŒÂ–Ú‚Ì“ü—Íƒtƒ@ƒCƒ‹‚Ì‰½—ñ–Ú‚É‘Š“–‚·‚é‚©‚ğ”»•Ê‚µ‚Ü‚·B
+	//! SELECTå¥ã§æŒ‡å®šã•ã‚ŒãŸåˆ—åãŒã€ä½•å€‹ç›®ã®å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã®ä½•åˆ—ç›®ã«ç›¸å½“ã™ã‚‹ã‹ã‚’åˆ¤åˆ¥ã—ã¾ã™ã€‚
 	void SetAllColumns();
 
-	//! “ü—Í‚³‚ê‚½Šeƒe[ƒuƒ‹‚ÌAŒ»İo—Í‚µ‚Ä‚¢‚és‚ğw‚·ƒJ[ƒ\ƒ‹‚ğA‰Šú‰»‚³‚ê‚½ó‘Ô‚Åæ“¾‚µ‚Ü‚·B
-	//! @return ‰Šú‰»‚³‚ê‚½ƒJ[ƒ\ƒ‹‚Å‚·B
+	//! å…¥åŠ›ã•ã‚ŒãŸå„ãƒ†ãƒ¼ãƒ–ãƒ«ã®ã€ç¾åœ¨å‡ºåŠ›ã—ã¦ã„ã‚‹è¡Œã‚’æŒ‡ã™ã‚«ãƒ¼ã‚½ãƒ«ã‚’ã€åˆæœŸåŒ–ã•ã‚ŒãŸçŠ¶æ…‹ã§å–å¾—ã—ã¾ã™ã€‚
+	//! @return åˆæœŸåŒ–ã•ã‚ŒãŸã‚«ãƒ¼ã‚½ãƒ«ã§ã™ã€‚
 	const shared_ptr<vector<vector<const vector<const shared_ptr<const Data>>>::const_iterator>> OutputData::GetInitializedCurrentRows() const;
 
-	//! WHERE‚âORDER BY‚ğ“K—p‚µ‚Ä‚¢‚È‚¢‚·‚×‚Ä‚Ìs‚ğæ“¾‚µ‚Ü‚·B
-	//! @return ‚·‚×‚Ä‚Ìƒf[ƒ^sB“ü—Í‚³‚ê‚½‚·‚×‚Ä‚Ì“ü—Íƒf[ƒ^‚ğ•ÛŠÇ‚µ‚Ü‚·B
+	//! WHEREã‚„ORDER BYã‚’é©ç”¨ã—ã¦ã„ãªã„ã™ã¹ã¦ã®è¡Œã‚’å–å¾—ã—ã¾ã™ã€‚
+	//! @return ã™ã¹ã¦ã®ãƒ‡ãƒ¼ã‚¿è¡Œã€‚å…¥åŠ›ã•ã‚ŒãŸã™ã¹ã¦ã®å…¥åŠ›ãƒ‡ãƒ¼ã‚¿ã‚’ä¿ç®¡ã—ã¾ã™ã€‚
 	const shared_ptr<vector<const vector<const shared_ptr<const Data>>>> GetAllRows() const;
 
-	//! ƒf[ƒ^‚É‘Î‚µ‚ÄWHERE‹å‚ğ“K—p‚µ‚Ü‚·B
-	//! @params [in] outputRows “K—p‚³‚ê‚éƒf[ƒ^B
+	//! ãƒ‡ãƒ¼ã‚¿ã«å¯¾ã—ã¦WHEREå¥ã‚’é©ç”¨ã—ã¾ã™ã€‚
+	//! @params [in] outputRows é©ç”¨ã•ã‚Œã‚‹ãƒ‡ãƒ¼ã‚¿ã€‚
 	void ApplyWhere(vector<const vector<const shared_ptr<const Data>>> &outputRows) const;
 
-	//! ƒf[ƒ^‚É‘Î‚µ‚ÄORDER BY‹å‚ğ“K—p‚µ‚Ü‚·B
-	//! @params [in] outputRows “K—p‚³‚ê‚éƒf[ƒ^B
+	//! ãƒ‡ãƒ¼ã‚¿ã«å¯¾ã—ã¦ORDER BYå¥ã‚’é©ç”¨ã—ã¾ã™ã€‚
+	//! @params [in] outputRows é©ç”¨ã•ã‚Œã‚‹ãƒ‡ãƒ¼ã‚¿ã€‚
 	void ApplyOrderBy(vector<const vector<const shared_ptr<const Data>>> &outputRows) const;
 public:
 
-	//! OutputDataƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] queryInfo SQL‚Ìî•ñ‚Å‚·B
-	//! @param [in] inputTables ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İæ‚Á‚½ƒf[ƒ^‚Å‚·B
+	//! OutputDataã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] queryInfo SQLã®æƒ…å ±ã§ã™ã€‚
+	//! @param [in] inputTables ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿å–ã£ãŸãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 	OutputData(const SqlQueryInfo queryInfo, const vector<const InputTable> &inputTables);
 
-	//! o—Í‚·‚éƒJƒ‰ƒ€‚ğæ“¾‚µ‚Ü‚·B
-	//! @return o—Í‚·‚éƒJƒ‰ƒ€‚Å‚·B
+	//! å‡ºåŠ›ã™ã‚‹ã‚«ãƒ©ãƒ ã‚’å–å¾—ã—ã¾ã™ã€‚
+	//! @return å‡ºåŠ›ã™ã‚‹ã‚«ãƒ©ãƒ ã§ã™ã€‚
 	const vector<Column> columns() const;
 
-	//! o—Í‚·‚é‚·‚×‚Ä‚Ìƒf[ƒ^s‚ğæ“¾‚µ‚Ü‚·B
-	//! @return o—Í‚·‚é‚·‚×‚Ä‚Ìƒf[ƒ^sB“ü—Í‚³‚ê‚½‚·‚×‚Ä‚Ì“ü—Íƒf[ƒ^‚ğ•ÛŠÇ‚µ‚Ü‚·B
+	//! å‡ºåŠ›ã™ã‚‹ã™ã¹ã¦ã®ãƒ‡ãƒ¼ã‚¿è¡Œã‚’å–å¾—ã—ã¾ã™ã€‚
+	//! @return å‡ºåŠ›ã™ã‚‹ã™ã¹ã¦ã®ãƒ‡ãƒ¼ã‚¿è¡Œã€‚å…¥åŠ›ã•ã‚ŒãŸã™ã¹ã¦ã®å…¥åŠ›ãƒ‡ãƒ¼ã‚¿ã‚’ä¿ç®¡ã—ã¾ã™ã€‚
 	const shared_ptr<const vector<const vector<const shared_ptr<const Data>>>> outputRows() const;
 };
 
-//! SqlQuery‚ÌCsv‚É‘Î‚·‚é“üo—Í‚ğˆµ‚¢‚Ü‚·B
+//! SqlQueryã®Csvã«å¯¾ã™ã‚‹å…¥å‡ºåŠ›ã‚’æ‰±ã„ã¾ã™ã€‚
 class Csv
 {
-	const shared_ptr<const SqlQueryInfo> queryInfo; //!< SQL‚É‹Lq‚³‚ê‚½“à—e‚Å‚·B
+	const shared_ptr<const SqlQueryInfo> queryInfo; //!< SQLã«è¨˜è¿°ã•ã‚ŒãŸå†…å®¹ã§ã™ã€‚
 
-	//! ƒtƒ@ƒCƒ‹ƒXƒgƒŠ[ƒ€‚©‚çƒJƒ“ƒ}‹æØ‚è‚Ìˆês‚ğ“Ç‚İ‚İ‚Ü‚·B
-	//! @param [in] inputFile ƒf[ƒ^‚ğ“Ç‚İ‚Şƒtƒ@ƒCƒ‹ƒXƒgƒŠ[ƒ€‚Å‚·B
-	//! @return ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İ‚ñ‚¾ˆês•ª‚Ìƒf[ƒ^‚Å‚·B
+	//! ãƒ•ã‚¡ã‚¤ãƒ«ã‚¹ãƒˆãƒªãƒ¼ãƒ ã‹ã‚‰ã‚«ãƒ³ãƒåŒºåˆ‡ã‚Šã®ä¸€è¡Œã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+	//! @param [in] inputFile ãƒ‡ãƒ¼ã‚¿ã‚’èª­ã¿è¾¼ã‚€ãƒ•ã‚¡ã‚¤ãƒ«ã‚¹ãƒˆãƒªãƒ¼ãƒ ã§ã™ã€‚
+	//! @return ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿è¾¼ã‚“ã ä¸€è¡Œåˆ†ã®ãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 	const shared_ptr<const vector<const string>> ReadLineData(ifstream &inputFile) const;
 
-	//! “ü—Íƒtƒ@ƒCƒ‹‚ğŠJ‚«‚Ü‚·B
-	//! @param [in] filePath ŠJ‚­ƒtƒ@ƒCƒ‹‚Ìƒtƒ@ƒCƒ‹ƒpƒX‚Å‚·B
-	//! @return “ü—Íƒtƒ@ƒCƒ‹‚ğˆµ‚¤ƒXƒgƒŠ[ƒ€‚Å‚·B
+	//! å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ãã¾ã™ã€‚
+	//! @param [in] filePath é–‹ããƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ•ã‚¡ã‚¤ãƒ«ãƒ‘ã‚¹ã§ã™ã€‚
+	//! @return å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æ‰±ã†ã‚¹ãƒˆãƒªãƒ¼ãƒ ã§ã™ã€‚
 	ifstream OpenInputFile(const string filePath) const;
 
-	//! “ü—Íƒtƒ@ƒCƒ‹‚ğ•Â‚¶‚Ü‚·B
-	//! @param [in] inputFile “ü—Íƒtƒ@ƒCƒ‹‚ğˆµ‚¤ƒXƒgƒŠ[ƒ€‚Å‚·B
+	//! å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‰ã˜ã¾ã™ã€‚
+	//! @param [in] inputFile å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æ‰±ã†ã‚¹ãƒˆãƒªãƒ¼ãƒ ã§ã™ã€‚
 	void CloseInputFile(ifstream &inputFile) const;
 
-	//! “ü—ÍCSV‚Ìƒwƒbƒ_s‚ğ“Ç‚İ‚İ‚Ü‚·B
-	//! @param [in] inputFile “ü—Íƒtƒ@ƒCƒ‹‚ğˆµ‚¤ƒXƒgƒŠ[ƒ€‚Å‚·BŠJ‚¢‚½Œã‰½‚à“Ç‚İ‚ñ‚Å‚¢‚Ü‚¹‚ñB
-	//! @param [in] tableName SQL‚Åw’è‚³‚ê‚½ƒe[ƒuƒ‹–¼‚Å‚·B
-	//! @return ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İæ‚Á‚½ƒwƒbƒ_î•ñ‚Å‚·B
+	//! å…¥åŠ›CSVã®ãƒ˜ãƒƒãƒ€è¡Œã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+	//! @param [in] inputFile å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æ‰±ã†ã‚¹ãƒˆãƒªãƒ¼ãƒ ã§ã™ã€‚é–‹ã„ãŸå¾Œä½•ã‚‚èª­ã¿è¾¼ã‚“ã§ã„ã¾ã›ã‚“ã€‚
+	//! @param [in] tableName SQLã§æŒ‡å®šã•ã‚ŒãŸãƒ†ãƒ¼ãƒ–ãƒ«åã§ã™ã€‚
+	//! @return ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿å–ã£ãŸãƒ˜ãƒƒãƒ€æƒ…å ±ã§ã™ã€‚
 	const shared_ptr<const vector<const Column>> ReadHeader(ifstream &inputFile, const string tableName) const;
 
-	//! “ü—ÍCSV‚Ìƒf[ƒ^s‚ğ“Ç‚İ‚İ‚Ü‚·B
-	//! @param [in] inputFile “ü—Íƒtƒ@ƒCƒ‹‚ğˆµ‚¤ƒXƒgƒŠ[ƒ€‚Å‚·B‚·‚Å‚Éƒwƒbƒ_‚Ì‚İ‚ğ“Ç‚İ‚ñ‚¾Œã‚Å‚·B
-	//! @return ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İæ‚Á‚½ƒf[ƒ^‚Å‚·B
+	//! å…¥åŠ›CSVã®ãƒ‡ãƒ¼ã‚¿è¡Œã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+	//! @param [in] inputFile å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æ‰±ã†ã‚¹ãƒˆãƒªãƒ¼ãƒ ã§ã™ã€‚ã™ã§ã«ãƒ˜ãƒƒãƒ€ã®ã¿ã‚’èª­ã¿è¾¼ã‚“ã å¾Œã§ã™ã€‚
+	//! @return ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿å–ã£ãŸãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 	const shared_ptr<vector<const vector<const shared_ptr<const Data>>>> ReadData(ifstream &inputFile) const;
 
-	//! o—Íƒtƒ@ƒCƒ‹‚ğŠJ‚«‚Ü‚·B
-	//! @param [in] filePath ŠJ‚­ƒtƒ@ƒCƒ‹‚Ìƒtƒ@ƒCƒ‹ƒpƒX‚Å‚·B
-	//! @return o—Íƒtƒ@ƒCƒ‹‚ğˆµ‚¤ƒXƒgƒŠ[ƒ€‚Å‚·B
+	//! å‡ºåŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ãã¾ã™ã€‚
+	//! @param [in] filePath é–‹ããƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ•ã‚¡ã‚¤ãƒ«ãƒ‘ã‚¹ã§ã™ã€‚
+	//! @return å‡ºåŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æ‰±ã†ã‚¹ãƒˆãƒªãƒ¼ãƒ ã§ã™ã€‚
 	ofstream OpenOutputFile(const string filePath) const;
 
-	//! o—Íƒtƒ@ƒCƒ‹‚ğ•Â‚¶‚Ü‚·B
-	//! @param [in] OutputFile “ü—Íƒtƒ@ƒCƒ‹‚ğˆµ‚¤ƒXƒgƒŠ[ƒ€‚Å‚·B
+	//! å‡ºåŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‰ã˜ã¾ã™ã€‚
+	//! @param [in] OutputFile å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æ‰±ã†ã‚¹ãƒˆãƒªãƒ¼ãƒ ã§ã™ã€‚
 	void CloseOutputFile(ofstream &outputFile) const;
 
-	//! “ü—ÍCSV‚Ìƒwƒbƒ_s‚ğ“Ç‚İ‚İ‚Ü‚·B
-	//! @param [in] OutputFile o—Íƒtƒ@ƒCƒ‹‚ğˆµ‚¤ƒXƒgƒŠ[ƒ€‚Å‚·BŠJ‚¢‚½Œã‰½‚à“Ç‚İ‚ñ‚Å‚¢‚Ü‚¹‚ñB
-	//! @param [in] columns o—Í‚·‚éƒwƒbƒ_î•ñ‚Å‚·B
+	//! å…¥åŠ›CSVã®ãƒ˜ãƒƒãƒ€è¡Œã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+	//! @param [in] OutputFile å‡ºåŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æ‰±ã†ã‚¹ãƒˆãƒªãƒ¼ãƒ ã§ã™ã€‚é–‹ã„ãŸå¾Œä½•ã‚‚èª­ã¿è¾¼ã‚“ã§ã„ã¾ã›ã‚“ã€‚
+	//! @param [in] columns å‡ºåŠ›ã™ã‚‹ãƒ˜ãƒƒãƒ€æƒ…å ±ã§ã™ã€‚
 	void WriteHeader(ofstream &outputFile, const vector<Column> &columns) const;
 
-	//! “ü—ÍCSV‚Ìƒf[ƒ^s‚ğ“Ç‚İ‚İ‚Ü‚·B
-	//! @param [in] OutputFile o—Íƒtƒ@ƒCƒ‹‚ğˆµ‚¤ƒXƒgƒŠ[ƒ€‚Å‚·B‚·‚Å‚Éƒwƒbƒ_‚Ì‚İ‚ğ“Ç‚İ‚ñ‚¾Œã‚Å‚·B
-	//! columns [in] o—Í‚·‚éƒf[ƒ^‚Å‚·B
+	//! å…¥åŠ›CSVã®ãƒ‡ãƒ¼ã‚¿è¡Œã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+	//! @param [in] OutputFile å‡ºåŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æ‰±ã†ã‚¹ãƒˆãƒªãƒ¼ãƒ ã§ã™ã€‚ã™ã§ã«ãƒ˜ãƒƒãƒ€ã®ã¿ã‚’èª­ã¿è¾¼ã‚“ã å¾Œã§ã™ã€‚
+	//! columns [in] å‡ºåŠ›ã™ã‚‹ãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 	void WriteData(ofstream &outputFile, const OutputData &data) const;
 public:
 
-	//! CsvƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] queryInfo SQL‚É‹Lq‚³‚ê‚½“à—e‚Å‚·B
+	//! Csvã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] queryInfo SQLã«è¨˜è¿°ã•ã‚ŒãŸå†…å®¹ã§ã™ã€‚
 	Csv(const shared_ptr<const SqlQueryInfo> queryInfo);
 
-	//! CSVƒtƒ@ƒCƒ‹‚©‚ç“ü—Íƒf[ƒ^‚ğ“Ç‚İæ‚è‚Ü‚·B
-	//! @return ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İæ‚Á‚½ƒf[ƒ^‚Å‚·B
+	//! CSVãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰å…¥åŠ›ãƒ‡ãƒ¼ã‚¿ã‚’èª­ã¿å–ã‚Šã¾ã™ã€‚
+	//! @return ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿å–ã£ãŸãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 	const shared_ptr<const vector<const InputTable>> Read() const;
 
-	//! CSVƒtƒ@ƒCƒ‹‚Éo—Íƒf[ƒ^‚ğ‘‚«‚İ‚Ü‚·B
-	//! @param [in] outputFileName Œ‹‰Ê‚ğo—Í‚·‚éƒtƒ@ƒCƒ‹‚Ìƒtƒ@ƒCƒ‹–¼‚Å‚·B
-	//! @param [in] inputTables ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İæ‚Á‚½ƒf[ƒ^‚Å‚·B
+	//! CSVãƒ•ã‚¡ã‚¤ãƒ«ã«å‡ºåŠ›ãƒ‡ãƒ¼ã‚¿ã‚’æ›¸ãè¾¼ã¿ã¾ã™ã€‚
+	//! @param [in] outputFileName çµæœã‚’å‡ºåŠ›ã™ã‚‹ãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ•ã‚¡ã‚¤ãƒ«åã§ã™ã€‚
+	//! @param [in] inputTables ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿å–ã£ãŸãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 	void Write(const string outputFileName, const vector<const InputTable> &inputTables) const;
 };
 
-//! ƒtƒ@ƒCƒ‹‚É‘Î‚µ‚ÄÀs‚·‚éSQL‚ğ•\‚·ƒNƒ‰ƒX‚Å‚·B
+//! ãƒ•ã‚¡ã‚¤ãƒ«ã«å¯¾ã—ã¦å®Ÿè¡Œã™ã‚‹SQLã‚’è¡¨ã™ã‚¯ãƒ©ã‚¹ã§ã™ã€‚
 class SqlQuery
 {
-	const string space = " \t\r\n"; //!< ‘S‚Ä‚Ì‹ó”’•¶š‚Å‚·B
+	const string space = " \t\r\n"; //!< å…¨ã¦ã®ç©ºç™½æ–‡å­—ã§ã™ã€‚
 
-	const vector<const shared_ptr<const TokenReader>> tokenReaders; //!< ƒg[ƒNƒ“‚Ì“Ç‚İ‚İƒƒWƒbƒN‚ÌW‡‚Å‚·B
-	const vector<const Operator> operators; //!< ‰‰Zq‚Ìî•ñ‚Å‚·B
+	const vector<const shared_ptr<const TokenReader>> tokenReaders; //!< ãƒˆãƒ¼ã‚¯ãƒ³ã®èª­ã¿è¾¼ã¿ãƒ­ã‚¸ãƒƒã‚¯ã®é›†åˆã§ã™ã€‚
+	const vector<const Operator> operators; //!< æ¼”ç®—å­ã®æƒ…å ±ã§ã™ã€‚
 
-	shared_ptr<Csv> csv; //!< CSV‘€ì‚ğŠÇ—‚µ‚Ü‚·B
+	shared_ptr<Csv> csv; //!< CSVæ“ä½œã‚’ç®¡ç†ã—ã¾ã™ã€‚
 
-	//! SQL‚Ì•¶š—ñ‚©‚çƒg[ƒNƒ“‚ğØ‚èo‚µ‚Ü‚·B
-	//! @param [in] sql ƒg[ƒNƒ“‚É•ª‰ğ‚·‚éŒ³‚Æ‚È‚éSQL‚Å‚·B
-	//! @return Ø‚èo‚³‚ê‚½ƒg[ƒNƒ“‚Å‚·B
+	//! SQLã®æ–‡å­—åˆ—ã‹ã‚‰ãƒˆãƒ¼ã‚¯ãƒ³ã‚’åˆ‡ã‚Šå‡ºã—ã¾ã™ã€‚
+	//! @param [in] sql ãƒˆãƒ¼ã‚¯ãƒ³ã«åˆ†è§£ã™ã‚‹å…ƒã¨ãªã‚‹SQLã§ã™ã€‚
+	//! @return åˆ‡ã‚Šå‡ºã•ã‚ŒãŸãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚
 	const shared_ptr<const vector<const Token>> GetTokens(const string sql) const;
 
-	//! ƒg[ƒNƒ“‚ğ‰ğÍ‚µ‚ÄSQL‚Ì\•¶‚Åw’è‚³‚ê‚½î•ñ‚ğæ“¾‚µ‚Ü‚·B
-	//! @param [in] tokens ‰ğÍ‚Ì‘ÎÛ‚Æ‚È‚éƒg[ƒNƒ“‚Å‚·B
-	//! @return ‰ğÍ‚µ‚½Œ‹‰Ê‚Ìî•ñ‚Å‚·B
+	//! ãƒˆãƒ¼ã‚¯ãƒ³ã‚’è§£æã—ã¦SQLã®æ§‹æ–‡ã§æŒ‡å®šã•ã‚ŒãŸæƒ…å ±ã‚’å–å¾—ã—ã¾ã™ã€‚
+	//! @param [in] tokens è§£æã®å¯¾è±¡ã¨ãªã‚‹ãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚
+	//! @return è§£æã—ãŸçµæœã®æƒ…å ±ã§ã™ã€‚
 	const shared_ptr<const SqlQueryInfo> AnalyzeTokens(const vector<const Token> &tokens) const;
 public:
-	//! SqlQueryƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] sql Às‚·‚éSQL‚Å‚·B
+	//! SqlQueryã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] sql å®Ÿè¡Œã™ã‚‹SQLã§ã™ã€‚
 	SqlQuery(const string sql);
 
-	//! ƒJƒŒƒ“ƒgƒfƒBƒŒƒNƒgƒŠ‚É‚ ‚éCSV‚É‘Î‚µAŠÈˆÕ“I‚ÈSQL‚ğÀs‚µAŒ‹‰Ê‚ğƒtƒ@ƒCƒ‹‚Éo—Í‚µ‚Ü‚·B
-	//! @param[in] outputFileName SQL‚ÌÀsŒ‹‰Ê‚ğCSV‚Æ‚µ‚Äo—Í‚·‚éƒtƒ@ƒCƒ‹–¼‚Å‚·BŠg’£q‚ğŠÜ‚İ‚Ü‚·B
+	//! ã‚«ãƒ¬ãƒ³ãƒˆãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã«ã‚ã‚‹CSVã«å¯¾ã—ã€ç°¡æ˜“çš„ãªSQLã‚’å®Ÿè¡Œã—ã€çµæœã‚’ãƒ•ã‚¡ã‚¤ãƒ«ã«å‡ºåŠ›ã—ã¾ã™ã€‚
+	//! @param[in] outputFileName SQLã®å®Ÿè¡Œçµæœã‚’CSVã¨ã—ã¦å‡ºåŠ›ã™ã‚‹ãƒ•ã‚¡ã‚¤ãƒ«åã§ã™ã€‚æ‹¡å¼µå­ã‚’å«ã¿ã¾ã™ã€‚
 	void Execute(const string outputFileName);
 };
 
-// ˆÈãƒwƒbƒ_‚É‘Š“–‚·‚é•”•ªB
+// ä»¥ä¸Šãƒ˜ãƒƒãƒ€ã«ç›¸å½“ã™ã‚‹éƒ¨åˆ†ã€‚
 
-//! “ñ‚Â‚Ì•¶š—ñ‚ğA‘å•¶š¬•¶š‚ğ‹æ•Ê‚¹‚¸‚É”äŠr‚µA“™‚µ‚¢‚©‚Ç‚¤‚©‚Å‚·B
-//! @param [in] str1 ”äŠr‚³‚ê‚éˆê‚Â–Ú‚Ì•¶š—ñ‚Å‚·B
-//! @param [in] str2 ”äŠr‚³‚ê‚é“ñ‚Â–Ú‚Ì•¶š—ñ‚Å‚·B
-//! @return ”äŠr‚µ‚½Œ‹‰ÊA“™‚µ‚¢‚©‚Ç‚¤‚©‚Å‚·B
+//! äºŒã¤ã®æ–‡å­—åˆ—ã‚’ã€å¤§æ–‡å­—å°æ–‡å­—ã‚’åŒºåˆ¥ã›ãšã«æ¯”è¼ƒã—ã€ç­‰ã—ã„ã‹ã©ã†ã‹ã§ã™ã€‚
+//! @param [in] str1 æ¯”è¼ƒã•ã‚Œã‚‹ä¸€ã¤ç›®ã®æ–‡å­—åˆ—ã§ã™ã€‚
+//! @param [in] str2 æ¯”è¼ƒã•ã‚Œã‚‹äºŒã¤ç›®ã®æ–‡å­—åˆ—ã§ã™ã€‚
+//! @return æ¯”è¼ƒã—ãŸçµæœã€ç­‰ã—ã„ã‹ã©ã†ã‹ã§ã™ã€‚
 bool Equali(const string str1, const string str2){
 	return
 		str1.size() == str2.size() &&
@@ -1099,111 +1099,111 @@ bool Equali(const string str1, const string str2){
 		[](const char &c1, const char &c2){return toupper(c1) == toupper(c2); });
 }
 
-//! DataƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
+//! Dataã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 Data::Data(){}
 
-//! DataŒ^‚Ì‹ïÛƒNƒ‰ƒX‚ÌƒCƒ“ƒXƒ^ƒ“ƒX‚ğ•Ô‚µ‚Ü‚·B
-//! @param [in] value ƒf[ƒ^‚ÌÀÛ‚Ì’l‚Å‚·B
+//! Dataå‹ã®å…·è±¡ã‚¯ãƒ©ã‚¹ã®ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’è¿”ã—ã¾ã™ã€‚
+//! @param [in] value ãƒ‡ãƒ¼ã‚¿ã®å®Ÿéš›ã®å€¤ã§ã™ã€‚
 shared_ptr<Data> Data::New(const std::string value)
 {
 	return make_shared<StringData>(value);
 }
 
-//! DataŒ^‚Ì‹ïÛƒNƒ‰ƒX‚ÌƒCƒ“ƒXƒ^ƒ“ƒX‚ğ•Ô‚µ‚Ü‚·B
-//! @param [in] value ƒf[ƒ^‚ÌÀÛ‚Ì’l‚Å‚·B
+//! Dataå‹ã®å…·è±¡ã‚¯ãƒ©ã‚¹ã®ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’è¿”ã—ã¾ã™ã€‚
+//! @param [in] value ãƒ‡ãƒ¼ã‚¿ã®å®Ÿéš›ã®å€¤ã§ã™ã€‚
 shared_ptr<Data> Data::New(const int value)
 {
 	return make_shared<IntegerData>(value);
 }
 
-//! DataŒ^‚Ì‹ïÛƒNƒ‰ƒX‚ÌƒCƒ“ƒXƒ^ƒ“ƒX‚ğ•Ô‚µ‚Ü‚·B
-//! @param [in] value ƒf[ƒ^‚ÌÀÛ‚Ì’l‚Å‚·B
+//! Dataå‹ã®å…·è±¡ã‚¯ãƒ©ã‚¹ã®ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’è¿”ã—ã¾ã™ã€‚
+//! @param [in] value ãƒ‡ãƒ¼ã‚¿ã®å®Ÿéš›ã®å€¤ã§ã™ã€‚
 shared_ptr<Data> Data::New(const bool value)
 {
 	return make_shared<BooleanData>(value);
 }
 
-//! ƒf[ƒ^‚ª•¶š—ñŒ^‚Ìê‡‚Ì’l‚ğæ“¾‚µ‚Ü‚·B
-//! @return ƒf[ƒ^‚ª•¶š—ñŒ^‚Ìê‡‚Ì’l‚Å‚·B
+//! ãƒ‡ãƒ¼ã‚¿ãŒæ–‡å­—åˆ—å‹ã®å ´åˆã®å€¤ã‚’å–å¾—ã—ã¾ã™ã€‚
+//! @return ãƒ‡ãƒ¼ã‚¿ãŒæ–‡å­—åˆ—å‹ã®å ´åˆã®å€¤ã§ã™ã€‚
 const DataType Data::type() const
 {
 	return m_type;
 }
 
-//! ƒf[ƒ^‚ª•¶š—ñŒ^‚Ìê‡‚Ì’l‚ğæ“¾‚µ‚Ü‚·B
-//! @return ƒf[ƒ^‚ª•¶š—ñŒ^‚Ìê‡‚Ì’l‚Å‚·B
+//! ãƒ‡ãƒ¼ã‚¿ãŒæ–‡å­—åˆ—å‹ã®å ´åˆã®å€¤ã‚’å–å¾—ã—ã¾ã™ã€‚
+//! @return ãƒ‡ãƒ¼ã‚¿ãŒæ–‡å­—åˆ—å‹ã®å ´åˆã®å€¤ã§ã™ã€‚
 const string& Data::string() const
 {
 	return defaultString;
 }
 
-//! ƒf[ƒ^‚ª®”Œ^‚Ìê‡‚Ì’l‚ğæ“¾‚µ‚Ü‚·B
-//! @return ƒf[ƒ^‚ª®”Œ^‚Ìê‡‚Ì’l‚Å‚·B
+//! ãƒ‡ãƒ¼ã‚¿ãŒæ•´æ•°å‹ã®å ´åˆã®å€¤ã‚’å–å¾—ã—ã¾ã™ã€‚
+//! @return ãƒ‡ãƒ¼ã‚¿ãŒæ•´æ•°å‹ã®å ´åˆã®å€¤ã§ã™ã€‚
 const int Data::integer() const
 {
 	return 0;
 }
 
-//! ƒf[ƒ^‚ª^‹U’lŒ^‚Ìê‡‚Ì’l‚ğæ“¾‚µ‚Ü‚·B
-//! @return ƒf[ƒ^‚ª^‹U’lŒ^‚Ìê‡‚Ì’l‚Å‚·B
+//! ãƒ‡ãƒ¼ã‚¿ãŒçœŸå½å€¤å‹ã®å ´åˆã®å€¤ã‚’å–å¾—ã—ã¾ã™ã€‚
+//! @return ãƒ‡ãƒ¼ã‚¿ãŒçœŸå½å€¤å‹ã®å ´åˆã®å€¤ã§ã™ã€‚
 const bool Data::boolean() const
 {
 	return false;
 }
 
-//! DataƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] value ƒf[ƒ^‚Ì’l‚Å‚·B
+//! Dataã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] value ãƒ‡ãƒ¼ã‚¿ã®å€¤ã§ã™ã€‚
 StringData::StringData(const std::string value) : m_string(value){}
 
-//! ƒf[ƒ^‚ÌŒ^‚ğæ“¾‚µ‚Ü‚·B
-//! @return ƒf[ƒ^‚ÌŒ^‚Å‚·B
+//! ãƒ‡ãƒ¼ã‚¿ã®å‹ã‚’å–å¾—ã—ã¾ã™ã€‚
+//! @return ãƒ‡ãƒ¼ã‚¿ã®å‹ã§ã™ã€‚
 const DataType StringData::type() const
 {
 	return DataType::STRING;
 }
 
-//! ƒf[ƒ^‚ª•¶š—ñŒ^‚Ìê‡‚Ì’l‚ğæ“¾‚µ‚Ü‚·B
-//! @return ƒf[ƒ^‚ª•¶š—ñŒ^‚Ìê‡‚Ì’l‚Å‚·B
+//! ãƒ‡ãƒ¼ã‚¿ãŒæ–‡å­—åˆ—å‹ã®å ´åˆã®å€¤ã‚’å–å¾—ã—ã¾ã™ã€‚
+//! @return ãƒ‡ãƒ¼ã‚¿ãŒæ–‡å­—åˆ—å‹ã®å ´åˆã®å€¤ã§ã™ã€‚
 const string& StringData::string() const
 {
 	return m_string;
 }
 
-//! ‰ÁZ‰‰Z‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ‰ÁZ‚µ‚½Œ‹‰Ê‚Å‚·B
+//! åŠ ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return åŠ ç®—ã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> StringData::operator+(const shared_ptr<const Data>& right) const
 {
 	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 }
 
-//! Œ¸Z‰‰Z‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return Œ¸Z‚µ‚½Œ‹‰Ê‚Å‚·B
+//! æ¸›ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¸›ç®—ã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> StringData::operator-(const shared_ptr<const Data>& right) const
 {
 	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 }
 
-//! æZ‰‰Z‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return æZ‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ä¹—ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return ä¹—ç®—ã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> StringData::operator*(const shared_ptr<const Data>& right) const
 {
 	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 }
 
-//! œZ‰‰Z‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return œZ‚µ‚½Œ‹‰Ê‚Å‚·B
+//! é™¤ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return é™¤ç®—ã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> StringData::operator/(const shared_ptr<const Data>& right) const
 {
 	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 }
 
-//! “™’l”äŠr‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ç­‰å€¤æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> StringData::operator==(const shared_ptr<const Data>& right) const
 {
 	if (right->type() == DataType::STRING){
@@ -1214,9 +1214,9 @@ const shared_ptr<const Data> StringData::operator==(const shared_ptr<const Data>
 	}
 }
 
-//! •s“™”äŠr‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ä¸ç­‰æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> StringData::operator!=(const shared_ptr<const Data>& right) const
 {
 	if (right->type() == DataType::STRING){
@@ -1227,9 +1227,9 @@ const shared_ptr<const Data> StringData::operator!=(const shared_ptr<const Data>
 	}
 }
 
-//! ˆÈã”äŠr‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ä»¥ä¸Šæ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> StringData::operator>=(const shared_ptr<const Data>& right) const
 {
 	if (right->type() == DataType::STRING){
@@ -1240,9 +1240,9 @@ const shared_ptr<const Data> StringData::operator>=(const shared_ptr<const Data>
 	}
 }
 
-//! ‘å‚«‚¢”äŠr‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+//! å¤§ãã„æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> StringData::operator>(const shared_ptr<const Data>& right) const
 {
 	if (right->type() == DataType::STRING){
@@ -1253,9 +1253,9 @@ const shared_ptr<const Data> StringData::operator>(const shared_ptr<const Data>&
 	}
 }
 
-//! ˆÈ‰º”äŠr‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ä»¥ä¸‹æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> StringData::operator<=(const shared_ptr<const Data>& right) const
 {
 	if (right->type() == DataType::STRING){
@@ -1266,9 +1266,9 @@ const shared_ptr<const Data> StringData::operator<=(const shared_ptr<const Data>
 	}
 }
 
-//! ¬‚³‚¢”äŠr‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+//! å°ã•ã„æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> StringData::operator<(const shared_ptr<const Data>& right) const
 {
 	if (right->type() == DataType::STRING){
@@ -1279,43 +1279,43 @@ const shared_ptr<const Data> StringData::operator<(const shared_ptr<const Data>&
 	}
 }
 
-//! AND‰‰Z‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ‰‰Z‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ANDæ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¼”ç®—ã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> StringData::operator&&(const shared_ptr<const Data>& right) const
 {
 	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 }
 
-//! OR‰‰Z‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ‰‰Z‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ORæ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¼”ç®—ã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> StringData::operator||(const shared_ptr<const Data>& right) const
 {
 	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 }
 
-//! DataƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] value ƒf[ƒ^‚Ì’l‚Å‚·B
+//! Dataã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] value ãƒ‡ãƒ¼ã‚¿ã®å€¤ã§ã™ã€‚
 IntegerData::IntegerData(const int value) : m_integer(value){}
 
-//! ƒf[ƒ^‚ÌŒ^‚ğæ“¾‚µ‚Ü‚·B
-//! @return ƒf[ƒ^‚ÌŒ^‚Å‚·B
+//! ãƒ‡ãƒ¼ã‚¿ã®å‹ã‚’å–å¾—ã—ã¾ã™ã€‚
+//! @return ãƒ‡ãƒ¼ã‚¿ã®å‹ã§ã™ã€‚
 const DataType IntegerData::type() const
 {
 	return DataType::INTEGER;
 }
 
-//! ƒf[ƒ^‚ª®”Œ^‚Ìê‡‚Ì’l‚ğæ“¾‚µ‚Ü‚·B
-//! @return ƒf[ƒ^‚ª®”Œ^‚Ìê‡‚Ì’l‚Å‚·B
+//! ãƒ‡ãƒ¼ã‚¿ãŒæ•´æ•°å‹ã®å ´åˆã®å€¤ã‚’å–å¾—ã—ã¾ã™ã€‚
+//! @return ãƒ‡ãƒ¼ã‚¿ãŒæ•´æ•°å‹ã®å ´åˆã®å€¤ã§ã™ã€‚
 const int IntegerData::integer() const
 {
 	return m_integer;
 }
 
-//! ‰ÁZ‰‰Z‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ‰ÁZ‚µ‚½Œ‹‰Ê‚Å‚·B
+//! åŠ ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return åŠ ç®—ã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> IntegerData::operator+(const shared_ptr<const Data>& right) const
 {
 	if (right->type() == DataType::INTEGER){
@@ -1326,9 +1326,9 @@ const shared_ptr<const Data> IntegerData::operator+(const shared_ptr<const Data>
 	}
 }
 
-//! Œ¸Z‰‰Z‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return Œ¸Z‚µ‚½Œ‹‰Ê‚Å‚·B
+//! æ¸›ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¸›ç®—ã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> IntegerData::operator-(const shared_ptr<const Data>& right) const
 {
 	if (right->type() == DataType::INTEGER){
@@ -1339,9 +1339,9 @@ const shared_ptr<const Data> IntegerData::operator-(const shared_ptr<const Data>
 	}
 }
 
-//! æZ‰‰Z‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return æZ‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ä¹—ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return ä¹—ç®—ã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> IntegerData::operator*(const shared_ptr<const Data>& right) const
 {
 	if (right->type() == DataType::INTEGER){
@@ -1352,9 +1352,9 @@ const shared_ptr<const Data> IntegerData::operator*(const shared_ptr<const Data>
 	}
 }
 
-//! œZ‰‰Z‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return œZ‚µ‚½Œ‹‰Ê‚Å‚·B
+//! é™¤ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return é™¤ç®—ã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> IntegerData::operator/(const shared_ptr<const Data>& right) const
 {
 	if (right->type() == DataType::INTEGER){
@@ -1365,9 +1365,9 @@ const shared_ptr<const Data> IntegerData::operator/(const shared_ptr<const Data>
 	}
 }
 
-//! “™’l”äŠr‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ç­‰å€¤æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> IntegerData::operator==(const shared_ptr<const Data>& right) const
 {
 	if (right->type() == DataType::INTEGER){
@@ -1378,9 +1378,9 @@ const shared_ptr<const Data> IntegerData::operator==(const shared_ptr<const Data
 	}
 }
 
-//! •s“™”äŠr‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ä¸ç­‰æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> IntegerData::operator!=(const shared_ptr<const Data>& right) const
 {
 	if (right->type() == DataType::INTEGER){
@@ -1391,9 +1391,9 @@ const shared_ptr<const Data> IntegerData::operator!=(const shared_ptr<const Data
 	}
 }
 
-//! ˆÈã”äŠr‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ä»¥ä¸Šæ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> IntegerData::operator>=(const shared_ptr<const Data>& right) const
 {
 	if (right->type() == DataType::INTEGER){
@@ -1404,9 +1404,9 @@ const shared_ptr<const Data> IntegerData::operator>=(const shared_ptr<const Data
 	}
 }
 
-//! ‘å‚«‚¢”äŠr‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+//! å¤§ãã„æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> IntegerData::operator>(const shared_ptr<const Data>& right) const
 {
 	if (right->type() == DataType::INTEGER){
@@ -1417,9 +1417,9 @@ const shared_ptr<const Data> IntegerData::operator>(const shared_ptr<const Data>
 	}
 }
 
-//! ˆÈ‰º”äŠr‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ä»¥ä¸‹æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> IntegerData::operator<=(const shared_ptr<const Data>& right) const
 {
 	if (right->type() == DataType::INTEGER){
@@ -1430,9 +1430,9 @@ const shared_ptr<const Data> IntegerData::operator<=(const shared_ptr<const Data
 	}
 }
 
-//! ¬‚³‚¢”äŠr‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+//! å°ã•ã„æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> IntegerData::operator<(const shared_ptr<const Data>& right) const
 {
 	if (right->type() == DataType::INTEGER){
@@ -1443,123 +1443,123 @@ const shared_ptr<const Data> IntegerData::operator<(const shared_ptr<const Data>
 	}
 }
 
-//! AND‰‰Z‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ‰‰Z‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ANDæ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¼”ç®—ã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> IntegerData::operator&&(const shared_ptr<const Data>& right) const
 {
 	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 }
 
-//! OR‰‰Z‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ‰‰Z‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ORæ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¼”ç®—ã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> IntegerData::operator||(const shared_ptr<const Data>& right) const
 {
 	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 }
 
-//! DataƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] value ƒf[ƒ^‚Ì’l‚Å‚·B
+//! Dataã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] value ãƒ‡ãƒ¼ã‚¿ã®å€¤ã§ã™ã€‚
 BooleanData::BooleanData(const bool value) : m_boolean(value){}
 
-//! ƒf[ƒ^‚ÌŒ^‚ğæ“¾‚µ‚Ü‚·B
-//! @return ƒf[ƒ^‚ÌŒ^‚Å‚·B
+//! ãƒ‡ãƒ¼ã‚¿ã®å‹ã‚’å–å¾—ã—ã¾ã™ã€‚
+//! @return ãƒ‡ãƒ¼ã‚¿ã®å‹ã§ã™ã€‚
 const DataType BooleanData::type() const
 {
 	return DataType::BOOLEAN;
 }
 
-//! ƒf[ƒ^‚ª®”Œ^‚Ìê‡‚Ì’l‚ğæ“¾‚µ‚Ü‚·B
-//! @return ƒf[ƒ^‚ª®”Œ^‚Ìê‡‚Ì’l‚Å‚·B
+//! ãƒ‡ãƒ¼ã‚¿ãŒæ•´æ•°å‹ã®å ´åˆã®å€¤ã‚’å–å¾—ã—ã¾ã™ã€‚
+//! @return ãƒ‡ãƒ¼ã‚¿ãŒæ•´æ•°å‹ã®å ´åˆã®å€¤ã§ã™ã€‚
 const bool BooleanData::boolean() const
 {
 	return m_boolean;
 }
 
-//! ‰ÁZ‰‰Z‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ‰ÁZ‚µ‚½Œ‹‰Ê‚Å‚·B
+//! åŠ ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return åŠ ç®—ã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> BooleanData::operator+(const shared_ptr<const Data>& right) const
 {
 	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 }
 
-//! Œ¸Z‰‰Z‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return Œ¸Z‚µ‚½Œ‹‰Ê‚Å‚·B
+//! æ¸›ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¸›ç®—ã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> BooleanData::operator-(const shared_ptr<const Data>& right) const
 {
 	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 }
 
-//! æZ‰‰Z‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return æZ‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ä¹—ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return ä¹—ç®—ã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> BooleanData::operator*(const shared_ptr<const Data>& right) const
 {
 	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 }
 
-//! œZ‰‰Z‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return œZ‚µ‚½Œ‹‰Ê‚Å‚·B
+//! é™¤ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return é™¤ç®—ã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> BooleanData::operator/(const shared_ptr<const Data>& right) const
 {
 	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 }
 
-//! “™’l”äŠr‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ç­‰å€¤æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> BooleanData::operator==(const shared_ptr<const Data>& right) const
 {
 	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 }
 
-//! •s“™”äŠr‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ä¸ç­‰æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> BooleanData::operator!=(const shared_ptr<const Data>& right) const
 {
 	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 }
 
-//! ˆÈã”äŠr‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ä»¥ä¸Šæ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> BooleanData::operator>=(const shared_ptr<const Data>& right) const
 {
 	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 }
 
-//! ‘å‚«‚¢”äŠr‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+//! å¤§ãã„æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> BooleanData::operator>(const shared_ptr<const Data>& right) const
 {
 	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 }
 
-//! ˆÈ‰º”äŠr‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ä»¥ä¸‹æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> BooleanData::operator<=(const shared_ptr<const Data>& right) const
 {
 	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 }
 
-//! ¬‚³‚¢”äŠr‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+//! å°ã•ã„æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> BooleanData::operator<(const shared_ptr<const Data>& right) const
 {
 	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 }
 
-//! AND‰‰Z‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ‰‰Z‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ANDæ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¼”ç®—ã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> BooleanData::operator&&(const shared_ptr<const Data>& right) const
 {
 	if (right->type() == DataType::BOOLEAN){
@@ -1570,9 +1570,9 @@ const shared_ptr<const Data> BooleanData::operator&&(const shared_ptr<const Data
 	}
 }
 
-//! OR‰‰Z‚ğs‚¢‚Ü‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ‰‰Z‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ORæ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¼”ç®—ã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> BooleanData::operator||(const shared_ptr<const Data>& right) const
 {
 	if (right->type() == DataType::BOOLEAN){
@@ -1583,170 +1583,170 @@ const shared_ptr<const Data> BooleanData::operator||(const shared_ptr<const Data
 	}
 }
 
-//! ‰ÁZ‰‰Z‚ğs‚¢‚Ü‚·B
-//! @param [in] left ¶•Ó‚Å‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ‰ÁZ‚µ‚½Œ‹‰Ê‚Å‚·B
+//! åŠ ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] left å·¦è¾ºã§ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return åŠ ç®—ã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> operator+(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right)
 {
 	return *left + right;
 }
 
-//! Œ¸Z‰‰Z‚ğs‚¢‚Ü‚·B
-//! @param [in] left ¶•Ó‚Å‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return Œ¸Z‚µ‚½Œ‹‰Ê‚Å‚·B
+//! æ¸›ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] left å·¦è¾ºã§ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¸›ç®—ã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> operator-(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right)
 {
 	return *left - right;
 }
 
 
-//! æZ‰‰Z‚ğs‚¢‚Ü‚·B
-//! @param [in] left ¶•Ó‚Å‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return æZ‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ä¹—ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] left å·¦è¾ºã§ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return ä¹—ç®—ã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> operator*(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right)
 {
 	return *left * right;
 }
 
-//! œZ‰‰Z‚ğs‚¢‚Ü‚·B
-//! @param [in] left ¶•Ó‚Å‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return œZ‚µ‚½Œ‹‰Ê‚Å‚·B
+//! é™¤ç®—æ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] left å·¦è¾ºã§ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return é™¤ç®—ã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> operator/(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right)
 {
 	return *left / right;
 }
 
-//! “™’l”äŠr‚ğs‚¢‚Ü‚·B
-//! @param [in] left ¶•Ó‚Å‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ç­‰å€¤æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] left å·¦è¾ºã§ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> operator==(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right)
 {
 	return *left == right;
 }
 
-//! •s“™”äŠr‚ğs‚¢‚Ü‚·B
-//! @param [in] left ¶•Ó‚Å‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ä¸ç­‰æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] left å·¦è¾ºã§ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> operator!=(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right)
 {
 	return *left != right;
 }
 
-//! ˆÈã”äŠr‚ğs‚¢‚Ü‚·B
-//! @param [in] left ¶•Ó‚Å‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ä»¥ä¸Šæ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] left å·¦è¾ºã§ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> operator>=(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right)
 {
 	return *left >= right;
 }
 
-//! ‘å‚«‚¢”äŠr‚ğs‚¢‚Ü‚·B
-//! @param [in] left ¶•Ó‚Å‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+//! å¤§ãã„æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] left å·¦è¾ºã§ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> operator>(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right)
 {
 	return *left > right;
 }
 
-//! ˆÈ‰º”äŠr‚ğs‚¢‚Ü‚·B
-//! @param [in] left ¶•Ó‚Å‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ä»¥ä¸‹æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] left å·¦è¾ºã§ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> operator<=(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right)
 {
 	return *left <= right;
 }
 
-//! ¬‚³‚¢”äŠr‚ğs‚¢‚Ü‚·B
-//! @param [in] left ¶•Ó‚Å‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ”äŠr‚µ‚½Œ‹‰Ê‚Å‚·B
+//! å°ã•ã„æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] left å·¦è¾ºã§ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¯”è¼ƒã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> operator<(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right)
 {
 	return *left < right;
 }
 
-//! AND‰‰Z‚ğs‚¢‚Ü‚·B
-//! @param [in] left ¶•Ó‚Å‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ‰‰Z‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ANDæ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] left å·¦è¾ºã§ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¼”ç®—ã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> operator&&(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right)
 {
 	return *left && right;
 }
 
-//! OR‰‰Z‚ğs‚¢‚Ü‚·B
-//! @param [in] left ¶•Ó‚Å‚·B
-//! @param [in] right ‰E•Ó‚Å‚·B
-//! @return ‰‰Z‚µ‚½Œ‹‰Ê‚Å‚·B
+//! ORæ¼”ç®—ã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] left å·¦è¾ºã§ã™ã€‚
+//! @param [in] right å³è¾ºã§ã™ã€‚
+//! @return æ¼”ç®—ã—ãŸçµæœã§ã™ã€‚
 const shared_ptr<const Data> operator||(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right)
 {
 	return *left || right;
 }
 
-//! OperatorƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
+//! Operatorã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 Operator::Operator()
 {
 }
 
-//! OperatorƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] kind ‰‰Zq‚Ìí—Ş‚ğA‰‰Zq‚ğ‹Lq‚·‚éƒg[ƒNƒ“‚Ìí—Ş‚Å•\‚µ‚Ü‚·B
-//! @param [in] order ‰‰Zq‚Ì—Dæ‡ˆÊ‚Å‚·B
+//! Operatorã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] kind æ¼”ç®—å­ã®ç¨®é¡ã‚’ã€æ¼”ç®—å­ã‚’è¨˜è¿°ã™ã‚‹ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§è¡¨ã—ã¾ã™ã€‚
+//! @param [in] order æ¼”ç®—å­ã®å„ªå…ˆé †ä½ã§ã™ã€‚
 Operator::Operator(const TokenKind kind, const int order) : kind(kind), order(order)
 {
 }
 
-//! TokenƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
+//! Tokenã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 Token::Token() : Token(TokenKind::NOT_TOKEN, "")
 {
 }
 
-//! TokenƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] kind ƒg[ƒNƒ“‚Ìí—Ş‚Å‚·B
+//! Tokenã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] kind ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§ã™ã€‚
 Token::Token(const TokenKind kind) : Token(kind, "")
 {
 }
 
-//! TokenƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] kind ƒg[ƒNƒ“‚Ìí—Ş‚Å‚·B
-//! @param [in] word ‹L˜^‚³‚ê‚Ä‚¢‚éƒg[ƒNƒ“‚Ì•¶š—ñ‚Å‚·B‹L˜^‚Ì•K—v‚ª‚È‚¯‚ê‚Î‹ó”’‚Å‚·B
+//! Tokenã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] kind ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§ã™ã€‚
+//! @param [in] word è¨˜éŒ²ã•ã‚Œã¦ã„ã‚‹ãƒˆãƒ¼ã‚¯ãƒ³ã®æ–‡å­—åˆ—ã§ã™ã€‚è¨˜éŒ²ã®å¿…è¦ãŒãªã‘ã‚Œã°ç©ºç™½ã§ã™ã€‚
 Token::Token(const TokenKind kind, const string word) :kind(kind)
 {
 	this->word = word;
 }
 
-//! ColumnƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
+//! Columnã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 Column::Column() : Column("", "")
 {
 
 }
 
-//! ColumnƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] columnName w’è‚³‚ê‚½—ñ‚Ì—ñ–¼‚Å‚·B
+//! Columnã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] columnName æŒ‡å®šã•ã‚ŒãŸåˆ—ã®åˆ—åã§ã™ã€‚
 Column::Column(const string columnName) : Column("", columnName)
 {
 }
 
-//! ColumnƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] tableName —ñ‚ªŠ‘®‚·‚éƒe[ƒuƒ‹–¼‚Å‚·Bw’è‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Í‹ó•¶š—ñ‚Æ‚È‚è‚Ü‚·B
-//! @param [in] columnName w’è‚³‚ê‚½—ñ‚Ì—ñ–¼‚Å‚·B
+//! Columnã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] tableName åˆ—ãŒæ‰€å±ã™ã‚‹ãƒ†ãƒ¼ãƒ–ãƒ«åã§ã™ã€‚æŒ‡å®šã•ã‚Œã¦ã„ãªã„å ´åˆã¯ç©ºæ–‡å­—åˆ—ã¨ãªã‚Šã¾ã™ã€‚
+//! @param [in] columnName æŒ‡å®šã•ã‚ŒãŸåˆ—ã®åˆ—åã§ã™ã€‚
 Column::Column(const string tableName, const string columnName)
 {
 	this->tableName = tableName;
 	this->columnName = columnName;
 }
 
-//! ƒf[ƒ^‚ÌŒŸõ‚É—˜—p‚·‚é‚½‚ßA‘S‚Ä‚Ìƒe[ƒuƒ‹‚Ì—ñ‚Ìî•ñ‚ğ“o˜^‚µ‚Ü‚·B
-//! @param [in] queryInfo SQL‚É‹Lq‚³‚ê‚½î•ñ‚Å‚·B
-//! @param [in] inputTables ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İæ‚Á‚½ƒf[ƒ^‚Å‚·B
+//! ãƒ‡ãƒ¼ã‚¿ã®æ¤œç´¢ã«åˆ©ç”¨ã™ã‚‹ãŸã‚ã€å…¨ã¦ã®ãƒ†ãƒ¼ãƒ–ãƒ«ã®åˆ—ã®æƒ…å ±ã‚’ç™»éŒ²ã—ã¾ã™ã€‚
+//! @param [in] queryInfo SQLã«è¨˜è¿°ã•ã‚ŒãŸæƒ…å ±ã§ã™ã€‚
+//! @param [in] inputTables ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿å–ã£ãŸãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 void Column::SetAllColumns(const vector<const InputTable> &inputTables)
 {
 
@@ -1756,36 +1756,36 @@ void Column::SetAllColumns(const vector<const InputTable> &inputTables)
 	for (auto &inputTable : inputTables){
 		for (auto &inputColumn : *inputTable.columns()){
 			if (Equali(columnName, inputColumn.columnName) &&
-				(tableName.empty() || // ƒe[ƒuƒ‹–¼‚ªİ’è‚³‚ê‚Ä‚¢‚éê‡‚Ì‚İƒe[ƒuƒ‹–¼‚Ì”äŠr‚ğs‚¢‚Ü‚·B
+				(tableName.empty() || // ãƒ†ãƒ¼ãƒ–ãƒ«åãŒè¨­å®šã•ã‚Œã¦ã„ã‚‹å ´åˆã®ã¿ãƒ†ãƒ¼ãƒ–ãƒ«åã®æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
 				Equali(tableName, inputColumn.tableName))){
 
-				// Šù‚ÉŒ©‚Â‚©‚Á‚Ä‚¢‚é‚Ì‚É‚à‚¤ˆê‚ÂŒ©‚Â‚©‚Á‚½‚çƒGƒ‰[‚Å‚·B
+				// æ—¢ã«è¦‹ã¤ã‹ã£ã¦ã„ã‚‹ã®ã«ã‚‚ã†ä¸€ã¤è¦‹ã¤ã‹ã£ãŸã‚‰ã‚¨ãƒ©ãƒ¼ã§ã™ã€‚
 				if (found){
 					throw ResultValue::ERR_BAD_COLUMN_NAME;
 				}
 				found = true;
-				// Œ©‚Â‚©‚Á‚½’l‚ğ‚Â—ñ‚Ìƒf[ƒ^‚ğ¶¬‚µ‚Ü‚·B
+				// è¦‹ã¤ã‹ã£ãŸå€¤ã‚’æŒã¤åˆ—ã®ãƒ‡ãƒ¼ã‚¿ã‚’ç”Ÿæˆã—ã¾ã™ã€‚
 				allColumnsIndex = i;
 				outputName = inputColumn.columnName;
 			}
 			++i;
 		}
 	}
-	// ˆê‚Â‚àŒ©‚Â‚©‚ç‚È‚­‚Ä‚àƒGƒ‰[‚Å‚·B
+	// ä¸€ã¤ã‚‚è¦‹ã¤ã‹ã‚‰ãªãã¦ã‚‚ã‚¨ãƒ©ãƒ¼ã§ã™ã€‚
 	if (!found){
 		throw ResultValue::ERR_BAD_COLUMN_NAME;
 	}
 }
 
-//! ExtensionTreeNodeƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
+//! ExtensionTreeNodeã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 ExtensionTreeNode::ExtensionTreeNode()
 {
 }
 
-// left‚Æright‚ğmiddleOperator‚Å‰‰Z‚µ‚Ü‚·B
+// leftã¨rightã‚’middleOperatorã§æ¼”ç®—ã—ã¾ã™ã€‚
 void ExtensionTreeNode::Operate()
 {
-	// ©ƒm[ƒh‚æ‚è‘O‚Éqƒm[ƒh‚ğ‰‰Z‚µ‚Ä‚¨‚«‚Ü‚·B
+	// è‡ªãƒãƒ¼ãƒ‰ã‚ˆã‚Šå‰ã«å­ãƒãƒ¼ãƒ‰ã‚’æ¼”ç®—ã—ã¦ãŠãã¾ã™ã€‚
 	if (left){
 		left->Operate();
 	}
@@ -1793,7 +1793,7 @@ void ExtensionTreeNode::Operate()
 		right->Operate();
 	}
 
-	// ©ƒm[ƒh‚Ì’l‚ğŒvZ‚µ‚Ü‚·B
+	// è‡ªãƒãƒ¼ãƒ‰ã®å€¤ã‚’è¨ˆç®—ã—ã¾ã™ã€‚
 	switch (middleOperator.kind){
 	case TokenKind::PLUS:
 		value = left->value + right->value;
@@ -1834,30 +1834,30 @@ void ExtensionTreeNode::Operate()
 	}
 }
 
-//! ƒJƒ‰ƒ€–¼‚Åw’è‚³‚ê‚½ƒf[ƒ^‚ğ‚Âƒm[ƒh‚©‚Ç‚¤‚©‚Å‚·B
-//! @return ƒJƒ‰ƒ€–¼‚Åw’è‚³‚ê‚½ƒf[ƒ^‚ğ‚Âƒm[ƒh‚©‚Ç‚¤‚©B
+//! ã‚«ãƒ©ãƒ åã§æŒ‡å®šã•ã‚ŒãŸãƒ‡ãƒ¼ã‚¿ã‚’æŒã¤ãƒãƒ¼ãƒ‰ã‹ã©ã†ã‹ã§ã™ã€‚
+//! @return ã‚«ãƒ©ãƒ åã§æŒ‡å®šã•ã‚ŒãŸãƒ‡ãƒ¼ã‚¿ã‚’æŒã¤ãƒãƒ¼ãƒ‰ã‹ã©ã†ã‹ã€‚
 bool ExtensionTreeNode::isDataNodeAsColumnName()
 {
 	return middleOperator.kind == TokenKind::NOT_TOKEN && !column.columnName.empty();
 }
 
-//! ÀÛ‚Éo—Í‚·‚és‚É‡‚í‚¹‚Ä—ñ‚Éƒf[ƒ^‚ğİ’è‚µ‚Ü‚·B
-//! @param [in] ÀÛ‚Éo—Í‚·‚és‚Å‚·B
+//! å®Ÿéš›ã«å‡ºåŠ›ã™ã‚‹è¡Œã«åˆã‚ã›ã¦åˆ—ã«ãƒ‡ãƒ¼ã‚¿ã‚’è¨­å®šã—ã¾ã™ã€‚
+//! @param [in] å®Ÿéš›ã«å‡ºåŠ›ã™ã‚‹è¡Œã§ã™ã€‚
 void ExtensionTreeNode::SetColumnData(const vector<const shared_ptr<const Data>> &outputRow)
 {
 	if (isDataNodeAsColumnName()){
 		value = outputRow[column.allColumnsIndex];
 
-		// •„†‚ğl—¶‚µ‚Ä’l‚ğŒvZ‚µ‚Ü‚·B
+		// ç¬¦å·ã‚’è€ƒæ…®ã—ã¦å€¤ã‚’è¨ˆç®—ã—ã¾ã™ã€‚
 		if (value->type() == DataType::INTEGER){
 			value = Data::New(value->integer() * signCoefficient);
 		}
 	}
 }
 
-//! ˆø”‚Æ‚µ‚Ä“n‚µ‚½ƒm[ƒh‹y‚Ñ‚»‚Ìq‘·‚Ìƒm[ƒh‚ğæ“¾‚µ‚Ü‚·B
-//! @param [in] –ß‚è’l‚Ìƒ‹[ƒg‚Æ‚È‚éƒm[ƒh‚Å‚·B‡˜‚Í‹A‚è‚ª‚¯‡‚Å‚·B
-//! @return ©g‹y‚Ñq‘·‚Ìƒm[ƒh‚Å‚·B
+//! å¼•æ•°ã¨ã—ã¦æ¸¡ã—ãŸãƒãƒ¼ãƒ‰åŠã³ãã®å­å­«ã®ãƒãƒ¼ãƒ‰ã‚’å–å¾—ã—ã¾ã™ã€‚
+//! @param [in] æˆ»ã‚Šå€¤ã®ãƒ«ãƒ¼ãƒˆã¨ãªã‚‹ãƒãƒ¼ãƒ‰ã§ã™ã€‚é †åºã¯å¸°ã‚ŠãŒã‘é †ã§ã™ã€‚
+//! @return è‡ªèº«åŠã³å­å­«ã®ãƒãƒ¼ãƒ‰ã§ã™ã€‚
 const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> SelfAndDescendants(shared_ptr<ExtensionTreeNode> self)
 {
 	auto selfAndDescendants = make_shared<vector<const shared_ptr<ExtensionTreeNode>>>();
@@ -1879,17 +1879,17 @@ const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> SelfAndDescendants
 	return selfAndDescendants;
 }
 
-//! OrderƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] column ORDER‹å‚Éw’è‚³‚ê‚½—ñ–¼‚Å‚·B
-//! @param [in] isAsc ORDER‘w’è‚³‚ê‚½‡˜‚ª¸‡‚©‚Ç‚¤‚©‚Å‚·B
+//! Orderã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] column ORDERå¥ã«æŒ‡å®šã•ã‚ŒãŸåˆ—åã§ã™ã€‚
+//! @param [in] isAsc ORDERå›½æŒ‡å®šã•ã‚ŒãŸé †åºãŒæ˜‡é †ã‹ã©ã†ã‹ã§ã™ã€‚
 Order::Order(Column column, const bool isAsc) : column(column), isAsc(isAsc){}
 
-//! ‘S‚Ä‚ª”’l‚Æ‚È‚é—ñ‚Í”’l—ñ‚É•ÏŠ·‚µ‚Ü‚·B
+//! å…¨ã¦ãŒæ•°å€¤ã¨ãªã‚‹åˆ—ã¯æ•°å€¤åˆ—ã«å¤‰æ›ã—ã¾ã™ã€‚
 void InputTable::InitializeIntegerColumn()
 {
 	for (size_t i = 0; i < columns()->size(); ++i){
 
-		// ‘S‚Ä‚Ìs‚Ì‚ ‚é—ñ‚É‚Â‚¢‚ÄAƒf[ƒ^•¶š—ñ‚©‚ç•„†‚Æ”’lˆÈŠO‚Ì•¶š‚ğ’T‚µ‚Ü‚·B
+		// å…¨ã¦ã®è¡Œã®ã‚ã‚‹åˆ—ã«ã¤ã„ã¦ã€ãƒ‡ãƒ¼ã‚¿æ–‡å­—åˆ—ã‹ã‚‰ç¬¦å·ã¨æ•°å€¤ä»¥å¤–ã®æ–‡å­—ã‚’æ¢ã—ã¾ã™ã€‚
 		if (none_of(
 			data()->begin(),
 			data()->end(),
@@ -1901,7 +1901,7 @@ void InputTable::InitializeIntegerColumn()
 				inputRow[i]->string().end(),
 				[&](const char& c){return signNum.find(c) == string::npos; }); })){
 
-			// •„†‚Æ”šˆÈŠO‚ªŒ©‚Â‚©‚ç‚È‚¢—ñ‚É‚Â‚¢‚Ä‚ÍA”’l—ñ‚É•ÏŠ·‚µ‚Ü‚·B
+			// ç¬¦å·ã¨æ•°å­—ä»¥å¤–ãŒè¦‹ã¤ã‹ã‚‰ãªã„åˆ—ã«ã¤ã„ã¦ã¯ã€æ•°å€¤åˆ—ã«å¤‰æ›ã—ã¾ã™ã€‚
 			for (auto& inputRow : *data()){
 				inputRow[i] = Data::New(stoi(inputRow[i]->string()));
 			}
@@ -1909,32 +1909,32 @@ void InputTable::InitializeIntegerColumn()
 	}
 }
 
-//! InputTableƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] columns “Ç‚İ‚ñ‚¾ƒwƒbƒ_î•ñ‚Å‚·B
-//! @param [in] data “Ç‚İ‚ñ‚¾ƒf[ƒ^‚Å‚·B
+//! InputTableã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] columns èª­ã¿è¾¼ã‚“ã ãƒ˜ãƒƒãƒ€æƒ…å ±ã§ã™ã€‚
+//! @param [in] data èª­ã¿è¾¼ã‚“ã ãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 InputTable::InputTable(const shared_ptr<const vector<const Column>> columns, const shared_ptr<vector<const vector<const shared_ptr<const Data>>>> data) : m_columns(columns), m_data(data)
 {
 	InitializeIntegerColumn();
 }
 
-//! —ñ‚Ìî•ñ‚ğæ“¾‚µ‚Ü‚·B
-//! @return ƒf[ƒ^‚Å‚·B
+//! åˆ—ã®æƒ…å ±ã‚’å–å¾—ã—ã¾ã™ã€‚
+//! @return ãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 const shared_ptr<const vector<const Column>> InputTable::columns() const
 {
 	return m_columns;
 }
 
-//! ƒf[ƒ^‚ğæ“¾‚µ‚Ü‚·B
-//! @return —ñ‚Ìî•ñ‚Å‚·B
+//! ãƒ‡ãƒ¼ã‚¿ã‚’å–å¾—ã—ã¾ã™ã€‚
+//! @return åˆ—ã®æƒ…å ±ã§ã™ã€‚
 const shared_ptr<vector<const vector<const shared_ptr<const Data>>>> InputTable::data() const
 {
 	return m_data;
 }
 
-//! ƒg[ƒNƒ“‚ğ“Ç‚İ‚İ‚Ü‚·B
-//! @param [in] cursol “Ç‚İ‚İŠJnˆÊ’u‚Å‚·B
-//! @param [in] end SQL‘S‘Ì‚ÌI—¹ˆÊ’u‚Å‚·B
-//! @return Ø‚èo‚³‚ê‚½ƒg[ƒNƒ“‚Å‚·B“Ç‚İ‚İ‚ª¸”s‚µ‚½ê‡‚Ínullptr‚ğ•Ô‚µ‚Ü‚·B
+//! ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+//! @param [in] cursol èª­ã¿è¾¼ã¿é–‹å§‹ä½ç½®ã§ã™ã€‚
+//! @param [in] end SQLå…¨ä½“ã®çµ‚äº†ä½ç½®ã§ã™ã€‚
+//! @return åˆ‡ã‚Šå‡ºã•ã‚ŒãŸãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚èª­ã¿è¾¼ã¿ãŒå¤±æ•—ã—ãŸå ´åˆã¯nullptrã‚’è¿”ã—ã¾ã™ã€‚
 const shared_ptr<const Token> TokenReader::Read(string::const_iterator &cursol, const string::const_iterator &end) const
 {
 	auto backPoint = cursol;
@@ -1945,16 +1945,16 @@ const shared_ptr<const Token> TokenReader::Read(string::const_iterator &cursol, 
 	return token;
 }
 
-//! ÀÛ‚Éƒg[ƒNƒ“‚ğ“Ç‚İ‚İ‚Ü‚·B
-//! @param [in] cursol “Ç‚İ‚İŠJnˆÊ’u‚Å‚·B
-//! @param [in] end SQL‘S‘Ì‚ÌI—¹ˆÊ’u‚Å‚·B
-//! @return Ø‚èo‚³‚ê‚½ƒg[ƒNƒ“‚Å‚·B“Ç‚İ‚İ‚ª¸”s‚µ‚½ê‡‚Ínullptr‚ğ•Ô‚µ‚Ü‚·B
+//! å®Ÿéš›ã«ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+//! @param [in] cursol èª­ã¿è¾¼ã¿é–‹å§‹ä½ç½®ã§ã™ã€‚
+//! @param [in] end SQLå…¨ä½“ã®çµ‚äº†ä½ç½®ã§ã™ã€‚
+//! @return åˆ‡ã‚Šå‡ºã•ã‚ŒãŸãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚èª­ã¿è¾¼ã¿ãŒå¤±æ•—ã—ãŸå ´åˆã¯nullptrã‚’è¿”ã—ã¾ã™ã€‚
 const shared_ptr<const Token> IntLiteralReader::ReadCore(string::const_iterator &cursol, const string::const_iterator &end) const
 {
 	auto start = cursol;
 	cursol = find_if(cursol, end, [&](char c){return num.find(c) == string::npos; });
 	if (start != cursol && (
-		alpahUnder.find(*cursol) == string::npos || // ”š‚ÌŒã‚É‚·‚®‚É¯•Êq‚ª‘±‚­‚Ì‚Í•´‚ç‚í‚µ‚¢‚Ì‚Å”’lƒŠƒeƒ‰ƒ‹‚Æ‚Íˆµ‚¢‚Ü‚¹‚ñB
+		alpahUnder.find(*cursol) == string::npos || // æ•°å­—ã®å¾Œã«ã™ãã«è­˜åˆ¥å­ãŒç¶šãã®ã¯ç´›ã‚‰ã‚ã—ã„ã®ã§æ•°å€¤ãƒªãƒ†ãƒ©ãƒ«ã¨ã¯æ‰±ã„ã¾ã›ã‚“ã€‚
 		cursol == end)){
 		return make_shared<Token>(TokenKind::INT_LITERAL, string(start, cursol));
 	}
@@ -1963,17 +1963,17 @@ const shared_ptr<const Token> IntLiteralReader::ReadCore(string::const_iterator 
 	}
 }
 
-//! ÀÛ‚Éƒg[ƒNƒ“‚ğ“Ç‚İ‚İ‚Ü‚·B
-//! @param [in] cursol “Ç‚İ‚İŠJnˆÊ’u‚Å‚·B
-//! @param [in] end SQL‘S‘Ì‚ÌI—¹ˆÊ’u‚Å‚·B
-//! @return Ø‚èo‚³‚ê‚½ƒg[ƒNƒ“‚Å‚·B“Ç‚İ‚İ‚ª¸”s‚µ‚½ê‡‚Ínullptr‚ğ•Ô‚µ‚Ü‚·B
+//! å®Ÿéš›ã«ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+//! @param [in] cursol èª­ã¿è¾¼ã¿é–‹å§‹ä½ç½®ã§ã™ã€‚
+//! @param [in] end SQLå…¨ä½“ã®çµ‚äº†ä½ç½®ã§ã™ã€‚
+//! @return åˆ‡ã‚Šå‡ºã•ã‚ŒãŸãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚èª­ã¿è¾¼ã¿ãŒå¤±æ•—ã—ãŸå ´åˆã¯nullptrã‚’è¿”ã—ã¾ã™ã€‚
 const shared_ptr<const Token> StringLiteralReader::ReadCore(string::const_iterator &cursol, const string::const_iterator &end) const
 {
 	auto start = cursol;
-	// •¶š—ñƒŠƒeƒ‰ƒ‹‚ğŠJn‚·‚éƒVƒ“ƒOƒ‹ƒNƒH[ƒg‚ğ”»•Ê‚µA“Ç‚İ‚İ‚Ü‚·B
+	// æ–‡å­—åˆ—ãƒªãƒ†ãƒ©ãƒ«ã‚’é–‹å§‹ã™ã‚‹ã‚·ãƒ³ã‚°ãƒ«ã‚¯ã‚©ãƒ¼ãƒˆã‚’åˆ¤åˆ¥ã—ã€èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 	if (*cursol == "\'"[0]){
 		++cursol;
-		// ƒƒgƒŠƒNƒX‘ª’èƒc[ƒ‹‚Ìcccc‚ÍƒVƒ“ƒOƒ‹ƒNƒH[ƒg‚Ì•¶šƒŠƒeƒ‰ƒ‹’†‚ÌƒGƒXƒP[ƒv‚ğ”F¯‚µ‚È‚¢‚½‚ßA•¶šƒŠƒeƒ‰ƒ‹‚ğg‚í‚È‚¢‚±‚Æ‚Å‰ñ”ğ‚µ‚Ä‚¢‚Ü‚·B
+		// ãƒ¡ãƒˆãƒªã‚¯ã‚¹æ¸¬å®šãƒ„ãƒ¼ãƒ«ã®ccccã¯ã‚·ãƒ³ã‚°ãƒ«ã‚¯ã‚©ãƒ¼ãƒˆã®æ–‡å­—ãƒªãƒ†ãƒ©ãƒ«ä¸­ã®ã‚¨ã‚¹ã‚±ãƒ¼ãƒ—ã‚’èªè­˜ã—ãªã„ãŸã‚ã€æ–‡å­—ãƒªãƒ†ãƒ©ãƒ«ã‚’ä½¿ã‚ãªã„ã“ã¨ã§å›é¿ã—ã¦ã„ã¾ã™ã€‚
 		cursol = find_if_not(cursol, end, [](char c){return c != "\'"[0]; });
 		if (cursol == end){
 			throw ResultValue::ERR_TOKEN_CANT_READ;
@@ -1986,17 +1986,17 @@ const shared_ptr<const Token> StringLiteralReader::ReadCore(string::const_iterat
 	}
 }
 
-//! ÀÛ‚Éƒg[ƒNƒ“‚ğ“Ç‚İ‚İ‚Ü‚·B
-//! @param [in] cursol “Ç‚İ‚İŠJnˆÊ’u‚Å‚·B
-//! @param [in] end SQL‘S‘Ì‚ÌI—¹ˆÊ’u‚Å‚·B
-//! @return Ø‚èo‚³‚ê‚½ƒg[ƒNƒ“‚Å‚·B“Ç‚İ‚İ‚ª¸”s‚µ‚½ê‡‚Ínullptr‚ğ•Ô‚µ‚Ü‚·B
+//! å®Ÿéš›ã«ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+//! @param [in] cursol èª­ã¿è¾¼ã¿é–‹å§‹ä½ç½®ã§ã™ã€‚
+//! @param [in] end SQLå…¨ä½“ã®çµ‚äº†ä½ç½®ã§ã™ã€‚
+//! @return åˆ‡ã‚Šå‡ºã•ã‚ŒãŸãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚èª­ã¿è¾¼ã¿ãŒå¤±æ•—ã—ãŸå ´åˆã¯nullptrã‚’è¿”ã—ã¾ã™ã€‚
 const shared_ptr<const Token> KeywordReader::ReadCore(string::const_iterator &cursol, const string::const_iterator &end) const
 {
 	auto result =
 		mismatch(keyword.word.begin(), keyword.word.end(), cursol,
 		[](const char keywordChar, const char sqlChar){return keywordChar == toupper(sqlChar); });
 
-	if (result.first == keyword.word.end() && // ƒL[ƒ[ƒh‚ÌÅŒã‚Ì•¶š‚Ü‚Å“¯‚¶‚Å‚·B
+	if (result.first == keyword.word.end() && // ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã®æœ€å¾Œã®æ–‡å­—ã¾ã§åŒã˜ã§ã™ã€‚
 		CheckNextChar(result.second, end)){ 
 		cursol = result.second;
 		return make_shared<Token>(keyword);
@@ -2006,38 +2006,38 @@ const shared_ptr<const Token> KeywordReader::ReadCore(string::const_iterator &cu
 	}
 }
 
-//! KeywordReaderƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] kind ƒg[ƒNƒ“‚Ìí—Ş‚Å‚·B
-//! @param [in] word ƒL[ƒ[ƒh‚Ì•¶š—ñ‚Å‚·B
+//! KeywordReaderã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] kind ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§ã™ã€‚
+//! @param [in] word ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã®æ–‡å­—åˆ—ã§ã™ã€‚
 KeywordReader::KeywordReader(const TokenKind kind, const string word) : keyword(Token(kind, word)){}
 
-//! ƒL[ƒ[ƒh‚ÌŸ‚Ì•¶š‚Ìƒ`ƒFƒbƒN‚ğs‚¢‚Ü‚·B
-//! @param [in] next ƒ`ƒFƒbƒN‘ÎÛ‚Æ‚È‚éŸ‚Ì•¶š‚ÌƒCƒeƒŒ[ƒ^‚Å‚·B
-//! @param [in] next endƒCƒeƒŒ[ƒ^‚Å‚·B
+//! ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã®æ¬¡ã®æ–‡å­—ã®ãƒã‚§ãƒƒã‚¯ã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] next ãƒã‚§ãƒƒã‚¯å¯¾è±¡ã¨ãªã‚‹æ¬¡ã®æ–‡å­—ã®ã‚¤ãƒ†ãƒ¬ãƒ¼ã‚¿ã§ã™ã€‚
+//! @param [in] next endã‚¤ãƒ†ãƒ¬ãƒ¼ã‚¿ã§ã™ã€‚
 const bool KeywordReader::CheckNextChar(const string::const_iterator& next, const string::const_iterator& end) const
 {
-	//ƒL[ƒ[ƒh‚É¯•Êq‚ª‹æØ‚è‚È‚µ‚É‘±‚¢‚Ä‚¢‚È‚¢‚©‚ğŠm”F‚µ‚Ü‚·B 
+	//ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã«è­˜åˆ¥å­ãŒåŒºåˆ‡ã‚Šãªã—ã«ç¶šã„ã¦ã„ãªã„ã‹ã‚’ç¢ºèªã—ã¾ã™ã€‚ 
 	return next != end && alpahNumUnder.find(*next) == string::npos;
 }
 
-//! KeywordReaderƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] kind ƒg[ƒNƒ“‚Ìí—Ş‚Å‚·B
-//! @param [in] word ƒL[ƒ[ƒh‚Ì•¶š—ñ‚Å‚·B
+//! KeywordReaderã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] kind ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§ã™ã€‚
+//! @param [in] word ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã®æ–‡å­—åˆ—ã§ã™ã€‚
 SignReader::SignReader(const TokenKind kind, const string word) : KeywordReader(kind, word){}
 
-//! ƒL[ƒ[ƒh‚ÌŸ‚Ì•¶š‚Ìƒ`ƒFƒbƒN‚ğs‚¢‚Ü‚·B
-//! @param [in] next ƒ`ƒFƒbƒN‘ÎÛ‚Æ‚È‚éŸ‚Ì•¶š‚ÌƒCƒeƒŒ[ƒ^‚Å‚·B
-//! @param [in] next endƒCƒeƒŒ[ƒ^‚Å‚·B
+//! ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã®æ¬¡ã®æ–‡å­—ã®ãƒã‚§ãƒƒã‚¯ã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] next ãƒã‚§ãƒƒã‚¯å¯¾è±¡ã¨ãªã‚‹æ¬¡ã®æ–‡å­—ã®ã‚¤ãƒ†ãƒ¬ãƒ¼ã‚¿ã§ã™ã€‚
+//! @param [in] next endã‚¤ãƒ†ãƒ¬ãƒ¼ã‚¿ã§ã™ã€‚
 const bool SignReader::CheckNextChar(const string::const_iterator& next, const string::const_iterator& end) const
 {
-	// Ÿ‚Ì•¶š‚Íƒ`ƒFƒbƒN‚¹‚¸‚É•K‚¸OK‚Æ‚È‚è‚Ü‚·B
+	// æ¬¡ã®æ–‡å­—ã¯ãƒã‚§ãƒƒã‚¯ã›ãšã«å¿…ãšOKã¨ãªã‚Šã¾ã™ã€‚
 	return true;
 }
 
-//! ÀÛ‚Éƒg[ƒNƒ“‚ğ“Ç‚İ‚İ‚Ü‚·B
-//! @param [in] cursol “Ç‚İ‚İŠJnˆÊ’u‚Å‚·B
-//! @param [in] end SQL‘S‘Ì‚ÌI—¹ˆÊ’u‚Å‚·B
-//! @return Ø‚èo‚³‚ê‚½ƒg[ƒNƒ“‚Å‚·B“Ç‚İ‚İ‚ª¸”s‚µ‚½ê‡‚Ínullptr‚ğ•Ô‚µ‚Ü‚·B
+//! å®Ÿéš›ã«ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+//! @param [in] cursol èª­ã¿è¾¼ã¿é–‹å§‹ä½ç½®ã§ã™ã€‚
+//! @param [in] end SQLå…¨ä½“ã®çµ‚äº†ä½ç½®ã§ã™ã€‚
+//! @return åˆ‡ã‚Šå‡ºã•ã‚ŒãŸãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚èª­ã¿è¾¼ã¿ãŒå¤±æ•—ã—ãŸå ´åˆã¯nullptrã‚’è¿”ã—ã¾ã™ã€‚
 const shared_ptr<const Token> IdentifierReader::ReadCore(string::const_iterator &cursol, const string::const_iterator &end) const
 {
 	auto start = cursol;
@@ -2050,22 +2050,22 @@ const shared_ptr<const Token> IdentifierReader::ReadCore(string::const_iterator 
 	}
 }
 
-//! TokenParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·B
-//! @params [in] kind “Ç‚İæ‚éƒg[ƒNƒ“‚Ìí—Ş‚Å‚·B
+//! TokenParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚
+//! @params [in] kind èª­ã¿å–ã‚‹ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§ã™ã€‚
 TokenParser::TokenParser(function<void(const Token)> action, const vector<const TokenKind> kinds) : m_action(action), m_kinds(kinds){}
 
-//! TokenParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @params [in] kind “Ç‚İæ‚éƒg[ƒNƒ“‚Ìí—Ş‚Å‚·B
+//! TokenParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @params [in] kind èª­ã¿å–ã‚‹ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§ã™ã€‚
 TokenParser::TokenParser(const vector<const TokenKind> kinds) : m_kinds(kinds){}
 
-//! TokenParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @params [in] kind “Ç‚İæ‚éƒg[ƒNƒ“‚Ìí—Ş‚Å‚·B
+//! TokenParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @params [in] kind èª­ã¿å–ã‚‹ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§ã™ã€‚
 TokenParser::TokenParser(TokenKind kind) : m_kinds({ kind }){}
 
-//! ƒg[ƒNƒ“‚É‘Î‚·‚éƒp[ƒX‚ğs‚¢‚Ü‚·B
-//! @params [in] cursol Œ»İ‚Ì“Ç‚İæ‚èˆÊ’u‚ğ•\‚·ƒJ[ƒ\ƒ‹‚Å‚·B
-//! @return ƒp[ƒX‚ª¬Œ÷‚µ‚½‚©‚Ç‚¤‚©‚Å‚·B
+//! ãƒˆãƒ¼ã‚¯ãƒ³ã«å¯¾ã™ã‚‹ãƒ‘ãƒ¼ã‚¹ã‚’è¡Œã„ã¾ã™ã€‚
+//! @params [in] cursol ç¾åœ¨ã®èª­ã¿å–ã‚Šä½ç½®ã‚’è¡¨ã™ã‚«ãƒ¼ã‚½ãƒ«ã§ã™ã€‚
+//! @return ãƒ‘ãƒ¼ã‚¹ãŒæˆåŠŸã—ãŸã‹ã©ã†ã‹ã§ã™ã€‚
 const bool TokenParser::Parse(vector<const Token>::const_iterator& cursol, vector<const Token>::const_iterator& end) const
 {
 	if (cursol == end){
@@ -2084,23 +2084,23 @@ const bool TokenParser::Parse(vector<const Token>::const_iterator& cursol, vecto
 		}
 	});
 }
-//! “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚ğ“o˜^‚µ‚Ü‚·B
-//! @param [in] “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·B
+//! èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã‚’ç™»éŒ²ã—ã¾ã™ã€‚
+//! @param [in] èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚
 const shared_ptr<const TokenParser> TokenParser::Action(const function<void(const Token)> action) const
 {
 	return make_shared<TokenParser>(action, m_kinds);
 }
 
-//! ƒg[ƒNƒ“‚Ìƒp[ƒT[‚ğ¶¬‚µ‚Ü‚·B
-//! @params [in] kind “Ç‚İæ‚éƒg[ƒNƒ“‚Ìí—Ş‚Å‚·B
+//! ãƒˆãƒ¼ã‚¯ãƒ³ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã‚’ç”Ÿæˆã—ã¾ã™ã€‚
+//! @params [in] kind èª­ã¿å–ã‚‹ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§ã™ã€‚
 const shared_ptr<TokenParser> token(TokenKind kind)
 {
 	return make_shared<TokenParser>(kind);
 }
 
-//! “ñ‚Â‚ÌTokenPerser‚ğŒ³‚É•¡”‚Ìí—Ş‚ğ‚Æ‚éTokenParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @params [in] parser1 Œ³‚ÌParser‚Å‚·B
-//! @params [in] parser2 ’Ç‰Á‚·‚éí—Ş‚Ì‚ÌParser‚Å‚·B
+//! äºŒã¤ã®TokenPerserã‚’å…ƒã«è¤‡æ•°ã®ç¨®é¡ã‚’ã¨ã‚‹TokenParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @params [in] parser1 å…ƒã®Parserã§ã™ã€‚
+//! @params [in] parser2 è¿½åŠ ã™ã‚‹ç¨®é¡ã®ã®Parserã§ã™ã€‚
 const shared_ptr<const TokenParser> TokenParser::or(const shared_ptr<const TokenParser> parser) const
 {
 	vector<const TokenKind> newKinds(m_kinds);
@@ -2108,13 +2108,13 @@ const shared_ptr<const TokenParser> TokenParser::or(const shared_ptr<const Token
 	return make_shared<TokenParser>(newKinds);
 }
 
-//! NoTokenParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·B
+//! NoTokenParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚
 NoTokenParser::NoTokenParser(const function<void(void)> action) : m_action(action){}
 
-//! ƒg[ƒNƒ“‚É‘Î‚·‚éƒp[ƒX‚ğs‚¢‚Ü‚·B
-//! @params [in] cursol Œ»İ‚Ì“Ç‚İæ‚èˆÊ’u‚ğ•\‚·ƒJ[ƒ\ƒ‹‚Å‚·B
-//! @return ƒp[ƒX‚ª¬Œ÷‚µ‚½‚©‚Ç‚¤‚©‚Å‚·B
+//! ãƒˆãƒ¼ã‚¯ãƒ³ã«å¯¾ã™ã‚‹ãƒ‘ãƒ¼ã‚¹ã‚’è¡Œã„ã¾ã™ã€‚
+//! @params [in] cursol ç¾åœ¨ã®èª­ã¿å–ã‚Šä½ç½®ã‚’è¡¨ã™ã‚«ãƒ¼ã‚½ãƒ«ã§ã™ã€‚
+//! @return ãƒ‘ãƒ¼ã‚¹ãŒæˆåŠŸã—ãŸã‹ã©ã†ã‹ã§ã™ã€‚
 const bool NoTokenParser::Parse(vector<const Token>::const_iterator& cursol, vector<const Token>::const_iterator& end) const
 {
 	if (m_action){
@@ -2123,33 +2123,33 @@ const bool NoTokenParser::Parse(vector<const Token>::const_iterator& cursol, vec
 	return true;
 }
 
-//! “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚ğ“o˜^‚µ‚Ü‚·B
-//! @param [in] “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·B
+//! èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã‚’ç™»éŒ²ã—ã¾ã™ã€‚
+//! @param [in] èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚
 const shared_ptr<const NoTokenParser> NoTokenParser::Action(const function<void(void)> action) const
 {
 	return make_shared<NoTokenParser>(action);
 }
 
-//! ‰½‚à“Ç‚İæ‚ç‚¸‚ÉƒAƒNƒVƒ‡ƒ“‚¾‚¯Às‚·‚éƒp[ƒT[‚ğ¶¬‚µ‚Ü‚·B
+//! ä½•ã‚‚èª­ã¿å–ã‚‰ãšã«ã‚¢ã‚¯ã‚·ãƒ§ãƒ³ã ã‘å®Ÿè¡Œã™ã‚‹ãƒ‘ãƒ¼ã‚µãƒ¼ã‚’ç”Ÿæˆã—ã¾ã™ã€‚
 const shared_ptr<NoTokenParser> action(function<void(void)> action)
 {
 	return make_shared<NoTokenParser>(action);
 }
 
-//! SequenceParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·B
-//! @params [in] parser1 ˆê‚Â–Ú‚ÌParser‚Å‚·B
-//! @params [in] parser1 ˆê‚Â–Ú‚ÌParser‚Å‚·B
+//! SequenceParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚
+//! @params [in] parser1 ä¸€ã¤ç›®ã®Parserã§ã™ã€‚
+//! @params [in] parser1 ä¸€ã¤ç›®ã®Parserã§ã™ã€‚
 SequenceParser::SequenceParser(const function<void(void)> action, const shared_ptr<const Parser> parser1, const shared_ptr<const Parser> parser2) : m_action(action), m_parser1(parser1), m_parser2(parser2){}
 
-//! SequenceParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @params [in] parser1 ˆê‚Â–Ú‚ÌParser‚Å‚·B
-//! @params [in] parser1 ˆê‚Â–Ú‚ÌParser‚Å‚·B
+//! SequenceParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @params [in] parser1 ä¸€ã¤ç›®ã®Parserã§ã™ã€‚
+//! @params [in] parser1 ä¸€ã¤ç›®ã®Parserã§ã™ã€‚
 SequenceParser::SequenceParser(const shared_ptr<const Parser> parser1, const shared_ptr<const Parser> parser2) : m_parser1(parser1), m_parser2(parser2){}
 
-//! ƒg[ƒNƒ“‚É‘Î‚·‚éƒp[ƒX‚ğs‚¢‚Ü‚·B
-//! @params [in] cursol Œ»İ‚Ì“Ç‚İæ‚èˆÊ’u‚ğ•\‚·ƒJ[ƒ\ƒ‹‚Å‚·B
-//! @return ƒp[ƒX‚ª¬Œ÷‚µ‚½‚©‚Ç‚¤‚©‚Å‚·B
+//! ãƒˆãƒ¼ã‚¯ãƒ³ã«å¯¾ã™ã‚‹ãƒ‘ãƒ¼ã‚¹ã‚’è¡Œã„ã¾ã™ã€‚
+//! @params [in] cursol ç¾åœ¨ã®èª­ã¿å–ã‚Šä½ç½®ã‚’è¡¨ã™ã‚«ãƒ¼ã‚½ãƒ«ã§ã™ã€‚
+//! @return ãƒ‘ãƒ¼ã‚¹ãŒæˆåŠŸã—ãŸã‹ã©ã†ã‹ã§ã™ã€‚
 const bool SequenceParser::Parse(vector<const Token>::const_iterator& cursol, vector<const Token>::const_iterator& end) const
 {
 	auto beforeParse = cursol;
@@ -2163,43 +2163,43 @@ const bool SequenceParser::Parse(vector<const Token>::const_iterator& cursol, ve
 	return false;
 }
 
-//! “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚ğ“o˜^‚µ‚Ü‚·B
-//! @param [in] “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·B
+//! èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã‚’ç™»éŒ²ã—ã¾ã™ã€‚
+//! @param [in] èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚
 const shared_ptr<const SequenceParser> SequenceParser::Action(const function<void(void)> action) const
 {
 	return make_shared<SequenceParser>(action, m_parser1, m_parser2);
 }
 
-//! SequenceParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ¶¬‚µ‚Ü‚·B
-//! @params [in] parser1 ˆê‚Â–Ú‚ÌParser‚Å‚·B
-//! @params [in] parser2 “ñ‚Â–Ú‚ÌParser‚Å‚·B
+//! SequenceParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’ç”Ÿæˆã—ã¾ã™ã€‚
+//! @params [in] parser1 ä¸€ã¤ç›®ã®Parserã§ã™ã€‚
+//! @params [in] parser2 äºŒã¤ç›®ã®Parserã§ã™ã€‚
 const shared_ptr<const SequenceParser> operator>>(const shared_ptr<const Parser> parser1, const shared_ptr<const Parser> parser2)
 {
 	return make_shared<SequenceParser>(parser1, parser2);
 }
 
-//! SequenceParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·B
-//! @params [in] parser1 ˆê‚Â–Ú‚ÌParser‚Å‚·B
-//! @params [in] parser2 “ñ‚Â–Ú–Ú‚ÌParser‚Å‚·B
+//! SequenceParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚
+//! @params [in] parser1 ä¸€ã¤ç›®ã®Parserã§ã™ã€‚
+//! @params [in] parser2 äºŒã¤ç›®ç›®ã®Parserã§ã™ã€‚
 OrderedChoiceParser::OrderedChoiceParser(const function<void(void)> action, const shared_ptr<const Parser> parser1, const shared_ptr<const Parser> parser2) : m_action(action), m_parser1(parser1), m_parser2(parser2){}
 
 
-//! SequenceParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @params [in] parser1 ˆê‚Â–Ú‚ÌParser‚Å‚·B
-//! @params [in] parser2 “ñ‚Â–Ú‚ÌParser‚Å‚·B
+//! SequenceParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @params [in] parser1 ä¸€ã¤ç›®ã®Parserã§ã™ã€‚
+//! @params [in] parser2 äºŒã¤ç›®ã®Parserã§ã™ã€‚
 OrderedChoiceParser::OrderedChoiceParser(const shared_ptr<const Parser> parser1, const shared_ptr<const Parser> parser2) : m_parser1(parser1), m_parser2(parser2){}
 
-//! “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚ğ“o˜^‚µ‚Ü‚·B
-//! @param [in] “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·B
+//! èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã‚’ç™»éŒ²ã—ã¾ã™ã€‚
+//! @param [in] èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚
 const shared_ptr<const OrderedChoiceParser> OrderedChoiceParser::Action(const function<void(void)> action) const
 {
 	return make_shared<OrderedChoiceParser>(action, m_parser1, m_parser2);
 }
 
-//! “ñ‚Â‚Ì‹K‘¥‚É‘Î‚·‚éƒp[ƒX‚ğs‚¢‚Ü‚·B
-//! @params [in] cursol Œ»İ‚Ì“Ç‚İæ‚èˆÊ’u‚ğ•\‚·ƒJ[ƒ\ƒ‹‚Å‚·B
-//! @return ƒp[ƒX‚ª¬Œ÷‚µ‚½‚©‚Ç‚¤‚©‚Å‚·B
+//! äºŒã¤ã®è¦å‰‡ã«å¯¾ã™ã‚‹ãƒ‘ãƒ¼ã‚¹ã‚’è¡Œã„ã¾ã™ã€‚
+//! @params [in] cursol ç¾åœ¨ã®èª­ã¿å–ã‚Šä½ç½®ã‚’è¡¨ã™ã‚«ãƒ¼ã‚½ãƒ«ã§ã™ã€‚
+//! @return ãƒ‘ãƒ¼ã‚¹ãŒæˆåŠŸã—ãŸã‹ã©ã†ã‹ã§ã™ã€‚
 const bool OrderedChoiceParser::Parse(vector<const Token>::const_iterator& cursol, vector<const Token>::const_iterator& end) const
 {
 	if (m_parser1->Parse(cursol, end) || m_parser2->Parse(cursol, end)){
@@ -2211,33 +2211,33 @@ const bool OrderedChoiceParser::Parse(vector<const Token>::const_iterator& curso
 	return false;
 }
 
-//! OrderedChoiceParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ¶¬‚µ‚Ü‚·B
-//! @params [in] parser1 ˆê‚Â–Ú‚ÌParser‚Å‚·B
-//! @params [in] parser2 “ñ‚Â–Ú‚ÌParser‚Å‚·B
+//! OrderedChoiceParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’ç”Ÿæˆã—ã¾ã™ã€‚
+//! @params [in] parser1 ä¸€ã¤ç›®ã®Parserã§ã™ã€‚
+//! @params [in] parser2 äºŒã¤ç›®ã®Parserã§ã™ã€‚
 const shared_ptr<const OrderedChoiceParser> operator|(const shared_ptr<const Parser> parser1, const shared_ptr<const Parser> parser2)
 {
 	return make_shared<OrderedChoiceParser>(parser1, parser2);
 }
 
-//! OptionalParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·B
-//! @params [in] optional ‘¶İ‚µ‚Ä‚à‚µ‚È‚­‚Ä‚à‚æ‚¢‹K‘¥‚Å‚·B
+//! OptionalParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚
+//! @params [in] optional å­˜åœ¨ã—ã¦ã‚‚ã—ãªãã¦ã‚‚ã‚ˆã„è¦å‰‡ã§ã™ã€‚
 OptionalParser::OptionalParser(const function<void(void)> action, const shared_ptr<const Parser> optional) :m_action(action), m_optional(optional) {}
 
-//! OptionalParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @params [in] optional ‘¶İ‚µ‚Ä‚à‚µ‚È‚­‚Ä‚à‚æ‚¢‹K‘¥‚Å‚·B
+//! OptionalParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @params [in] optional å­˜åœ¨ã—ã¦ã‚‚ã—ãªãã¦ã‚‚ã‚ˆã„è¦å‰‡ã§ã™ã€‚
 OptionalParser::OptionalParser(const shared_ptr<const Parser> optional) : m_optional(optional){}
 
-//! “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚ğ“o˜^‚µ‚Ü‚·B
-//! @param [in] “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·B
+//! èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã‚’ç™»éŒ²ã—ã¾ã™ã€‚
+//! @param [in] èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚
 const shared_ptr<const OptionalParser> OptionalParser::Action(const function<void(void)> action) const
 {
 	return make_shared<OptionalParser>(action, m_optional);
 }
 
-//! ƒIƒvƒVƒ‡ƒiƒ‹‚Èƒp[ƒX‚ğs‚¢‚Ü‚·B
-//! @params [in] cursol Œ»İ‚Ì“Ç‚İæ‚èˆÊ’u‚ğ•\‚·ƒJ[ƒ\ƒ‹‚Å‚·B
-//! @return ƒp[ƒX‚ª¬Œ÷‚µ‚½‚©‚Ç‚¤‚©‚Å‚·B
+//! ã‚ªãƒ—ã‚·ãƒ§ãƒŠãƒ«ãªãƒ‘ãƒ¼ã‚¹ã‚’è¡Œã„ã¾ã™ã€‚
+//! @params [in] cursol ç¾åœ¨ã®èª­ã¿å–ã‚Šä½ç½®ã‚’è¡¨ã™ã‚«ãƒ¼ã‚½ãƒ«ã§ã™ã€‚
+//! @return ãƒ‘ãƒ¼ã‚¹ãŒæˆåŠŸã—ãŸã‹ã©ã†ã‹ã§ã™ã€‚
 const bool OptionalParser::Parse(vector<const Token>::const_iterator& cursol, vector<const Token>::const_iterator& end) const
 {
 	auto beforeParse = cursol;
@@ -2251,32 +2251,32 @@ const bool OptionalParser::Parse(vector<const Token>::const_iterator& cursol, ve
 	}
 	return true;
 }
-//! OptionalParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ¶¬‚µ‚Ü‚·B
-//! @params [in] optional ‘¶İ‚µ‚Ä‚à‚µ‚È‚­‚Ä‚à‚æ‚¢‹K‘¥‚Å‚·B
+//! OptionalParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’ç”Ÿæˆã—ã¾ã™ã€‚
+//! @params [in] optional å­˜åœ¨ã—ã¦ã‚‚ã—ãªãã¦ã‚‚ã‚ˆã„è¦å‰‡ã§ã™ã€‚
 const shared_ptr<const OptionalParser> operator-(const shared_ptr<const Parser> optional)
 {
 	return make_shared<OptionalParser>(optional);
 }
 
-//! ZeroOrMoreParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·B
-//! @params [in] once ŒJ‚è•Ô‚µ‚Ìˆê‰ñ•ª‚Æ‚È‚é‹K‘¥‚Å‚·B
+//! ZeroOrMoreParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚
+//! @params [in] once ç¹°ã‚Šè¿”ã—ã®ä¸€å›åˆ†ã¨ãªã‚‹è¦å‰‡ã§ã™ã€‚
 ZeroOrMoreParser::ZeroOrMoreParser(const function<void(void)> action, const shared_ptr<const Parser> once) :m_action(action), m_once(once){}
 
-//! ZeroOrMoreParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @params [in] once ŒJ‚è•Ô‚µ‚Ìˆê‰ñ•ª‚Æ‚È‚é‹K‘¥‚Å‚·B
+//! ZeroOrMoreParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @params [in] once ç¹°ã‚Šè¿”ã—ã®ä¸€å›åˆ†ã¨ãªã‚‹è¦å‰‡ã§ã™ã€‚
 ZeroOrMoreParser::ZeroOrMoreParser(const shared_ptr<const Parser> once): m_once(once){}
 
-//! “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚ğ“o˜^‚µ‚Ü‚·B
-//! @param [in] “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·B
+//! èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã‚’ç™»éŒ²ã—ã¾ã™ã€‚
+//! @param [in] èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚
 const shared_ptr<const ZeroOrMoreParser> ZeroOrMoreParser::Action(const function<void(void)> action) const
 {
 	return make_shared<ZeroOrMoreParser>(action, m_once);
 }
 
-//! ŒJ‚è•Ô‚µ‚Ìƒp[ƒX‚ğs‚¢‚Ü‚·B
-//! @params [in] cursol Œ»İ‚Ì“Ç‚İæ‚èˆÊ’u‚ğ•\‚·ƒJ[ƒ\ƒ‹‚Å‚·B
-//! @return ƒp[ƒX‚ª¬Œ÷‚µ‚½‚©‚Ç‚¤‚©‚Å‚·B
+//! ç¹°ã‚Šè¿”ã—ã®ãƒ‘ãƒ¼ã‚¹ã‚’è¡Œã„ã¾ã™ã€‚
+//! @params [in] cursol ç¾åœ¨ã®èª­ã¿å–ã‚Šä½ç½®ã‚’è¡¨ã™ã‚«ãƒ¼ã‚½ãƒ«ã§ã™ã€‚
+//! @return ãƒ‘ãƒ¼ã‚¹ãŒæˆåŠŸã—ãŸã‹ã©ã†ã‹ã§ã™ã€‚
 const bool ZeroOrMoreParser::Parse(vector<const Token>::const_iterator& cursol, vector<const Token>::const_iterator& end) const
 {
 	while (m_once->Parse(cursol, end)){}
@@ -2286,32 +2286,32 @@ const bool ZeroOrMoreParser::Parse(vector<const Token>::const_iterator& cursol, 
 	return true;
 }
 
-//! ZeroOrMoreParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ¶¬‚µ‚Ü‚·B
-//! @params [in] once ŒJ‚è•Ô‚µ‚Ìˆê‰ñ•ª‚Æ‚È‚é‹K‘¥‚Å‚·B
+//! ZeroOrMoreParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’ç”Ÿæˆã—ã¾ã™ã€‚
+//! @params [in] once ç¹°ã‚Šè¿”ã—ã®ä¸€å›åˆ†ã¨ãªã‚‹è¦å‰‡ã§ã™ã€‚
 const shared_ptr<const Parser> operator~(const shared_ptr<const Parser> once)
 {
 	return make_shared<ZeroOrMoreParser>(once);
 }
 
-//! AndPredicateParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] æ“Ç‚İ‚ğÀs‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·Bæ“Ç‚İ‚ª¬Œ÷‚µ‚½‚©‚Ç‚¤‚©‚ğó‚¯æ‚è‚Ü‚·B
-//! @params [in] parser æ“Ç‚İ‚·‚é‹K‘¥‚Å‚·B
+//! AndPredicateParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] å…ˆèª­ã¿ã‚’å®Ÿè¡Œã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚å…ˆèª­ã¿ãŒæˆåŠŸã—ãŸã‹ã©ã†ã‹ã‚’å—ã‘å–ã‚Šã¾ã™ã€‚
+//! @params [in] parser å…ˆèª­ã¿ã™ã‚‹è¦å‰‡ã§ã™ã€‚
 AndPredicateParser::AndPredicateParser(const function<void(bool)> action, const shared_ptr<const Parser> parser) :m_action(action), m_parser(parser){}
 
-//! ZeroOrMoreParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @params [in] parser æ“Ç‚İ‚·‚é‹K‘¥‚Å‚·B
+//! ZeroOrMoreParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @params [in] parser å…ˆèª­ã¿ã™ã‚‹è¦å‰‡ã§ã™ã€‚
 AndPredicateParser::AndPredicateParser(const shared_ptr<const Parser> parser) : m_parser(parser){}
 
-//! “Ç‚İæ‚è‚ª¬Œ÷‚µ‚½‚çÀs‚·‚éˆ—‚ğ“o˜^‚µ‚Ü‚·B
-//! @param [in] æ“Ç‚İ‚ğÀs‚µ‚½‚çÀs‚·‚éˆ—‚Å‚·Bæ“Ç‚İ‚ª¬Œ÷‚µ‚½‚©‚Ç‚¤‚©‚ğó‚¯æ‚è‚Ü‚·B
+//! èª­ã¿å–ã‚ŠãŒæˆåŠŸã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã‚’ç™»éŒ²ã—ã¾ã™ã€‚
+//! @param [in] å…ˆèª­ã¿ã‚’å®Ÿè¡Œã—ãŸã‚‰å®Ÿè¡Œã™ã‚‹å‡¦ç†ã§ã™ã€‚å…ˆèª­ã¿ãŒæˆåŠŸã—ãŸã‹ã©ã†ã‹ã‚’å—ã‘å–ã‚Šã¾ã™ã€‚
 const shared_ptr<const AndPredicateParser> AndPredicateParser::Action(const function<void(bool)> action) const
 {
 	return make_shared<AndPredicateParser>(action, m_parser);
 }
 
-//! ŒJ‚è•Ô‚µ‚Ìƒp[ƒX‚ğs‚¢‚Ü‚·B
-//! @params [in] cursol Œ»İ‚Ì“Ç‚İæ‚èˆÊ’u‚ğ•\‚·ƒJ[ƒ\ƒ‹‚Å‚·B
-//! @return ƒp[ƒX‚ª¬Œ÷‚µ‚½‚©‚Ç‚¤‚©‚Å‚·B
+//! ç¹°ã‚Šè¿”ã—ã®ãƒ‘ãƒ¼ã‚¹ã‚’è¡Œã„ã¾ã™ã€‚
+//! @params [in] cursol ç¾åœ¨ã®èª­ã¿å–ã‚Šä½ç½®ã‚’è¡¨ã™ã‚«ãƒ¼ã‚½ãƒ«ã§ã™ã€‚
+//! @return ãƒ‘ãƒ¼ã‚¹ãŒæˆåŠŸã—ãŸã‹ã©ã†ã‹ã§ã™ã€‚
 const bool AndPredicateParser::Parse(vector<const Token>::const_iterator& cursol, vector<const Token>::const_iterator& end) const
 {
 	auto beforeParse = cursol;
@@ -2331,14 +2331,14 @@ const bool AndPredicateParser::Parse(vector<const Token>::const_iterator& cursol
 	}
 }
 
-//! AndPredicateParserƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @params [in] parser æ“Ç‚İ‚·‚é‹K‘¥‚Å‚·B
+//! AndPredicateParserã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @params [in] parser å…ˆèª­ã¿ã™ã‚‹è¦å‰‡ã§ã™ã€‚
 const shared_ptr<const AndPredicateParser> operator&(const shared_ptr<const Parser> parser)
 {
 	return make_shared<AndPredicateParser>(parser);
 }
 
-//! “ü—Íƒtƒ@ƒCƒ‹‚É‘‚¢‚Ä‚ ‚Á‚½‚·‚×‚Ä‚Ì—ñ‚ğallInputColumns‚Éİ’è‚µ‚Ü‚·B
+//! å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã«æ›¸ã„ã¦ã‚ã£ãŸã™ã¹ã¦ã®åˆ—ã‚’allInputColumnsã«è¨­å®šã—ã¾ã™ã€‚
 void OutputData::InitializeAllInputColumns()
 {
 	for (auto &inputTable : inputTables){
@@ -2349,20 +2349,20 @@ void OutputData::InitializeAllInputColumns()
 	}
 }
 
-//! WHERE‚âORDER BY‚ğ“K—p‚µ‚Ä‚¢‚È‚¢‚·‚×‚Ä‚Ìs‚ğæ“¾‚µ‚Ü‚·B
-//! @return ‚·‚×‚Ä‚Ìƒf[ƒ^sB“ü—Í‚³‚ê‚½‚·‚×‚Ä‚Ì“ü—Íƒf[ƒ^‚ğ•ÛŠÇ‚µ‚Ü‚·B
+//! WHEREã‚„ORDER BYã‚’é©ç”¨ã—ã¦ã„ãªã„ã™ã¹ã¦ã®è¡Œã‚’å–å¾—ã—ã¾ã™ã€‚
+//! @return ã™ã¹ã¦ã®ãƒ‡ãƒ¼ã‚¿è¡Œã€‚å…¥åŠ›ã•ã‚ŒãŸã™ã¹ã¦ã®å…¥åŠ›ãƒ‡ãƒ¼ã‚¿ã‚’ä¿ç®¡ã—ã¾ã™ã€‚
 const shared_ptr<vector<const vector<const shared_ptr<const Data>>>> OutputData::GetAllRows() const
 {
 	auto outputRows = make_shared<vector<const vector<const shared_ptr<const Data>>>>();
 	auto currentRowsPtr = GetInitializedCurrentRows();
 	auto &currentRows = *currentRowsPtr;
 
-	// o—Í‚·‚éƒf[ƒ^‚ğİ’è‚µ‚Ü‚·B
+	// å‡ºåŠ›ã™ã‚‹ãƒ‡ãƒ¼ã‚¿ã‚’è¨­å®šã—ã¾ã™ã€‚
 	while (true){
 		outputRows->push_back(vector<const shared_ptr<const Data>>());
-		auto &outputRow = outputRows->back();// WHERE‚âORDER‚Ì‚½‚ß‚É‚·‚×‚Ä‚Ìî•ñ‚ğŠÜ‚ŞsBrow‚ÆƒCƒ“ƒfƒbƒNƒX‚ğ‹¤—L‚µ‚Ü‚·B
+		auto &outputRow = outputRows->back();// WHEREã‚„ORDERã®ãŸã‚ã«ã™ã¹ã¦ã®æƒ…å ±ã‚’å«ã‚€è¡Œã€‚rowã¨ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã‚’å…±æœ‰ã—ã¾ã™ã€‚
 
-		// outputRow‚Ì—ñ‚ğİ’è‚µ‚Ü‚·B
+		// outputRowã®åˆ—ã‚’è¨­å®šã—ã¾ã™ã€‚
 		for (auto &currentRow : currentRows){
 			copy(
 				currentRow->begin(),
@@ -2370,18 +2370,18 @@ const shared_ptr<vector<const vector<const shared_ptr<const Data>>>> OutputData:
 				back_inserter(outputRow));
 		}
 
-		// Šeƒe[ƒuƒ‹‚Ìs‚Ì‚·‚×‚Ä‚Ì‘g‚İ‡‚í‚¹‚ğo—Í‚µ‚Ü‚·B
+		// å„ãƒ†ãƒ¼ãƒ–ãƒ«ã®è¡Œã®ã™ã¹ã¦ã®çµ„ã¿åˆã‚ã›ã‚’å‡ºåŠ›ã—ã¾ã™ã€‚
 
-		// ÅŒã‚Ìƒe[ƒuƒ‹‚ÌƒJƒŒƒ“ƒgs‚ğƒCƒ“ƒNƒŠƒƒ“ƒg‚µ‚Ü‚·B
+		// æœ€å¾Œã®ãƒ†ãƒ¼ãƒ–ãƒ«ã®ã‚«ãƒ¬ãƒ³ãƒˆè¡Œã‚’ã‚¤ãƒ³ã‚¯ãƒªãƒ¡ãƒ³ãƒˆã—ã¾ã™ã€‚
 		++currentRows[queryInfo.tableNames.size() - 1];
 
-		// ÅŒã‚Ìƒe[ƒuƒ‹‚ªÅIs‚É‚È‚Á‚Ä‚¢‚½ê‡‚Íæ“ª‚É–ß‚µA‡‚É‘O‚Ìƒe[ƒuƒ‹‚ÌƒJƒŒƒ“ƒgs‚ğƒCƒ“ƒNƒŠƒƒ“ƒg‚µ‚Ü‚·B
+		// æœ€å¾Œã®ãƒ†ãƒ¼ãƒ–ãƒ«ãŒæœ€çµ‚è¡Œã«ãªã£ã¦ã„ãŸå ´åˆã¯å…ˆé ­ã«æˆ»ã—ã€é †ã«å‰ã®ãƒ†ãƒ¼ãƒ–ãƒ«ã®ã‚«ãƒ¬ãƒ³ãƒˆè¡Œã‚’ã‚¤ãƒ³ã‚¯ãƒªãƒ¡ãƒ³ãƒˆã—ã¾ã™ã€‚
 		for (int i = queryInfo.tableNames.size() - 1; currentRows[i] == inputTables[i].data()->end() && 0 < i; --i){
 			++currentRows[i - 1];
 			currentRows[i] = inputTables[i].data()->begin();
 		}
 
-		// Å‰‚Ìƒe[ƒuƒ‹‚ªÅŒã‚Ìs‚ğ’´‚¦‚½‚È‚ço—Ís‚Ì¶¬‚ÍI‚í‚è‚Å‚·B
+		// æœ€åˆã®ãƒ†ãƒ¼ãƒ–ãƒ«ãŒæœ€å¾Œã®è¡Œã‚’è¶…ãˆãŸãªã‚‰å‡ºåŠ›è¡Œã®ç”Ÿæˆã¯çµ‚ã‚ã‚Šã§ã™ã€‚
 		if (currentRows[0] == inputTables[0].data()->end()){
 			break;
 		}
@@ -2389,11 +2389,11 @@ const shared_ptr<vector<const vector<const shared_ptr<const Data>>>> OutputData:
 	return outputRows;
 }
 
-//! ƒf[ƒ^‚É‘Î‚µ‚ÄWHERE‹å‚ğ“K—p‚µ‚Ü‚·B
-//! @params [in] outputRows “K—p‚³‚ê‚éƒf[ƒ^B
+//! ãƒ‡ãƒ¼ã‚¿ã«å¯¾ã—ã¦WHEREå¥ã‚’é©ç”¨ã—ã¾ã™ã€‚
+//! @params [in] outputRows é©ç”¨ã•ã‚Œã‚‹ãƒ‡ãƒ¼ã‚¿ã€‚
 void OutputData::ApplyWhere(vector<const vector<const shared_ptr<const Data>>> &outputRows) const
 {
-	// WHEREğŒ‚ğ“K—p‚µ‚Ü‚·B
+	// WHEREæ¡ä»¶ã‚’é©ç”¨ã—ã¾ã™ã€‚
 	if (queryInfo.whereTopNode){
 		auto & newEnd = copy_if(
 			outputRows.begin(),
@@ -2411,20 +2411,20 @@ void OutputData::ApplyWhere(vector<const vector<const shared_ptr<const Data>>> &
 	}
 }
 
-//! ƒf[ƒ^‚É‘Î‚µ‚ÄORDER BY‹å‚ğ“K—p‚µ‚Ü‚·B
-//! @params [in] outputRows “K—p‚³‚ê‚éƒf[ƒ^B
+//! ãƒ‡ãƒ¼ã‚¿ã«å¯¾ã—ã¦ORDER BYå¥ã‚’é©ç”¨ã—ã¾ã™ã€‚
+//! @params [in] outputRows é©ç”¨ã•ã‚Œã‚‹ãƒ‡ãƒ¼ã‚¿ã€‚
 void OutputData::ApplyOrderBy(vector<const vector<const shared_ptr<const Data>>> &outputRows) const
 {
-	// ORDER‹å‚É‚æ‚é•À‚Ñ‘Ö‚¦‚Ìˆ—‚ğs‚¢‚Ü‚·B
+	// ORDERå¥ã«ã‚ˆã‚‹ä¸¦ã³æ›¿ãˆã®å‡¦ç†ã‚’è¡Œã„ã¾ã™ã€‚
 	if (!queryInfo.orders.empty()){
 		sort(
 			outputRows.begin(),
 			outputRows.end(),
 			[&](const vector<const shared_ptr<const Data>>& lRow, const vector<const shared_ptr<const Data>>& rRow){
 			for (auto &order : queryInfo.orders){
-				auto &lData = lRow[order.column.allColumnsIndex]; // ƒCƒ“ƒfƒbƒNƒX‚ªminIndex‚Ìƒf[ƒ^‚Å‚·B
-				auto &rData = rRow[order.column.allColumnsIndex]; // ƒCƒ“ƒfƒbƒNƒX‚ªj‚Ìƒf[ƒ^‚Å‚·B
-				int cmp = 0; // ”äŠrŒ‹‰Ê‚Å‚·B“™‚µ‚¯‚ê‚Î0AƒCƒ“ƒfƒbƒNƒXj‚Ìs‚ª‘å‚«‚¯‚ê‚Îƒvƒ‰ƒXAƒCƒ“ƒfƒbƒNƒXminIndex‚Ìs‚ª‘å‚«‚¯‚ê‚Îƒ}ƒCƒiƒX‚Æ‚È‚è‚Ü‚·B
+				auto &lData = lRow[order.column.allColumnsIndex]; // ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ãŒminIndexã®ãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
+				auto &rData = rRow[order.column.allColumnsIndex]; // ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ãŒjã®ãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
+				int cmp = 0; // æ¯”è¼ƒçµæœã§ã™ã€‚ç­‰ã—ã‘ã‚Œã°0ã€ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹jã®è¡ŒãŒå¤§ãã‘ã‚Œã°ãƒ—ãƒ©ã‚¹ã€ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹minIndexã®è¡ŒãŒå¤§ãã‘ã‚Œã°ãƒã‚¤ãƒŠã‚¹ã¨ãªã‚Šã¾ã™ã€‚
 				switch (lData->type())
 				{
 				case DataType::INTEGER:
@@ -2435,7 +2435,7 @@ void OutputData::ApplyOrderBy(vector<const vector<const shared_ptr<const Data>>>
 					break;
 				}
 
-				// ~‡‚È‚çcmp‚Ì‘å¬‚ğ“ü‚ê‘Ö‚¦‚Ü‚·B
+				// é™é †ãªã‚‰cmpã®å¤§å°ã‚’å…¥ã‚Œæ›¿ãˆã¾ã™ã€‚
 				if (!order.isAsc){
 					cmp *= -1;
 				}
@@ -2449,7 +2449,7 @@ void OutputData::ApplyOrderBy(vector<const vector<const shared_ptr<const Data>>>
 }
 
 
-//! SELECT‹å‚Ì—ñ–¼w’è‚ª*‚¾‚Á‚½ê‡‚ÍA“ü—ÍCSV‚Ì—ñ–¼‚ª‚·‚×‚Ä‘I‘ğ‚³‚ê‚Ü‚·B
+//! SELECTå¥ã®åˆ—åæŒ‡å®šãŒ*ã ã£ãŸå ´åˆã¯ã€å…¥åŠ›CSVã®åˆ—åãŒã™ã¹ã¦é¸æŠã•ã‚Œã¾ã™ã€‚
 void OutputData::OpenSelectAsterisk()
 {
 	if (queryInfo.selectColumns.empty()){
@@ -2457,7 +2457,7 @@ void OutputData::OpenSelectAsterisk()
 	}
 }
 
-//! —˜—p‚·‚é—ñ–¼‚ªA‰½ŒÂ–Ú‚Ì“ü—Íƒtƒ@ƒCƒ‹‚Ì‰½—ñ–Ú‚É‘Š“–‚·‚é‚©‚ğ”»•Ê‚µ‚Ü‚·B
+//! åˆ©ç”¨ã™ã‚‹åˆ—åãŒã€ä½•å€‹ç›®ã®å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã®ä½•åˆ—ç›®ã«ç›¸å½“ã™ã‚‹ã‹ã‚’åˆ¤åˆ¥ã—ã¾ã™ã€‚
 void OutputData::SetAllColumns()
 {
 	for (auto &selectColumn : queryInfo.selectColumns){
@@ -2476,8 +2476,8 @@ void OutputData::SetAllColumns()
 	}
 }
 
-//! OutputDataƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] queryInfo SQL‚Ìî•ñ‚Å‚·B
+//! OutputDataã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] queryInfo SQLã®æƒ…å ±ã§ã™ã€‚
 OutputData::OutputData(const SqlQueryInfo queryInfo, const vector<const InputTable> &inputTables) : queryInfo(queryInfo), inputTables(inputTables)
 {
 	InitializeAllInputColumns();
@@ -2485,8 +2485,8 @@ OutputData::OutputData(const SqlQueryInfo queryInfo, const vector<const InputTab
 	SetAllColumns();
 }
 
-//! “ü—Í‚³‚ê‚½Šeƒe[ƒuƒ‹‚ÌAŒ»İo—Í‚µ‚Ä‚¢‚és‚ğw‚·ƒJ[ƒ\ƒ‹‚ğA‰Šú‰»‚³‚ê‚½ó‘Ô‚Åæ“¾‚µ‚Ü‚·B
-//! @return ‰Šú‰»‚³‚ê‚½ƒJ[ƒ\ƒ‹‚Å‚·B
+//! å…¥åŠ›ã•ã‚ŒãŸå„ãƒ†ãƒ¼ãƒ–ãƒ«ã®ã€ç¾åœ¨å‡ºåŠ›ã—ã¦ã„ã‚‹è¡Œã‚’æŒ‡ã™ã‚«ãƒ¼ã‚½ãƒ«ã‚’ã€åˆæœŸåŒ–ã•ã‚ŒãŸçŠ¶æ…‹ã§å–å¾—ã—ã¾ã™ã€‚
+//! @return åˆæœŸåŒ–ã•ã‚ŒãŸã‚«ãƒ¼ã‚½ãƒ«ã§ã™ã€‚
 const shared_ptr<vector<vector<const vector<const shared_ptr<const Data>>>::const_iterator>> OutputData::GetInitializedCurrentRows() const
 {
 	auto currentRows = make_shared<vector<vector<const vector<const shared_ptr<const Data>>>::const_iterator>>();
@@ -2499,15 +2499,15 @@ const shared_ptr<vector<vector<const vector<const shared_ptr<const Data>>>::cons
 	return currentRows;
 }
 
-//! o—Í‚·‚éƒJƒ‰ƒ€–¼‚ğæ“¾‚µ‚Ü‚·B
-//! @return o—Í‚·‚éƒJƒ‰ƒ€–¼‚Å‚·B
+//! å‡ºåŠ›ã™ã‚‹ã‚«ãƒ©ãƒ åã‚’å–å¾—ã—ã¾ã™ã€‚
+//! @return å‡ºåŠ›ã™ã‚‹ã‚«ãƒ©ãƒ åã§ã™ã€‚
 const vector<Column> OutputData::columns() const
 {
 	return queryInfo.selectColumns;
 }
 
-//! o—Í‚·‚é‚·‚×‚Ä‚Ìƒf[ƒ^s‚ğæ“¾‚µ‚Ü‚·B
-//! @return o—Í‚·‚é‚·‚×‚Ä‚Ìƒf[ƒ^sB“ü—Í‚³‚ê‚½‚·‚×‚Ä‚Ì“ü—Íƒf[ƒ^‚ğ•ÛŠÇ‚µ‚Ü‚·B
+//! å‡ºåŠ›ã™ã‚‹ã™ã¹ã¦ã®ãƒ‡ãƒ¼ã‚¿è¡Œã‚’å–å¾—ã—ã¾ã™ã€‚
+//! @return å‡ºåŠ›ã™ã‚‹ã™ã¹ã¦ã®ãƒ‡ãƒ¼ã‚¿è¡Œã€‚å…¥åŠ›ã•ã‚ŒãŸã™ã¹ã¦ã®å…¥åŠ›ãƒ‡ãƒ¼ã‚¿ã‚’ä¿ç®¡ã—ã¾ã™ã€‚
 const shared_ptr<const vector<const vector<const shared_ptr<const Data>>>> OutputData::outputRows() const
 {
 	auto outputRows = GetAllRows();
@@ -2518,27 +2518,27 @@ const shared_ptr<const vector<const vector<const shared_ptr<const Data>>>> Outpu
 	return outputRows;
 }
 
-//! ƒtƒ@ƒCƒ‹ƒXƒgƒŠ[ƒ€‚©‚çƒJƒ“ƒ}‹æØ‚è‚Ìˆês‚ğ“Ç‚İ‚İ‚Ü‚·B
-//! @param [in] inputFile ƒf[ƒ^‚ğ“Ç‚İ‚Şƒtƒ@ƒCƒ‹ƒXƒgƒŠ[ƒ€‚Å‚·B
-//! @return ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İ‚ñ‚¾ˆês•ª‚Ìƒf[ƒ^‚Å‚·B
+//! ãƒ•ã‚¡ã‚¤ãƒ«ã‚¹ãƒˆãƒªãƒ¼ãƒ ã‹ã‚‰ã‚«ãƒ³ãƒåŒºåˆ‡ã‚Šã®ä¸€è¡Œã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+//! @param [in] inputFile ãƒ‡ãƒ¼ã‚¿ã‚’èª­ã¿è¾¼ã‚€ãƒ•ã‚¡ã‚¤ãƒ«ã‚¹ãƒˆãƒªãƒ¼ãƒ ã§ã™ã€‚
+//! @return ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿è¾¼ã‚“ã ä¸€è¡Œåˆ†ã®ãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 const shared_ptr<const vector<const string>> Csv::ReadLineData(ifstream &inputFile) const
 {
-	string inputLine; // ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İ‚ñ‚¾s•¶š—ñ‚Å‚·B
+	string inputLine; // ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿è¾¼ã‚“ã è¡Œæ–‡å­—åˆ—ã§ã™ã€‚
 	if (getline(inputFile, inputLine)){
-		auto lineData = make_shared<vector<const string>>(); // ˆês•ª‚Ìƒf[ƒ^‚Å‚·B
+		auto lineData = make_shared<vector<const string>>(); // ä¸€è¡Œåˆ†ã®ãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 
-		auto charactorCursol = inputLine.begin(); // ƒwƒbƒ_“ü—Ís‚ğŒŸõ‚·‚éƒJ[ƒ\ƒ‹‚Å‚·B
-		auto lineEnd = inputLine.end(); // ƒwƒbƒ_“ü—Ís‚Ìend‚ğw‚µ‚Ü‚·B
+		auto charactorCursol = inputLine.begin(); // ãƒ˜ãƒƒãƒ€å…¥åŠ›è¡Œã‚’æ¤œç´¢ã™ã‚‹ã‚«ãƒ¼ã‚½ãƒ«ã§ã™ã€‚
+		auto lineEnd = inputLine.end(); // ãƒ˜ãƒƒãƒ€å…¥åŠ›è¡Œã®endã‚’æŒ‡ã—ã¾ã™ã€‚
 
-		// “Ç‚İ‚ñ‚¾s‚ğÅŒã‚Ü‚Å“Ç‚İ‚Ü‚·B
+		// èª­ã¿è¾¼ã‚“ã è¡Œã‚’æœ€å¾Œã¾ã§èª­ã¿ã¾ã™ã€‚
 		while (charactorCursol != lineEnd){
 
-			// —ñ–¼‚ğˆê‚Â“Ç‚İ‚Ü‚·B
-			auto columnStart = charactorCursol; // Œ»İ‚Ì—ñ‚ÌÅ‰‚ğ‹L˜^‚µ‚Ä‚¨‚«‚Ü‚·B
+			// åˆ—åã‚’ä¸€ã¤èª­ã¿ã¾ã™ã€‚
+			auto columnStart = charactorCursol; // ç¾åœ¨ã®åˆ—ã®æœ€åˆã‚’è¨˜éŒ²ã—ã¦ãŠãã¾ã™ã€‚
 			charactorCursol = find(charactorCursol, lineEnd, ',');
 			lineData->push_back(string(columnStart, charactorCursol));
 
-			// “ü—Ís‚ÌƒJƒ“ƒ}‚Ì•ª‚ğ“Ç‚İi‚ß‚Ü‚·B
+			// å…¥åŠ›è¡Œã®ã‚«ãƒ³ãƒã®åˆ†ã‚’èª­ã¿é€²ã‚ã¾ã™ã€‚
 			if (charactorCursol != lineEnd){
 				++charactorCursol;
 			}
@@ -2550,20 +2550,20 @@ const shared_ptr<const vector<const string>> Csv::ReadLineData(ifstream &inputFi
 	}
 }
 
-//! “ü—Íƒtƒ@ƒCƒ‹‚ğŠJ‚«‚Ü‚·B
-//! @param [in] filePath ŠJ‚­ƒtƒ@ƒCƒ‹‚Ìƒtƒ@ƒCƒ‹ƒpƒX‚Å‚·B
-//! @return “ü—Íƒtƒ@ƒCƒ‹‚ğˆµ‚¤ƒXƒgƒŠ[ƒ€‚Å‚·B
+//! å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ãã¾ã™ã€‚
+//! @param [in] filePath é–‹ããƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ•ã‚¡ã‚¤ãƒ«ãƒ‘ã‚¹ã§ã™ã€‚
+//! @return å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æ‰±ã†ã‚¹ãƒˆãƒªãƒ¼ãƒ ã§ã™ã€‚
 ifstream Csv::OpenInputFile(const string filePath) const
 {
-	auto inputFile = ifstream(filePath); //“ü—Í‚·‚éCSVƒtƒ@ƒCƒ‹‚ğˆµ‚¤ƒXƒgƒŠ[ƒ€‚Å‚·B
+	auto inputFile = ifstream(filePath); //å…¥åŠ›ã™ã‚‹CSVãƒ•ã‚¡ã‚¤ãƒ«ã‚’æ‰±ã†ã‚¹ãƒˆãƒªãƒ¼ãƒ ã§ã™ã€‚
 	if (!inputFile){
 		throw ResultValue::ERR_FILE_OPEN;
 	}
 	return inputFile;
 }
 
-//! “ü—Íƒtƒ@ƒCƒ‹‚ğ•Â‚¶‚Ü‚·B
-//! @param [in] inputFile “ü—Íƒtƒ@ƒCƒ‹‚ğˆµ‚¤ƒXƒgƒŠ[ƒ€‚Å‚·B
+//! å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‰ã˜ã¾ã™ã€‚
+//! @param [in] inputFile å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æ‰±ã†ã‚¹ãƒˆãƒªãƒ¼ãƒ ã§ã™ã€‚
 void Csv::CloseInputFile(ifstream &inputFile) const
 {
 	inputFile.close();
@@ -2572,13 +2572,13 @@ void Csv::CloseInputFile(ifstream &inputFile) const
 	}
 }
 
-//! “ü—ÍCSV‚Ìƒwƒbƒ_s‚ğ“Ç‚İ‚İ‚Ü‚·B
-//! @param [in] inputFile “ü—Íƒtƒ@ƒCƒ‹‚ğˆµ‚¤ƒXƒgƒŠ[ƒ€‚Å‚·BŠJ‚¢‚½Œã‰½‚à“Ç‚İ‚ñ‚Å‚¢‚Ü‚¹‚ñB
-//! @param [in] tableName SQL‚Åw’è‚³‚ê‚½ƒe[ƒuƒ‹–¼‚Å‚·B
-//! @return ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İæ‚Á‚½ƒwƒbƒ_î•ñ‚Å‚·B
+//! å…¥åŠ›CSVã®ãƒ˜ãƒƒãƒ€è¡Œã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+//! @param [in] inputFile å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æ‰±ã†ã‚¹ãƒˆãƒªãƒ¼ãƒ ã§ã™ã€‚é–‹ã„ãŸå¾Œä½•ã‚‚èª­ã¿è¾¼ã‚“ã§ã„ã¾ã›ã‚“ã€‚
+//! @param [in] tableName SQLã§æŒ‡å®šã•ã‚ŒãŸãƒ†ãƒ¼ãƒ–ãƒ«åã§ã™ã€‚
+//! @return ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿å–ã£ãŸãƒ˜ãƒƒãƒ€æƒ…å ±ã§ã™ã€‚
 const shared_ptr<const vector<const Column>> Csv::ReadHeader(ifstream &inputFile, const string tableName) const
 {
-	auto columns = make_shared<vector<const Column>>(); // “Ç‚İ‚ñ‚¾—ñ‚Ìˆê——B
+	auto columns = make_shared<vector<const Column>>(); // èª­ã¿è¾¼ã‚“ã åˆ—ã®ä¸€è¦§ã€‚
 
 	if (auto lineData = ReadLineData(inputFile)){
 		transform(
@@ -2592,12 +2592,12 @@ const shared_ptr<const vector<const Column>> Csv::ReadHeader(ifstream &inputFile
 		throw ResultValue::ERR_CSV_SYNTAX;
 	}
 }
-//! “ü—ÍCSV‚Ìƒf[ƒ^s‚ğ“Ç‚İ‚İ‚Ü‚·B
-//! @param [in] inputFile “ü—Íƒtƒ@ƒCƒ‹‚ğˆµ‚¤ƒXƒgƒŠ[ƒ€‚Å‚·B‚·‚Å‚Éƒwƒbƒ_‚Ì‚İ‚ğ“Ç‚İ‚ñ‚¾Œã‚Å‚·B
-//! @return ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İæ‚Á‚½ƒf[ƒ^‚Å‚·B
+//! å…¥åŠ›CSVã®ãƒ‡ãƒ¼ã‚¿è¡Œã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+//! @param [in] inputFile å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æ‰±ã†ã‚¹ãƒˆãƒªãƒ¼ãƒ ã§ã™ã€‚ã™ã§ã«ãƒ˜ãƒƒãƒ€ã®ã¿ã‚’èª­ã¿è¾¼ã‚“ã å¾Œã§ã™ã€‚
+//! @return ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿å–ã£ãŸãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 const shared_ptr<vector<const vector<const shared_ptr<const Data>>>> Csv::ReadData(ifstream &inputFile) const
 {
-	auto data = make_shared<vector<const vector<const shared_ptr<const Data>>>>(); // “Ç‚İ‚ñ‚¾ƒf[ƒ^‚Ìˆê——B
+	auto data = make_shared<vector<const vector<const shared_ptr<const Data>>>>(); // èª­ã¿è¾¼ã‚“ã ãƒ‡ãƒ¼ã‚¿ã®ä¸€è¦§ã€‚
 
 	while (auto lineData = ReadLineData(inputFile)){
 		vector<const shared_ptr<const Data>> row;
@@ -2611,9 +2611,9 @@ const shared_ptr<vector<const vector<const shared_ptr<const Data>>>> Csv::ReadDa
 	return data;
 }
 
-//! o—Íƒtƒ@ƒCƒ‹‚ğŠJ‚«‚Ü‚·B
-//! @param [in] outputFileName ŠJ‚­ƒtƒ@ƒCƒ‹‚Ìƒtƒ@ƒCƒ‹ƒpƒX‚Å‚·B
-//! @return o—Íƒtƒ@ƒCƒ‹‚ğˆµ‚¤ƒXƒgƒŠ[ƒ€‚Å‚·B
+//! å‡ºåŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ãã¾ã™ã€‚
+//! @param [in] outputFileName é–‹ããƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ•ã‚¡ã‚¤ãƒ«ãƒ‘ã‚¹ã§ã™ã€‚
+//! @return å‡ºåŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æ‰±ã†ã‚¹ãƒˆãƒªãƒ¼ãƒ ã§ã™ã€‚
 ofstream Csv::OpenOutputFile(const string outputFileName) const
 {
 	ofstream outputFile(outputFileName);
@@ -2623,8 +2623,8 @@ ofstream Csv::OpenOutputFile(const string outputFileName) const
 	return outputFile;
 }
 
-//! o—Íƒtƒ@ƒCƒ‹‚ğ•Â‚¶‚Ü‚·B
-//! @param [in] OutputFile “ü—Íƒtƒ@ƒCƒ‹‚ğˆµ‚¤ƒXƒgƒŠ[ƒ€‚Å‚·B
+//! å‡ºåŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‰ã˜ã¾ã™ã€‚
+//! @param [in] OutputFile å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æ‰±ã†ã‚¹ãƒˆãƒªãƒ¼ãƒ ã§ã™ã€‚
 void Csv::CloseOutputFile(ofstream &outputFile) const
 {
 	if (outputFile.bad()){
@@ -2638,9 +2638,9 @@ void Csv::CloseOutputFile(ofstream &outputFile) const
 	}
 }
 
-//! “ü—ÍCSV‚Ìƒwƒbƒ_s‚ğ“Ç‚İ‚İ‚Ü‚·B
-//! @param [in] OutputFile o—Íƒtƒ@ƒCƒ‹‚ğˆµ‚¤ƒXƒgƒŠ[ƒ€‚Å‚·BŠJ‚¢‚½Œã‰½‚à“Ç‚İ‚ñ‚Å‚¢‚Ü‚¹‚ñB
-//! @param [in] columns o—Í‚·‚éƒwƒbƒ_î•ñ‚Å‚·B
+//! å…¥åŠ›CSVã®ãƒ˜ãƒƒãƒ€è¡Œã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+//! @param [in] OutputFile å‡ºåŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æ‰±ã†ã‚¹ãƒˆãƒªãƒ¼ãƒ ã§ã™ã€‚é–‹ã„ãŸå¾Œä½•ã‚‚èª­ã¿è¾¼ã‚“ã§ã„ã¾ã›ã‚“ã€‚
+//! @param [in] columns å‡ºåŠ›ã™ã‚‹ãƒ˜ãƒƒãƒ€æƒ…å ±ã§ã™ã€‚
 void Csv::WriteHeader(ofstream &outputFile, const vector<Column> &columns) const
 {
 	for (auto it = columns.begin(); it != columns.end(); ++it){
@@ -2654,9 +2654,9 @@ void Csv::WriteHeader(ofstream &outputFile, const vector<Column> &columns) const
 	}
 }
 
-//! “ü—ÍCSV‚Ìƒf[ƒ^s‚ğ“Ç‚İ‚İ‚Ü‚·B
-//! @param [in] OutputFile o—Íƒtƒ@ƒCƒ‹‚ğˆµ‚¤ƒXƒgƒŠ[ƒ€‚Å‚·B‚·‚Å‚Éƒwƒbƒ_‚Ì‚İ‚ğ“Ç‚İ‚ñ‚¾Œã‚Å‚·B
-//! columns [in] o—Í‚·‚éƒf[ƒ^‚Å‚·B
+//! å…¥åŠ›CSVã®ãƒ‡ãƒ¼ã‚¿è¡Œã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+//! @param [in] OutputFile å‡ºåŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æ‰±ã†ã‚¹ãƒˆãƒªãƒ¼ãƒ ã§ã™ã€‚ã™ã§ã«ãƒ˜ãƒƒãƒ€ã®ã¿ã‚’èª­ã¿è¾¼ã‚“ã å¾Œã§ã™ã€‚
+//! columns [in] å‡ºåŠ›ã™ã‚‹ãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 void Csv::WriteData(ofstream &outputFile, const OutputData &data) const
 {
 	auto &outputRows = data.outputRows();
@@ -2681,12 +2681,12 @@ void Csv::WriteData(ofstream &outputFile, const OutputData &data) const
 	}
 }
 
-//! CsvƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] queryInfo SQL‚É‹Lq‚³‚ê‚½“à—e‚Å‚·B
+//! Csvã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] queryInfo SQLã«è¨˜è¿°ã•ã‚ŒãŸå†…å®¹ã§ã™ã€‚
 Csv::Csv(const shared_ptr<const SqlQueryInfo> queryInfo) : queryInfo(queryInfo){}
 
-//! CSVƒtƒ@ƒCƒ‹‚©‚ç“ü—Íƒf[ƒ^‚ğ“Ç‚İæ‚è‚Ü‚·B
-//! @return ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İæ‚Á‚½ƒf[ƒ^‚Å‚·B
+//! CSVãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰å…¥åŠ›ãƒ‡ãƒ¼ã‚¿ã‚’èª­ã¿å–ã‚Šã¾ã™ã€‚
+//! @return ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿å–ã£ãŸãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 const shared_ptr<const vector<const InputTable>> Csv::Read() const
 {
 	auto tables = make_shared<vector<const InputTable>>();
@@ -2704,15 +2704,15 @@ const shared_ptr<const vector<const InputTable>> Csv::Read() const
 	return tables;
 }
 
-//! CSVƒtƒ@ƒCƒ‹‚Éo—Íƒf[ƒ^‚ğ‘‚«‚İ‚Ü‚·B
-//! @param [in] outputFileName Œ‹‰Ê‚ğo—Í‚·‚éƒtƒ@ƒCƒ‹‚Ìƒtƒ@ƒCƒ‹–¼‚Å‚·B
-//! @param [in] queryInfo SQL‚Ìî•ñ‚Å‚·B
-//! @param [in] inputTables ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İæ‚Á‚½ƒf[ƒ^‚Å‚·B
+//! CSVãƒ•ã‚¡ã‚¤ãƒ«ã«å‡ºåŠ›ãƒ‡ãƒ¼ã‚¿ã‚’æ›¸ãè¾¼ã¿ã¾ã™ã€‚
+//! @param [in] outputFileName çµæœã‚’å‡ºåŠ›ã™ã‚‹ãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ•ã‚¡ã‚¤ãƒ«åã§ã™ã€‚
+//! @param [in] queryInfo SQLã®æƒ…å ±ã§ã™ã€‚
+//! @param [in] inputTables ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿å–ã£ãŸãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 void Csv::Write(const string outputFileName, const vector<const InputTable> &inputTables) const
 {
-	OutputData outputData(*queryInfo, inputTables); // o—Í‚·‚éƒf[ƒ^‚Å‚·B
+	OutputData outputData(*queryInfo, inputTables); // å‡ºåŠ›ã™ã‚‹ãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 
-	auto outputFile = OpenOutputFile(outputFileName); // ‘‚«‚Şƒtƒ@ƒCƒ‹‚Ìƒtƒ@ƒCƒ‹ƒXƒgƒŠ[ƒ€‚Å‚·B
+	auto outputFile = OpenOutputFile(outputFileName); // æ›¸ãè¾¼ã‚€ãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ•ã‚¡ã‚¤ãƒ«ã‚¹ãƒˆãƒªãƒ¼ãƒ ã§ã™ã€‚
 	
 	WriteHeader(outputFile, outputData.columns());
 
@@ -2722,24 +2722,24 @@ void Csv::Write(const string outputFileName, const vector<const InputTable> &inp
 }
 
 
-//! SQL‚Ì•¶š—ñ‚©‚çƒg[ƒNƒ“‚ğØ‚èo‚µ‚Ü‚·B
-//! @param [in] sql ƒg[ƒNƒ“‚É•ª‰ğ‚·‚éŒ³‚Æ‚È‚éSQL‚Å‚·B
-//! @return Ø‚èo‚³‚ê‚½ƒg[ƒNƒ“‚Å‚·B
+//! SQLã®æ–‡å­—åˆ—ã‹ã‚‰ãƒˆãƒ¼ã‚¯ãƒ³ã‚’åˆ‡ã‚Šå‡ºã—ã¾ã™ã€‚
+//! @param [in] sql ãƒˆãƒ¼ã‚¯ãƒ³ã«åˆ†è§£ã™ã‚‹å…ƒã¨ãªã‚‹SQLã§ã™ã€‚
+//! @return åˆ‡ã‚Šå‡ºã•ã‚ŒãŸãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚
 const shared_ptr<const vector<const Token>> SqlQuery::GetTokens(const string sql) const
 {
-	auto cursol = sql.begin(); // SQL‚ğƒg[ƒNƒ“‚É•ªŠ„‚µ‚Ä“Ç‚İ‚Ş‚ÉŒ»İ“Ç‚ñ‚Å‚¢‚é•¶š‚ÌêŠ‚ğ•\‚µ‚Ü‚·B
-	auto end = sql.end(); // sql‚Ìend‚ğw‚µ‚Ü‚·B
-	auto tokens = make_shared<vector<const Token>>(); //“Ç‚İ‚ñ‚¾ƒg[ƒNƒ“‚Å‚·B
+	auto cursol = sql.begin(); // SQLã‚’ãƒˆãƒ¼ã‚¯ãƒ³ã«åˆ†å‰²ã—ã¦èª­ã¿è¾¼ã‚€æ™‚ã«ç¾åœ¨èª­ã‚“ã§ã„ã‚‹æ–‡å­—ã®å ´æ‰€ã‚’è¡¨ã—ã¾ã™ã€‚
+	auto end = sql.end(); // sqlã®endã‚’æŒ‡ã—ã¾ã™ã€‚
+	auto tokens = make_shared<vector<const Token>>(); //èª­ã¿è¾¼ã‚“ã ãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚
 
-	// SQL‚ğƒg[ƒNƒ“‚É•ªŠ„‚Ä“Ç‚İ‚İ‚Ü‚·B
+	// SQLã‚’ãƒˆãƒ¼ã‚¯ãƒ³ã«åˆ†å‰²ã¦èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 	while (cursol != end){
 
-		// ‹ó”’‚ğ“Ç‚İ”ò‚Î‚µ‚Ü‚·B
+		// ç©ºç™½ã‚’èª­ã¿é£›ã°ã—ã¾ã™ã€‚
 		cursol = find_if(cursol, end, [&](char c){return space.find(c) == string::npos; });
 		if (cursol == end){
 			break;
 		}
-		// Šeíƒg[ƒNƒ“‚ğ“Ç‚İ‚İ‚Ü‚·B
+		// å„ç¨®ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 		shared_ptr<const Token> token;
 		if (any_of(
 			tokenReaders.begin(),
@@ -2756,64 +2756,64 @@ const shared_ptr<const vector<const Token>> SqlQuery::GetTokens(const string sql
 	return tokens;
 }
 
-//! ƒg[ƒNƒ“‚ğ‰ğÍ‚µ‚ÄSQL‚Ì\•¶‚Åw’è‚³‚ê‚½î•ñ‚ğæ“¾‚µ‚Ü‚·B
-//! @param [in] tokens ‰ğÍ‚Ì‘ÎÛ‚Æ‚È‚éƒg[ƒNƒ“‚Å‚·B
-//! @return ‰ğÍ‚µ‚½Œ‹‰Ê‚Ìî•ñ‚Å‚·B
+//! ãƒˆãƒ¼ã‚¯ãƒ³ã‚’è§£æã—ã¦SQLã®æ§‹æ–‡ã§æŒ‡å®šã•ã‚ŒãŸæƒ…å ±ã‚’å–å¾—ã—ã¾ã™ã€‚
+//! @param [in] tokens è§£æã®å¯¾è±¡ã¨ãªã‚‹ãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚
+//! @return è§£æã—ãŸçµæœã®æƒ…å ±ã§ã™ã€‚
 const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const Token> &tokens) const
 {
 	auto queryInfo = make_shared<SqlQueryInfo>();
 
-	auto AND = token(TokenKind::AND);// ANDƒL[ƒ[ƒhƒg[ƒNƒ“‚Ìƒp[ƒT[‚Å‚·B
-	auto ASC = token(TokenKind::ASC);// ASCƒL[ƒ[ƒhƒg[ƒNƒ“‚Ìƒp[ƒT[‚Å‚·B
-	auto BY = token(TokenKind::BY);// BYƒL[ƒ[ƒhƒg[ƒNƒ“‚Ìƒp[ƒT[‚Å‚·B
-	auto DESC = token(TokenKind::DESC);// DESCƒL[ƒ[ƒhƒg[ƒNƒ“‚Ìƒp[ƒT[‚Å‚·B
-	auto FROM = token(TokenKind::FROM);// FROMƒL[ƒ[ƒhƒg[ƒNƒ“‚Ìƒp[ƒT[‚Å‚·B
-	auto OR = token(TokenKind::OR);// ORƒL[ƒ[ƒhƒg[ƒNƒ“‚Ìƒp[ƒT[‚Å‚·B
-	auto ORDER = token(TokenKind::ORDER);// ORDERƒL[ƒ[ƒhƒg[ƒNƒ“‚Ìƒp[ƒT[‚Å‚·B
-	auto SELECT = token(TokenKind::SELECT);// SELECTƒL[ƒ[ƒhƒg[ƒNƒ“‚Ìƒp[ƒT[‚Å‚·B
-	auto WHERE = token(TokenKind::WHERE);// WHEREƒL[ƒ[ƒhƒg[ƒNƒ“‚Ìƒp[ƒT[‚Å‚·B
-	auto ASTERISK = token(TokenKind::ASTERISK); // – ‹L†ƒg[ƒNƒ“‚Ìƒp[ƒT[‚Å‚·B
-	auto COMMA = token(TokenKind::COMMA); // C ‹L†‚Å‚·ƒg[ƒNƒ“‚Ìƒp[ƒT[‚Å‚·B
-	auto CLOSE_PAREN = token(TokenKind::CLOSE_PAREN); // j ‹L†ƒg[ƒNƒ“‚Ìƒp[ƒT[‚Å‚·B
-	auto DOT = token(TokenKind::DOT); // D ‹L†ƒg[ƒNƒ“‚Ìƒp[ƒT[‚Å‚·B
-	auto EQUAL = token(TokenKind::EQUAL); //  ‹L†ƒg[ƒNƒ“‚Ìƒp[ƒT[‚Å‚·B
-	auto GREATER_THAN = token(TokenKind::GREATER_THAN); // „ ‹L†ƒg[ƒNƒ“‚Ìƒp[ƒT[‚Å‚·B
-	auto GREATER_THAN_OR_EQUAL = token(TokenKind::GREATER_THAN_OR_EQUAL); // „ ‹L†ƒg[ƒNƒ“‚Ìƒp[ƒT[‚Å‚·B
-	auto LESS_THAN = token(TokenKind::LESS_THAN); // ƒ ‹L†ƒg[ƒNƒ“‚Ìƒp[ƒT[‚Å‚·B
-	auto LESS_THAN_OR_EQUAL = token(TokenKind::LESS_THAN_OR_EQUAL); // ƒ ‹L†ƒg[ƒNƒ“‚Ìƒp[ƒT[‚Å‚·B
-	auto MINUS = token(TokenKind::MINUS); // | ‹L†ƒg[ƒNƒ“‚Ìƒp[ƒT[‚Å‚·B
-	auto NOT_EQUAL = token(TokenKind::NOT_EQUAL); // ƒ„ ‹L†ƒg[ƒNƒ“‚Ìƒp[ƒT[‚Å‚·B
-	auto OPEN_PAREN = token(TokenKind::OPEN_PAREN); // i ‹L†ƒg[ƒNƒ“‚Ìƒp[ƒT[‚Å‚·B
-	auto PLUS = token(TokenKind::PLUS); // { ‹L†ƒg[ƒNƒ“‚Ìƒp[ƒT[‚Å‚·B
-	auto SLASH = token(TokenKind::SLASH); // ^ ‹L†ƒg[ƒNƒ“‚Ìƒp[ƒT[‚Å‚·B
-	auto IDENTIFIER = token(TokenKind::IDENTIFIER); // ¯•Êqƒg[ƒNƒ“‚Ìƒp[ƒT[‚Å‚·B
-	auto INT_LITERAL = token(TokenKind::INT_LITERAL); // ®”ƒŠƒeƒ‰ƒ‹ƒg[ƒNƒ“‚Ìƒp[ƒT[‚Å‚·B
-	auto STRING_LITERAL = token(TokenKind::STRING_LITERAL); // •¶š—ñƒŠƒeƒ‰ƒ‹ƒg[ƒNƒ“‚Ìƒp[ƒT[‚Å‚·B
+	auto AND = token(TokenKind::AND);// ANDã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ãƒˆãƒ¼ã‚¯ãƒ³ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
+	auto ASC = token(TokenKind::ASC);// ASCã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ãƒˆãƒ¼ã‚¯ãƒ³ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
+	auto BY = token(TokenKind::BY);// BYã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ãƒˆãƒ¼ã‚¯ãƒ³ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
+	auto DESC = token(TokenKind::DESC);// DESCã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ãƒˆãƒ¼ã‚¯ãƒ³ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
+	auto FROM = token(TokenKind::FROM);// FROMã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ãƒˆãƒ¼ã‚¯ãƒ³ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
+	auto OR = token(TokenKind::OR);// ORã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ãƒˆãƒ¼ã‚¯ãƒ³ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
+	auto ORDER = token(TokenKind::ORDER);// ORDERã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ãƒˆãƒ¼ã‚¯ãƒ³ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
+	auto SELECT = token(TokenKind::SELECT);// SELECTã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ãƒˆãƒ¼ã‚¯ãƒ³ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
+	auto WHERE = token(TokenKind::WHERE);// WHEREã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ãƒˆãƒ¼ã‚¯ãƒ³ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
+	auto ASTERISK = token(TokenKind::ASTERISK); // ï¼Š è¨˜å·ãƒˆãƒ¼ã‚¯ãƒ³ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
+	auto COMMA = token(TokenKind::COMMA); // ï¼Œ è¨˜å·ã§ã™ãƒˆãƒ¼ã‚¯ãƒ³ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
+	auto CLOSE_PAREN = token(TokenKind::CLOSE_PAREN); // ï¼‰ è¨˜å·ãƒˆãƒ¼ã‚¯ãƒ³ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
+	auto DOT = token(TokenKind::DOT); // ï¼ è¨˜å·ãƒˆãƒ¼ã‚¯ãƒ³ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
+	auto EQUAL = token(TokenKind::EQUAL); // ï¼ è¨˜å·ãƒˆãƒ¼ã‚¯ãƒ³ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
+	auto GREATER_THAN = token(TokenKind::GREATER_THAN); // ï¼ è¨˜å·ãƒˆãƒ¼ã‚¯ãƒ³ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
+	auto GREATER_THAN_OR_EQUAL = token(TokenKind::GREATER_THAN_OR_EQUAL); // ï¼ï¼ è¨˜å·ãƒˆãƒ¼ã‚¯ãƒ³ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
+	auto LESS_THAN = token(TokenKind::LESS_THAN); // ï¼œ è¨˜å·ãƒˆãƒ¼ã‚¯ãƒ³ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
+	auto LESS_THAN_OR_EQUAL = token(TokenKind::LESS_THAN_OR_EQUAL); // ï¼œï¼ è¨˜å·ãƒˆãƒ¼ã‚¯ãƒ³ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
+	auto MINUS = token(TokenKind::MINUS); // ï¼ è¨˜å·ãƒˆãƒ¼ã‚¯ãƒ³ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
+	auto NOT_EQUAL = token(TokenKind::NOT_EQUAL); // ï¼œï¼ è¨˜å·ãƒˆãƒ¼ã‚¯ãƒ³ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
+	auto OPEN_PAREN = token(TokenKind::OPEN_PAREN); // ï¼ˆ è¨˜å·ãƒˆãƒ¼ã‚¯ãƒ³ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
+	auto PLUS = token(TokenKind::PLUS); // ï¼‹ è¨˜å·ãƒˆãƒ¼ã‚¯ãƒ³ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
+	auto SLASH = token(TokenKind::SLASH); // ï¼ è¨˜å·ãƒˆãƒ¼ã‚¯ãƒ³ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
+	auto IDENTIFIER = token(TokenKind::IDENTIFIER); // è­˜åˆ¥å­ãƒˆãƒ¼ã‚¯ãƒ³ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
+	auto INT_LITERAL = token(TokenKind::INT_LITERAL); // æ•´æ•°ãƒªãƒ†ãƒ©ãƒ«ãƒˆãƒ¼ã‚¯ãƒ³ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
+	auto STRING_LITERAL = token(TokenKind::STRING_LITERAL); // æ–‡å­—åˆ—ãƒªãƒ†ãƒ©ãƒ«ãƒˆãƒ¼ã‚¯ãƒ³ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
 
-	Column column; // Œ»İ“Ç‚İ‚ñ‚Å‚¢‚éORDER BY‹å‚Å‚Ì—ñ‚ğ•Û‚µ‚Ü‚·B
+	Column column; // ç¾åœ¨èª­ã¿è¾¼ã‚“ã§ã„ã‚‹ORDER BYå¥ã§ã®åˆ—ã‚’ä¿æŒã—ã¾ã™ã€‚
 
-	// —ñw’è‚Ìˆê‚Â–Ú‚Ì¯•Êq‚Ìƒp[ƒT[‚Å‚·B
+	// åˆ—æŒ‡å®šã®ä¸€ã¤ç›®ã®è­˜åˆ¥å­ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
 	auto FIRST_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
-		// ƒe[ƒuƒ‹–¼‚ªw’è‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Æ‰¼’è‚µ‚Ä“Ç‚İ‚İ‚Ü‚·B
+		// ãƒ†ãƒ¼ãƒ–ãƒ«åãŒæŒ‡å®šã•ã‚Œã¦ã„ãªã„å ´åˆã¨ä»®å®šã—ã¦èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 		column = Column(token.word);
 	});
 
-	// —ñw’è‚Ì“ñ‚Â–Ú‚Ì¯•Êq‚Ìƒp[ƒT[‚Å‚·B
+	// åˆ—æŒ‡å®šã®äºŒã¤ç›®ã®è­˜åˆ¥å­ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
 	auto SECOND_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
-		// ƒe[ƒuƒ‹–¼‚ªw’è‚³‚ê‚Ä‚¢‚é‚±‚Æ‚ª‚í‚©‚Á‚½‚Ì‚Å“Ç‚İ‘Ö‚¦‚Ü‚·B
+		// ãƒ†ãƒ¼ãƒ–ãƒ«åãŒæŒ‡å®šã•ã‚Œã¦ã„ã‚‹ã“ã¨ãŒã‚ã‹ã£ãŸã®ã§èª­ã¿æ›¿ãˆã¾ã™ã€‚
 		column = Column(column.columnName, token.word);
 	});
 
-	auto COLUMN = FIRST_COLUMN_NAME >> -(DOT >> SECOND_COLUMN_NAME); // —ñw’èˆê‚Â‚Ìƒp[ƒT[‚Å‚·B
+	auto COLUMN = FIRST_COLUMN_NAME >> -(DOT >> SECOND_COLUMN_NAME); // åˆ—æŒ‡å®šä¸€ã¤ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
 
-	bool isAsc = true; // Œ»İ“Ç‚İ‚ñ‚Å‚¢‚éORDER BY‹å‚Å‚Ì—ñ‚ª¸‡‚Å‚ ‚é‚©‚Ç‚¤‚©‚Å‚·B
+	bool isAsc = true; // ç¾åœ¨èª­ã¿è¾¼ã‚“ã§ã„ã‚‹ORDER BYå¥ã§ã®åˆ—ãŒæ˜‡é †ã§ã‚ã‚‹ã‹ã©ã†ã‹ã§ã™ã€‚
 
-	// ¸‡~‡‚ğw’è‚·‚é‚½‚ß‚ÌDESCƒg[ƒNƒ“‚Ìƒp[ƒT[‚Å‚·B
+	// æ˜‡é †é™é †ã‚’æŒ‡å®šã™ã‚‹ãŸã‚ã®DESCãƒˆãƒ¼ã‚¯ãƒ³ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
 	auto SET_DESC = DESC->Action([&](const Token token){
 		isAsc = false;
 	});
 
-	shared_ptr<ExtensionTreeNode> currentNode; // Œ»İ“Ç‚İ‚ñ‚Å‚¢‚éƒm[ƒh‚Å‚·B
+	shared_ptr<ExtensionTreeNode> currentNode; // ç¾åœ¨èª­ã¿è¾¼ã‚“ã§ã„ã‚‹ãƒãƒ¼ãƒ‰ã§ã™ã€‚
 	auto WHERE_OPEN_PAREN = OPEN_PAREN->Action([&](const Token token){
 		++currentNode->parenOpenBeforeClose;
 	});
@@ -2834,55 +2834,55 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 		currentNode->value = Data::New(token.word.substr(1, token.word.size() - 2));
 	});
 
-	// ‹L†‚ÌˆÓ–¡
-	// A >> B		:A‚ÌŒã‚ÉB‚ª‘±‚­
-	// -A			:A‚ª”CˆÓ
-	// ~A			:A‚ª0‰ñˆÈã‘±‚­
+	// è¨˜å·ã®æ„å‘³
+	// A >> B		:Aã®å¾Œã«BãŒç¶šã
+	// -A			:AãŒä»»æ„
+	// ~A			:AãŒ0å›ä»¥ä¸Šç¶šã
 
-	// SELECT‹å‚Ì—ñw’èˆê‚Â‚Ìƒp[ƒT[‚Å‚·B
+	// SELECTå¥ã®åˆ—æŒ‡å®šä¸€ã¤ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
 	auto SELECT_COLUMN = COLUMN->Action([&]{
 		queryInfo->selectColumns.push_back(column);
 	});
 
-	auto SELECT_COLUMNS = SELECT_COLUMN >> ~(COMMA >> SELECT_COLUMN); // SELECT‹å‚Ìˆê‚ÂˆÈã‚Ì‚Ì—ñw’è‚Ìƒp[ƒT[‚Å‚·B
+	auto SELECT_COLUMNS = SELECT_COLUMN >> ~(COMMA >> SELECT_COLUMN); // SELECTå¥ã®ä¸€ã¤ä»¥ä¸Šã®ã®åˆ—æŒ‡å®šã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
 
-	auto SELECT_CLAUSE = SELECT >> (ASTERISK | SELECT_COLUMNS); // SELECT‹å‚Ìƒp[ƒT[‚Å‚·B
+	auto SELECT_CLAUSE = SELECT >> (ASTERISK | SELECT_COLUMNS); // SELECTå¥ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
 
 	auto PRE_ORDERBY_COLUMN = action([&]{
 		isAsc = true;
 	});
 
-	auto ORDER_BY_COLUMN = PRE_ORDERBY_COLUMN >> COLUMN >> -(ASC | SET_DESC); // ORDER BY‹å‚Ì—ñw’èˆê‚Â‚Ìƒp[ƒT[‚Å‚·B
+	auto ORDER_BY_COLUMN = PRE_ORDERBY_COLUMN >> COLUMN >> -(ASC | SET_DESC); // ORDER BYå¥ã®åˆ—æŒ‡å®šä¸€ã¤ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
 
 	ORDER_BY_COLUMN = ORDER_BY_COLUMN->Action([&]{
 		queryInfo->orders.push_back(Order(column, isAsc));
 	});
 
-	auto ORDER_BY_COLUMNS = ORDER_BY_COLUMN >> ~(COMMA >> ORDER_BY_COLUMN); // ORDER BY‹å‚Ìˆê‚ÂˆÈã‚Ì—ñw’è‚Ìƒp[ƒT[‚Å‚·B
+	auto ORDER_BY_COLUMNS = ORDER_BY_COLUMN >> ~(COMMA >> ORDER_BY_COLUMN); // ORDER BYå¥ã®ä¸€ã¤ä»¥ä¸Šã®åˆ—æŒ‡å®šã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
 
-	auto ORDER_BY_CLAUSE = ORDER >> BY >> ORDER_BY_COLUMNS; // ORDER BY‹å‚Ìƒp[ƒT[‚Å‚·B
+	auto ORDER_BY_CLAUSE = ORDER >> BY >> ORDER_BY_COLUMNS; // ORDER BYå¥ã®ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
 
-	// ƒIƒyƒ‰ƒ“ƒh‚É‘O’u‚³‚ê‚é + ‚© -‚ÌŸ‚Ìƒg[ƒNƒ“‚ğæ“Ç‚İ‚µ”»•Ê‚·‚éƒp[ƒT[‚Å‚·B
+	// ã‚ªãƒšãƒ©ãƒ³ãƒ‰ã«å‰ç½®ã•ã‚Œã‚‹ + ã‹ -ã®æ¬¡ã®ãƒˆãƒ¼ã‚¯ãƒ³ã‚’å…ˆèª­ã¿ã—åˆ¤åˆ¥ã™ã‚‹ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
 	auto WHERE_UNIALY_NEXT = (&(IDENTIFIER | INT_LITERAL))->Action([&](const bool success){
 		if (!success){
 			throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 		}
 	});
 
-	// ƒIƒyƒ‰ƒ“ƒh‚É‘O’u‚³‚ê‚é + ‚© - ‚ğ“Ç‚İ‚Şƒp[ƒT[‚Å‚·B
+	// ã‚ªãƒšãƒ©ãƒ³ãƒ‰ã«å‰ç½®ã•ã‚Œã‚‹ + ã‹ - ã‚’èª­ã¿è¾¼ã‚€ãƒ‘ãƒ¼ã‚µãƒ¼ã§ã™ã€‚
 	auto WHERE_UNIAEY_PLUS_MINUS = (PLUS | WHERE_UNIARY_MINUS) >> WHERE_UNIALY_NEXT;
 
 	auto WHERE_CLOSE_PAREN = CLOSE_PAREN->Action([&](const Token token){
-		shared_ptr<ExtensionTreeNode> searchedAncestor = currentNode->parent; // ƒJƒbƒR•Â‚¶‚é‚Æ‘Î‰‚·‚éƒJƒbƒRŠJ‚­‚ğ—¼•ûŠÜ‚Ş‘cæƒm[ƒh‚ğ’T‚·‚½‚ß‚ÌƒJ[ƒ\ƒ‹‚Å‚·B
+		shared_ptr<ExtensionTreeNode> searchedAncestor = currentNode->parent; // ã‚«ãƒƒã‚³é–‰ã˜ã‚‹ã¨å¯¾å¿œã™ã‚‹ã‚«ãƒƒã‚³é–‹ãã‚’ä¸¡æ–¹å«ã‚€ç¥–å…ˆãƒãƒ¼ãƒ‰ã‚’æ¢ã™ãŸã‚ã®ã‚«ãƒ¼ã‚½ãƒ«ã§ã™ã€‚
 		while (searchedAncestor){
 
-			// searchedAncestor‚Ì¶‚Ìq‚É‘Î‰‚·‚éƒJƒbƒRŠJ‚­‚ª‚È‚¢‚©‚ğŒŸõ‚µ‚Ü‚·B
-			shared_ptr<ExtensionTreeNode> searched = searchedAncestor; // searchedAncestor‚Ì“à•”‚©‚çƒJƒbƒRŠJ‚­‚ğŒŸõ‚·‚é‚½‚ß‚ÌƒJ[ƒ\ƒ‹‚Å‚·B
+			// searchedAncestorã®å·¦ã®å­ã«å¯¾å¿œã™ã‚‹ã‚«ãƒƒã‚³é–‹ããŒãªã„ã‹ã‚’æ¤œç´¢ã—ã¾ã™ã€‚
+			shared_ptr<ExtensionTreeNode> searched = searchedAncestor; // searchedAncestorã®å†…éƒ¨ã‹ã‚‰ã‚«ãƒƒã‚³é–‹ãã‚’æ¤œç´¢ã™ã‚‹ãŸã‚ã®ã‚«ãƒ¼ã‚½ãƒ«ã§ã™ã€‚
 			while (searched && !searched->parenOpenBeforeClose){
 				searched = searched->left;
 			}
 			if (searched){
-				// ‘Î‰•t‚¯‚ç‚ê‚Ä‚¢‚È‚¢ƒJƒbƒRŠJ‚­‚ğˆê‚Âíœ‚µAƒm[ƒh‚ªƒJƒbƒR‚ÉˆÍ‚Ü‚ê‚Ä‚¢‚é‚±‚Æ‚ğ‹L˜^‚µ‚Ü‚·B
+				// å¯¾å¿œä»˜ã‘ã‚‰ã‚Œã¦ã„ãªã„ã‚«ãƒƒã‚³é–‹ãã‚’ä¸€ã¤å‰Šé™¤ã—ã€ãƒãƒ¼ãƒ‰ãŒã‚«ãƒƒã‚³ã«å›²ã¾ã‚Œã¦ã„ã‚‹ã“ã¨ã‚’è¨˜éŒ²ã—ã¾ã™ã€‚
 				--searched->parenOpenBeforeClose;
 				searchedAncestor->inParen = true;
 				break;
@@ -2898,34 +2898,34 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 	auto WHERE_OPERAND = -~WHERE_OPEN_PAREN >> -WHERE_UNIAEY_PLUS_MINUS >> OPERAND >> -~WHERE_CLOSE_PAREN;
 
 	auto OPERATOR = ASTERISK->or(SLASH)->or(PLUS)->or(MINUS)->or(EQUAL)->or(GREATER_THAN)->or(GREATER_THAN_OR_EQUAL)->or(LESS_THAN)->or(LESS_THAN_OR_EQUAL)->or(NOT_EQUAL)->or(AND)->or(AND)->or(OR)->Action([&](const Token token){
-		// ‰‰Zq(ƒIƒyƒŒ[ƒ^[‚ğ“Ç‚İ‚İ‚Ü‚·B
-		auto foundOperator = find_if(operators.begin(), operators.end(), [&](const Operator& op){return op.kind == token.kind; }); // Œ»İ“Ç‚İ‚ñ‚Å‚¢‚é‰‰Zq‚Ìî•ñ‚Å‚·B
+		// æ¼”ç®—å­(ã‚ªãƒšãƒ¬ãƒ¼ã‚¿ãƒ¼ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+		auto foundOperator = find_if(operators.begin(), operators.end(), [&](const Operator& op){return op.kind == token.kind; }); // ç¾åœ¨èª­ã¿è¾¼ã‚“ã§ã„ã‚‹æ¼”ç®—å­ã®æƒ…å ±ã§ã™ã€‚
 
-		// Œ»İŒ©‚Ä‚¢‚é‰‰Zq‚Ìî•ñ‚ğ’T‚µ‚Ü‚·B
-		// Œ©‚Â‚©‚Á‚½‰‰Zq‚Ìî•ñ‚ğ‚à‚Æ‚Éƒm[ƒh‚ğ“ü‚ê‘Ö‚¦‚Ü‚·B
-		shared_ptr<ExtensionTreeNode> tmp = currentNode; //ƒm[ƒh‚ğ“ü‚ê‘Ö‚¦‚é‚½‚ß‚Ég‚¤•Ï”‚Å‚·B
+		// ç¾åœ¨è¦‹ã¦ã„ã‚‹æ¼”ç®—å­ã®æƒ…å ±ã‚’æ¢ã—ã¾ã™ã€‚
+		// è¦‹ã¤ã‹ã£ãŸæ¼”ç®—å­ã®æƒ…å ±ã‚’ã‚‚ã¨ã«ãƒãƒ¼ãƒ‰ã‚’å…¥ã‚Œæ›¿ãˆã¾ã™ã€‚
+		shared_ptr<ExtensionTreeNode> tmp = currentNode; //ãƒãƒ¼ãƒ‰ã‚’å…¥ã‚Œæ›¿ãˆã‚‹ãŸã‚ã«ä½¿ã†å¤‰æ•°ã§ã™ã€‚
 
-		shared_ptr<ExtensionTreeNode> searched = tmp; // “ü‚ê‘Ö‚¦‚éƒm[ƒh‚ğ’T‚·‚½‚ß‚ÌƒJ[ƒ\ƒ‹‚Å‚·B
+		shared_ptr<ExtensionTreeNode> searched = tmp; // å…¥ã‚Œæ›¿ãˆã‚‹ãƒãƒ¼ãƒ‰ã‚’æ¢ã™ãŸã‚ã®ã‚«ãƒ¼ã‚½ãƒ«ã§ã™ã€‚
 
-		//ƒJƒbƒR‚É‚­‚­‚ç‚ê‚Ä‚¢‚È‚©‚Á‚½ê‡‚ÉA‰‰Zq‚Ì—Dæ‡ˆÊ‚ğQl‚ÉŒ‹‡‚·‚éƒm[ƒh‚ğ’T‚µ‚Ü‚·B
-		bool first = true; // ‰‰Zq‚Ì—Dæ‡ˆÊ‚ğŒŸõ‚·‚éÅ‰‚Ìƒ‹[ƒv‚Å‚·B
+		//ã‚«ãƒƒã‚³ã«ããã‚‰ã‚Œã¦ã„ãªã‹ã£ãŸå ´åˆã«ã€æ¼”ç®—å­ã®å„ªå…ˆé †ä½ã‚’å‚è€ƒã«çµåˆã™ã‚‹ãƒãƒ¼ãƒ‰ã‚’æ¢ã—ã¾ã™ã€‚
+		bool first = true; // æ¼”ç®—å­ã®å„ªå…ˆé †ä½ã‚’æ¤œç´¢ã™ã‚‹æœ€åˆã®ãƒ«ãƒ¼ãƒ—ã§ã™ã€‚
 		do{
 			if (!first){
 				tmp = tmp->parent;
 				searched = tmp;
 			}
-			// Œ»İ‚Ì“Ç‚İ‚İêŠ‚ğ‚­‚­‚éƒJƒbƒR‚ªŠJ‚­êŠ‚ğ’T‚µ‚Ü‚·B
+			// ç¾åœ¨ã®èª­ã¿è¾¼ã¿å ´æ‰€ã‚’ããã‚‹ã‚«ãƒƒã‚³ãŒé–‹ãå ´æ‰€ã‚’æ¢ã—ã¾ã™ã€‚
 			while (searched && !searched->parenOpenBeforeClose){
 				searched = searched->left;
 			}
 			first = false;
 		} while (!searched && tmp->parent && (tmp->parent->middleOperator.order <= foundOperator->order || tmp->parent->inParen));
 
-		// ‰‰Zq‚Ìƒm[ƒh‚ğV‚µ‚­¶¬‚µ‚Ü‚·B
+		// æ¼”ç®—å­ã®ãƒãƒ¼ãƒ‰ã‚’æ–°ã—ãç”Ÿæˆã—ã¾ã™ã€‚
 		currentNode = make_shared<ExtensionTreeNode>();
 		currentNode->middleOperator = *foundOperator;
 
-		// Œ©‚Â‚©‚Á‚½êŠ‚ÉV‚µ‚¢ƒm[ƒh‚ğ”z’u‚µ‚Ü‚·B‚±‚ê‚Ü‚Å‚»‚ÌˆÊ’u‚É‚ ‚Á‚½ƒm[ƒh‚Í¶‚Ìq‚Æ‚È‚é‚æ‚¤Aeƒm[ƒh‚Æqƒm[ƒh‚Ìƒ|ƒCƒ“ƒ^‚ğ‚Â‚¯‚©‚¦‚Ü‚·B
+		// è¦‹ã¤ã‹ã£ãŸå ´æ‰€ã«æ–°ã—ã„ãƒãƒ¼ãƒ‰ã‚’é…ç½®ã—ã¾ã™ã€‚ã“ã‚Œã¾ã§ãã®ä½ç½®ã«ã‚ã£ãŸãƒãƒ¼ãƒ‰ã¯å·¦ã®å­ã¨ãªã‚‹ã‚ˆã†ã€è¦ªãƒãƒ¼ãƒ‰ã¨å­ãƒãƒ¼ãƒ‰ã®ãƒã‚¤ãƒ³ã‚¿ã‚’ã¤ã‘ã‹ãˆã¾ã™ã€‚
 		currentNode->parent = tmp->parent;
 		if (currentNode->parent){
 			currentNode->parent->right = currentNode;
@@ -2935,16 +2935,16 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 	});
 
 	auto PRE_WHERE_OPERAND = action([&]{
-		// ƒIƒyƒ‰ƒ“ƒh‚Ìƒm[ƒh‚ğV‚µ‚­¶¬‚µ‚Ü‚·B
+		// ã‚ªãƒšãƒ©ãƒ³ãƒ‰ã®ãƒãƒ¼ãƒ‰ã‚’æ–°ã—ãç”Ÿæˆã—ã¾ã™ã€‚
 		auto newNode = make_shared<ExtensionTreeNode>();
 		if (currentNode){
-			// Œ»İ‚Ìƒm[ƒh‚ğ‰E‚Ìq‚É‚¸‚ç‚µAŒ³‚ÌˆÊ’u‚ÉV‚µ‚¢ƒm[ƒh‚ğ‘}“ü‚µ‚Ü‚·B
+			// ç¾åœ¨ã®ãƒãƒ¼ãƒ‰ã‚’å³ã®å­ã«ãšã‚‰ã—ã€å…ƒã®ä½ç½®ã«æ–°ã—ã„ãƒãƒ¼ãƒ‰ã‚’æŒ¿å…¥ã—ã¾ã™ã€‚
 			currentNode->right = newNode;
 			currentNode->right->parent = currentNode;
 			currentNode = currentNode->right;
 		}
 		else{
-			// Å‰‚ÍƒJƒŒƒ“ƒgƒm[ƒh‚ÉV‚µ‚¢ƒm[ƒh‚ğ“ü‚ê‚Ü‚·B
+			// æœ€åˆã¯ã‚«ãƒ¬ãƒ³ãƒˆãƒãƒ¼ãƒ‰ã«æ–°ã—ã„ãƒãƒ¼ãƒ‰ã‚’å…¥ã‚Œã¾ã™ã€‚
 			currentNode = newNode;
 		}
 	});
@@ -2955,7 +2955,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 
 	auto WHERE_CLAUSE = (WHERE >> WHERE_EXTENSION)->Action([&]{
 		queryInfo->whereTopNode = currentNode;
-		// –Ø‚ğª‚ÉŒü‚©‚Á‚Ä‚³‚©‚Ì‚Ú‚èAª‚Ìƒm[ƒh‚ğİ’è‚µ‚Ü‚·B
+		// æœ¨ã‚’æ ¹ã«å‘ã‹ã£ã¦ã•ã‹ã®ã¼ã‚Šã€æ ¹ã®ãƒãƒ¼ãƒ‰ã‚’è¨­å®šã—ã¾ã™ã€‚
 		while (queryInfo->whereTopNode->parent){
 			queryInfo->whereTopNode = queryInfo->whereTopNode->parent;
 		}
@@ -2974,19 +2974,19 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 		-WHERE_ORDER >>
 		FROM_CLAUSE;
 
-	auto tokenCursol = tokens.begin(); // Œ»İŒ©‚Ä‚¢‚éƒg[ƒNƒ“‚ğw‚µ‚Ü‚·B
+	auto tokenCursol = tokens.begin(); // ç¾åœ¨è¦‹ã¦ã„ã‚‹ãƒˆãƒ¼ã‚¯ãƒ³ã‚’æŒ‡ã—ã¾ã™ã€‚
 
 	if (!TINY_SQL->Parse(tokenCursol, tokens.end())){
 		throw ResultValue::ERR_SQL_SYNTAX;
 	}
 	
-	// ÅŒã‚Ìƒg[ƒNƒ“‚Ü‚Å“Ç‚İ‚İ‚ªi‚ñ‚Å‚¢‚È‚©‚Á‚½‚çƒGƒ‰[‚Å‚·B
+	// æœ€å¾Œã®ãƒˆãƒ¼ã‚¯ãƒ³ã¾ã§èª­ã¿è¾¼ã¿ãŒé€²ã‚“ã§ã„ãªã‹ã£ãŸã‚‰ã‚¨ãƒ©ãƒ¼ã§ã™ã€‚
 	if (tokenCursol != tokens.end()){
 		throw ResultValue::ERR_SQL_SYNTAX;
 	}
-	// \•¶ƒGƒ‰[‚ª‚È‚¢‚±‚Æ‚ğ‘O’ñ‚Æ‚µ‚½ˆ—‚È‚Ì‚ÅÅŒã‚ÉÀs‚µ‚Ä‚¢‚Ü‚·B
+	// æ§‹æ–‡ã‚¨ãƒ©ãƒ¼ãŒãªã„ã“ã¨ã‚’å‰æã¨ã—ãŸå‡¦ç†ãªã®ã§æœ€å¾Œã«å®Ÿè¡Œã—ã¦ã„ã¾ã™ã€‚
 	if (queryInfo->whereTopNode){
-		// Šù‘¶”’l‚Ì•„†‚ğŒvZ‚µ‚Ü‚·B
+		// æ—¢å­˜æ•°å€¤ã®ç¬¦å·ã‚’è¨ˆç®—ã—ã¾ã™ã€‚
 		auto whereNodes = SelfAndDescendants(queryInfo->whereTopNode);
 		for (auto &whereNode : *whereNodes){
 			if (whereNode->middleOperator.kind == TokenKind::NOT_TOKEN &&
@@ -3000,10 +3000,10 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 	return queryInfo;
 }
 
-//! SqlQueryƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] sql Às‚·‚éSQL‚Å‚·B
+//! SqlQueryã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] sql å®Ÿè¡Œã™ã‚‹SQLã§ã™ã€‚
 SqlQuery::SqlQuery(const string sql) :
-// æ“ª‚©‚ç‡‚ÉŒŸõ‚³‚ê‚é‚Ì‚ÅA‘O•ûˆê’v‚Æ‚È‚é“ñ‚Â‚Ì€–Ú‚Í‡”Ô‚É‹C‚ğ‚Â‚¯‚Ä“o˜^‚µ‚È‚­‚Ä‚Í‚¢‚¯‚Ü‚¹‚ñB
+// å…ˆé ­ã‹ã‚‰é †ã«æ¤œç´¢ã•ã‚Œã‚‹ã®ã§ã€å‰æ–¹ä¸€è‡´ã¨ãªã‚‹äºŒã¤ã®é …ç›®ã¯é †ç•ªã«æ°—ã‚’ã¤ã‘ã¦ç™»éŒ²ã—ãªãã¦ã¯ã„ã‘ã¾ã›ã‚“ã€‚
 	tokenReaders({
 		make_shared<IntLiteralReader>(),
 		make_shared<StringLiteralReader>(),
@@ -3048,79 +3048,79 @@ SqlQuery::SqlQuery(const string sql) :
 	csv = make_shared<Csv>(AnalyzeTokens(*GetTokens(sql)));
 }
 
-//! ƒJƒŒƒ“ƒgƒfƒBƒŒƒNƒgƒŠ‚É‚ ‚éCSV‚É‘Î‚µAŠÈˆÕ“I‚ÈSQL‚ğÀs‚µAŒ‹‰Ê‚ğƒtƒ@ƒCƒ‹‚Éo—Í‚µ‚Ü‚·B
-//! @param[in] outputFileName SQL‚ÌÀsŒ‹‰Ê‚ğCSV‚Æ‚µ‚Äo—Í‚·‚éƒtƒ@ƒCƒ‹–¼‚Å‚·BŠg’£q‚ğŠÜ‚İ‚Ü‚·B
+//! ã‚«ãƒ¬ãƒ³ãƒˆãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã«ã‚ã‚‹CSVã«å¯¾ã—ã€ç°¡æ˜“çš„ãªSQLã‚’å®Ÿè¡Œã—ã€çµæœã‚’ãƒ•ã‚¡ã‚¤ãƒ«ã«å‡ºåŠ›ã—ã¾ã™ã€‚
+//! @param[in] outputFileName SQLã®å®Ÿè¡Œçµæœã‚’CSVã¨ã—ã¦å‡ºåŠ›ã™ã‚‹ãƒ•ã‚¡ã‚¤ãƒ«åã§ã™ã€‚æ‹¡å¼µå­ã‚’å«ã¿ã¾ã™ã€‚
 void SqlQuery::Execute(const string outputFileName)
 {
 	csv->Write(outputFileName, *csv->Read());
 }
 
-//! ƒJƒŒƒ“ƒgƒfƒBƒŒƒNƒgƒŠ‚É‚ ‚éCSV‚É‘Î‚µAŠÈˆÕ“I‚ÈSQL‚ğÀs‚µAŒ‹‰Ê‚ğƒtƒ@ƒCƒ‹‚Éo—Í‚µ‚Ü‚·B
-//! @param [in] sql Às‚·‚éSQL‚Å‚·B
-//! @param[in] outputFileName SQL‚ÌÀsŒ‹‰Ê‚ğCSV‚Æ‚µ‚Äo—Í‚·‚éƒtƒ@ƒCƒ‹–¼‚Å‚·BŠg’£q‚ğŠÜ‚İ‚Ü‚·B
-//! @return Às‚µ‚½Œ‹‰Ê‚Ìó‘Ô‚Å‚·B
-//! @retval OK=0                      –â‘è‚È‚­I—¹‚µ‚Ü‚µ‚½B
-//! @retval ERR_FILE_OPEN=1           ƒtƒ@ƒCƒ‹‚ğŠJ‚­‚±‚Æ‚É¸”s‚µ‚Ü‚µ‚½B
-//! @retval ERR_FILE_WRITE=2          ƒtƒ@ƒCƒ‹‚É‘‚«‚İ‚ğs‚¤‚±‚Æ‚É¸”s‚µ‚Ü‚µ‚½B
-//! @retval ERR_FILE_CLOSE=3          ƒtƒ@ƒCƒ‹‚ğ•Â‚¶‚é‚±‚Æ‚É¸”s‚µ‚Ü‚µ‚½B
-//! @retval ERR_TOKEN_CANT_READ=4     ƒg[ƒNƒ“‰ğÍ‚É¸”s‚µ‚Ü‚µ‚½B
-//! @retval ERR_SQL_SYNTAX=5          SQL‚Ì\•¶‰ğÍ‚ª¸”s‚µ‚Ü‚µ‚½B
-//! @retval ERR_BAD_COLUMN_NAME=6     ƒe[ƒuƒ‹w’è‚ğŠÜ‚Ş—ñ–¼‚ª“KØ‚Å‚Í‚ ‚è‚Ü‚¹‚ñB
-//! @retval ERR_WHERE_OPERAND_TYPE=7  ‰‰Z‚Ì¶‰E‚ÌŒ^‚ª“KØ‚Å‚Í‚ ‚è‚Ü‚¹‚ñB
-//! @retval ERR_CSV_SYNTAX=8          CSV‚Ì\•¶‰ğÍ‚ª¸”s‚µ‚Ü‚µ‚½B
-//! @retval ERR_MEMORY_ALLOCATE=9     ƒƒ‚ƒŠ‚Ìæ“¾‚É¸”s‚µ‚Ü‚µ‚½B
-//! @retval ERR_MEMORY_OVER=10        —pˆÓ‚µ‚½ƒƒ‚ƒŠ—Ìˆæ‚ÌãŒÀ‚ğ’´‚¦‚Ü‚µ‚½B
+//! ã‚«ãƒ¬ãƒ³ãƒˆãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã«ã‚ã‚‹CSVã«å¯¾ã—ã€ç°¡æ˜“çš„ãªSQLã‚’å®Ÿè¡Œã—ã€çµæœã‚’ãƒ•ã‚¡ã‚¤ãƒ«ã«å‡ºåŠ›ã—ã¾ã™ã€‚
+//! @param [in] sql å®Ÿè¡Œã™ã‚‹SQLã§ã™ã€‚
+//! @param[in] outputFileName SQLã®å®Ÿè¡Œçµæœã‚’CSVã¨ã—ã¦å‡ºåŠ›ã™ã‚‹ãƒ•ã‚¡ã‚¤ãƒ«åã§ã™ã€‚æ‹¡å¼µå­ã‚’å«ã¿ã¾ã™ã€‚
+//! @return å®Ÿè¡Œã—ãŸçµæœã®çŠ¶æ…‹ã§ã™ã€‚
+//! @retval OK=0                      å•é¡Œãªãçµ‚äº†ã—ã¾ã—ãŸã€‚
+//! @retval ERR_FILE_OPEN=1           ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ãã“ã¨ã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+//! @retval ERR_FILE_WRITE=2          ãƒ•ã‚¡ã‚¤ãƒ«ã«æ›¸ãè¾¼ã¿ã‚’è¡Œã†ã“ã¨ã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+//! @retval ERR_FILE_CLOSE=3          ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‰ã˜ã‚‹ã“ã¨ã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+//! @retval ERR_TOKEN_CANT_READ=4     ãƒˆãƒ¼ã‚¯ãƒ³è§£æã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+//! @retval ERR_SQL_SYNTAX=5          SQLã®æ§‹æ–‡è§£æãŒå¤±æ•—ã—ã¾ã—ãŸã€‚
+//! @retval ERR_BAD_COLUMN_NAME=6     ãƒ†ãƒ¼ãƒ–ãƒ«æŒ‡å®šã‚’å«ã‚€åˆ—åãŒé©åˆ‡ã§ã¯ã‚ã‚Šã¾ã›ã‚“ã€‚
+//! @retval ERR_WHERE_OPERAND_TYPE=7  æ¼”ç®—ã®å·¦å³ã®å‹ãŒé©åˆ‡ã§ã¯ã‚ã‚Šã¾ã›ã‚“ã€‚
+//! @retval ERR_CSV_SYNTAX=8          CSVã®æ§‹æ–‡è§£æãŒå¤±æ•—ã—ã¾ã—ãŸã€‚
+//! @retval ERR_MEMORY_ALLOCATE=9     ãƒ¡ãƒ¢ãƒªã®å–å¾—ã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+//! @retval ERR_MEMORY_OVER=10        ç”¨æ„ã—ãŸãƒ¡ãƒ¢ãƒªé ˜åŸŸã®ä¸Šé™ã‚’è¶…ãˆã¾ã—ãŸã€‚
 //! @details 
-//! QÆ‚·‚éƒe[ƒuƒ‹‚ÍAƒe[ƒuƒ‹–¼.csv‚ÌŒ`‚Åì¬‚µ‚Ü‚·B                                                     @n
-//! ˆês–Ú‚Íƒwƒbƒ_s‚ÅA‚»‚Ìs‚É—ñ–¼‚ğ‘‚«‚Ü‚·B                                                             @n
-//! ‘OŒã‚ÌƒXƒy[ƒX“Ç‚İ”ò‚Î‚µ‚âƒ_ƒuƒ‹ƒNƒH[ƒe[ƒVƒ‡ƒ“‚Å‚­‚­‚é‚È‚Ç‚Ì‹@”\‚Í‚ ‚è‚Ü‚¹‚ñB                         @n
-//! —ñ‚ÌŒ^‚Ì’è‹`‚Í‚Å‚«‚È‚¢‚Ì‚ÅA—ñ‚Ì‚·‚×‚Ä‚Ìƒf[ƒ^‚Ì’l‚ª”’l‚Æ‚µ‚Ä‰ğß‚Å‚«‚é—ñ‚Ìƒf[ƒ^‚ğ®”‚Æ‚µ‚Äˆµ‚¢‚Ü‚·B @n
-//! Às‚·‚éSQL‚Åg‚¦‚é‹@”\‚ğˆÈ‰º‚É—á‚Æ‚µ‚Ä‚ ‚°‚Ü‚·B                                                        @n
-//! —á1:                                                                                                     @n
+//! å‚ç…§ã™ã‚‹ãƒ†ãƒ¼ãƒ–ãƒ«ã¯ã€ãƒ†ãƒ¼ãƒ–ãƒ«å.csvã®å½¢ã§ä½œæˆã—ã¾ã™ã€‚                                                     @n
+//! ä¸€è¡Œç›®ã¯ãƒ˜ãƒƒãƒ€è¡Œã§ã€ãã®è¡Œã«åˆ—åã‚’æ›¸ãã¾ã™ã€‚                                                             @n
+//! å‰å¾Œã®ã‚¹ãƒšãƒ¼ã‚¹èª­ã¿é£›ã°ã—ã‚„ãƒ€ãƒ–ãƒ«ã‚¯ã‚©ãƒ¼ãƒ†ãƒ¼ã‚·ãƒ§ãƒ³ã§ããã‚‹ãªã©ã®æ©Ÿèƒ½ã¯ã‚ã‚Šã¾ã›ã‚“ã€‚                         @n
+//! åˆ—ã®å‹ã®å®šç¾©ã¯ã§ããªã„ã®ã§ã€åˆ—ã®ã™ã¹ã¦ã®ãƒ‡ãƒ¼ã‚¿ã®å€¤ãŒæ•°å€¤ã¨ã—ã¦è§£é‡ˆã§ãã‚‹åˆ—ã®ãƒ‡ãƒ¼ã‚¿ã‚’æ•´æ•°ã¨ã—ã¦æ‰±ã„ã¾ã™ã€‚ @n
+//! å®Ÿè¡Œã™ã‚‹SQLã§ä½¿ãˆã‚‹æ©Ÿèƒ½ã‚’ä»¥ä¸‹ã«ä¾‹ã¨ã—ã¦ã‚ã’ã¾ã™ã€‚                                                        @n
+//! ä¾‹1:                                                                                                     @n
 //! SELECT *                                                                                                 @n
 //! FROM USERS                                                                                               @n
 //!                                                                                                          @n
-//! —á2: ‘å•¶š¬•¶š‚Í‹æ•Ê‚µ‚Ü‚¹‚ñB                                                                        @n
+//! ä¾‹2: å¤§æ–‡å­—å°æ–‡å­—ã¯åŒºåˆ¥ã—ã¾ã›ã‚“ã€‚                                                                        @n
 //! select *                                                                                                 @n
 //! from users                                                                                               @n
 //!                                                                                                          @n
-//! —á3: —ñ‚Ìw’è‚ª‚Å‚«‚Ü‚·B                                                                                @n
+//! ä¾‹3: åˆ—ã®æŒ‡å®šãŒã§ãã¾ã™ã€‚                                                                                @n
 //! SELECT Id, Name                                                                                          @n
 //! FROM USERS                                                                                               @n
 //!                                                                                                          @n
-//! —á4: ƒe[ƒuƒ‹–¼‚ğw’è‚µ‚Ä—ñ‚Ìw’è‚ª‚Å‚«‚Ü‚·B                                                            @n
+//! ä¾‹4: ãƒ†ãƒ¼ãƒ–ãƒ«åã‚’æŒ‡å®šã—ã¦åˆ—ã®æŒ‡å®šãŒã§ãã¾ã™ã€‚                                                            @n
 //! SELECT USERS.Id                                                                                          @n
 //! FROM USERS                                                                                               @n
 //!                                                                                                          @n
-//! —á5: ORDER‹å‚ªg‚¦‚Ü‚·B                                                                                 @n
+//! ä¾‹5: ORDERå¥ãŒä½¿ãˆã¾ã™ã€‚                                                                                 @n
 //! SELECT *                                                                                                 @n
 //! ORDER BY NAME                                                                                            @n
 //! FROM USERS                                                                                               @n
 //!                                                                                                          @n
-//! —á6: ORDER‹å‚É•¡”—ñ‚â¸‡A~‡‚Ìw’è‚ª‚Å‚«‚Ü‚·B                                                       @n
+//! ä¾‹6: ORDERå¥ã«è¤‡æ•°åˆ—ã‚„æ˜‡é †ã€é™é †ã®æŒ‡å®šãŒã§ãã¾ã™ã€‚                                                       @n
 //! SELECT *                                                                                                 @n
 //! ORDER BY AGE DESC, Name ASC                                                                              @n
 //!                                                                                                          @n
-//! —á7: WHERE‹å‚ªg‚¦‚Ü‚·B                                                                                 @n
+//! ä¾‹7: WHEREå¥ãŒä½¿ãˆã¾ã™ã€‚                                                                                 @n
 //! SELECT *                                                                                                 @n
 //! WHERE AGE >= 20                                                                                          @n
 //! FROM USERS                                                                                               @n
 //!                                                                                                          @n
-//! —á8: WHERE‹å‚Å‚Í•¶š—ñ‚Ì”äŠr‚àg‚¦‚Ü‚·B                                                                 @n
+//! ä¾‹8: WHEREå¥ã§ã¯æ–‡å­—åˆ—ã®æ¯”è¼ƒã‚‚ä½¿ãˆã¾ã™ã€‚                                                                 @n
 //! SELECT *                                                                                                 @n
 //! WHERE NAME >= 'N'                                                                                        @n
 //! FROM USERS                                                                                               @n
 //!                                                                                                          @n
-//! —á9: WHERE‹å‚É‚Íl‘¥‰‰ZAƒJƒbƒRAANDAOR‚È‚Ç‚ğŠÜ‚Ş•¡G‚È®‚ª—˜—p‚Å‚«‚Ü‚·B                              @n
+//! ä¾‹9: WHEREå¥ã«ã¯å››å‰‡æ¼”ç®—ã€ã‚«ãƒƒã‚³ã€ANDã€ORãªã©ã‚’å«ã‚€è¤‡é›‘ãªå¼ãŒåˆ©ç”¨ã§ãã¾ã™ã€‚                              @n
 //! SELECT *                                                                                                 @n
 //! WHERE AGE >= 20 AND (AGE <= 40 || WEIGHT < 100)                                                          @n
 //! FROM USERS                                                                                               @n
 //!                                                                                                          @n
-//! —á10: FROM‹å‚É•¡”‚Ìƒe[ƒuƒ‹‚ªw’è‚Å‚«‚Ü‚·B‚»‚Ìê‡‚ÍƒNƒƒX‚ÅŒ‹‡‚µ‚Ü‚·B                               @n
+//! ä¾‹10: FROMå¥ã«è¤‡æ•°ã®ãƒ†ãƒ¼ãƒ–ãƒ«ãŒæŒ‡å®šã§ãã¾ã™ã€‚ãã®å ´åˆã¯ã‚¯ãƒ­ã‚¹ã§çµåˆã—ã¾ã™ã€‚                               @n
 //! SELECT *                                                                                                 @n
 //! FROM USERS, CHILDREN                                                                                     @n
 //!                                                                                                          @n
-//! —á11: WHERE‚ÅğŒ‚ğ‚Â‚¯‚é‚±‚Æ‚É‚æ‚èAƒe[ƒuƒ‹‚ÌŒ‹‡‚ª‚Å‚«‚Ü‚·B                                          @n
+//! ä¾‹11: WHEREã§æ¡ä»¶ã‚’ã¤ã‘ã‚‹ã“ã¨ã«ã‚ˆã‚Šã€ãƒ†ãƒ¼ãƒ–ãƒ«ã®çµåˆãŒã§ãã¾ã™ã€‚                                          @n
 //! SELECT USERS.NAME, CHILDREN.NAME                                                                         @n
 //! WHERE USERS.ID = CHILDREN.PARENTID                                                                       @n
 //! FROM USERS, CHILDREN                                                                                     @n
@@ -3131,7 +3131,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 		SqlQuery(sql).Execute(outputFileName);
 		return static_cast<int>(ResultValue::OK);
 	}
-	catch (ResultValue error) // ”­¶‚µ‚½ƒGƒ‰[‚Ìí—Ş‚Å‚·B
+	catch (ResultValue error) // ç™ºç”Ÿã—ãŸã‚¨ãƒ©ãƒ¼ã®ç¨®é¡ã§ã™ã€‚
 	{
 		return static_cast<int>(error);
 	}

@@ -12,442 +12,442 @@
 
 using namespace std;
 
-//! ƒJƒŒƒ“ƒgƒfƒBƒŒƒNƒgƒŠ‚É‚ ‚éCSV‚É‘Î‚µAŠÈˆÕ“I‚ÈSQL‚ğÀs‚µAŒ‹‰Ê‚ğƒtƒ@ƒCƒ‹‚Éo—Í‚µ‚Ü‚·B
-//! @param [in] sql Às‚·‚éSQL‚Å‚·B
-//! @param[in] outputFileName SQL‚ÌÀsŒ‹‰Ê‚ğCSV‚Æ‚µ‚Äo—Í‚·‚éƒtƒ@ƒCƒ‹–¼‚Å‚·BŠg’£q‚ğŠÜ‚İ‚Ü‚·B
-//! @return Às‚µ‚½Œ‹‰Ê‚Ìó‘Ô‚Å‚·B
+//! ã‚«ãƒ¬ãƒ³ãƒˆãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã«ã‚ã‚‹CSVã«å¯¾ã—ã€ç°¡æ˜“çš„ãªSQLã‚’å®Ÿè¡Œã—ã€çµæœã‚’ãƒ•ã‚¡ã‚¤ãƒ«ã«å‡ºåŠ›ã—ã¾ã™ã€‚
+//! @param [in] sql å®Ÿè¡Œã™ã‚‹SQLã§ã™ã€‚
+//! @param[in] outputFileName SQLã®å®Ÿè¡Œçµæœã‚’CSVã¨ã—ã¦å‡ºåŠ›ã™ã‚‹ãƒ•ã‚¡ã‚¤ãƒ«åã§ã™ã€‚æ‹¡å¼µå­ã‚’å«ã¿ã¾ã™ã€‚
+//! @return å®Ÿè¡Œã—ãŸçµæœã®çŠ¶æ…‹ã§ã™ã€‚
 int ExecuteSQL(const string, const string);
 
-//! ExecuteSQL‚Ì–ß‚è’l‚Ìí—Ş‚ğ•\‚µ‚Ü‚·B
+//! ExecuteSQLã®æˆ»ã‚Šå€¤ã®ç¨®é¡ã‚’è¡¨ã—ã¾ã™ã€‚
 enum class ResultValue
 {
-	OK = 0,                     //!< –â‘è‚È‚­I—¹‚µ‚Ü‚µ‚½B
-	ERR_FILE_OPEN = 1,          //!< ƒtƒ@ƒCƒ‹‚ğŠJ‚­‚±‚Æ‚É¸”s‚µ‚Ü‚µ‚½B
-	ERR_FILE_WRITE = 2,         //!< ƒtƒ@ƒCƒ‹‚É‘‚«‚İ‚ğs‚¤‚±‚Æ‚É¸”s‚µ‚Ü‚µ‚½B
-	ERR_FILE_CLOSE = 3,         //!< ƒtƒ@ƒCƒ‹‚ğ•Â‚¶‚é‚±‚Æ‚É¸”s‚µ‚Ü‚µ‚½B
-	ERR_TOKEN_CANT_READ = 4,    //!< ƒg[ƒNƒ“‰ğÍ‚É¸”s‚µ‚Ü‚µ‚½B
-	ERR_SQL_SYNTAX = 5,         //!< SQL‚Ì\•¶‰ğÍ‚ª¸”s‚µ‚Ü‚µ‚½B
-	ERR_BAD_COLUMN_NAME = 6,    //!< ƒe[ƒuƒ‹w’è‚ğŠÜ‚Ş—ñ–¼‚ª“KØ‚Å‚Í‚ ‚è‚Ü‚¹‚ñB
-	ERR_WHERE_OPERAND_TYPE = 7, //!< ‰‰Z‚Ì¶‰E‚ÌŒ^‚ª“KØ‚Å‚Í‚ ‚è‚Ü‚¹‚ñB
-	ERR_CSV_SYNTAX = 8,         //!< CSV‚Ì\•¶‰ğÍ‚ª¸”s‚µ‚Ü‚µ‚½B
-	ERR_MEMORY_ALLOCATE = 9,    //!< ƒƒ‚ƒŠ‚Ìæ“¾‚É¸”s‚µ‚Ü‚µ‚½B
-	ERR_MEMORY_OVER = 10        //!< —pˆÓ‚µ‚½ƒƒ‚ƒŠ—Ìˆæ‚ÌãŒÀ‚ğ’´‚¦‚Ü‚µ‚½B
+	OK = 0,                     //!< å•é¡Œãªãçµ‚äº†ã—ã¾ã—ãŸã€‚
+	ERR_FILE_OPEN = 1,          //!< ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ãã“ã¨ã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+	ERR_FILE_WRITE = 2,         //!< ãƒ•ã‚¡ã‚¤ãƒ«ã«æ›¸ãè¾¼ã¿ã‚’è¡Œã†ã“ã¨ã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+	ERR_FILE_CLOSE = 3,         //!< ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‰ã˜ã‚‹ã“ã¨ã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+	ERR_TOKEN_CANT_READ = 4,    //!< ãƒˆãƒ¼ã‚¯ãƒ³è§£æã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+	ERR_SQL_SYNTAX = 5,         //!< SQLã®æ§‹æ–‡è§£æãŒå¤±æ•—ã—ã¾ã—ãŸã€‚
+	ERR_BAD_COLUMN_NAME = 6,    //!< ãƒ†ãƒ¼ãƒ–ãƒ«æŒ‡å®šã‚’å«ã‚€åˆ—åãŒé©åˆ‡ã§ã¯ã‚ã‚Šã¾ã›ã‚“ã€‚
+	ERR_WHERE_OPERAND_TYPE = 7, //!< æ¼”ç®—ã®å·¦å³ã®å‹ãŒé©åˆ‡ã§ã¯ã‚ã‚Šã¾ã›ã‚“ã€‚
+	ERR_CSV_SYNTAX = 8,         //!< CSVã®æ§‹æ–‡è§£æãŒå¤±æ•—ã—ã¾ã—ãŸã€‚
+	ERR_MEMORY_ALLOCATE = 9,    //!< ãƒ¡ãƒ¢ãƒªã®å–å¾—ã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+	ERR_MEMORY_OVER = 10        //!< ç”¨æ„ã—ãŸãƒ¡ãƒ¢ãƒªé ˜åŸŸã®ä¸Šé™ã‚’è¶…ãˆã¾ã—ãŸã€‚
 };
 
-//! “ü—Í‚âo—ÍAŒo‰ß‚ÌŒvZ‚É—˜—p‚·‚éƒf[ƒ^‚Ìƒf[ƒ^Œ^‚Ìí—Ş‚ğ•\‚µ‚Ü‚·B
+//! å…¥åŠ›ã‚„å‡ºåŠ›ã€çµŒéã®è¨ˆç®—ã«åˆ©ç”¨ã™ã‚‹ãƒ‡ãƒ¼ã‚¿ã®ãƒ‡ãƒ¼ã‚¿å‹ã®ç¨®é¡ã‚’è¡¨ã—ã¾ã™ã€‚
 enum class DataType
 {
-	STRING,   //!< •¶š—ñŒ^‚Å‚·B
-	INTEGER,  //!< ®”Œ^‚Å‚·B
-	BOOLEAN   //!< ^‹U’lŒ^‚Å‚·B
+	STRING,   //!< æ–‡å­—åˆ—å‹ã§ã™ã€‚
+	INTEGER,  //!< æ•´æ•°å‹ã§ã™ã€‚
+	BOOLEAN   //!< çœŸå½å€¤å‹ã§ã™ã€‚
 };
 
-//! ƒg[ƒNƒ“‚Ìí—Ş‚ğ•\‚µ‚Ü‚·B
+//! ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã‚’è¡¨ã—ã¾ã™ã€‚
 enum class TokenKind
 {
-	NOT_TOKEN,              //!< ƒg[ƒNƒ“‚ğ•\‚µ‚Ü‚¹‚ñB
-	ASC,                    //!< ASCƒL[ƒ[ƒh‚Å‚·B
-	AND,                    //!< ANDƒL[ƒ[ƒh‚Å‚·B
-	BY,                     //!< BYƒL[ƒ[ƒh‚Å‚·B
-	DESC,                   //!< DESCƒL[ƒ[ƒh‚Å‚·B
-	FROM,                   //!< FROMƒL[ƒ[ƒh‚Å‚·B
-	OR,                     //!< ORƒL[ƒ[ƒh‚Å‚·B
-	ORDER,                  //!< ORDERƒL[ƒ[ƒh‚Å‚·B
-	SELECT,                 //!< SELECTƒL[ƒ[ƒh‚Å‚·B
-	WHERE,                  //!< WHEREƒL[ƒ[ƒh‚Å‚·B
-	ASTERISK,               //!< – ‹L†‚Å‚·B
-	COMMA,                  //!< C ‹L†‚Å‚·B
-	CLOSE_PAREN,            //!< j ‹L†‚Å‚·B
-	DOT,                    //!< D ‹L†‚Å‚·B
-	EQUAL,                  //!<  ‹L†‚Å‚·B
-	GREATER_THAN,           //!< „ ‹L†‚Å‚·B
-	GREATER_THAN_OR_EQUAL,  //!< „ ‹L†‚Å‚·B
-	LESS_THAN,              //!< ƒ ‹L†‚Å‚·B
-	LESS_THAN_OR_EQUAL,     //!< ƒ ‹L†‚Å‚·B
-	MINUS,                  //!< | ‹L†‚Å‚·B
-	NOT_EQUAL,              //!< ƒ„ ‹L†‚Å‚·B
-	OPEN_PAREN,             //!< i ‹L†‚Å‚·B
-	PLUS,                   //!< { ‹L†‚Å‚·B
-	SLASH,                  //!< ^ ‹L†‚Å‚·B
-	IDENTIFIER,             //!< ¯•Êq‚Å‚·B
-	INT_LITERAL,            //!< ®”ƒŠƒeƒ‰ƒ‹‚Å‚·B
-	STRING_LITERAL          //!< •¶š—ñƒŠƒeƒ‰ƒ‹‚Å‚·B
+	NOT_TOKEN,              //!< ãƒˆãƒ¼ã‚¯ãƒ³ã‚’è¡¨ã—ã¾ã›ã‚“ã€‚
+	ASC,                    //!< ASCã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã§ã™ã€‚
+	AND,                    //!< ANDã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã§ã™ã€‚
+	BY,                     //!< BYã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã§ã™ã€‚
+	DESC,                   //!< DESCã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã§ã™ã€‚
+	FROM,                   //!< FROMã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã§ã™ã€‚
+	OR,                     //!< ORã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã§ã™ã€‚
+	ORDER,                  //!< ORDERã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã§ã™ã€‚
+	SELECT,                 //!< SELECTã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã§ã™ã€‚
+	WHERE,                  //!< WHEREã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã§ã™ã€‚
+	ASTERISK,               //!< ï¼Š è¨˜å·ã§ã™ã€‚
+	COMMA,                  //!< ï¼Œ è¨˜å·ã§ã™ã€‚
+	CLOSE_PAREN,            //!< ï¼‰ è¨˜å·ã§ã™ã€‚
+	DOT,                    //!< ï¼ è¨˜å·ã§ã™ã€‚
+	EQUAL,                  //!< ï¼ è¨˜å·ã§ã™ã€‚
+	GREATER_THAN,           //!< ï¼ è¨˜å·ã§ã™ã€‚
+	GREATER_THAN_OR_EQUAL,  //!< ï¼ï¼ è¨˜å·ã§ã™ã€‚
+	LESS_THAN,              //!< ï¼œ è¨˜å·ã§ã™ã€‚
+	LESS_THAN_OR_EQUAL,     //!< ï¼œï¼ è¨˜å·ã§ã™ã€‚
+	MINUS,                  //!< ï¼ è¨˜å·ã§ã™ã€‚
+	NOT_EQUAL,              //!< ï¼œï¼ è¨˜å·ã§ã™ã€‚
+	OPEN_PAREN,             //!< ï¼ˆ è¨˜å·ã§ã™ã€‚
+	PLUS,                   //!< ï¼‹ è¨˜å·ã§ã™ã€‚
+	SLASH,                  //!< ï¼ è¨˜å·ã§ã™ã€‚
+	IDENTIFIER,             //!< è­˜åˆ¥å­ã§ã™ã€‚
+	INT_LITERAL,            //!< æ•´æ•°ãƒªãƒ†ãƒ©ãƒ«ã§ã™ã€‚
+	STRING_LITERAL          //!< æ–‡å­—åˆ—ãƒªãƒ†ãƒ©ãƒ«ã§ã™ã€‚
 };
 
-//! ˆê‚Â‚Ì’l‚ğ‚Âƒf[ƒ^‚Å‚·B
+//! ä¸€ã¤ã®å€¤ã‚’æŒã¤ãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 class Data
 {
-	string m_string; //!< ƒf[ƒ^‚ª•¶š—ñŒ^‚Ìê‡‚Ì’l‚Å‚·B
+	string m_string; //!< ãƒ‡ãƒ¼ã‚¿ãŒæ–‡å­—åˆ—å‹ã®å ´åˆã®å€¤ã§ã™ã€‚
 
-	//! ÀÛ‚Ìƒf[ƒ^‚ğŠi”[‚·‚é‹¤—p‘Ì‚Å‚·B
+	//! å®Ÿéš›ã®ãƒ‡ãƒ¼ã‚¿ã‚’æ ¼ç´ã™ã‚‹å…±ç”¨ä½“ã§ã™ã€‚
 	union
 	{
-		int integer;                  //!< ƒf[ƒ^‚ª®”Œ^‚Ìê‡‚Ì’l‚Å‚·B
-		bool boolean;                 //!< ƒf[ƒ^‚ª^‹U’lŒ^‚Ìê‡‚Ì’l‚Å‚·B
+		int integer;                  //!< ãƒ‡ãƒ¼ã‚¿ãŒæ•´æ•°å‹ã®å ´åˆã®å€¤ã§ã™ã€‚
+		bool boolean;                 //!< ãƒ‡ãƒ¼ã‚¿ãŒçœŸå½å€¤å‹ã®å ´åˆã®å€¤ã§ã™ã€‚
 	} m_value;
 public:
-	DataType type = DataType::STRING; //!< ƒf[ƒ^‚ÌŒ^‚Å‚·B
+	DataType type = DataType::STRING; //!< ãƒ‡ãƒ¼ã‚¿ã®å‹ã§ã™ã€‚
 
-	//! DataƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
+	//! Dataã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 	Data();
 
-	//! DataƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] value ƒf[ƒ^‚Ì’l‚Å‚·B
+	//! Dataã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] value ãƒ‡ãƒ¼ã‚¿ã®å€¤ã§ã™ã€‚
 	Data(const string value);
 
-	//! DataƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] value ƒf[ƒ^‚Ì’l‚Å‚·B
+	//! Dataã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] value ãƒ‡ãƒ¼ã‚¿ã®å€¤ã§ã™ã€‚
 	Data(const int value);
 
-	//! DataƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] value ƒf[ƒ^‚Ì’l‚Å‚·B
+	//! Dataã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] value ãƒ‡ãƒ¼ã‚¿ã®å€¤ã§ã™ã€‚
 	Data(const bool value);
 
-	//! ƒf[ƒ^‚ª•¶š—ñŒ^‚Ìê‡‚Ì’l‚ğæ“¾‚µ‚Ü‚·B
-	//! @return ƒf[ƒ^‚ª•¶š—ñŒ^‚Ìê‡‚Ì’l‚Å‚·B
+	//! ãƒ‡ãƒ¼ã‚¿ãŒæ–‡å­—åˆ—å‹ã®å ´åˆã®å€¤ã‚’å–å¾—ã—ã¾ã™ã€‚
+	//! @return ãƒ‡ãƒ¼ã‚¿ãŒæ–‡å­—åˆ—å‹ã®å ´åˆã®å€¤ã§ã™ã€‚
 	const string& string() const;
 
-	//! ƒf[ƒ^‚ª®”Œ^‚Ìê‡‚Ì’l‚ğæ“¾‚µ‚Ü‚·B
-	//! @return ƒf[ƒ^‚ª®”Œ^‚Ìê‡‚Ì’l‚Å‚·B
+	//! ãƒ‡ãƒ¼ã‚¿ãŒæ•´æ•°å‹ã®å ´åˆã®å€¤ã‚’å–å¾—ã—ã¾ã™ã€‚
+	//! @return ãƒ‡ãƒ¼ã‚¿ãŒæ•´æ•°å‹ã®å ´åˆã®å€¤ã§ã™ã€‚
 	const int& integer() const;
 
-	//! ƒf[ƒ^‚ª^‹U’lŒ^‚Ìê‡‚Ì’l‚ğæ“¾‚µ‚Ü‚·B
-	//! @return ƒf[ƒ^‚ª^‹U’lŒ^‚Ìê‡‚Ì’l‚Å‚·B
+	//! ãƒ‡ãƒ¼ã‚¿ãŒçœŸå½å€¤å‹ã®å ´åˆã®å€¤ã‚’å–å¾—ã—ã¾ã™ã€‚
+	//! @return ãƒ‡ãƒ¼ã‚¿ãŒçœŸå½å€¤å‹ã®å ´åˆã®å€¤ã§ã™ã€‚
 	const bool& boolean() const;
 };
 
-//! WHERE‹å‚Éw’è‚·‚é‰‰Zq‚Ìî•ñ‚ğ•\‚µ‚Ü‚·B
+//! WHEREå¥ã«æŒ‡å®šã™ã‚‹æ¼”ç®—å­ã®æƒ…å ±ã‚’è¡¨ã—ã¾ã™ã€‚
 class Operator
 {
 public:
-	TokenKind kind = TokenKind::NOT_TOKEN; //!< ‰‰Zq‚Ìí—Ş‚ğA‰‰Zq‚ğ‹Lq‚·‚éƒg[ƒNƒ“‚Ìí—Ş‚Å•\‚µ‚Ü‚·B
-	int order = 0; //!< ‰‰Zq‚Ì—Dæ‡ˆÊ‚Å‚·B
+	TokenKind kind = TokenKind::NOT_TOKEN; //!< æ¼”ç®—å­ã®ç¨®é¡ã‚’ã€æ¼”ç®—å­ã‚’è¨˜è¿°ã™ã‚‹ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§è¡¨ã—ã¾ã™ã€‚
+	int order = 0; //!< æ¼”ç®—å­ã®å„ªå…ˆé †ä½ã§ã™ã€‚
 
-	//! OperatorƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
+	//! Operatorã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 	Operator();
 
-	//! OperatorƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] kind ‰‰Zq‚Ìí—Ş‚ğA‰‰Zq‚ğ‹Lq‚·‚éƒg[ƒNƒ“‚Ìí—Ş‚Å•\‚µ‚Ü‚·B
-	//! @param [in] order ‰‰Zq‚Ì—Dæ‡ˆÊ‚Å‚·B
+	//! Operatorã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] kind æ¼”ç®—å­ã®ç¨®é¡ã‚’ã€æ¼”ç®—å­ã‚’è¨˜è¿°ã™ã‚‹ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§è¡¨ã—ã¾ã™ã€‚
+	//! @param [in] order æ¼”ç®—å­ã®å„ªå…ˆé †ä½ã§ã™ã€‚
 	Operator(const TokenKind kind, const int order);
 };
 
-//! ƒg[ƒNƒ“‚ğ•\‚µ‚Ü‚·B
+//! ãƒˆãƒ¼ã‚¯ãƒ³ã‚’è¡¨ã—ã¾ã™ã€‚
 class Token
 {
 public:
-	TokenKind kind; //!< ƒg[ƒNƒ“‚Ìí—Ş‚Å‚·B
-	string word; //!< ‹L˜^‚³‚ê‚Ä‚¢‚éƒg[ƒNƒ“‚Ì•¶š—ñ‚Å‚·B‹L˜^‚Ì•K—v‚ª‚È‚¯‚ê‚Î‹ó”’‚Å‚·B
+	TokenKind kind; //!< ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§ã™ã€‚
+	string word; //!< è¨˜éŒ²ã•ã‚Œã¦ã„ã‚‹ãƒˆãƒ¼ã‚¯ãƒ³ã®æ–‡å­—åˆ—ã§ã™ã€‚è¨˜éŒ²ã®å¿…è¦ãŒãªã‘ã‚Œã°ç©ºç™½ã§ã™ã€‚
 
-	//! TokenƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
+	//! Tokenã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 	Token();
 
-	//! TokenƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] kind ƒg[ƒNƒ“‚Ìí—Ş‚Å‚·B
+	//! Tokenã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] kind ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§ã™ã€‚
 	Token(const TokenKind kind);
 
-	//! TokenƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] kind ƒg[ƒNƒ“‚Ìí—Ş‚Å‚·B
-	//! @param [in] word ‹L˜^‚³‚ê‚Ä‚¢‚éƒg[ƒNƒ“‚Ì•¶š—ñ‚Å‚·B‹L˜^‚Ì•K—v‚ª‚È‚¯‚ê‚Î‹ó”’‚Å‚·B
+	//! Tokenã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] kind ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§ã™ã€‚
+	//! @param [in] word è¨˜éŒ²ã•ã‚Œã¦ã„ã‚‹ãƒˆãƒ¼ã‚¯ãƒ³ã®æ–‡å­—åˆ—ã§ã™ã€‚è¨˜éŒ²ã®å¿…è¦ãŒãªã‘ã‚Œã°ç©ºç™½ã§ã™ã€‚
 	Token(const TokenKind kind, const string word);
 };
 
 class InputTable;
-//! w’è‚³‚ê‚½—ñ‚Ìî•ñ‚Å‚·B‚Ç‚Ìƒe[ƒuƒ‹‚ÉŠ‘®‚·‚é‚©‚Ìî•ñ‚àŠÜ‚İ‚Ü‚·B
+//! æŒ‡å®šã•ã‚ŒãŸåˆ—ã®æƒ…å ±ã§ã™ã€‚ã©ã®ãƒ†ãƒ¼ãƒ–ãƒ«ã«æ‰€å±ã™ã‚‹ã‹ã®æƒ…å ±ã‚‚å«ã¿ã¾ã™ã€‚
 class Column
 {
 public:
-	string tableName; //!< —ñ‚ªŠ‘®‚·‚éƒe[ƒuƒ‹–¼‚Å‚·Bw’è‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Í‹ó•¶š—ñ‚Æ‚È‚è‚Ü‚·B
-	string columnName; //!< w’è‚³‚ê‚½—ñ‚Ì—ñ–¼‚Å‚·B
-	int allColumnsIndex; //!< ‘S‚Ä‚Ìƒe[ƒuƒ‹‚Ì‚·‚×‚Ä‚Ì—ñ‚Ì’†‚ÅA‚±‚Ì—ñ‚ª‰½”Ô–Ú‚©‚Å‚·B
-	string outputName; //!< ‚±‚Ì—ñ‚ğo—Í‚·‚é‚Ì•\¦–¼‚Å‚·B
+	string tableName; //!< åˆ—ãŒæ‰€å±ã™ã‚‹ãƒ†ãƒ¼ãƒ–ãƒ«åã§ã™ã€‚æŒ‡å®šã•ã‚Œã¦ã„ãªã„å ´åˆã¯ç©ºæ–‡å­—åˆ—ã¨ãªã‚Šã¾ã™ã€‚
+	string columnName; //!< æŒ‡å®šã•ã‚ŒãŸåˆ—ã®åˆ—åã§ã™ã€‚
+	int allColumnsIndex; //!< å…¨ã¦ã®ãƒ†ãƒ¼ãƒ–ãƒ«ã®ã™ã¹ã¦ã®åˆ—ã®ä¸­ã§ã€ã“ã®åˆ—ãŒä½•ç•ªç›®ã‹ã§ã™ã€‚
+	string outputName; //!< ã“ã®åˆ—ã‚’å‡ºåŠ›ã™ã‚‹æ™‚ã®è¡¨ç¤ºåã§ã™ã€‚
 
-	//! ColumnƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
+	//! Columnã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 	Column();
 
-	//! ColumnƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] columnName w’è‚³‚ê‚½—ñ‚Ì—ñ–¼‚Å‚·B
+	//! Columnã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] columnName æŒ‡å®šã•ã‚ŒãŸåˆ—ã®åˆ—åã§ã™ã€‚
 	Column(const string columnName);
 
-	//! ColumnƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] tableName —ñ‚ªŠ‘®‚·‚éƒe[ƒuƒ‹–¼‚Å‚·Bw’è‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Í‹ó•¶š—ñ‚Æ‚È‚è‚Ü‚·B
-	//! @param [in] columnName w’è‚³‚ê‚½—ñ‚Ì—ñ–¼‚Å‚·B
+	//! Columnã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] tableName åˆ—ãŒæ‰€å±ã™ã‚‹ãƒ†ãƒ¼ãƒ–ãƒ«åã§ã™ã€‚æŒ‡å®šã•ã‚Œã¦ã„ãªã„å ´åˆã¯ç©ºæ–‡å­—åˆ—ã¨ãªã‚Šã¾ã™ã€‚
+	//! @param [in] columnName æŒ‡å®šã•ã‚ŒãŸåˆ—ã®åˆ—åã§ã™ã€‚
 	Column(const string tableName, const string columnName);
 
-	//! ƒf[ƒ^‚ÌŒŸõ‚É—˜—p‚·‚é‚½‚ßA‘S‚Ä‚Ìƒe[ƒuƒ‹‚Ì—ñ‚Ìî•ñ‚ğ“o˜^‚µ‚Ü‚·B
-	//! @param [in] queryInfo SQL‚É‹Lq‚³‚ê‚½î•ñ‚Å‚·B
-	//! @param [in] inputTables ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İæ‚Á‚½ƒf[ƒ^‚Å‚·B
+	//! ãƒ‡ãƒ¼ã‚¿ã®æ¤œç´¢ã«åˆ©ç”¨ã™ã‚‹ãŸã‚ã€å…¨ã¦ã®ãƒ†ãƒ¼ãƒ–ãƒ«ã®åˆ—ã®æƒ…å ±ã‚’ç™»éŒ²ã—ã¾ã™ã€‚
+	//! @param [in] queryInfo SQLã«è¨˜è¿°ã•ã‚ŒãŸæƒ…å ±ã§ã™ã€‚
+	//! @param [in] inputTables ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿å–ã£ãŸãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 	void Column::SetAllColumns(const vector<const InputTable> &inputTables);
 };
 
-//! WHERE‹å‚ÌğŒ‚Ì®–Ø‚ğ•\‚µ‚Ü‚·B
+//! WHEREå¥ã®æ¡ä»¶ã®å¼æœ¨ã‚’è¡¨ã—ã¾ã™ã€‚
 class ExtensionTreeNode
 {
 public:
-	shared_ptr<ExtensionTreeNode> parent;//!< e‚Æ‚È‚éƒm[ƒh‚Å‚·Bª‚Ì®–Ø‚Ìê‡‚Ínullptr‚Æ‚È‚è‚Ü‚·B
-	shared_ptr<ExtensionTreeNode> left;  //!< ¶‚Ìq‚Æ‚È‚éƒm[ƒh‚Å‚·B©g‚ª––’[‚Ì—t‚Æ‚È‚é®–Ø‚Ìê‡‚Ínullptr‚Æ‚È‚è‚Ü‚·B
-	Operator middleOperator;             //!< ’†’u‚³‚ê‚é‰‰Zq‚Å‚·B©g‚ª––’[‚Ì‚Æ‚È‚é®–Ø‚Ìê‡‚Ìí—Ş‚ÍNOT_TOKEN‚Æ‚È‚è‚Ü‚·B
-	shared_ptr<ExtensionTreeNode>right;   //!< ‰E‚Ìq‚Æ‚È‚éƒm[ƒh‚Å‚·B©g‚ª––’[‚Ì—t‚Æ‚È‚é®–Ø‚Ìê‡‚Ínullptr‚Æ‚È‚è‚Ü‚·B
-	bool inParen = false;                //!< ©g‚ª‚©‚Á‚±‚É‚­‚é‚Ü‚ê‚Ä‚¢‚é‚©‚Ç‚¤‚©‚Å‚·B
-	int parenOpenBeforeClose = 0;        //!< –Ø‚Ì\’z’†‚É0ˆÈŠO‚Æ‚È‚èA©g‚Ì¶‚É‚ ‚èA‚Ü‚¾•Â‚¶‚Ä‚È‚¢ƒJƒbƒR‚ÌŠJn‚Ì”‚Æ‚È‚è‚Ü‚·B
-	int signCoefficient = 1;             //!< ©g‚ª—t‚É‚ ‚èAƒ}ƒCƒiƒX’P€‰‰Zq‚ª‚Â‚¢‚Ä‚¢‚éê‡‚Í-1A‚»‚êˆÈŠO‚Í1‚Æ‚È‚è‚Ü‚·B
-	Column column;                       //!< —ñêw’è‚³‚ê‚Ä‚¢‚éê‡‚ÉA‚»‚Ì—ñ‚ğ•\‚µ‚Ü‚·B—ñw’è‚Å‚Í‚È‚¢ê‡‚ÍcolumnName‚ª‹ó•¶š—ñ‚Æ‚È‚è‚Ü‚·B
-	bool calculated = false;             //!< ®‚Ì’l‚ğŒvZ’†‚ÉAŒvZÏ‚İ‚©‚Ç‚¤‚©‚Å‚·B
-	Data value;                          //!< w’è‚³‚ê‚½A‚à‚µ‚­‚ÍŒvZ‚³‚ê‚½’l‚Å‚·B
+	shared_ptr<ExtensionTreeNode> parent;//!< è¦ªã¨ãªã‚‹ãƒãƒ¼ãƒ‰ã§ã™ã€‚æ ¹ã®å¼æœ¨ã®å ´åˆã¯nullptrã¨ãªã‚Šã¾ã™ã€‚
+	shared_ptr<ExtensionTreeNode> left;  //!< å·¦ã®å­ã¨ãªã‚‹ãƒãƒ¼ãƒ‰ã§ã™ã€‚è‡ªèº«ãŒæœ«ç«¯ã®è‘‰ã¨ãªã‚‹å¼æœ¨ã®å ´åˆã¯nullptrã¨ãªã‚Šã¾ã™ã€‚
+	Operator middleOperator;             //!< ä¸­ç½®ã•ã‚Œã‚‹æ¼”ç®—å­ã§ã™ã€‚è‡ªèº«ãŒæœ«ç«¯ã®ã¨ãªã‚‹å¼æœ¨ã®å ´åˆã®ç¨®é¡ã¯NOT_TOKENã¨ãªã‚Šã¾ã™ã€‚
+	shared_ptr<ExtensionTreeNode>right;   //!< å³ã®å­ã¨ãªã‚‹ãƒãƒ¼ãƒ‰ã§ã™ã€‚è‡ªèº«ãŒæœ«ç«¯ã®è‘‰ã¨ãªã‚‹å¼æœ¨ã®å ´åˆã¯nullptrã¨ãªã‚Šã¾ã™ã€‚
+	bool inParen = false;                //!< è‡ªèº«ãŒã‹ã£ã“ã«ãã‚‹ã¾ã‚Œã¦ã„ã‚‹ã‹ã©ã†ã‹ã§ã™ã€‚
+	int parenOpenBeforeClose = 0;        //!< æœ¨ã®æ§‹ç¯‰ä¸­ã«0ä»¥å¤–ã¨ãªã‚Šã€è‡ªèº«ã®å·¦ã«ã‚ã‚Šã€ã¾ã é–‰ã˜ã¦ãªã„ã‚«ãƒƒã‚³ã®é–‹å§‹ã®æ•°ã¨ãªã‚Šã¾ã™ã€‚
+	int signCoefficient = 1;             //!< è‡ªèº«ãŒè‘‰ã«ã‚ã‚Šã€ãƒã‚¤ãƒŠã‚¹å˜é …æ¼”ç®—å­ãŒã¤ã„ã¦ã„ã‚‹å ´åˆã¯-1ã€ãã‚Œä»¥å¤–ã¯1ã¨ãªã‚Šã¾ã™ã€‚
+	Column column;                       //!< åˆ—å ´æŒ‡å®šã•ã‚Œã¦ã„ã‚‹å ´åˆã«ã€ãã®åˆ—ã‚’è¡¨ã—ã¾ã™ã€‚åˆ—æŒ‡å®šã§ã¯ãªã„å ´åˆã¯columnNameãŒç©ºæ–‡å­—åˆ—ã¨ãªã‚Šã¾ã™ã€‚
+	bool calculated = false;             //!< å¼ã®å€¤ã‚’è¨ˆç®—ä¸­ã«ã€è¨ˆç®—æ¸ˆã¿ã‹ã©ã†ã‹ã§ã™ã€‚
+	Data value;                          //!< æŒ‡å®šã•ã‚ŒãŸã€ã‚‚ã—ãã¯è¨ˆç®—ã•ã‚ŒãŸå€¤ã§ã™ã€‚
 
-	//! ExtensionTreeNodeƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
+	//! ExtensionTreeNodeã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 	ExtensionTreeNode();
 };
 
-//! ˆø”‚Æ‚µ‚Ä“n‚µ‚½ƒm[ƒh‹y‚Ñ‚»‚Ìq‘·‚Ìƒm[ƒh‚ğæ“¾‚µ‚Ü‚·B
-//! @param [in] –ß‚è’l‚Ìƒ‹[ƒg‚Æ‚È‚éƒm[ƒh‚Å‚·B
-//! @return ©g‹y‚Ñq‘·‚Ìƒm[ƒh‚Å‚·B
+//! å¼•æ•°ã¨ã—ã¦æ¸¡ã—ãŸãƒãƒ¼ãƒ‰åŠã³ãã®å­å­«ã®ãƒãƒ¼ãƒ‰ã‚’å–å¾—ã—ã¾ã™ã€‚
+//! @param [in] æˆ»ã‚Šå€¤ã®ãƒ«ãƒ¼ãƒˆã¨ãªã‚‹ãƒãƒ¼ãƒ‰ã§ã™ã€‚
+//! @return è‡ªèº«åŠã³å­å­«ã®ãƒãƒ¼ãƒ‰ã§ã™ã€‚
 const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> SelfAndDescendants(shared_ptr<ExtensionTreeNode>);
 
-//! SqlQuery‚Ì\•¶î•ñ‚ğˆµ‚¤ƒNƒ‰ƒX‚Å‚·B
+//! SqlQueryã®æ§‹æ–‡æƒ…å ±ã‚’æ‰±ã†ã‚¯ãƒ©ã‚¹ã§ã™ã€‚
 class SqlQueryInfo
 {
 public:
-	vector<const string> tableNames; //!< FROM‹å‚Åw’è‚µ‚Ä‚¢‚éƒe[ƒuƒ‹–¼‚Å‚·B
-	vector<Column> selectColumns; //!< SELECT‹å‚Éw’è‚³‚ê‚½—ñ–¼‚Å‚·B
-	vector<Column> orderByColumns; //!< ORDER‹å‚Éw’è‚³‚ê‚½—ñ–¼‚Å‚·B
-	vector<TokenKind> orders; //!< “¯‚¶ƒCƒ“ƒfƒbƒNƒX‚ÌorderByColumns‚É‘Î‰‚µ‚Ä‚¢‚éA¸‡A~‡‚Ìw’è‚Å‚·B
-	shared_ptr<ExtensionTreeNode> whereTopNode; //!< ®–Ø‚Ìª‚Æ‚È‚éƒm[ƒh‚Å‚·B
+	vector<const string> tableNames; //!< FROMå¥ã§æŒ‡å®šã—ã¦ã„ã‚‹ãƒ†ãƒ¼ãƒ–ãƒ«åã§ã™ã€‚
+	vector<Column> selectColumns; //!< SELECTå¥ã«æŒ‡å®šã•ã‚ŒãŸåˆ—åã§ã™ã€‚
+	vector<Column> orderByColumns; //!< ORDERå¥ã«æŒ‡å®šã•ã‚ŒãŸåˆ—åã§ã™ã€‚
+	vector<TokenKind> orders; //!< åŒã˜ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã®orderByColumnsã«å¯¾å¿œã—ã¦ã„ã‚‹ã€æ˜‡é †ã€é™é †ã®æŒ‡å®šã§ã™ã€‚
+	shared_ptr<ExtensionTreeNode> whereTopNode; //!< å¼æœ¨ã®æ ¹ã¨ãªã‚‹ãƒãƒ¼ãƒ‰ã§ã™ã€‚
 };
 
-//! CSV‚Æ‚µ‚Ä“ü—Í‚³‚ê‚½ƒtƒ@ƒCƒ‹‚Ì“à—e‚ğ•\‚µ‚Ü‚·B
+//! CSVã¨ã—ã¦å…¥åŠ›ã•ã‚ŒãŸãƒ•ã‚¡ã‚¤ãƒ«ã®å†…å®¹ã‚’è¡¨ã—ã¾ã™ã€‚
 class InputTable
 {
-	const string signNum = "+-0123456789"; //!< ‘S‚Ä‚Ì•„†‚Æ”š‚Å‚·B
+	const string signNum = "+-0123456789"; //!< å…¨ã¦ã®ç¬¦å·ã¨æ•°å­—ã§ã™ã€‚
 
-	const shared_ptr<const vector<const Column>> m_columns; //!< —ñ‚Ìî•ñ‚Å‚·B
-	const shared_ptr<vector<const vector<const Data>>> m_data; //! ƒf[ƒ^‚Å‚·B
+	const shared_ptr<const vector<const Column>> m_columns; //!< åˆ—ã®æƒ…å ±ã§ã™ã€‚
+	const shared_ptr<vector<const vector<const Data>>> m_data; //! ãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 
-	//! ‘S‚Ä‚ª”’l‚Æ‚È‚é—ñ‚Í”’l—ñ‚É•ÏŠ·‚µ‚Ü‚·B
+	//! å…¨ã¦ãŒæ•°å€¤ã¨ãªã‚‹åˆ—ã¯æ•°å€¤åˆ—ã«å¤‰æ›ã—ã¾ã™ã€‚
 	void InputTable::InitializeIntegerColumn();
 public:
-	//! InputTableƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] columns “Ç‚İ‚ñ‚¾ƒwƒbƒ_î•ñ‚Å‚·B
-	//! @param [in] data “Ç‚İ‚ñ‚¾ƒf[ƒ^‚Å‚·B
+	//! InputTableã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] columns èª­ã¿è¾¼ã‚“ã ãƒ˜ãƒƒãƒ€æƒ…å ±ã§ã™ã€‚
+	//! @param [in] data èª­ã¿è¾¼ã‚“ã ãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 	InputTable(const shared_ptr<const vector<const Column>> columns, const shared_ptr<vector<const vector<const Data>>> data);
 
-	//! —ñ‚Ìî•ñ‚ğæ“¾‚µ‚Ü‚·B
-	//! @return —ñ‚Ìî•ñ‚Å‚·B
+	//! åˆ—ã®æƒ…å ±ã‚’å–å¾—ã—ã¾ã™ã€‚
+	//! @return åˆ—ã®æƒ…å ±ã§ã™ã€‚
 	const shared_ptr<const vector<const Column>> columns() const;
 
-	//! ƒf[ƒ^‚ğæ“¾‚µ‚Ü‚·B
-	//! @return ƒf[ƒ^‚Å‚·B
+	//! ãƒ‡ãƒ¼ã‚¿ã‚’å–å¾—ã—ã¾ã™ã€‚
+	//! @return ãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 	const shared_ptr<vector<const vector<const Data>>> data() const;
 };
 
 class TokenReader
 {
 protected:
-	const string alpahUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ"; //!< ‘S‚Ä‚ÌƒAƒ‹ƒtƒ@ƒxƒbƒg‚Ì‘å•¶š¬•¶š‚ÆƒAƒ“ƒ_[ƒo[‚Å‚·B
-	const string alpahNumUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; //!< ‘S‚Ä‚Ì”š‚ÆƒAƒ‹ƒtƒ@ƒxƒbƒg‚Ì‘å•¶š¬•¶š‚ÆƒAƒ“ƒ_[ƒo[‚Å‚·B
-	const string num = "0123456789"; //!< ‘S‚Ä‚Ì”š‚Å‚·B
+	const string alpahUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ"; //!< å…¨ã¦ã®ã‚¢ãƒ«ãƒ•ã‚¡ãƒ™ãƒƒãƒˆã®å¤§æ–‡å­—å°æ–‡å­—ã¨ã‚¢ãƒ³ãƒ€ãƒ¼ãƒãƒ¼ã§ã™ã€‚
+	const string alpahNumUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; //!< å…¨ã¦ã®æ•°å­—ã¨ã‚¢ãƒ«ãƒ•ã‚¡ãƒ™ãƒƒãƒˆã®å¤§æ–‡å­—å°æ–‡å­—ã¨ã‚¢ãƒ³ãƒ€ãƒ¼ãƒãƒ¼ã§ã™ã€‚
+	const string num = "0123456789"; //!< å…¨ã¦ã®æ•°å­—ã§ã™ã€‚
 
-	//! ÀÛ‚Éƒg[ƒNƒ“‚ğ“Ç‚İ‚Ü‚·B
-	//! @param [in] cursol “Ç‚İ‚İŠJnˆÊ’u‚Å‚·B
-	//! @param [in] end SQL‘S‘Ì‚ÌI—¹ˆÊ’u‚Å‚·B
-	//! @return Ø‚èo‚³‚ê‚½ƒg[ƒNƒ“‚Å‚·B“Ç‚İ‚İ‚ª¸”s‚µ‚½ê‡‚Ínullptr‚ğ•Ô‚µ‚Ü‚·B
+	//! å®Ÿéš›ã«ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã¾ã™ã€‚
+	//! @param [in] cursol èª­ã¿è¾¼ã¿é–‹å§‹ä½ç½®ã§ã™ã€‚
+	//! @param [in] end SQLå…¨ä½“ã®çµ‚äº†ä½ç½®ã§ã™ã€‚
+	//! @return åˆ‡ã‚Šå‡ºã•ã‚ŒãŸãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚èª­ã¿è¾¼ã¿ãŒå¤±æ•—ã—ãŸå ´åˆã¯nullptrã‚’è¿”ã—ã¾ã™ã€‚
 	virtual const shared_ptr<const Token> ReadCore(string::const_iterator &cursol, const string::const_iterator& end) const = 0;
 public:
-	//! ƒg[ƒNƒ“‚ğ“Ç‚İ‚İ‚Ü‚·B
-	//! @param [in] cursol “Ç‚İ‚İŠJnˆÊ’u‚Å‚·B
-	//! @param [in] end SQL‘S‘Ì‚ÌI—¹ˆÊ’u‚Å‚·B
-	//! @return Ø‚èo‚³‚ê‚½ƒg[ƒNƒ“‚Å‚·B“Ç‚İ‚İ‚ª¸”s‚µ‚½ê‡‚Ínullptr‚ğ•Ô‚µ‚Ü‚·B
+	//! ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+	//! @param [in] cursol èª­ã¿è¾¼ã¿é–‹å§‹ä½ç½®ã§ã™ã€‚
+	//! @param [in] end SQLå…¨ä½“ã®çµ‚äº†ä½ç½®ã§ã™ã€‚
+	//! @return åˆ‡ã‚Šå‡ºã•ã‚ŒãŸãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚èª­ã¿è¾¼ã¿ãŒå¤±æ•—ã—ãŸå ´åˆã¯nullptrã‚’è¿”ã—ã¾ã™ã€‚
 	const shared_ptr<const Token> Read(string::const_iterator &cursol, const string::const_iterator& end) const;
 };
 
-//! ”’lƒŠƒeƒ‰ƒ‹ƒg[ƒNƒ“‚ğ“Ç‚İ‚Ş‹@”\‚ğ’ñ‹Ÿ‚µ‚Ü‚·B
+//! æ•°å€¤ãƒªãƒ†ãƒ©ãƒ«ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã‚€æ©Ÿèƒ½ã‚’æä¾›ã—ã¾ã™ã€‚
 class IntLiteralReader : public TokenReader
 {
 protected:
-	//! ÀÛ‚Éƒg[ƒNƒ“‚ğ“Ç‚İ‚Ü‚·B
-	//! @param [in] cursol “Ç‚İ‚İŠJnˆÊ’u‚Å‚·B
-	//! @param [in] end SQL‘S‘Ì‚ÌI—¹ˆÊ’u‚Å‚·B
-	//! @return Ø‚èo‚³‚ê‚½ƒg[ƒNƒ“‚Å‚·B“Ç‚İ‚İ‚ª¸”s‚µ‚½ê‡‚Ínullptr‚ğ•Ô‚µ‚Ü‚·B
+	//! å®Ÿéš›ã«ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã¾ã™ã€‚
+	//! @param [in] cursol èª­ã¿è¾¼ã¿é–‹å§‹ä½ç½®ã§ã™ã€‚
+	//! @param [in] end SQLå…¨ä½“ã®çµ‚äº†ä½ç½®ã§ã™ã€‚
+	//! @return åˆ‡ã‚Šå‡ºã•ã‚ŒãŸãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚èª­ã¿è¾¼ã¿ãŒå¤±æ•—ã—ãŸå ´åˆã¯nullptrã‚’è¿”ã—ã¾ã™ã€‚
 	const shared_ptr<const Token> ReadCore(string::const_iterator &cursol, const string::const_iterator& end) const override;
 };
 
-//! •¶š—ñƒŠƒeƒ‰ƒ‹ƒg[ƒNƒ“‚ğ“Ç‚İ‚Ş‹@”\‚ğ’ñ‹Ÿ‚µ‚Ü‚·B
+//! æ–‡å­—åˆ—ãƒªãƒ†ãƒ©ãƒ«ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã‚€æ©Ÿèƒ½ã‚’æä¾›ã—ã¾ã™ã€‚
 class StringLiteralReader : public TokenReader
 {
 protected:
-	//! ÀÛ‚Éƒg[ƒNƒ“‚ğ“Ç‚İ‚İ‚Ü‚·B
-	//! @param [in] cursol “Ç‚İ‚İŠJnˆÊ’u‚Å‚·B
-	//! @param [in] end SQL‘S‘Ì‚ÌI—¹ˆÊ’u‚Å‚·B
-	//! @return Ø‚èo‚³‚ê‚½ƒg[ƒNƒ“‚Å‚·B“Ç‚İ‚İ‚ª¸”s‚µ‚½ê‡‚Ínullptr‚ğ•Ô‚µ‚Ü‚·B
+	//! å®Ÿéš›ã«ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+	//! @param [in] cursol èª­ã¿è¾¼ã¿é–‹å§‹ä½ç½®ã§ã™ã€‚
+	//! @param [in] end SQLå…¨ä½“ã®çµ‚äº†ä½ç½®ã§ã™ã€‚
+	//! @return åˆ‡ã‚Šå‡ºã•ã‚ŒãŸãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚èª­ã¿è¾¼ã¿ãŒå¤±æ•—ã—ãŸå ´åˆã¯nullptrã‚’è¿”ã—ã¾ã™ã€‚
 	const shared_ptr<const Token> ReadCore(string::const_iterator &cursol, const string::const_iterator& end) const override;
 };
 
-//! ƒL[ƒ[ƒhƒg[ƒNƒ“‚ğ“Ç‚İ‚Ş‹@”\‚ğ’ñ‹Ÿ‚µ‚Ü‚·B
+//! ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã‚€æ©Ÿèƒ½ã‚’æä¾›ã—ã¾ã™ã€‚
 class KeywordReader : public TokenReader
 {
 protected:
-	Token keyword; //!< “Ç‚İ‚ŞƒL[ƒ[ƒhƒg[ƒNƒ“‚Æ“™‚µ‚¢ƒg[ƒNƒ“‚Å‚·B
+	Token keyword; //!< èª­ã¿è¾¼ã‚€ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ãƒˆãƒ¼ã‚¯ãƒ³ã¨ç­‰ã—ã„ãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚
 
-	//! ÀÛ‚Éƒg[ƒNƒ“‚ğ“Ç‚İ‚İ‚Ü‚·B
-	//! @param [in] cursol “Ç‚İ‚İŠJnˆÊ’u‚Å‚·B
-	//! @param [in] end SQL‘S‘Ì‚ÌI—¹ˆÊ’u‚Å‚·B
-	//! @return Ø‚èo‚³‚ê‚½ƒg[ƒNƒ“‚Å‚·B“Ç‚İ‚İ‚ª¸”s‚µ‚½ê‡‚Ínullptr‚ğ•Ô‚µ‚Ü‚·B
+	//! å®Ÿéš›ã«ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+	//! @param [in] cursol èª­ã¿è¾¼ã¿é–‹å§‹ä½ç½®ã§ã™ã€‚
+	//! @param [in] end SQLå…¨ä½“ã®çµ‚äº†ä½ç½®ã§ã™ã€‚
+	//! @return åˆ‡ã‚Šå‡ºã•ã‚ŒãŸãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚èª­ã¿è¾¼ã¿ãŒå¤±æ•—ã—ãŸå ´åˆã¯nullptrã‚’è¿”ã—ã¾ã™ã€‚
 	const shared_ptr<const Token> ReadCore(string::const_iterator &cursol, const string::const_iterator& end) const override;
 
-	//! ƒL[ƒ[ƒh‚ÌŸ‚Ì•¶š‚Ìƒ`ƒFƒbƒN‚ğs‚¢‚Ü‚·B
-	//! @param [in] next ƒ`ƒFƒbƒN‘ÎÛ‚Æ‚È‚éŸ‚Ì•¶š‚ÌƒCƒeƒŒ[ƒ^‚Å‚·B
-	//! @param [in] next endƒCƒeƒŒ[ƒ^‚Å‚·B
+	//! ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã®æ¬¡ã®æ–‡å­—ã®ãƒã‚§ãƒƒã‚¯ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] next ãƒã‚§ãƒƒã‚¯å¯¾è±¡ã¨ãªã‚‹æ¬¡ã®æ–‡å­—ã®ã‚¤ãƒ†ãƒ¬ãƒ¼ã‚¿ã§ã™ã€‚
+	//! @param [in] next endã‚¤ãƒ†ãƒ¬ãƒ¼ã‚¿ã§ã™ã€‚
 	virtual const bool CheckNextChar(const string::const_iterator& next, const string::const_iterator& end) const;
 public:
-	//! KeywordReaderƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] kind ƒg[ƒNƒ“‚Ìí—Ş‚Å‚·B
-	//! @param [in] word ƒL[ƒ[ƒh‚Ì•¶š—ñ‚Å‚·B
+	//! KeywordReaderã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] kind ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§ã™ã€‚
+	//! @param [in] word ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã®æ–‡å­—åˆ—ã§ã™ã€‚
 	KeywordReader(const TokenKind kind, const string word);
 };
 
-//! ‹L†ƒg[ƒNƒ“‚ğ“Ç‚İ‚Ş‹@”\‚ğ’ñ‹Ÿ‚µ‚Ü‚·B
+//! è¨˜å·ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã‚€æ©Ÿèƒ½ã‚’æä¾›ã—ã¾ã™ã€‚
 class SignReader : public KeywordReader
 {
 protected:
-	//! ƒL[ƒ[ƒh‚ÌŸ‚Ì•¶š‚Ìƒ`ƒFƒbƒN‚ğs‚¢‚Ü‚·B
-	//! @param [in] next ƒ`ƒFƒbƒN‘ÎÛ‚Æ‚È‚éŸ‚Ì•¶š‚ÌƒCƒeƒŒ[ƒ^‚Å‚·B
-	//! @param [in] next endƒCƒeƒŒ[ƒ^‚Å‚·B
+	//! ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã®æ¬¡ã®æ–‡å­—ã®ãƒã‚§ãƒƒã‚¯ã‚’è¡Œã„ã¾ã™ã€‚
+	//! @param [in] next ãƒã‚§ãƒƒã‚¯å¯¾è±¡ã¨ãªã‚‹æ¬¡ã®æ–‡å­—ã®ã‚¤ãƒ†ãƒ¬ãƒ¼ã‚¿ã§ã™ã€‚
+	//! @param [in] next endã‚¤ãƒ†ãƒ¬ãƒ¼ã‚¿ã§ã™ã€‚
 	const bool CheckNextChar(const string::const_iterator& next, const string::const_iterator& end) const override;
 
 public:
-	//! KeywordReaderƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] kind ƒg[ƒNƒ“‚Ìí—Ş‚Å‚·B
-	//! @param [in] word ƒL[ƒ[ƒh‚Ì•¶š—ñ‚Å‚·B
+	//! KeywordReaderã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] kind ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§ã™ã€‚
+	//! @param [in] word ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã®æ–‡å­—åˆ—ã§ã™ã€‚
 	SignReader(const TokenKind kind, const string word);
 };
 
-//! ¯•Êqƒg[ƒNƒ“‚ğ“Ç‚İ‚Ş‹@”\‚ğ’ñ‹Ÿ‚µ‚Ü‚·B
+//! è­˜åˆ¥å­ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã‚€æ©Ÿèƒ½ã‚’æä¾›ã—ã¾ã™ã€‚
 class IdentifierReader : public TokenReader
 {
 protected:
-	//! ÀÛ‚Éƒg[ƒNƒ“‚ğ“Ç‚İ‚İ‚Ü‚·B
-	//! @param [in] cursol “Ç‚İ‚İŠJnˆÊ’u‚Å‚·B
-	//! @param [in] end SQL‘S‘Ì‚ÌI—¹ˆÊ’u‚Å‚·B
-	//! @return Ø‚èo‚³‚ê‚½ƒg[ƒNƒ“‚Å‚·B“Ç‚İ‚İ‚ª¸”s‚µ‚½ê‡‚Ínullptr‚ğ•Ô‚µ‚Ü‚·B
+	//! å®Ÿéš›ã«ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+	//! @param [in] cursol èª­ã¿è¾¼ã¿é–‹å§‹ä½ç½®ã§ã™ã€‚
+	//! @param [in] end SQLå…¨ä½“ã®çµ‚äº†ä½ç½®ã§ã™ã€‚
+	//! @return åˆ‡ã‚Šå‡ºã•ã‚ŒãŸãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚èª­ã¿è¾¼ã¿ãŒå¤±æ•—ã—ãŸå ´åˆã¯nullptrã‚’è¿”ã—ã¾ã™ã€‚
 	const shared_ptr<const Token> ReadCore(string::const_iterator &cursol, const string::const_iterator& end) const override;
 };
 
-//! o—Í‚·‚éƒf[ƒ^‚ğŠÇ—‚µ‚Ü‚·B
+//! å‡ºåŠ›ã™ã‚‹ãƒ‡ãƒ¼ã‚¿ã‚’ç®¡ç†ã—ã¾ã™ã€‚
 class OutputData
 {
-	SqlQueryInfo queryInfo; //!< SQL‚É‹Lq‚³‚ê‚½“à—e‚Å‚·B
-	vector<Column> allInputColumns; //!< “ü—Í‚ÉŠÜ‚Ü‚ê‚é‚·‚×‚Ä‚Ì—ñ‚Ìˆê——‚Å‚·B
+	SqlQueryInfo queryInfo; //!< SQLã«è¨˜è¿°ã•ã‚ŒãŸå†…å®¹ã§ã™ã€‚
+	vector<Column> allInputColumns; //!< å…¥åŠ›ã«å«ã¾ã‚Œã‚‹ã™ã¹ã¦ã®åˆ—ã®ä¸€è¦§ã§ã™ã€‚
 
-	const vector<const InputTable> &inputTables; //!< ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İæ‚Á‚½ƒf[ƒ^‚Å‚·B
+	const vector<const InputTable> &inputTables; //!< ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿å–ã£ãŸãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 
-	//! “ü—Íƒtƒ@ƒCƒ‹‚É‘‚¢‚Ä‚ ‚Á‚½‚·‚×‚Ä‚Ì—ñ‚ğallInputColumns‚Éİ’è‚µ‚Ü‚·B
+	//! å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã«æ›¸ã„ã¦ã‚ã£ãŸã™ã¹ã¦ã®åˆ—ã‚’allInputColumnsã«è¨­å®šã—ã¾ã™ã€‚
 	void InitializeAllInputColumns();
 
-	//! SELECT‹å‚Ì—ñ–¼w’è‚ª*‚¾‚Á‚½ê‡‚ÍA“ü—ÍCSV‚Ì—ñ–¼‚ª‚·‚×‚Ä‘I‘ğ‚³‚ê‚Ü‚·B
+	//! SELECTå¥ã®åˆ—åæŒ‡å®šãŒ*ã ã£ãŸå ´åˆã¯ã€å…¥åŠ›CSVã®åˆ—åãŒã™ã¹ã¦é¸æŠã•ã‚Œã¾ã™ã€‚
 	void OpenSelectAsterisk();
 
-	//! SELECT‹å‚Åw’è‚³‚ê‚½—ñ–¼‚ªA‰½ŒÂ–Ú‚Ì“ü—Íƒtƒ@ƒCƒ‹‚Ì‰½—ñ–Ú‚É‘Š“–‚·‚é‚©‚ğ”»•Ê‚µ‚Ü‚·B
+	//! SELECTå¥ã§æŒ‡å®šã•ã‚ŒãŸåˆ—åãŒã€ä½•å€‹ç›®ã®å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã®ä½•åˆ—ç›®ã«ç›¸å½“ã™ã‚‹ã‹ã‚’åˆ¤åˆ¥ã—ã¾ã™ã€‚
 	void SetAllColumns();
 
-	//! “ü—Í‚³‚ê‚½Šeƒe[ƒuƒ‹‚ÌAŒ»İo—Í‚µ‚Ä‚¢‚és‚ğw‚·ƒJ[ƒ\ƒ‹‚ğA‰Šú‰»‚³‚ê‚½ó‘Ô‚Åæ“¾‚µ‚Ü‚·B
-	//! @return ‰Šú‰»‚³‚ê‚½ƒJ[ƒ\ƒ‹‚Å‚·B
+	//! å…¥åŠ›ã•ã‚ŒãŸå„ãƒ†ãƒ¼ãƒ–ãƒ«ã®ã€ç¾åœ¨å‡ºåŠ›ã—ã¦ã„ã‚‹è¡Œã‚’æŒ‡ã™ã‚«ãƒ¼ã‚½ãƒ«ã‚’ã€åˆæœŸåŒ–ã•ã‚ŒãŸçŠ¶æ…‹ã§å–å¾—ã—ã¾ã™ã€‚
+	//! @return åˆæœŸåŒ–ã•ã‚ŒãŸã‚«ãƒ¼ã‚½ãƒ«ã§ã™ã€‚
 	const shared_ptr<vector<vector<const vector<const Data>>::const_iterator>> OutputData::GetInitializedCurrentRows() const;
 
-	//! o—Í‚·‚é‚·‚×‚Ä‚Ìƒf[ƒ^s‚ğæ“¾‚µ‚Ü‚·B
-	//! @return o—Í‚·‚é‚·‚×‚Ä‚Ìƒf[ƒ^sB“ü—Í‚³‚ê‚½‚·‚×‚Ä‚Ì“ü—Íƒf[ƒ^‚ğ•ÛŠÇ‚µ‚Ü‚·B
+	//! å‡ºåŠ›ã™ã‚‹ã™ã¹ã¦ã®ãƒ‡ãƒ¼ã‚¿è¡Œã‚’å–å¾—ã—ã¾ã™ã€‚
+	//! @return å‡ºåŠ›ã™ã‚‹ã™ã¹ã¦ã®ãƒ‡ãƒ¼ã‚¿è¡Œã€‚å…¥åŠ›ã•ã‚ŒãŸã™ã¹ã¦ã®å…¥åŠ›ãƒ‡ãƒ¼ã‚¿ã‚’ä¿ç®¡ã—ã¾ã™ã€‚
 	const shared_ptr<vector<vector<Data>>> GetOutputRows();
 public:
 
-	//! OutputDataƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] queryInfo SQL‚Ìî•ñ‚Å‚·B
+	//! OutputDataã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] queryInfo SQLã®æƒ…å ±ã§ã™ã€‚
 	OutputData(const SqlQueryInfo queryInfo, const vector<const InputTable> &inputTables);
 
-	//! CSVƒtƒ@ƒCƒ‹‚Éo—Íƒf[ƒ^‚ğ‘‚«‚İ‚Ü‚·B
-	//! @param [in] outputFileName Œ‹‰Ê‚ğo—Í‚·‚éƒtƒ@ƒCƒ‹‚Ìƒtƒ@ƒCƒ‹–¼‚Å‚·B
-	//! @param [in] inputTables ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İæ‚Á‚½ƒf[ƒ^‚Å‚·B
+	//! CSVãƒ•ã‚¡ã‚¤ãƒ«ã«å‡ºåŠ›ãƒ‡ãƒ¼ã‚¿ã‚’æ›¸ãè¾¼ã¿ã¾ã™ã€‚
+	//! @param [in] outputFileName çµæœã‚’å‡ºåŠ›ã™ã‚‹ãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ•ã‚¡ã‚¤ãƒ«åã§ã™ã€‚
+	//! @param [in] inputTables ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿å–ã£ãŸãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 	void WriteCsv(const string outputFileName, const vector<const InputTable> &inputTables);
 };
 
-//! SqlQuery‚ÌCsv‚É‘Î‚·‚é“üo—Í‚ğˆµ‚¢‚Ü‚·B
+//! SqlQueryã®Csvã«å¯¾ã™ã‚‹å…¥å‡ºåŠ›ã‚’æ‰±ã„ã¾ã™ã€‚
 class Csv
 {
-	const shared_ptr<const SqlQueryInfo> queryInfo; //!< SQL‚É‹Lq‚³‚ê‚½“à—e‚Å‚·B
+	const shared_ptr<const SqlQueryInfo> queryInfo; //!< SQLã«è¨˜è¿°ã•ã‚ŒãŸå†…å®¹ã§ã™ã€‚
 
-	//! ƒtƒ@ƒCƒ‹ƒXƒgƒŠ[ƒ€‚©‚çƒJƒ“ƒ}‹æØ‚è‚Ìˆês‚ğ“Ç‚İ‚İ‚Ü‚·B
-	//! @param [in] inputFile ƒf[ƒ^‚ğ“Ç‚İ‚Şƒtƒ@ƒCƒ‹ƒXƒgƒŠ[ƒ€‚Å‚·B
-	//! @return ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İ‚ñ‚¾ˆês•ª‚Ìƒf[ƒ^‚Å‚·B
+	//! ãƒ•ã‚¡ã‚¤ãƒ«ã‚¹ãƒˆãƒªãƒ¼ãƒ ã‹ã‚‰ã‚«ãƒ³ãƒåŒºåˆ‡ã‚Šã®ä¸€è¡Œã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+	//! @param [in] inputFile ãƒ‡ãƒ¼ã‚¿ã‚’èª­ã¿è¾¼ã‚€ãƒ•ã‚¡ã‚¤ãƒ«ã‚¹ãƒˆãƒªãƒ¼ãƒ ã§ã™ã€‚
+	//! @return ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿è¾¼ã‚“ã ä¸€è¡Œåˆ†ã®ãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 	const shared_ptr<const vector<const string>> ReadLineData(ifstream &inputFile) const;
 
-	//! “ü—Íƒtƒ@ƒCƒ‹‚ğŠJ‚«‚Ü‚·B
-	//! @param [in] filePath ŠJ‚­ƒtƒ@ƒCƒ‹‚Ìƒtƒ@ƒCƒ‹ƒpƒX‚Å‚·B
-	//! @return “ü—Íƒtƒ@ƒCƒ‹‚ğˆµ‚¤ƒXƒgƒŠ[ƒ€‚Å‚·B
+	//! å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ãã¾ã™ã€‚
+	//! @param [in] filePath é–‹ããƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ•ã‚¡ã‚¤ãƒ«ãƒ‘ã‚¹ã§ã™ã€‚
+	//! @return å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æ‰±ã†ã‚¹ãƒˆãƒªãƒ¼ãƒ ã§ã™ã€‚
 	ifstream OpenInputFile(const string filePath) const;
 
-	//! “ü—Íƒtƒ@ƒCƒ‹‚ğ•Â‚¶‚Ü‚·B
-	//! @param [in] inputFile “ü—Íƒtƒ@ƒCƒ‹‚ğˆµ‚¤ƒXƒgƒŠ[ƒ€‚Å‚·B
+	//! å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‰ã˜ã¾ã™ã€‚
+	//! @param [in] inputFile å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æ‰±ã†ã‚¹ãƒˆãƒªãƒ¼ãƒ ã§ã™ã€‚
 	void CloseInputFile(ifstream &inputFile) const;
 
-	//! “ü—ÍCSV‚Ìƒwƒbƒ_s‚ğ“Ç‚İ‚İ‚Ü‚·B
-	//! @param [in] inputFile “ü—Íƒtƒ@ƒCƒ‹‚ğˆµ‚¤ƒXƒgƒŠ[ƒ€‚Å‚·BŠJ‚¢‚½Œã‰½‚à“Ç‚İ‚ñ‚Å‚¢‚Ü‚¹‚ñB
-	//! @param [in] tableName SQL‚Åw’è‚³‚ê‚½ƒe[ƒuƒ‹–¼‚Å‚·B
-	//! @return ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İæ‚Á‚½ƒwƒbƒ_î•ñ‚Å‚·B
+	//! å…¥åŠ›CSVã®ãƒ˜ãƒƒãƒ€è¡Œã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+	//! @param [in] inputFile å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æ‰±ã†ã‚¹ãƒˆãƒªãƒ¼ãƒ ã§ã™ã€‚é–‹ã„ãŸå¾Œä½•ã‚‚èª­ã¿è¾¼ã‚“ã§ã„ã¾ã›ã‚“ã€‚
+	//! @param [in] tableName SQLã§æŒ‡å®šã•ã‚ŒãŸãƒ†ãƒ¼ãƒ–ãƒ«åã§ã™ã€‚
+	//! @return ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿å–ã£ãŸãƒ˜ãƒƒãƒ€æƒ…å ±ã§ã™ã€‚
 	const shared_ptr<const vector<const Column>> ReadHeader(ifstream &inputFile, const string tableName) const;
 
-	//! “ü—ÍCSV‚Ìƒf[ƒ^s‚ğ“Ç‚İ‚İ‚Ü‚·B
-	//! @param [in] inputFile “ü—Íƒtƒ@ƒCƒ‹‚ğˆµ‚¤ƒXƒgƒŠ[ƒ€‚Å‚·B‚·‚Å‚Éƒwƒbƒ_‚Ì‚İ‚ğ“Ç‚İ‚ñ‚¾Œã‚Å‚·B
-	//! @return ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İæ‚Á‚½ƒf[ƒ^‚Å‚·B
+	//! å…¥åŠ›CSVã®ãƒ‡ãƒ¼ã‚¿è¡Œã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+	//! @param [in] inputFile å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æ‰±ã†ã‚¹ãƒˆãƒªãƒ¼ãƒ ã§ã™ã€‚ã™ã§ã«ãƒ˜ãƒƒãƒ€ã®ã¿ã‚’èª­ã¿è¾¼ã‚“ã å¾Œã§ã™ã€‚
+	//! @return ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿å–ã£ãŸãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 	const shared_ptr<vector<const vector<const Data>>> ReadData(ifstream &inputFile) const;
 public:
 
-	//! CsvƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] queryInfo SQL‚É‹Lq‚³‚ê‚½“à—e‚Å‚·B
+	//! Csvã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] queryInfo SQLã«è¨˜è¿°ã•ã‚ŒãŸå†…å®¹ã§ã™ã€‚
 	Csv(const shared_ptr<const SqlQueryInfo> queryInfo);
 
-	//! CSVƒtƒ@ƒCƒ‹‚©‚ç“ü—Íƒf[ƒ^‚ğ“Ç‚İæ‚è‚Ü‚·B
-	//! @return ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İæ‚Á‚½ƒf[ƒ^‚Å‚·B
+	//! CSVãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰å…¥åŠ›ãƒ‡ãƒ¼ã‚¿ã‚’èª­ã¿å–ã‚Šã¾ã™ã€‚
+	//! @return ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿å–ã£ãŸãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 	const shared_ptr<const vector<const InputTable>> ReadCsv() const;
 
-	//! CSVƒtƒ@ƒCƒ‹‚Éo—Íƒf[ƒ^‚ğ‘‚«‚İ‚Ü‚·B
-	//! @param [in] outputFileName Œ‹‰Ê‚ğo—Í‚·‚éƒtƒ@ƒCƒ‹‚Ìƒtƒ@ƒCƒ‹–¼‚Å‚·B
-	//! @param [in] inputTables ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İæ‚Á‚½ƒf[ƒ^‚Å‚·B
+	//! CSVãƒ•ã‚¡ã‚¤ãƒ«ã«å‡ºåŠ›ãƒ‡ãƒ¼ã‚¿ã‚’æ›¸ãè¾¼ã¿ã¾ã™ã€‚
+	//! @param [in] outputFileName çµæœã‚’å‡ºåŠ›ã™ã‚‹ãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ•ã‚¡ã‚¤ãƒ«åã§ã™ã€‚
+	//! @param [in] inputTables ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿å–ã£ãŸãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 	void WriteCsv(const string outputFileName, const vector<const InputTable> &inputTables) const;
 };
 
-//! ƒtƒ@ƒCƒ‹‚É‘Î‚µ‚ÄÀs‚·‚éSQL‚ğ•\‚·ƒNƒ‰ƒX‚Å‚·B
+//! ãƒ•ã‚¡ã‚¤ãƒ«ã«å¯¾ã—ã¦å®Ÿè¡Œã™ã‚‹SQLã‚’è¡¨ã™ã‚¯ãƒ©ã‚¹ã§ã™ã€‚
 class SqlQuery
 {
-	const string space = " \t\r\n"; //!< ‘S‚Ä‚Ì‹ó”’•¶š‚Å‚·B
+	const string space = " \t\r\n"; //!< å…¨ã¦ã®ç©ºç™½æ–‡å­—ã§ã™ã€‚
 
-	const vector<const shared_ptr<const TokenReader>> tokenReaders; //!< ƒg[ƒNƒ“‚Ì“Ç‚İ‚İƒƒWƒbƒN‚ÌW‡‚Å‚·B
-	const vector<const Operator> operators; //!< ‰‰Zq‚Ìî•ñ‚Å‚·B
+	const vector<const shared_ptr<const TokenReader>> tokenReaders; //!< ãƒˆãƒ¼ã‚¯ãƒ³ã®èª­ã¿è¾¼ã¿ãƒ­ã‚¸ãƒƒã‚¯ã®é›†åˆã§ã™ã€‚
+	const vector<const Operator> operators; //!< æ¼”ç®—å­ã®æƒ…å ±ã§ã™ã€‚
 
-	shared_ptr<Csv> csv; //!< CSV‘€ì‚ğŠÇ—‚µ‚Ü‚·B
+	shared_ptr<Csv> csv; //!< CSVæ“ä½œã‚’ç®¡ç†ã—ã¾ã™ã€‚
 
-	//! SQL‚Ì•¶š—ñ‚©‚çƒg[ƒNƒ“‚ğØ‚èo‚µ‚Ü‚·B
-	//! @param [in] sql ƒg[ƒNƒ“‚É•ª‰ğ‚·‚éŒ³‚Æ‚È‚éSQL‚Å‚·B
-	//! @return Ø‚èo‚³‚ê‚½ƒg[ƒNƒ“‚Å‚·B
+	//! SQLã®æ–‡å­—åˆ—ã‹ã‚‰ãƒˆãƒ¼ã‚¯ãƒ³ã‚’åˆ‡ã‚Šå‡ºã—ã¾ã™ã€‚
+	//! @param [in] sql ãƒˆãƒ¼ã‚¯ãƒ³ã«åˆ†è§£ã™ã‚‹å…ƒã¨ãªã‚‹SQLã§ã™ã€‚
+	//! @return åˆ‡ã‚Šå‡ºã•ã‚ŒãŸãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚
 	const shared_ptr<const vector<const Token>> GetTokens(const string sql) const;
 
-	//! ƒg[ƒNƒ“‚ğ‰ğÍ‚µ‚ÄSQL‚Ì\•¶‚Åw’è‚³‚ê‚½î•ñ‚ğæ“¾‚µ‚Ü‚·B
-	//! @param [in] tokens ‰ğÍ‚Ì‘ÎÛ‚Æ‚È‚éƒg[ƒNƒ“‚Å‚·B
-	//! @return ‰ğÍ‚µ‚½Œ‹‰Ê‚Ìî•ñ‚Å‚·B
+	//! ãƒˆãƒ¼ã‚¯ãƒ³ã‚’è§£æã—ã¦SQLã®æ§‹æ–‡ã§æŒ‡å®šã•ã‚ŒãŸæƒ…å ±ã‚’å–å¾—ã—ã¾ã™ã€‚
+	//! @param [in] tokens è§£æã®å¯¾è±¡ã¨ãªã‚‹ãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚
+	//! @return è§£æã—ãŸçµæœã®æƒ…å ±ã§ã™ã€‚
 	const shared_ptr<const SqlQueryInfo> AnalyzeTokens(const vector<const Token> &tokens) const;
 public:
-	//! SqlQueryƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-	//! @param [in] sql Às‚·‚éSQL‚Å‚·B
+	//! SqlQueryã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+	//! @param [in] sql å®Ÿè¡Œã™ã‚‹SQLã§ã™ã€‚
 	SqlQuery(const string sql);
 
-	//! ƒJƒŒƒ“ƒgƒfƒBƒŒƒNƒgƒŠ‚É‚ ‚éCSV‚É‘Î‚µAŠÈˆÕ“I‚ÈSQL‚ğÀs‚µAŒ‹‰Ê‚ğƒtƒ@ƒCƒ‹‚Éo—Í‚µ‚Ü‚·B
-	//! @param[in] outputFileName SQL‚ÌÀsŒ‹‰Ê‚ğCSV‚Æ‚µ‚Äo—Í‚·‚éƒtƒ@ƒCƒ‹–¼‚Å‚·BŠg’£q‚ğŠÜ‚İ‚Ü‚·B
+	//! ã‚«ãƒ¬ãƒ³ãƒˆãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã«ã‚ã‚‹CSVã«å¯¾ã—ã€ç°¡æ˜“çš„ãªSQLã‚’å®Ÿè¡Œã—ã€çµæœã‚’ãƒ•ã‚¡ã‚¤ãƒ«ã«å‡ºåŠ›ã—ã¾ã™ã€‚
+	//! @param[in] outputFileName SQLã®å®Ÿè¡Œçµæœã‚’CSVã¨ã—ã¦å‡ºåŠ›ã™ã‚‹ãƒ•ã‚¡ã‚¤ãƒ«åã§ã™ã€‚æ‹¡å¼µå­ã‚’å«ã¿ã¾ã™ã€‚
 	void Execute(const string outputFileName);
 };
 
-// ˆÈãƒwƒbƒ_‚É‘Š“–‚·‚é•”•ªB
+// ä»¥ä¸Šãƒ˜ãƒƒãƒ€ã«ç›¸å½“ã™ã‚‹éƒ¨åˆ†ã€‚
 
-//! “ñ‚Â‚Ì•¶š—ñ‚ğA‘å•¶š¬•¶š‚ğ‹æ•Ê‚¹‚¸‚É”äŠr‚µA“™‚µ‚¢‚©‚Ç‚¤‚©‚Å‚·B
-//! @param [in] str1 ”äŠr‚³‚ê‚éˆê‚Â–Ú‚Ì•¶š—ñ‚Å‚·B
-//! @param [in] str2 ”äŠr‚³‚ê‚é“ñ‚Â–Ú‚Ì•¶š—ñ‚Å‚·B
-//! @return ”äŠr‚µ‚½Œ‹‰ÊA“™‚µ‚¢‚©‚Ç‚¤‚©‚Å‚·B
+//! äºŒã¤ã®æ–‡å­—åˆ—ã‚’ã€å¤§æ–‡å­—å°æ–‡å­—ã‚’åŒºåˆ¥ã›ãšã«æ¯”è¼ƒã—ã€ç­‰ã—ã„ã‹ã©ã†ã‹ã§ã™ã€‚
+//! @param [in] str1 æ¯”è¼ƒã•ã‚Œã‚‹ä¸€ã¤ç›®ã®æ–‡å­—åˆ—ã§ã™ã€‚
+//! @param [in] str2 æ¯”è¼ƒã•ã‚Œã‚‹äºŒã¤ç›®ã®æ–‡å­—åˆ—ã§ã™ã€‚
+//! @return æ¯”è¼ƒã—ãŸçµæœã€ç­‰ã—ã„ã‹ã©ã†ã‹ã§ã™ã€‚
 bool Equali(const string str1, const string str2){
 	return
 		str1.size() == str2.size() &&
@@ -455,109 +455,109 @@ bool Equali(const string str1, const string str2){
 		[](const char &c1, const char &c2){return toupper(c1) == toupper(c2); });
 }
 
-//! DataƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
+//! Dataã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 Data::Data() :m_value({ 0 })
 {
 }
 
-//! DataƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] value ƒf[ƒ^‚Ì’l‚Å‚·B
+//! Dataã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] value ãƒ‡ãƒ¼ã‚¿ã®å€¤ã§ã™ã€‚
 Data::Data(const std::string value) : m_value({ 0 })
 {
 	m_string = value;
 }
 
-//! DataƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] value ƒf[ƒ^‚Ì’l‚Å‚·B
+//! Dataã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] value ãƒ‡ãƒ¼ã‚¿ã®å€¤ã§ã™ã€‚
 Data::Data(const int value) : type(DataType::INTEGER)
 {
 	m_value.integer = value;
 }
 
-//! DataƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] value ƒf[ƒ^‚Ì’l‚Å‚·B
+//! Dataã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] value ãƒ‡ãƒ¼ã‚¿ã®å€¤ã§ã™ã€‚
 Data::Data(const bool value) : type(DataType::BOOLEAN)
 {
 	m_value.boolean = value;
 }
 
 
-//! ƒf[ƒ^‚ª•¶š—ñŒ^‚Ìê‡‚Ì’l‚ğæ“¾‚µ‚Ü‚·B
-//! @return ƒf[ƒ^‚ª•¶š—ñŒ^‚Ìê‡‚Ì’l‚Å‚·B
+//! ãƒ‡ãƒ¼ã‚¿ãŒæ–‡å­—åˆ—å‹ã®å ´åˆã®å€¤ã‚’å–å¾—ã—ã¾ã™ã€‚
+//! @return ãƒ‡ãƒ¼ã‚¿ãŒæ–‡å­—åˆ—å‹ã®å ´åˆã®å€¤ã§ã™ã€‚
 const string& Data::string() const
 {
 	return m_string;
 }
 
-//! ƒf[ƒ^‚ª®”Œ^‚Ìê‡‚Ì’l‚ğæ“¾‚µ‚Ü‚·B
-//! @return ƒf[ƒ^‚ª®”Œ^‚Ìê‡‚Ì’l‚Å‚·B
+//! ãƒ‡ãƒ¼ã‚¿ãŒæ•´æ•°å‹ã®å ´åˆã®å€¤ã‚’å–å¾—ã—ã¾ã™ã€‚
+//! @return ãƒ‡ãƒ¼ã‚¿ãŒæ•´æ•°å‹ã®å ´åˆã®å€¤ã§ã™ã€‚
 const int& Data::integer() const
 {
 	return m_value.integer;
 }
 
-//! ƒf[ƒ^‚ª^‹U’lŒ^‚Ìê‡‚Ì’l‚ğæ“¾‚µ‚Ü‚·B
-//! @return ƒf[ƒ^‚ª^‹U’lŒ^‚Ìê‡‚Ì’l‚Å‚·B
+//! ãƒ‡ãƒ¼ã‚¿ãŒçœŸå½å€¤å‹ã®å ´åˆã®å€¤ã‚’å–å¾—ã—ã¾ã™ã€‚
+//! @return ãƒ‡ãƒ¼ã‚¿ãŒçœŸå½å€¤å‹ã®å ´åˆã®å€¤ã§ã™ã€‚
 const bool& Data::boolean() const
 {
 	return m_value.boolean;
 }
 
-//! OperatorƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
+//! Operatorã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 Operator::Operator()
 {
 }
 
-//! OperatorƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] kind ‰‰Zq‚Ìí—Ş‚ğA‰‰Zq‚ğ‹Lq‚·‚éƒg[ƒNƒ“‚Ìí—Ş‚Å•\‚µ‚Ü‚·B
-//! @param [in] order ‰‰Zq‚Ì—Dæ‡ˆÊ‚Å‚·B
+//! Operatorã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] kind æ¼”ç®—å­ã®ç¨®é¡ã‚’ã€æ¼”ç®—å­ã‚’è¨˜è¿°ã™ã‚‹ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§è¡¨ã—ã¾ã™ã€‚
+//! @param [in] order æ¼”ç®—å­ã®å„ªå…ˆé †ä½ã§ã™ã€‚
 Operator::Operator(const TokenKind kind, const int order) : kind(kind), order(order)
 {
 }
 
-//! TokenƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
+//! Tokenã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 Token::Token() : Token(TokenKind::NOT_TOKEN, "")
 {
 }
 
-//! TokenƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] kind ƒg[ƒNƒ“‚Ìí—Ş‚Å‚·B
+//! Tokenã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] kind ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§ã™ã€‚
 Token::Token(const TokenKind kind) : Token(kind, "")
 {
 }
 
-//! TokenƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] kind ƒg[ƒNƒ“‚Ìí—Ş‚Å‚·B
-//! @param [in] word ‹L˜^‚³‚ê‚Ä‚¢‚éƒg[ƒNƒ“‚Ì•¶š—ñ‚Å‚·B‹L˜^‚Ì•K—v‚ª‚È‚¯‚ê‚Î‹ó”’‚Å‚·B
+//! Tokenã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] kind ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§ã™ã€‚
+//! @param [in] word è¨˜éŒ²ã•ã‚Œã¦ã„ã‚‹ãƒˆãƒ¼ã‚¯ãƒ³ã®æ–‡å­—åˆ—ã§ã™ã€‚è¨˜éŒ²ã®å¿…è¦ãŒãªã‘ã‚Œã°ç©ºç™½ã§ã™ã€‚
 Token::Token(const TokenKind kind, const string word) :kind(kind)
 {
 	this->word = word;
 }
 
-//! ColumnƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
+//! Columnã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 Column::Column() : Column("", "")
 {
 
 }
 
-//! ColumnƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] columnName w’è‚³‚ê‚½—ñ‚Ì—ñ–¼‚Å‚·B
+//! Columnã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] columnName æŒ‡å®šã•ã‚ŒãŸåˆ—ã®åˆ—åã§ã™ã€‚
 Column::Column(const string columnName) : Column("", columnName)
 {
 }
 
-//! ColumnƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] tableName —ñ‚ªŠ‘®‚·‚éƒe[ƒuƒ‹–¼‚Å‚·Bw’è‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Í‹ó•¶š—ñ‚Æ‚È‚è‚Ü‚·B
-//! @param [in] columnName w’è‚³‚ê‚½—ñ‚Ì—ñ–¼‚Å‚·B
+//! Columnã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] tableName åˆ—ãŒæ‰€å±ã™ã‚‹ãƒ†ãƒ¼ãƒ–ãƒ«åã§ã™ã€‚æŒ‡å®šã•ã‚Œã¦ã„ãªã„å ´åˆã¯ç©ºæ–‡å­—åˆ—ã¨ãªã‚Šã¾ã™ã€‚
+//! @param [in] columnName æŒ‡å®šã•ã‚ŒãŸåˆ—ã®åˆ—åã§ã™ã€‚
 Column::Column(const string tableName, const string columnName)
 {
 	this->tableName = tableName;
 	this->columnName = columnName;
 }
 
-//! ƒf[ƒ^‚ÌŒŸõ‚É—˜—p‚·‚é‚½‚ßA‘S‚Ä‚Ìƒe[ƒuƒ‹‚Ì—ñ‚Ìî•ñ‚ğ“o˜^‚µ‚Ü‚·B
-//! @param [in] queryInfo SQL‚É‹Lq‚³‚ê‚½î•ñ‚Å‚·B
-//! @param [in] inputTables ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İæ‚Á‚½ƒf[ƒ^‚Å‚·B
+//! ãƒ‡ãƒ¼ã‚¿ã®æ¤œç´¢ã«åˆ©ç”¨ã™ã‚‹ãŸã‚ã€å…¨ã¦ã®ãƒ†ãƒ¼ãƒ–ãƒ«ã®åˆ—ã®æƒ…å ±ã‚’ç™»éŒ²ã—ã¾ã™ã€‚
+//! @param [in] queryInfo SQLã«è¨˜è¿°ã•ã‚ŒãŸæƒ…å ±ã§ã™ã€‚
+//! @param [in] inputTables ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿å–ã£ãŸãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 void Column::SetAllColumns(const vector<const InputTable> &inputTables)
 {
 	bool found = false;
@@ -565,35 +565,35 @@ void Column::SetAllColumns(const vector<const InputTable> &inputTables)
 	for (auto &inputTable : inputTables){
 		for (auto &inputColumn : *inputTable.columns()){
 			if (Equali(columnName, inputColumn.columnName) &&
-				(tableName.empty() || // ƒe[ƒuƒ‹–¼‚ªİ’è‚³‚ê‚Ä‚¢‚éê‡‚Ì‚İƒe[ƒuƒ‹–¼‚Ì”äŠr‚ğs‚¢‚Ü‚·B
+				(tableName.empty() || // ãƒ†ãƒ¼ãƒ–ãƒ«åãŒè¨­å®šã•ã‚Œã¦ã„ã‚‹å ´åˆã®ã¿ãƒ†ãƒ¼ãƒ–ãƒ«åã®æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
 				Equali(tableName, inputColumn.tableName))){
 
-				// Šù‚ÉŒ©‚Â‚©‚Á‚Ä‚¢‚é‚Ì‚É‚à‚¤ˆê‚ÂŒ©‚Â‚©‚Á‚½‚çƒGƒ‰[‚Å‚·B
+				// æ—¢ã«è¦‹ã¤ã‹ã£ã¦ã„ã‚‹ã®ã«ã‚‚ã†ä¸€ã¤è¦‹ã¤ã‹ã£ãŸã‚‰ã‚¨ãƒ©ãƒ¼ã§ã™ã€‚
 				if (found){
 					throw ResultValue::ERR_BAD_COLUMN_NAME;
 				}
 				found = true;
-				// Œ©‚Â‚©‚Á‚½’l‚ğ‚Â—ñ‚Ìƒf[ƒ^‚ğ¶¬‚µ‚Ü‚·B
+				// è¦‹ã¤ã‹ã£ãŸå€¤ã‚’æŒã¤åˆ—ã®ãƒ‡ãƒ¼ã‚¿ã‚’ç”Ÿæˆã—ã¾ã™ã€‚
 				allColumnsIndex = i;
 				outputName = inputColumn.columnName;
 			}
 			++i;
 		}
 	}
-	// ˆê‚Â‚àŒ©‚Â‚©‚ç‚È‚­‚Ä‚àƒGƒ‰[‚Å‚·B
+	// ä¸€ã¤ã‚‚è¦‹ã¤ã‹ã‚‰ãªãã¦ã‚‚ã‚¨ãƒ©ãƒ¼ã§ã™ã€‚
 	if (!found){
 		throw ResultValue::ERR_BAD_COLUMN_NAME;
 	}
 }
 
-//! ExtensionTreeNodeƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
+//! ExtensionTreeNodeã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
 ExtensionTreeNode::ExtensionTreeNode()
 {
 }
 
-//! ˆø”‚Æ‚µ‚Ä“n‚µ‚½ƒm[ƒh‹y‚Ñ‚»‚Ìq‘·‚Ìƒm[ƒh‚ğæ“¾‚µ‚Ü‚·B
-//! @param [in] –ß‚è’l‚Ìƒ‹[ƒg‚Æ‚È‚éƒm[ƒh‚Å‚·B
-//! @return ©g‹y‚Ñq‘·‚Ìƒm[ƒh‚Å‚·B
+//! å¼•æ•°ã¨ã—ã¦æ¸¡ã—ãŸãƒãƒ¼ãƒ‰åŠã³ãã®å­å­«ã®ãƒãƒ¼ãƒ‰ã‚’å–å¾—ã—ã¾ã™ã€‚
+//! @param [in] æˆ»ã‚Šå€¤ã®ãƒ«ãƒ¼ãƒˆã¨ãªã‚‹ãƒãƒ¼ãƒ‰ã§ã™ã€‚
+//! @return è‡ªèº«åŠã³å­å­«ã®ãƒãƒ¼ãƒ‰ã§ã™ã€‚
 const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> SelfAndDescendants(shared_ptr<ExtensionTreeNode> self)
 {
 	auto selfAndDescendants = make_shared<vector<const shared_ptr<ExtensionTreeNode>>>();
@@ -615,12 +615,12 @@ const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> SelfAndDescendants
 	return selfAndDescendants;
 }
 
-//! ‘S‚Ä‚ª”’l‚Æ‚È‚é—ñ‚Í”’l—ñ‚É•ÏŠ·‚µ‚Ü‚·B
+//! å…¨ã¦ãŒæ•°å€¤ã¨ãªã‚‹åˆ—ã¯æ•°å€¤åˆ—ã«å¤‰æ›ã—ã¾ã™ã€‚
 void InputTable::InitializeIntegerColumn()
 {
 	for (size_t i = 0; i < columns()->size(); ++i){
 
-		// ‘S‚Ä‚Ìs‚Ì‚ ‚é—ñ‚É‚Â‚¢‚ÄAƒf[ƒ^•¶š—ñ‚©‚ç•„†‚Æ”’lˆÈŠO‚Ì•¶š‚ğ’T‚µ‚Ü‚·B
+		// å…¨ã¦ã®è¡Œã®ã‚ã‚‹åˆ—ã«ã¤ã„ã¦ã€ãƒ‡ãƒ¼ã‚¿æ–‡å­—åˆ—ã‹ã‚‰ç¬¦å·ã¨æ•°å€¤ä»¥å¤–ã®æ–‡å­—ã‚’æ¢ã—ã¾ã™ã€‚
 		if (none_of(
 			data()->begin(),
 			data()->end(),
@@ -632,7 +632,7 @@ void InputTable::InitializeIntegerColumn()
 				inputRow[i].string().end(),
 				[&](const char& c){return signNum.find(c) == string::npos; }); })){
 
-			// •„†‚Æ”šˆÈŠO‚ªŒ©‚Â‚©‚ç‚È‚¢—ñ‚É‚Â‚¢‚Ä‚ÍA”’l—ñ‚É•ÏŠ·‚µ‚Ü‚·B
+			// ç¬¦å·ã¨æ•°å­—ä»¥å¤–ãŒè¦‹ã¤ã‹ã‚‰ãªã„åˆ—ã«ã¤ã„ã¦ã¯ã€æ•°å€¤åˆ—ã«å¤‰æ›ã—ã¾ã™ã€‚
 			for (auto& inputRow : *data()){
 				inputRow[i] = Data(stoi(inputRow[i].string()));
 			}
@@ -640,32 +640,32 @@ void InputTable::InitializeIntegerColumn()
 	}
 }
 
-//! InputTableƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] columns “Ç‚İ‚ñ‚¾ƒwƒbƒ_î•ñ‚Å‚·B
-//! @param [in] data “Ç‚İ‚ñ‚¾ƒf[ƒ^‚Å‚·B
+//! InputTableã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] columns èª­ã¿è¾¼ã‚“ã ãƒ˜ãƒƒãƒ€æƒ…å ±ã§ã™ã€‚
+//! @param [in] data èª­ã¿è¾¼ã‚“ã ãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 InputTable::InputTable(const shared_ptr<const vector<const Column>> columns, const shared_ptr<vector<const vector<const Data>>> data) : m_columns(columns), m_data(data)
 {
 	InitializeIntegerColumn();
 }
 
-//! —ñ‚Ìî•ñ‚ğæ“¾‚µ‚Ü‚·B
-//! @return ƒf[ƒ^‚Å‚·B
+//! åˆ—ã®æƒ…å ±ã‚’å–å¾—ã—ã¾ã™ã€‚
+//! @return ãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 const shared_ptr<const vector<const Column>> InputTable::columns() const
 {
 	return m_columns;
 }
 
-//! ƒf[ƒ^‚ğæ“¾‚µ‚Ü‚·B
-//! @return —ñ‚Ìî•ñ‚Å‚·B
+//! ãƒ‡ãƒ¼ã‚¿ã‚’å–å¾—ã—ã¾ã™ã€‚
+//! @return åˆ—ã®æƒ…å ±ã§ã™ã€‚
 const shared_ptr<vector<const vector<const Data>>> InputTable::data() const
 {
 	return m_data;
 }
 
-//! ƒg[ƒNƒ“‚ğ“Ç‚İ‚İ‚Ü‚·B
-//! @param [in] cursol “Ç‚İ‚İŠJnˆÊ’u‚Å‚·B
-//! @param [in] end SQL‘S‘Ì‚ÌI—¹ˆÊ’u‚Å‚·B
-//! @return Ø‚èo‚³‚ê‚½ƒg[ƒNƒ“‚Å‚·B“Ç‚İ‚İ‚ª¸”s‚µ‚½ê‡‚Ínullptr‚ğ•Ô‚µ‚Ü‚·B
+//! ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+//! @param [in] cursol èª­ã¿è¾¼ã¿é–‹å§‹ä½ç½®ã§ã™ã€‚
+//! @param [in] end SQLå…¨ä½“ã®çµ‚äº†ä½ç½®ã§ã™ã€‚
+//! @return åˆ‡ã‚Šå‡ºã•ã‚ŒãŸãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚èª­ã¿è¾¼ã¿ãŒå¤±æ•—ã—ãŸå ´åˆã¯nullptrã‚’è¿”ã—ã¾ã™ã€‚
 const shared_ptr<const Token> TokenReader::Read(string::const_iterator &cursol, const string::const_iterator &end) const
 {
 	auto backPoint = cursol;
@@ -676,16 +676,16 @@ const shared_ptr<const Token> TokenReader::Read(string::const_iterator &cursol, 
 	return token;
 }
 
-//! ÀÛ‚Éƒg[ƒNƒ“‚ğ“Ç‚İ‚İ‚Ü‚·B
-//! @param [in] cursol “Ç‚İ‚İŠJnˆÊ’u‚Å‚·B
-//! @param [in] end SQL‘S‘Ì‚ÌI—¹ˆÊ’u‚Å‚·B
-//! @return Ø‚èo‚³‚ê‚½ƒg[ƒNƒ“‚Å‚·B“Ç‚İ‚İ‚ª¸”s‚µ‚½ê‡‚Ínullptr‚ğ•Ô‚µ‚Ü‚·B
+//! å®Ÿéš›ã«ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+//! @param [in] cursol èª­ã¿è¾¼ã¿é–‹å§‹ä½ç½®ã§ã™ã€‚
+//! @param [in] end SQLå…¨ä½“ã®çµ‚äº†ä½ç½®ã§ã™ã€‚
+//! @return åˆ‡ã‚Šå‡ºã•ã‚ŒãŸãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚èª­ã¿è¾¼ã¿ãŒå¤±æ•—ã—ãŸå ´åˆã¯nullptrã‚’è¿”ã—ã¾ã™ã€‚
 const shared_ptr<const Token> IntLiteralReader::ReadCore(string::const_iterator &cursol, const string::const_iterator &end) const
 {
 	auto start = cursol;
 	cursol = find_if(cursol, end, [&](char c){return num.find(c) == string::npos; });
 	if (start != cursol && (
-		alpahUnder.find(*cursol) == string::npos || // ”š‚ÌŒã‚É‚·‚®‚É¯•Êq‚ª‘±‚­‚Ì‚Í•´‚ç‚í‚µ‚¢‚Ì‚Å”’lƒŠƒeƒ‰ƒ‹‚Æ‚Íˆµ‚¢‚Ü‚¹‚ñB
+		alpahUnder.find(*cursol) == string::npos || // æ•°å­—ã®å¾Œã«ã™ãã«è­˜åˆ¥å­ãŒç¶šãã®ã¯ç´›ã‚‰ã‚ã—ã„ã®ã§æ•°å€¤ãƒªãƒ†ãƒ©ãƒ«ã¨ã¯æ‰±ã„ã¾ã›ã‚“ã€‚
 		cursol == end)){
 		return make_shared<Token>(TokenKind::INT_LITERAL, string(start, cursol));
 	}
@@ -694,17 +694,17 @@ const shared_ptr<const Token> IntLiteralReader::ReadCore(string::const_iterator 
 	}
 }
 
-//! ÀÛ‚Éƒg[ƒNƒ“‚ğ“Ç‚İ‚İ‚Ü‚·B
-//! @param [in] cursol “Ç‚İ‚İŠJnˆÊ’u‚Å‚·B
-//! @param [in] end SQL‘S‘Ì‚ÌI—¹ˆÊ’u‚Å‚·B
-//! @return Ø‚èo‚³‚ê‚½ƒg[ƒNƒ“‚Å‚·B“Ç‚İ‚İ‚ª¸”s‚µ‚½ê‡‚Ínullptr‚ğ•Ô‚µ‚Ü‚·B
+//! å®Ÿéš›ã«ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+//! @param [in] cursol èª­ã¿è¾¼ã¿é–‹å§‹ä½ç½®ã§ã™ã€‚
+//! @param [in] end SQLå…¨ä½“ã®çµ‚äº†ä½ç½®ã§ã™ã€‚
+//! @return åˆ‡ã‚Šå‡ºã•ã‚ŒãŸãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚èª­ã¿è¾¼ã¿ãŒå¤±æ•—ã—ãŸå ´åˆã¯nullptrã‚’è¿”ã—ã¾ã™ã€‚
 const shared_ptr<const Token> StringLiteralReader::ReadCore(string::const_iterator &cursol, const string::const_iterator &end) const
 {
 	auto start = cursol;
-	// •¶š—ñƒŠƒeƒ‰ƒ‹‚ğŠJn‚·‚éƒVƒ“ƒOƒ‹ƒNƒH[ƒg‚ğ”»•Ê‚µA“Ç‚İ‚İ‚Ü‚·B
+	// æ–‡å­—åˆ—ãƒªãƒ†ãƒ©ãƒ«ã‚’é–‹å§‹ã™ã‚‹ã‚·ãƒ³ã‚°ãƒ«ã‚¯ã‚©ãƒ¼ãƒˆã‚’åˆ¤åˆ¥ã—ã€èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 	if (*cursol == "\'"[0]){
 		++cursol;
-		// ƒƒgƒŠƒNƒX‘ª’èƒc[ƒ‹‚Ìcccc‚ÍƒVƒ“ƒOƒ‹ƒNƒH[ƒg‚Ì•¶šƒŠƒeƒ‰ƒ‹’†‚ÌƒGƒXƒP[ƒv‚ğ”F¯‚µ‚È‚¢‚½‚ßA•¶šƒŠƒeƒ‰ƒ‹‚ğg‚í‚È‚¢‚±‚Æ‚Å‰ñ”ğ‚µ‚Ä‚¢‚Ü‚·B
+		// ãƒ¡ãƒˆãƒªã‚¯ã‚¹æ¸¬å®šãƒ„ãƒ¼ãƒ«ã®ccccã¯ã‚·ãƒ³ã‚°ãƒ«ã‚¯ã‚©ãƒ¼ãƒˆã®æ–‡å­—ãƒªãƒ†ãƒ©ãƒ«ä¸­ã®ã‚¨ã‚¹ã‚±ãƒ¼ãƒ—ã‚’èªè­˜ã—ãªã„ãŸã‚ã€æ–‡å­—ãƒªãƒ†ãƒ©ãƒ«ã‚’ä½¿ã‚ãªã„ã“ã¨ã§å›é¿ã—ã¦ã„ã¾ã™ã€‚
 		cursol = find_if_not(cursol, end, [](char c){return c != "\'"[0]; });
 		if (cursol == end){
 			throw ResultValue::ERR_TOKEN_CANT_READ;
@@ -717,17 +717,17 @@ const shared_ptr<const Token> StringLiteralReader::ReadCore(string::const_iterat
 	}
 }
 
-//! ÀÛ‚Éƒg[ƒNƒ“‚ğ“Ç‚İ‚İ‚Ü‚·B
-//! @param [in] cursol “Ç‚İ‚İŠJnˆÊ’u‚Å‚·B
-//! @param [in] end SQL‘S‘Ì‚ÌI—¹ˆÊ’u‚Å‚·B
-//! @return Ø‚èo‚³‚ê‚½ƒg[ƒNƒ“‚Å‚·B“Ç‚İ‚İ‚ª¸”s‚µ‚½ê‡‚Ínullptr‚ğ•Ô‚µ‚Ü‚·B
+//! å®Ÿéš›ã«ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+//! @param [in] cursol èª­ã¿è¾¼ã¿é–‹å§‹ä½ç½®ã§ã™ã€‚
+//! @param [in] end SQLå…¨ä½“ã®çµ‚äº†ä½ç½®ã§ã™ã€‚
+//! @return åˆ‡ã‚Šå‡ºã•ã‚ŒãŸãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚èª­ã¿è¾¼ã¿ãŒå¤±æ•—ã—ãŸå ´åˆã¯nullptrã‚’è¿”ã—ã¾ã™ã€‚
 const shared_ptr<const Token> KeywordReader::ReadCore(string::const_iterator &cursol, const string::const_iterator &end) const
 {
 	auto result =
 		mismatch(keyword.word.begin(), keyword.word.end(), cursol,
 		[](const char keywordChar, const char sqlChar){return keywordChar == toupper(sqlChar); });
 
-	if (result.first == keyword.word.end() && // ƒL[ƒ[ƒh‚ÌÅŒã‚Ì•¶š‚Ü‚Å“¯‚¶‚Å‚·B
+	if (result.first == keyword.word.end() && // ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã®æœ€å¾Œã®æ–‡å­—ã¾ã§åŒã˜ã§ã™ã€‚
 		CheckNextChar(result.second, end)){ 
 		cursol = result.second;
 		return make_shared<Token>(keyword);
@@ -737,38 +737,38 @@ const shared_ptr<const Token> KeywordReader::ReadCore(string::const_iterator &cu
 	}
 }
 
-//! KeywordReaderƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] kind ƒg[ƒNƒ“‚Ìí—Ş‚Å‚·B
-//! @param [in] word ƒL[ƒ[ƒh‚Ì•¶š—ñ‚Å‚·B
+//! KeywordReaderã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] kind ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§ã™ã€‚
+//! @param [in] word ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã®æ–‡å­—åˆ—ã§ã™ã€‚
 KeywordReader::KeywordReader(const TokenKind kind, const string word) : keyword(Token(kind, word)){}
 
-//! ƒL[ƒ[ƒh‚ÌŸ‚Ì•¶š‚Ìƒ`ƒFƒbƒN‚ğs‚¢‚Ü‚·B
-//! @param [in] next ƒ`ƒFƒbƒN‘ÎÛ‚Æ‚È‚éŸ‚Ì•¶š‚ÌƒCƒeƒŒ[ƒ^‚Å‚·B
-//! @param [in] next endƒCƒeƒŒ[ƒ^‚Å‚·B
+//! ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã®æ¬¡ã®æ–‡å­—ã®ãƒã‚§ãƒƒã‚¯ã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] next ãƒã‚§ãƒƒã‚¯å¯¾è±¡ã¨ãªã‚‹æ¬¡ã®æ–‡å­—ã®ã‚¤ãƒ†ãƒ¬ãƒ¼ã‚¿ã§ã™ã€‚
+//! @param [in] next endã‚¤ãƒ†ãƒ¬ãƒ¼ã‚¿ã§ã™ã€‚
 const bool KeywordReader::CheckNextChar(const string::const_iterator& next, const string::const_iterator& end) const
 {
-	//ƒL[ƒ[ƒh‚É¯•Êq‚ª‹æØ‚è‚È‚µ‚É‘±‚¢‚Ä‚¢‚È‚¢‚©‚ğŠm”F‚µ‚Ü‚·B 
+	//ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã«è­˜åˆ¥å­ãŒåŒºåˆ‡ã‚Šãªã—ã«ç¶šã„ã¦ã„ãªã„ã‹ã‚’ç¢ºèªã—ã¾ã™ã€‚ 
 	return next != end && alpahNumUnder.find(*next) == string::npos;
 }
 
-//! KeywordReaderƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] kind ƒg[ƒNƒ“‚Ìí—Ş‚Å‚·B
-//! @param [in] word ƒL[ƒ[ƒh‚Ì•¶š—ñ‚Å‚·B
+//! KeywordReaderã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] kind ãƒˆãƒ¼ã‚¯ãƒ³ã®ç¨®é¡ã§ã™ã€‚
+//! @param [in] word ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã®æ–‡å­—åˆ—ã§ã™ã€‚
 SignReader::SignReader(const TokenKind kind, const string word) : KeywordReader(kind, word){}
 
-//! ƒL[ƒ[ƒh‚ÌŸ‚Ì•¶š‚Ìƒ`ƒFƒbƒN‚ğs‚¢‚Ü‚·B
-//! @param [in] next ƒ`ƒFƒbƒN‘ÎÛ‚Æ‚È‚éŸ‚Ì•¶š‚ÌƒCƒeƒŒ[ƒ^‚Å‚·B
-//! @param [in] next endƒCƒeƒŒ[ƒ^‚Å‚·B
+//! ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã®æ¬¡ã®æ–‡å­—ã®ãƒã‚§ãƒƒã‚¯ã‚’è¡Œã„ã¾ã™ã€‚
+//! @param [in] next ãƒã‚§ãƒƒã‚¯å¯¾è±¡ã¨ãªã‚‹æ¬¡ã®æ–‡å­—ã®ã‚¤ãƒ†ãƒ¬ãƒ¼ã‚¿ã§ã™ã€‚
+//! @param [in] next endã‚¤ãƒ†ãƒ¬ãƒ¼ã‚¿ã§ã™ã€‚
 const bool SignReader::CheckNextChar(const string::const_iterator& next, const string::const_iterator& end) const
 {
-	// Ÿ‚Ì•¶š‚Íƒ`ƒFƒbƒN‚¹‚¸‚É•K‚¸OK‚Æ‚È‚è‚Ü‚·B
+	// æ¬¡ã®æ–‡å­—ã¯ãƒã‚§ãƒƒã‚¯ã›ãšã«å¿…ãšOKã¨ãªã‚Šã¾ã™ã€‚
 	return true;
 }
 
-//! ÀÛ‚Éƒg[ƒNƒ“‚ğ“Ç‚İ‚İ‚Ü‚·B
-//! @param [in] cursol “Ç‚İ‚İŠJnˆÊ’u‚Å‚·B
-//! @param [in] end SQL‘S‘Ì‚ÌI—¹ˆÊ’u‚Å‚·B
-//! @return Ø‚èo‚³‚ê‚½ƒg[ƒNƒ“‚Å‚·B“Ç‚İ‚İ‚ª¸”s‚µ‚½ê‡‚Ínullptr‚ğ•Ô‚µ‚Ü‚·B
+//! å®Ÿéš›ã«ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+//! @param [in] cursol èª­ã¿è¾¼ã¿é–‹å§‹ä½ç½®ã§ã™ã€‚
+//! @param [in] end SQLå…¨ä½“ã®çµ‚äº†ä½ç½®ã§ã™ã€‚
+//! @return åˆ‡ã‚Šå‡ºã•ã‚ŒãŸãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚èª­ã¿è¾¼ã¿ãŒå¤±æ•—ã—ãŸå ´åˆã¯nullptrã‚’è¿”ã—ã¾ã™ã€‚
 const shared_ptr<const Token> IdentifierReader::ReadCore(string::const_iterator &cursol, const string::const_iterator &end) const
 {
 	auto start = cursol;
@@ -781,7 +781,7 @@ const shared_ptr<const Token> IdentifierReader::ReadCore(string::const_iterator 
 	}
 }
 
-//! “ü—Íƒtƒ@ƒCƒ‹‚É‘‚¢‚Ä‚ ‚Á‚½‚·‚×‚Ä‚Ì—ñ‚ğallInputColumns‚Éİ’è‚µ‚Ü‚·B
+//! å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã«æ›¸ã„ã¦ã‚ã£ãŸã™ã¹ã¦ã®åˆ—ã‚’allInputColumnsã«è¨­å®šã—ã¾ã™ã€‚
 void OutputData::InitializeAllInputColumns()
 {
 	for (auto &inputTable : inputTables){
@@ -792,7 +792,7 @@ void OutputData::InitializeAllInputColumns()
 	}
 }
 
-//! SELECT‹å‚Ì—ñ–¼w’è‚ª*‚¾‚Á‚½ê‡‚ÍA“ü—ÍCSV‚Ì—ñ–¼‚ª‚·‚×‚Ä‘I‘ğ‚³‚ê‚Ü‚·B
+//! SELECTå¥ã®åˆ—åæŒ‡å®šãŒ*ã ã£ãŸå ´åˆã¯ã€å…¥åŠ›CSVã®åˆ—åãŒã™ã¹ã¦é¸æŠã•ã‚Œã¾ã™ã€‚
 void OutputData::OpenSelectAsterisk()
 {
 	if (queryInfo.selectColumns.empty()){
@@ -800,7 +800,7 @@ void OutputData::OpenSelectAsterisk()
 	}
 }
 
-//! SELECT‹å‚Åw’è‚³‚ê‚½—ñ–¼‚ªA‰½ŒÂ–Ú‚Ì“ü—Íƒtƒ@ƒCƒ‹‚Ì‰½—ñ–Ú‚É‘Š“–‚·‚é‚©‚ğ”»•Ê‚µ‚Ü‚·B
+//! SELECTå¥ã§æŒ‡å®šã•ã‚ŒãŸåˆ—åãŒã€ä½•å€‹ç›®ã®å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã®ä½•åˆ—ç›®ã«ç›¸å½“ã™ã‚‹ã‹ã‚’åˆ¤åˆ¥ã—ã¾ã™ã€‚
 void OutputData::SetAllColumns()
 {
 	for (auto &selectColumn : queryInfo.selectColumns){
@@ -808,8 +808,8 @@ void OutputData::SetAllColumns()
 	}
 }
 
-//! OutputDataƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] queryInfo SQL‚Ìî•ñ‚Å‚·B
+//! OutputDataã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] queryInfo SQLã®æƒ…å ±ã§ã™ã€‚
 OutputData::OutputData(const SqlQueryInfo queryInfo, const vector<const InputTable> &inputTables) : queryInfo(queryInfo), inputTables(inputTables)
 {
 	InitializeAllInputColumns();
@@ -817,8 +817,8 @@ OutputData::OutputData(const SqlQueryInfo queryInfo, const vector<const InputTab
 	SetAllColumns();
 }
 
-//! “ü—Í‚³‚ê‚½Šeƒe[ƒuƒ‹‚ÌAŒ»İo—Í‚µ‚Ä‚¢‚és‚ğw‚·ƒJ[ƒ\ƒ‹‚ğA‰Šú‰»‚³‚ê‚½ó‘Ô‚Åæ“¾‚µ‚Ü‚·B
-//! @return ‰Šú‰»‚³‚ê‚½ƒJ[ƒ\ƒ‹‚Å‚·B
+//! å…¥åŠ›ã•ã‚ŒãŸå„ãƒ†ãƒ¼ãƒ–ãƒ«ã®ã€ç¾åœ¨å‡ºåŠ›ã—ã¦ã„ã‚‹è¡Œã‚’æŒ‡ã™ã‚«ãƒ¼ã‚½ãƒ«ã‚’ã€åˆæœŸåŒ–ã•ã‚ŒãŸçŠ¶æ…‹ã§å–å¾—ã—ã¾ã™ã€‚
+//! @return åˆæœŸåŒ–ã•ã‚ŒãŸã‚«ãƒ¼ã‚½ãƒ«ã§ã™ã€‚
 const shared_ptr<vector<vector<const vector<const Data>>::const_iterator>> OutputData::GetInitializedCurrentRows() const
 {
 	auto currentRows = make_shared<vector<vector<const vector<const Data>>::const_iterator>>();
@@ -831,21 +831,21 @@ const shared_ptr<vector<vector<const vector<const Data>>::const_iterator>> Outpu
 	return currentRows;
 }
 
-//! o—Í‚·‚é‚·‚×‚Ä‚Ìƒf[ƒ^s‚ğæ“¾‚µ‚Ü‚·B
-//! @return o—Í‚·‚é‚·‚×‚Ä‚Ìƒf[ƒ^sB“ü—Í‚³‚ê‚½‚·‚×‚Ä‚Ì“ü—Íƒf[ƒ^‚ğ•ÛŠÇ‚µ‚Ü‚·B
+//! å‡ºåŠ›ã™ã‚‹ã™ã¹ã¦ã®ãƒ‡ãƒ¼ã‚¿è¡Œã‚’å–å¾—ã—ã¾ã™ã€‚
+//! @return å‡ºåŠ›ã™ã‚‹ã™ã¹ã¦ã®ãƒ‡ãƒ¼ã‚¿è¡Œã€‚å…¥åŠ›ã•ã‚ŒãŸã™ã¹ã¦ã®å…¥åŠ›ãƒ‡ãƒ¼ã‚¿ã‚’ä¿ç®¡ã—ã¾ã™ã€‚
 const shared_ptr<vector<vector<Data>>> OutputData::GetOutputRows()
 {
 	auto outputRows = make_shared<vector<vector<Data>>>();
 	auto currentRowsPtr = GetInitializedCurrentRows();
 	auto &currentRows = *currentRowsPtr;
 
-	// o—Í‚·‚éƒf[ƒ^‚ğİ’è‚µ‚Ü‚·B
+	// å‡ºåŠ›ã™ã‚‹ãƒ‡ãƒ¼ã‚¿ã‚’è¨­å®šã—ã¾ã™ã€‚
 	while (true){
 
 		outputRows->push_back(vector<Data>());
-		vector<Data> &outputRow = outputRows->back();// WHERE‚âORDER‚Ì‚½‚ß‚É‚·‚×‚Ä‚Ìî•ñ‚ğŠÜ‚ŞsBrow‚ÆƒCƒ“ƒfƒbƒNƒX‚ğ‹¤—L‚µ‚Ü‚·B
+		vector<Data> &outputRow = outputRows->back();// WHEREã‚„ORDERã®ãŸã‚ã«ã™ã¹ã¦ã®æƒ…å ±ã‚’å«ã‚€è¡Œã€‚rowã¨ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã‚’å…±æœ‰ã—ã¾ã™ã€‚
 
-		// outputRow‚Ì—ñ‚ğİ’è‚µ‚Ü‚·B
+		// outputRowã®åˆ—ã‚’è¨­å®šã—ã¾ã™ã€‚
 		for (auto &currentRow : currentRows){
 			copy(
 				currentRow->begin(),
@@ -853,11 +853,11 @@ const shared_ptr<vector<vector<Data>>> OutputData::GetOutputRows()
 				back_inserter(outputRow));
 		}
 
-		// WHERE‚ÌğŒ‚Æ‚È‚é’l‚ğÄ‹A“I‚ÉŒvZ‚µ‚Ü‚·B
+		// WHEREã®æ¡ä»¶ã¨ãªã‚‹å€¤ã‚’å†å¸°çš„ã«è¨ˆç®—ã—ã¾ã™ã€‚
 		if (queryInfo.whereTopNode){
-			shared_ptr<ExtensionTreeNode> currentNode = queryInfo.whereTopNode; // Œ»İŒ©‚Ä‚¢‚éƒm[ƒh‚Å‚·B
+			shared_ptr<ExtensionTreeNode> currentNode = queryInfo.whereTopNode; // ç¾åœ¨è¦‹ã¦ã„ã‚‹ãƒãƒ¼ãƒ‰ã§ã™ã€‚
 			while (currentNode){
-				// qƒm[ƒh‚ÌŒvZ‚ªI‚í‚Á‚Ä‚È‚¢ê‡‚ÍA‚Ü‚¸‚»‚¿‚ç‚ÌŒvZ‚ğs‚¢‚Ü‚·B
+				// å­ãƒãƒ¼ãƒ‰ã®è¨ˆç®—ãŒçµ‚ã‚ã£ã¦ãªã„å ´åˆã¯ã€ã¾ãšãã¡ã‚‰ã®è¨ˆç®—ã‚’è¡Œã„ã¾ã™ã€‚
 				if (currentNode->left && !currentNode->left->calculated){
 					currentNode = currentNode->left;
 					continue;
@@ -867,19 +867,19 @@ const shared_ptr<vector<vector<Data>>> OutputData::GetOutputRows()
 					continue;
 				}
 
-				// ©ƒm[ƒh‚Ì’l‚ğŒvZ‚µ‚Ü‚·B
+				// è‡ªãƒãƒ¼ãƒ‰ã®å€¤ã‚’è¨ˆç®—ã—ã¾ã™ã€‚
 				switch (currentNode->middleOperator.kind){
 				case TokenKind::NOT_TOKEN:
-					// ƒm[ƒh‚Éƒf[ƒ^‚ªİ’è‚³‚ê‚Ä‚¢‚éê‡‚Å‚·B
+					// ãƒãƒ¼ãƒ‰ã«ãƒ‡ãƒ¼ã‚¿ãŒè¨­å®šã•ã‚Œã¦ã„ã‚‹å ´åˆã§ã™ã€‚
 
-					// ƒf[ƒ^‚ª—ñ–¼‚Åw’è‚³‚ê‚Ä‚¢‚éê‡A¡ˆµ‚Á‚Ä‚¢‚és‚Ìƒf[ƒ^‚ğİ’è‚µ‚Ü‚·B
+					// ãƒ‡ãƒ¼ã‚¿ãŒåˆ—åã§æŒ‡å®šã•ã‚Œã¦ã„ã‚‹å ´åˆã€ä»Šæ‰±ã£ã¦ã„ã‚‹è¡Œã®ãƒ‡ãƒ¼ã‚¿ã‚’è¨­å®šã—ã¾ã™ã€‚
 					if (!currentNode->column.columnName.empty()){
 						bool found = false;
 						for (size_t i = 0; i < allInputColumns.size(); ++i){
 							if (Equali(currentNode->column.columnName, allInputColumns[i].columnName) &&
-								(currentNode->column.tableName.empty() || // ƒe[ƒuƒ‹–¼‚ªİ’è‚³‚ê‚Ä‚¢‚éê‡‚Ì‚İƒe[ƒuƒ‹–¼‚Ì”äŠr‚ğs‚¢‚Ü‚·B
+								(currentNode->column.tableName.empty() || // ãƒ†ãƒ¼ãƒ–ãƒ«åãŒè¨­å®šã•ã‚Œã¦ã„ã‚‹å ´åˆã®ã¿ãƒ†ãƒ¼ãƒ–ãƒ«åã®æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
 								Equali(currentNode->column.tableName, allInputColumns[i].tableName))){
-								// Šù‚ÉŒ©‚Â‚©‚Á‚Ä‚¢‚é‚Ì‚É‚à‚¤ˆê‚ÂŒ©‚Â‚©‚Á‚½‚çƒGƒ‰[‚Å‚·B
+								// æ—¢ã«è¦‹ã¤ã‹ã£ã¦ã„ã‚‹ã®ã«ã‚‚ã†ä¸€ã¤è¦‹ã¤ã‹ã£ãŸã‚‰ã‚¨ãƒ©ãƒ¼ã§ã™ã€‚
 								if (found){
 									throw ResultValue::ERR_BAD_COLUMN_NAME;
 								}
@@ -887,12 +887,12 @@ const shared_ptr<vector<vector<Data>>> OutputData::GetOutputRows()
 								currentNode->value = outputRow[i];
 							}
 						}
-						// ˆê‚Â‚àŒ©‚Â‚©‚ç‚È‚­‚Ä‚àƒGƒ‰[‚Å‚·B
+						// ä¸€ã¤ã‚‚è¦‹ã¤ã‹ã‚‰ãªãã¦ã‚‚ã‚¨ãƒ©ãƒ¼ã§ã™ã€‚
 						if (!found){
 							throw ResultValue::ERR_BAD_COLUMN_NAME;
 						}
 						;
-						// •„†‚ğl—¶‚µ‚Ä’l‚ğŒvZ‚µ‚Ü‚·B
+						// ç¬¦å·ã‚’è€ƒæ…®ã—ã¦å€¤ã‚’è¨ˆç®—ã—ã¾ã™ã€‚
 						if (currentNode->value.type == DataType::INTEGER){
 							currentNode->value = Data(currentNode->value.integer() * currentNode->signCoefficient);
 						}
@@ -904,16 +904,16 @@ const shared_ptr<vector<vector<Data>>> OutputData::GetOutputRows()
 				case TokenKind::LESS_THAN:
 				case TokenKind::LESS_THAN_OR_EQUAL:
 				case TokenKind::NOT_EQUAL:
-					// ”äŠr‰‰Zq‚Ìê‡‚Å‚·B
+					// æ¯”è¼ƒæ¼”ç®—å­ã®å ´åˆã§ã™ã€‚
 
-					// ”äŠr‚Å‚«‚é‚Ì‚Í•¶š—ñŒ^‚©®”Œ^‚ÅA‚©‚Â¶‰E‚ÌŒ^‚ª“¯‚¶ê‡‚Å‚·B
+					// æ¯”è¼ƒã§ãã‚‹ã®ã¯æ–‡å­—åˆ—å‹ã‹æ•´æ•°å‹ã§ã€ã‹ã¤å·¦å³ã®å‹ãŒåŒã˜å ´åˆã§ã™ã€‚
 					if (currentNode->left->value.type != DataType::INTEGER && currentNode->left->value.type != DataType::STRING ||
 						currentNode->left->value.type != currentNode->right->value.type){
 						throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 					}
 					currentNode->value.type = DataType::BOOLEAN;
 
-					// ”äŠrŒ‹‰Ê‚ğŒ^‚Æ‰‰Zq‚É‚æ‚Á‚ÄŒvZ•û–@‚ğ•Ï‚¦‚ÄAŒvZ‚µ‚Ü‚·B
+					// æ¯”è¼ƒçµæœã‚’å‹ã¨æ¼”ç®—å­ã«ã‚ˆã£ã¦è¨ˆç®—æ–¹æ³•ã‚’å¤‰ãˆã¦ã€è¨ˆç®—ã—ã¾ã™ã€‚
 					switch (currentNode->left->value.type){
 					case DataType::INTEGER:
 						switch (currentNode->middleOperator.kind){
@@ -965,15 +965,15 @@ const shared_ptr<vector<vector<Data>>> OutputData::GetOutputRows()
 				case TokenKind::MINUS:
 				case TokenKind::ASTERISK:
 				case TokenKind::SLASH:
-					// l‘¥‰‰Z‚Ìê‡‚Å‚·B
+					// å››å‰‡æ¼”ç®—ã®å ´åˆã§ã™ã€‚
 
-					// ‰‰Z‚Å‚«‚é‚Ì‚Í®”Œ^“¯m‚Ìê‡‚Ì‚İ‚Å‚·B
+					// æ¼”ç®—ã§ãã‚‹ã®ã¯æ•´æ•°å‹åŒå£«ã®å ´åˆã®ã¿ã§ã™ã€‚
 					if (currentNode->left->value.type != DataType::INTEGER || currentNode->right->value.type != DataType::INTEGER){
 						throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 					}
 					currentNode->value.type = DataType::INTEGER;
 
-					// ”äŠrŒ‹‰Ê‚ğ‰‰Zq‚É‚æ‚Á‚ÄŒvZ•û–@‚ğ•Ï‚¦‚ÄAŒvZ‚µ‚Ü‚·B
+					// æ¯”è¼ƒçµæœã‚’æ¼”ç®—å­ã«ã‚ˆã£ã¦è¨ˆç®—æ–¹æ³•ã‚’å¤‰ãˆã¦ã€è¨ˆç®—ã—ã¾ã™ã€‚
 					switch (currentNode->middleOperator.kind){
 					case TokenKind::PLUS:
 						currentNode->value = Data(currentNode->left->value.integer() + currentNode->right->value.integer());
@@ -991,15 +991,15 @@ const shared_ptr<vector<vector<Data>>> OutputData::GetOutputRows()
 					break;
 				case TokenKind::AND:
 				case TokenKind::OR:
-					// ˜_—‰‰Z‚Ìê‡‚Å‚·B
+					// è«–ç†æ¼”ç®—ã®å ´åˆã§ã™ã€‚
 
-					// ‰‰Z‚Å‚«‚é‚Ì‚Í^‹U’lŒ^“¯m‚Ìê‡‚Ì‚İ‚Å‚·B
+					// æ¼”ç®—ã§ãã‚‹ã®ã¯çœŸå½å€¤å‹åŒå£«ã®å ´åˆã®ã¿ã§ã™ã€‚
 					if (currentNode->left->value.type != DataType::BOOLEAN || currentNode->right->value.type != DataType::BOOLEAN){
 						throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 					}
 					currentNode->value.type = DataType::BOOLEAN;
 
-					// ”äŠrŒ‹‰Ê‚ğ‰‰Zq‚É‚æ‚Á‚ÄŒvZ•û–@‚ğ•Ï‚¦‚ÄAŒvZ‚µ‚Ü‚·B
+					// æ¯”è¼ƒçµæœã‚’æ¼”ç®—å­ã«ã‚ˆã£ã¦è¨ˆç®—æ–¹æ³•ã‚’å¤‰ãˆã¦ã€è¨ˆç®—ã—ã¾ã™ã€‚
 					switch (currentNode->middleOperator.kind){
 					case TokenKind::AND:
 						currentNode->value = Data(currentNode->left->value.boolean() && currentNode->right->value.boolean());
@@ -1011,50 +1011,50 @@ const shared_ptr<vector<vector<Data>>> OutputData::GetOutputRows()
 				}
 				currentNode->calculated = true;
 
-				// ©g‚ÌŒvZ‚ªI‚í‚Á‚½Œã‚Íe‚ÌŒvZ‚É–ß‚è‚Ü‚·B
+				// è‡ªèº«ã®è¨ˆç®—ãŒçµ‚ã‚ã£ãŸå¾Œã¯è¦ªã®è¨ˆç®—ã«æˆ»ã‚Šã¾ã™ã€‚
 				currentNode = currentNode->parent;
 			}
 
-			// ğŒ‚É‡‚í‚È‚¢s‚Ío—Í‚©‚çíœ‚µ‚Ü‚·B
+			// æ¡ä»¶ã«åˆã‚ãªã„è¡Œã¯å‡ºåŠ›ã‹ã‚‰å‰Šé™¤ã—ã¾ã™ã€‚
 			if (!queryInfo.whereTopNode->value.boolean()){
 				outputRows->pop_back();
 			}
-			// WHEREğŒ‚ÌŒvZŒ‹‰Ê‚ğƒŠƒZƒbƒg‚µ‚Ü‚·B
+			// WHEREæ¡ä»¶ã®è¨ˆç®—çµæœã‚’ãƒªã‚»ãƒƒãƒˆã—ã¾ã™ã€‚
 			auto whereNodes = SelfAndDescendants(queryInfo.whereTopNode);
 			for (auto &whereNode : *whereNodes){
 				whereNode->calculated = false;
 			}
 		}
 
-		// Šeƒe[ƒuƒ‹‚Ìs‚Ì‚·‚×‚Ä‚Ì‘g‚İ‡‚í‚¹‚ğo—Í‚µ‚Ü‚·B
+		// å„ãƒ†ãƒ¼ãƒ–ãƒ«ã®è¡Œã®ã™ã¹ã¦ã®çµ„ã¿åˆã‚ã›ã‚’å‡ºåŠ›ã—ã¾ã™ã€‚
 
-		// ÅŒã‚Ìƒe[ƒuƒ‹‚ÌƒJƒŒƒ“ƒgs‚ğƒCƒ“ƒNƒŠƒƒ“ƒg‚µ‚Ü‚·B
+		// æœ€å¾Œã®ãƒ†ãƒ¼ãƒ–ãƒ«ã®ã‚«ãƒ¬ãƒ³ãƒˆè¡Œã‚’ã‚¤ãƒ³ã‚¯ãƒªãƒ¡ãƒ³ãƒˆã—ã¾ã™ã€‚
 		++currentRows[queryInfo.tableNames.size() - 1];
 
-		// ÅŒã‚Ìƒe[ƒuƒ‹‚ªÅIs‚É‚È‚Á‚Ä‚¢‚½ê‡‚Íæ“ª‚É–ß‚µA‡‚É‘O‚Ìƒe[ƒuƒ‹‚ÌƒJƒŒƒ“ƒgs‚ğƒCƒ“ƒNƒŠƒƒ“ƒg‚µ‚Ü‚·B
+		// æœ€å¾Œã®ãƒ†ãƒ¼ãƒ–ãƒ«ãŒæœ€çµ‚è¡Œã«ãªã£ã¦ã„ãŸå ´åˆã¯å…ˆé ­ã«æˆ»ã—ã€é †ã«å‰ã®ãƒ†ãƒ¼ãƒ–ãƒ«ã®ã‚«ãƒ¬ãƒ³ãƒˆè¡Œã‚’ã‚¤ãƒ³ã‚¯ãƒªãƒ¡ãƒ³ãƒˆã—ã¾ã™ã€‚
 		for (int i = queryInfo.tableNames.size() - 1; currentRows[i] == inputTables[i].data()->end() && 0 < i; --i){
 			++currentRows[i - 1];
 			currentRows[i] = inputTables[i].data()->begin();
 		}
 
-		// Å‰‚Ìƒe[ƒuƒ‹‚ªÅŒã‚Ìs‚ğ’´‚¦‚½‚È‚ço—Ís‚Ì¶¬‚ÍI‚í‚è‚Å‚·B
+		// æœ€åˆã®ãƒ†ãƒ¼ãƒ–ãƒ«ãŒæœ€å¾Œã®è¡Œã‚’è¶…ãˆãŸãªã‚‰å‡ºåŠ›è¡Œã®ç”Ÿæˆã¯çµ‚ã‚ã‚Šã§ã™ã€‚
 		if (currentRows[0] == inputTables[0].data()->end()){
 			break;
 		}
 	}
 
-	// ORDER‹å‚É‚æ‚é•À‚Ñ‘Ö‚¦‚Ìˆ—‚ğs‚¢‚Ü‚·B
+	// ORDERå¥ã«ã‚ˆã‚‹ä¸¦ã³æ›¿ãˆã®å‡¦ç†ã‚’è¡Œã„ã¾ã™ã€‚
 	if (!queryInfo.orderByColumns.empty()){
-		// ORDER‹å‚Åw’è‚³‚ê‚Ä‚¢‚é—ñ‚ªA‘S‚Ä‚Ì“ü—Ís‚Ì’†‚Ì‚Ç‚Ìs‚È‚Ì‚©‚ğŒvZ‚µ‚Ü‚·B
-		vector<int> orderByColumnIndexes; // ORDER‹å‚Åw’è‚³‚ê‚½—ñ‚ÌA‚·‚×‚Ä‚Ìs‚Ì’†‚Å‚ÌƒCƒ“ƒfƒbƒNƒX‚Å‚·B
+		// ORDERå¥ã§æŒ‡å®šã•ã‚Œã¦ã„ã‚‹åˆ—ãŒã€å…¨ã¦ã®å…¥åŠ›è¡Œã®ä¸­ã®ã©ã®è¡Œãªã®ã‹ã‚’è¨ˆç®—ã—ã¾ã™ã€‚
+		vector<int> orderByColumnIndexes; // ORDERå¥ã§æŒ‡å®šã•ã‚ŒãŸåˆ—ã®ã€ã™ã¹ã¦ã®è¡Œã®ä¸­ã§ã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã§ã™ã€‚
 
 		for (auto &orderByColumn : queryInfo.orderByColumns){
 			bool found = false;
 			for (size_t i = 0; i < allInputColumns.size(); ++i){
 				if (Equali(orderByColumn.columnName, allInputColumns[i].columnName) &&
-					(orderByColumn.tableName.empty() || // ƒe[ƒuƒ‹–¼‚ªİ’è‚³‚ê‚Ä‚¢‚éê‡‚Ì‚İƒe[ƒuƒ‹–¼‚Ì”äŠr‚ğs‚¢‚Ü‚·B
+					(orderByColumn.tableName.empty() || // ãƒ†ãƒ¼ãƒ–ãƒ«åãŒè¨­å®šã•ã‚Œã¦ã„ã‚‹å ´åˆã®ã¿ãƒ†ãƒ¼ãƒ–ãƒ«åã®æ¯”è¼ƒã‚’è¡Œã„ã¾ã™ã€‚
 					Equali(orderByColumn.tableName, allInputColumns[i].tableName))){
-					// Šù‚ÉŒ©‚Â‚©‚Á‚Ä‚¢‚é‚Ì‚É‚à‚¤ˆê‚ÂŒ©‚Â‚©‚Á‚½‚çƒGƒ‰[‚Å‚·B
+					// æ—¢ã«è¦‹ã¤ã‹ã£ã¦ã„ã‚‹ã®ã«ã‚‚ã†ä¸€ã¤è¦‹ã¤ã‹ã£ãŸã‚‰ã‚¨ãƒ©ãƒ¼ã§ã™ã€‚
 					if (found){
 						throw ResultValue::ERR_BAD_COLUMN_NAME;
 					}
@@ -1062,21 +1062,21 @@ const shared_ptr<vector<vector<Data>>> OutputData::GetOutputRows()
 					orderByColumnIndexes.push_back(i);
 				}
 			}
-			// ˆê‚Â‚àŒ©‚Â‚©‚ç‚È‚­‚Ä‚àƒGƒ‰[‚Å‚·B
+			// ä¸€ã¤ã‚‚è¦‹ã¤ã‹ã‚‰ãªãã¦ã‚‚ã‚¨ãƒ©ãƒ¼ã§ã™ã€‚
 			if (!found){
 				throw ResultValue::ERR_BAD_COLUMN_NAME;
 			}
 		}
 
-		// allColumnOutputData‚Ìƒ\[ƒg‚ğs‚¢‚Ü‚·BŠÈ•Ö‚Ì‚½‚ß‹Ã‚Á‚½ƒ\[ƒg‚Íg‚í‚¸A‘I‘ğƒ\[ƒg‚ğ—˜—p‚µ‚Ü‚·B
+		// allColumnOutputDataã®ã‚½ãƒ¼ãƒˆã‚’è¡Œã„ã¾ã™ã€‚ç°¡ä¾¿ã®ãŸã‚å‡ã£ãŸã‚½ãƒ¼ãƒˆã¯ä½¿ã‚ãšã€é¸æŠã‚½ãƒ¼ãƒˆã‚’åˆ©ç”¨ã—ã¾ã™ã€‚
 		for (size_t i = 0; i < outputRows->size(); ++i){
-			int minIndex = i; // Œ»İ‚Ü‚Å‚ÅÅ¬‚Ìs‚ÌƒCƒ“ƒfƒbƒNƒX‚Å‚·B
+			int minIndex = i; // ç¾åœ¨ã¾ã§ã§æœ€å°ã®è¡Œã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã§ã™ã€‚
 			for (size_t j = i + 1; j < outputRows->size(); ++j){
-				bool jLessThanMin = false; // ƒCƒ“ƒfƒbƒNƒX‚ªj‚Ì’l‚ªAminIndex‚Ì’l‚æ‚è¬‚³‚¢‚©‚Ç‚¤‚©‚Å‚·B
+				bool jLessThanMin = false; // ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ãŒjã®å€¤ãŒã€minIndexã®å€¤ã‚ˆã‚Šå°ã•ã„ã‹ã©ã†ã‹ã§ã™ã€‚
 				for (size_t k = 0; k < orderByColumnIndexes.size(); ++k){
-					const Data &mData = (*outputRows)[minIndex][orderByColumnIndexes[k]]; // ƒCƒ“ƒfƒbƒNƒX‚ªminIndex‚Ìƒf[ƒ^‚Å‚·B
-					const Data &jData = (*outputRows)[j][orderByColumnIndexes[k]]; // ƒCƒ“ƒfƒbƒNƒX‚ªj‚Ìƒf[ƒ^‚Å‚·B
-					int cmp = 0; // ”äŠrŒ‹‰Ê‚Å‚·B“™‚µ‚¯‚ê‚Î0AƒCƒ“ƒfƒbƒNƒXj‚Ìs‚ª‘å‚«‚¯‚ê‚Îƒvƒ‰ƒXAƒCƒ“ƒfƒbƒNƒXminIndex‚Ìs‚ª‘å‚«‚¯‚ê‚Îƒ}ƒCƒiƒX‚Æ‚È‚è‚Ü‚·B
+					const Data &mData = (*outputRows)[minIndex][orderByColumnIndexes[k]]; // ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ãŒminIndexã®ãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
+					const Data &jData = (*outputRows)[j][orderByColumnIndexes[k]]; // ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ãŒjã®ãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
+					int cmp = 0; // æ¯”è¼ƒçµæœã§ã™ã€‚ç­‰ã—ã‘ã‚Œã°0ã€ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹jã®è¡ŒãŒå¤§ãã‘ã‚Œã°ãƒ—ãƒ©ã‚¹ã€ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹minIndexã®è¡ŒãŒå¤§ãã‘ã‚Œã°ãƒã‚¤ãƒŠã‚¹ã¨ãªã‚Šã¾ã™ã€‚
 					switch (mData.type)
 					{
 					case DataType::INTEGER:
@@ -1087,7 +1087,7 @@ const shared_ptr<vector<vector<Data>>> OutputData::GetOutputRows()
 						break;
 					}
 
-					// ~‡‚È‚çcmp‚Ì‘å¬‚ğ“ü‚ê‘Ö‚¦‚Ü‚·B
+					// é™é †ãªã‚‰cmpã®å¤§å°ã‚’å…¥ã‚Œæ›¿ãˆã¾ã™ã€‚
 					if (queryInfo.orders[k] == TokenKind::DESC){
 						cmp *= -1;
 					}
@@ -1112,22 +1112,22 @@ const shared_ptr<vector<vector<Data>>> OutputData::GetOutputRows()
 	return outputRows;
 }
 
-//! CSVƒtƒ@ƒCƒ‹‚Éo—Íƒf[ƒ^‚ğ‘‚«‚İ‚Ü‚·B
-//! @param [in] outputFileName Œ‹‰Ê‚ğo—Í‚·‚éƒtƒ@ƒCƒ‹‚Ìƒtƒ@ƒCƒ‹–¼‚Å‚·B
-//! @param [in] inputTables ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İæ‚Á‚½ƒf[ƒ^‚Å‚·B
+//! CSVãƒ•ã‚¡ã‚¤ãƒ«ã«å‡ºåŠ›ãƒ‡ãƒ¼ã‚¿ã‚’æ›¸ãè¾¼ã¿ã¾ã™ã€‚
+//! @param [in] outputFileName çµæœã‚’å‡ºåŠ›ã™ã‚‹ãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ•ã‚¡ã‚¤ãƒ«åã§ã™ã€‚
+//! @param [in] inputTables ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿å–ã£ãŸãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 void OutputData::WriteCsv(const string outputFileName, const vector<const InputTable> &inputTables)
 {
-	ofstream outputFile; // ‘‚«‚Şƒtƒ@ƒCƒ‹‚Ìƒtƒ@ƒCƒ‹ƒ|ƒCƒ“ƒ^‚Å‚·B
+	ofstream outputFile; // æ›¸ãè¾¼ã‚€ãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ•ã‚¡ã‚¤ãƒ«ãƒã‚¤ãƒ³ã‚¿ã§ã™ã€‚
 
 	auto outputRows = GetOutputRows();
 
-	// o—Íƒtƒ@ƒCƒ‹‚ğŠJ‚«‚Ü‚·B
+	// å‡ºåŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ãã¾ã™ã€‚
 	outputFile = ofstream(outputFileName);
 	if (outputFile.bad()){
 		throw ResultValue::ERR_FILE_OPEN;
 	}
 
-	// o—Íƒtƒ@ƒCƒ‹‚É—ñ–¼‚ğo—Í‚µ‚Ü‚·B
+	// å‡ºåŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã«åˆ—åã‚’å‡ºåŠ›ã—ã¾ã™ã€‚
 	for (size_t i = 0; i < queryInfo.selectColumns.size(); ++i){
 		outputFile << queryInfo.selectColumns[i].outputName;
 		if (i < queryInfo.selectColumns.size() - 1){
@@ -1138,7 +1138,7 @@ void OutputData::WriteCsv(const string outputFileName, const vector<const InputT
 		}
 	}
 
-	// o—Íƒtƒ@ƒCƒ‹‚Éƒf[ƒ^‚ğo—Í‚µ‚Ü‚·B
+	// å‡ºåŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã«ãƒ‡ãƒ¼ã‚¿ã‚’å‡ºåŠ›ã—ã¾ã™ã€‚
 	for (auto& outputRow : *outputRows){
 		size_t i = 0;
 		for (const auto &column : queryInfo.selectColumns){
@@ -1169,37 +1169,37 @@ void OutputData::WriteCsv(const string outputFileName, const vector<const InputT
 	}
 }
 
-//! CSVƒtƒ@ƒCƒ‹‚Éo—Íƒf[ƒ^‚ğ‘‚«‚İ‚Ü‚·B
-//! @param [in] outputFileName Œ‹‰Ê‚ğo—Í‚·‚éƒtƒ@ƒCƒ‹‚Ìƒtƒ@ƒCƒ‹–¼‚Å‚·B
-//! @param [in] queryInfo SQL‚Ìî•ñ‚Å‚·B
-//! @param [in] inputTables ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İæ‚Á‚½ƒf[ƒ^‚Å‚·B
+//! CSVãƒ•ã‚¡ã‚¤ãƒ«ã«å‡ºåŠ›ãƒ‡ãƒ¼ã‚¿ã‚’æ›¸ãè¾¼ã¿ã¾ã™ã€‚
+//! @param [in] outputFileName çµæœã‚’å‡ºåŠ›ã™ã‚‹ãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ•ã‚¡ã‚¤ãƒ«åã§ã™ã€‚
+//! @param [in] queryInfo SQLã®æƒ…å ±ã§ã™ã€‚
+//! @param [in] inputTables ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿å–ã£ãŸãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 void Csv::WriteCsv(const string outputFileName, const vector<const InputTable> &inputTables) const
 {
 	OutputData output(*queryInfo, inputTables);
 	output.WriteCsv(outputFileName, inputTables);
 }
 
-//! ƒtƒ@ƒCƒ‹ƒXƒgƒŠ[ƒ€‚©‚çƒJƒ“ƒ}‹æØ‚è‚Ìˆês‚ğ“Ç‚İ‚İ‚Ü‚·B
-//! @param [in] inputFile ƒf[ƒ^‚ğ“Ç‚İ‚Şƒtƒ@ƒCƒ‹ƒXƒgƒŠ[ƒ€‚Å‚·B
-//! @return ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İ‚ñ‚¾ˆês•ª‚Ìƒf[ƒ^‚Å‚·B
+//! ãƒ•ã‚¡ã‚¤ãƒ«ã‚¹ãƒˆãƒªãƒ¼ãƒ ã‹ã‚‰ã‚«ãƒ³ãƒåŒºåˆ‡ã‚Šã®ä¸€è¡Œã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+//! @param [in] inputFile ãƒ‡ãƒ¼ã‚¿ã‚’èª­ã¿è¾¼ã‚€ãƒ•ã‚¡ã‚¤ãƒ«ã‚¹ãƒˆãƒªãƒ¼ãƒ ã§ã™ã€‚
+//! @return ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿è¾¼ã‚“ã ä¸€è¡Œåˆ†ã®ãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 const shared_ptr<const vector<const string>> Csv::ReadLineData(ifstream &inputFile) const
 {
-	string inputLine; // ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İ‚ñ‚¾s•¶š—ñ‚Å‚·B
+	string inputLine; // ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿è¾¼ã‚“ã è¡Œæ–‡å­—åˆ—ã§ã™ã€‚
 	if (getline(inputFile, inputLine)){
-		auto lineData = make_shared<vector<const string>>(); // ˆês•ª‚Ìƒf[ƒ^‚Å‚·B
+		auto lineData = make_shared<vector<const string>>(); // ä¸€è¡Œåˆ†ã®ãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 
-		auto charactorCursol = inputLine.begin(); // ƒwƒbƒ_“ü—Ís‚ğŒŸõ‚·‚éƒJ[ƒ\ƒ‹‚Å‚·B
-		auto lineEnd = inputLine.end(); // ƒwƒbƒ_“ü—Ís‚Ìend‚ğw‚µ‚Ü‚·B
+		auto charactorCursol = inputLine.begin(); // ãƒ˜ãƒƒãƒ€å…¥åŠ›è¡Œã‚’æ¤œç´¢ã™ã‚‹ã‚«ãƒ¼ã‚½ãƒ«ã§ã™ã€‚
+		auto lineEnd = inputLine.end(); // ãƒ˜ãƒƒãƒ€å…¥åŠ›è¡Œã®endã‚’æŒ‡ã—ã¾ã™ã€‚
 
-		// “Ç‚İ‚ñ‚¾s‚ğÅŒã‚Ü‚Å“Ç‚İ‚Ü‚·B
+		// èª­ã¿è¾¼ã‚“ã è¡Œã‚’æœ€å¾Œã¾ã§èª­ã¿ã¾ã™ã€‚
 		while (charactorCursol != lineEnd){
 
-			// —ñ–¼‚ğˆê‚Â“Ç‚İ‚Ü‚·B
-			auto columnStart = charactorCursol; // Œ»İ‚Ì—ñ‚ÌÅ‰‚ğ‹L˜^‚µ‚Ä‚¨‚«‚Ü‚·B
+			// åˆ—åã‚’ä¸€ã¤èª­ã¿ã¾ã™ã€‚
+			auto columnStart = charactorCursol; // ç¾åœ¨ã®åˆ—ã®æœ€åˆã‚’è¨˜éŒ²ã—ã¦ãŠãã¾ã™ã€‚
 			charactorCursol = find(charactorCursol, lineEnd, ',');
 			lineData->push_back(string(columnStart, charactorCursol));
 
-			// “ü—Ís‚ÌƒJƒ“ƒ}‚Ì•ª‚ğ“Ç‚İi‚ß‚Ü‚·B
+			// å…¥åŠ›è¡Œã®ã‚«ãƒ³ãƒã®åˆ†ã‚’èª­ã¿é€²ã‚ã¾ã™ã€‚
 			if (charactorCursol != lineEnd){
 				++charactorCursol;
 			}
@@ -1211,13 +1211,13 @@ const shared_ptr<const vector<const string>> Csv::ReadLineData(ifstream &inputFi
 	}
 }
 
-//! “ü—ÍCSV‚Ìƒwƒbƒ_s‚ğ“Ç‚İ‚İ‚Ü‚·B
-//! @param [in] inputFile “ü—Íƒtƒ@ƒCƒ‹‚ğˆµ‚¤ƒXƒgƒŠ[ƒ€‚Å‚·BŠJ‚¢‚½Œã‰½‚à“Ç‚İ‚ñ‚Å‚¢‚Ü‚¹‚ñB
-//! @param [in] tableName SQL‚Åw’è‚³‚ê‚½ƒe[ƒuƒ‹–¼‚Å‚·B
-//! @return ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İæ‚Á‚½ƒwƒbƒ_î•ñ‚Å‚·B
+//! å…¥åŠ›CSVã®ãƒ˜ãƒƒãƒ€è¡Œã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+//! @param [in] inputFile å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æ‰±ã†ã‚¹ãƒˆãƒªãƒ¼ãƒ ã§ã™ã€‚é–‹ã„ãŸå¾Œä½•ã‚‚èª­ã¿è¾¼ã‚“ã§ã„ã¾ã›ã‚“ã€‚
+//! @param [in] tableName SQLã§æŒ‡å®šã•ã‚ŒãŸãƒ†ãƒ¼ãƒ–ãƒ«åã§ã™ã€‚
+//! @return ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿å–ã£ãŸãƒ˜ãƒƒãƒ€æƒ…å ±ã§ã™ã€‚
 const shared_ptr<const vector<const Column>> Csv::ReadHeader(ifstream &inputFile, const string tableName) const
 {
-	auto columns = make_shared<vector<const Column>>(); // “Ç‚İ‚ñ‚¾—ñ‚Ìˆê——B
+	auto columns = make_shared<vector<const Column>>(); // èª­ã¿è¾¼ã‚“ã åˆ—ã®ä¸€è¦§ã€‚
 
 	if (auto lineData = ReadLineData(inputFile)){
 		transform(
@@ -1231,12 +1231,12 @@ const shared_ptr<const vector<const Column>> Csv::ReadHeader(ifstream &inputFile
 		throw ResultValue::ERR_CSV_SYNTAX;
 	}
 }
-//! “ü—ÍCSV‚Ìƒf[ƒ^s‚ğ“Ç‚İ‚İ‚Ü‚·B
-//! @param [in] inputFile “ü—Íƒtƒ@ƒCƒ‹‚ğˆµ‚¤ƒXƒgƒŠ[ƒ€‚Å‚·B‚·‚Å‚Éƒwƒbƒ_‚Ì‚İ‚ğ“Ç‚İ‚ñ‚¾Œã‚Å‚·B
-//! @return ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İæ‚Á‚½ƒf[ƒ^‚Å‚·B
+//! å…¥åŠ›CSVã®ãƒ‡ãƒ¼ã‚¿è¡Œã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+//! @param [in] inputFile å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æ‰±ã†ã‚¹ãƒˆãƒªãƒ¼ãƒ ã§ã™ã€‚ã™ã§ã«ãƒ˜ãƒƒãƒ€ã®ã¿ã‚’èª­ã¿è¾¼ã‚“ã å¾Œã§ã™ã€‚
+//! @return ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿å–ã£ãŸãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 const shared_ptr<vector<const vector<const Data>>> Csv::ReadData(ifstream &inputFile) const
 {
-	auto data = make_shared<vector<const vector<const Data>>>(); // “Ç‚İ‚ñ‚¾ƒf[ƒ^‚Ìˆê——B
+	auto data = make_shared<vector<const vector<const Data>>>(); // èª­ã¿è¾¼ã‚“ã ãƒ‡ãƒ¼ã‚¿ã®ä¸€è¦§ã€‚
 
 	while (auto lineData = ReadLineData(inputFile)){
 		vector<const Data> row;
@@ -1250,20 +1250,20 @@ const shared_ptr<vector<const vector<const Data>>> Csv::ReadData(ifstream &input
 	return data;
 }
 
-//! “ü—Íƒtƒ@ƒCƒ‹‚ğŠJ‚«‚Ü‚·B
-//! @param [in] filePath ŠJ‚­ƒtƒ@ƒCƒ‹‚Ìƒtƒ@ƒCƒ‹ƒpƒX‚Å‚·B
-//! @return “ü—Íƒtƒ@ƒCƒ‹‚ğˆµ‚¤ƒXƒgƒŠ[ƒ€‚Å‚·B
+//! å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ãã¾ã™ã€‚
+//! @param [in] filePath é–‹ããƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ•ã‚¡ã‚¤ãƒ«ãƒ‘ã‚¹ã§ã™ã€‚
+//! @return å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æ‰±ã†ã‚¹ãƒˆãƒªãƒ¼ãƒ ã§ã™ã€‚
 ifstream Csv::OpenInputFile(const string filePath) const
 {
-	auto inputFile = ifstream(filePath); //“ü—Í‚·‚éCSVƒtƒ@ƒCƒ‹‚ğˆµ‚¤ƒXƒgƒŠ[ƒ€‚Å‚·B
+	auto inputFile = ifstream(filePath); //å…¥åŠ›ã™ã‚‹CSVãƒ•ã‚¡ã‚¤ãƒ«ã‚’æ‰±ã†ã‚¹ãƒˆãƒªãƒ¼ãƒ ã§ã™ã€‚
 	if (!inputFile){
 		throw ResultValue::ERR_FILE_OPEN;
 	}
 	return inputFile;
 }
 
-//! “ü—Íƒtƒ@ƒCƒ‹‚ğ•Â‚¶‚Ü‚·B
-//! @param [in] inputFile “ü—Íƒtƒ@ƒCƒ‹‚ğˆµ‚¤ƒXƒgƒŠ[ƒ€‚Å‚·B
+//! å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‰ã˜ã¾ã™ã€‚
+//! @param [in] inputFile å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æ‰±ã†ã‚¹ãƒˆãƒªãƒ¼ãƒ ã§ã™ã€‚
 void Csv::CloseInputFile(ifstream &inputFile) const
 {
 	inputFile.close();
@@ -1272,12 +1272,12 @@ void Csv::CloseInputFile(ifstream &inputFile) const
 	}
 }
 
-//! CsvƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] queryInfo SQL‚É‹Lq‚³‚ê‚½“à—e‚Å‚·B
+//! Csvã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] queryInfo SQLã«è¨˜è¿°ã•ã‚ŒãŸå†…å®¹ã§ã™ã€‚
 Csv::Csv(const shared_ptr<const SqlQueryInfo> queryInfo) : queryInfo(queryInfo){}
 
-//! CSVƒtƒ@ƒCƒ‹‚©‚ç“ü—Íƒf[ƒ^‚ğ“Ç‚İæ‚è‚Ü‚·B
-//! @return ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İæ‚Á‚½ƒf[ƒ^‚Å‚·B
+//! CSVãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰å…¥åŠ›ãƒ‡ãƒ¼ã‚¿ã‚’èª­ã¿å–ã‚Šã¾ã™ã€‚
+//! @return ãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰èª­ã¿å–ã£ãŸãƒ‡ãƒ¼ã‚¿ã§ã™ã€‚
 const shared_ptr<const vector<const InputTable>> Csv::ReadCsv() const
 {
 	auto tables = make_shared<vector<const InputTable>>();
@@ -1295,24 +1295,24 @@ const shared_ptr<const vector<const InputTable>> Csv::ReadCsv() const
 	return tables;
 }
 
-//! SQL‚Ì•¶š—ñ‚©‚çƒg[ƒNƒ“‚ğØ‚èo‚µ‚Ü‚·B
-//! @param [in] sql ƒg[ƒNƒ“‚É•ª‰ğ‚·‚éŒ³‚Æ‚È‚éSQL‚Å‚·B
-//! @return Ø‚èo‚³‚ê‚½ƒg[ƒNƒ“‚Å‚·B
+//! SQLã®æ–‡å­—åˆ—ã‹ã‚‰ãƒˆãƒ¼ã‚¯ãƒ³ã‚’åˆ‡ã‚Šå‡ºã—ã¾ã™ã€‚
+//! @param [in] sql ãƒˆãƒ¼ã‚¯ãƒ³ã«åˆ†è§£ã™ã‚‹å…ƒã¨ãªã‚‹SQLã§ã™ã€‚
+//! @return åˆ‡ã‚Šå‡ºã•ã‚ŒãŸãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚
 const shared_ptr<const vector<const Token>> SqlQuery::GetTokens(const string sql) const
 {
-	auto cursol = sql.begin(); // SQL‚ğƒg[ƒNƒ“‚É•ªŠ„‚µ‚Ä“Ç‚İ‚Ş‚ÉŒ»İ“Ç‚ñ‚Å‚¢‚é•¶š‚ÌêŠ‚ğ•\‚µ‚Ü‚·B
-	auto end = sql.end(); // sql‚Ìend‚ğw‚µ‚Ü‚·B
-	auto tokens = make_shared<vector<const Token>>(); //“Ç‚İ‚ñ‚¾ƒg[ƒNƒ“‚Å‚·B
+	auto cursol = sql.begin(); // SQLã‚’ãƒˆãƒ¼ã‚¯ãƒ³ã«åˆ†å‰²ã—ã¦èª­ã¿è¾¼ã‚€æ™‚ã«ç¾åœ¨èª­ã‚“ã§ã„ã‚‹æ–‡å­—ã®å ´æ‰€ã‚’è¡¨ã—ã¾ã™ã€‚
+	auto end = sql.end(); // sqlã®endã‚’æŒ‡ã—ã¾ã™ã€‚
+	auto tokens = make_shared<vector<const Token>>(); //èª­ã¿è¾¼ã‚“ã ãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚
 
-	// SQL‚ğƒg[ƒNƒ“‚É•ªŠ„‚Ä“Ç‚İ‚İ‚Ü‚·B
+	// SQLã‚’ãƒˆãƒ¼ã‚¯ãƒ³ã«åˆ†å‰²ã¦èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 	while (cursol != end){
 
-		// ‹ó”’‚ğ“Ç‚İ”ò‚Î‚µ‚Ü‚·B
+		// ç©ºç™½ã‚’èª­ã¿é£›ã°ã—ã¾ã™ã€‚
 		cursol = find_if(cursol, end, [&](char c){return space.find(c) == string::npos; });
 		if (cursol == end){
 			break;
 		}
-		// Šeíƒg[ƒNƒ“‚ğ“Ç‚İ‚İ‚Ü‚·B
+		// å„ç¨®ãƒˆãƒ¼ã‚¯ãƒ³ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 		shared_ptr<const Token> token;
 		if (any_of(
 			tokenReaders.begin(),
@@ -1329,15 +1329,15 @@ const shared_ptr<const vector<const Token>> SqlQuery::GetTokens(const string sql
 	return tokens;
 }
 
-//! ƒg[ƒNƒ“‚ğ‰ğÍ‚µ‚ÄSQL‚Ì\•¶‚Åw’è‚³‚ê‚½î•ñ‚ğæ“¾‚µ‚Ü‚·B
-//! @param [in] tokens ‰ğÍ‚Ì‘ÎÛ‚Æ‚È‚éƒg[ƒNƒ“‚Å‚·B
-//! @return ‰ğÍ‚µ‚½Œ‹‰Ê‚Ìî•ñ‚Å‚·B
+//! ãƒˆãƒ¼ã‚¯ãƒ³ã‚’è§£æã—ã¦SQLã®æ§‹æ–‡ã§æŒ‡å®šã•ã‚ŒãŸæƒ…å ±ã‚’å–å¾—ã—ã¾ã™ã€‚
+//! @param [in] tokens è§£æã®å¯¾è±¡ã¨ãªã‚‹ãƒˆãƒ¼ã‚¯ãƒ³ã§ã™ã€‚
+//! @return è§£æã—ãŸçµæœã®æƒ…å ±ã§ã™ã€‚
 const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const Token> &tokens) const
 {
 	auto queryInfo = make_shared<SqlQueryInfo>();
-	auto tokenCursol = tokens.begin(); // Œ»İŒ©‚Ä‚¢‚éƒg[ƒNƒ“‚ğw‚µ‚Ü‚·B
+	auto tokenCursol = tokens.begin(); // ç¾åœ¨è¦‹ã¦ã„ã‚‹ãƒˆãƒ¼ã‚¯ãƒ³ã‚’æŒ‡ã—ã¾ã™ã€‚
 
-	// SELECT‹å‚ğ“Ç‚İ‚İ‚Ü‚·B
+	// SELECTå¥ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 	if (tokenCursol->kind == TokenKind::SELECT){
 		++tokenCursol;
 	}
@@ -1350,20 +1350,20 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 	}
 	else
 	{
-		bool first = true; // SELECT‹å‚ÉÅ‰‚Éw’è‚³‚ê‚½—ñ–¼‚Ì“Ç‚İ‚İ‚©‚Ç‚¤‚©‚Å‚·B
+		bool first = true; // SELECTå¥ã«æœ€åˆã«æŒ‡å®šã•ã‚ŒãŸåˆ—åã®èª­ã¿è¾¼ã¿ã‹ã©ã†ã‹ã§ã™ã€‚
 		while (tokenCursol->kind == TokenKind::COMMA || first){
 			if (tokenCursol->kind == TokenKind::COMMA){
 				++tokenCursol;
 			}
 			if (tokenCursol->kind == TokenKind::IDENTIFIER){
-				// ƒe[ƒuƒ‹–¼‚ªw’è‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Æ‰¼’è‚µ‚Ä“Ç‚İ‚İ‚Ü‚·B
+				// ãƒ†ãƒ¼ãƒ–ãƒ«åãŒæŒ‡å®šã•ã‚Œã¦ã„ãªã„å ´åˆã¨ä»®å®šã—ã¦èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 				queryInfo->selectColumns.push_back(Column(tokenCursol->word));
 				++tokenCursol;
 				if (tokenCursol->kind == TokenKind::DOT){
 					++tokenCursol;
 					if (tokenCursol->kind == TokenKind::IDENTIFIER){
 
-						// ƒe[ƒuƒ‹–¼‚ªw’è‚³‚ê‚Ä‚¢‚é‚±‚Æ‚ª‚í‚©‚Á‚½‚Ì‚Å“Ç‚İ‘Ö‚¦‚Ü‚·B
+						// ãƒ†ãƒ¼ãƒ–ãƒ«åãŒæŒ‡å®šã•ã‚Œã¦ã„ã‚‹ã“ã¨ãŒã‚ã‹ã£ãŸã®ã§èª­ã¿æ›¿ãˆã¾ã™ã€‚
 						queryInfo->selectColumns.back() = Column(queryInfo->selectColumns.back().columnName, tokenCursol->word);
 						++tokenCursol;
 					}
@@ -1379,40 +1379,40 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 		}
 	}
 
-	// ORDER‹å‚ÆWHERE‹å‚ğ“Ç‚İ‚İ‚Ü‚·BÅ‘åŠeˆê‰ñ‚¸‚Â‘‚­‚±‚Æ‚ª‚Å‚«‚Ü‚·B
-	bool readOrder = false; // ‚·‚Å‚ÉORDER‹å‚ª“Ç‚İ‚İÏ‚İ‚©‚Ç‚¤‚©‚Å‚·B
-	bool readWhere = false; // ‚·‚Å‚ÉWHERE‹å‚ª“Ç‚İ‚İÏ‚İ‚©‚Ç‚¤‚©‚Å‚·B
+	// ORDERå¥ã¨WHEREå¥ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚æœ€å¤§å„ä¸€å›ãšã¤æ›¸ãã“ã¨ãŒã§ãã¾ã™ã€‚
+	bool readOrder = false; // ã™ã§ã«ORDERå¥ãŒèª­ã¿è¾¼ã¿æ¸ˆã¿ã‹ã©ã†ã‹ã§ã™ã€‚
+	bool readWhere = false; // ã™ã§ã«WHEREå¥ãŒèª­ã¿è¾¼ã¿æ¸ˆã¿ã‹ã©ã†ã‹ã§ã™ã€‚
 	while (tokenCursol->kind == TokenKind::ORDER || tokenCursol->kind == TokenKind::WHERE){
 
-		// “ñ“x–Ú‚ÌORDER‹å‚ÍƒGƒ‰[‚Å‚·B
+		// äºŒåº¦ç›®ã®ORDERå¥ã¯ã‚¨ãƒ©ãƒ¼ã§ã™ã€‚
 		if (readOrder && tokenCursol->kind == TokenKind::ORDER){
 			throw ResultValue::ERR_SQL_SYNTAX;
 		}
 
-		// “ñ“x–Ú‚ÌWHERE‹å‚ÍƒGƒ‰[‚Å‚·B
+		// äºŒåº¦ç›®ã®WHEREå¥ã¯ã‚¨ãƒ©ãƒ¼ã§ã™ã€‚
 		if (readWhere && tokenCursol->kind == TokenKind::WHERE){
 			throw ResultValue::ERR_SQL_SYNTAX;
 		}
-		// ORDER‹å‚ğ“Ç‚İ‚İ‚Ü‚·B
+		// ORDERå¥ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 		if (tokenCursol->kind == TokenKind::ORDER){
 			readOrder = true;
 			++tokenCursol;
 			if (tokenCursol->kind == TokenKind::BY){
 				++tokenCursol;
-				bool first = true; // ORDER‹å‚ÌÅ‰‚Ì—ñ–¼‚Ì“Ç‚İ‚İ‚©‚Ç‚¤‚©‚Å‚·B
+				bool first = true; // ORDERå¥ã®æœ€åˆã®åˆ—åã®èª­ã¿è¾¼ã¿ã‹ã©ã†ã‹ã§ã™ã€‚
 				while (tokenCursol->kind == TokenKind::COMMA || first){
 					if (tokenCursol->kind == TokenKind::COMMA){
 						++tokenCursol;
 					}
 					if (tokenCursol->kind == TokenKind::IDENTIFIER){
-						// ƒe[ƒuƒ‹–¼‚ªw’è‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Æ‰¼’è‚µ‚Ä“Ç‚İ‚İ‚Ü‚·B
+						// ãƒ†ãƒ¼ãƒ–ãƒ«åãŒæŒ‡å®šã•ã‚Œã¦ã„ãªã„å ´åˆã¨ä»®å®šã—ã¦èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 						queryInfo->orderByColumns.push_back(Column(tokenCursol->word));
 						++tokenCursol;
 						if (tokenCursol->kind == TokenKind::DOT){
 							++tokenCursol;
 							if (tokenCursol->kind == TokenKind::IDENTIFIER){
 
-								// ƒe[ƒuƒ‹–¼‚ªw’è‚³‚ê‚Ä‚¢‚é‚±‚Æ‚ª‚í‚©‚Á‚½‚Ì‚Å“Ç‚İ‘Ö‚¦‚Ü‚·B
+								// ãƒ†ãƒ¼ãƒ–ãƒ«åãŒæŒ‡å®šã•ã‚Œã¦ã„ã‚‹ã“ã¨ãŒã‚ã‹ã£ãŸã®ã§èª­ã¿æ›¿ãˆã¾ã™ã€‚
 								queryInfo->orderByColumns.back() = Column(queryInfo->orderByColumns.back().columnName, tokenCursol->word);
 								++tokenCursol;
 							}
@@ -1421,7 +1421,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 							}
 						}
 
-						// •À‚Ñ‘Ö‚¦‚Ì¸‡A~‡‚ğw’è‚µ‚Ü‚·B
+						// ä¸¦ã³æ›¿ãˆã®æ˜‡é †ã€é™é †ã‚’æŒ‡å®šã—ã¾ã™ã€‚
 						if (tokenCursol->kind == TokenKind::ASC){
 							queryInfo->orders.push_back(TokenKind::ASC);
 							++tokenCursol;
@@ -1431,7 +1431,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 							++tokenCursol;
 						}
 						else{
-							// w’è‚ª‚È‚¢ê‡‚Í¸‡‚Æ‚È‚è‚Ü‚·B
+							// æŒ‡å®šãŒãªã„å ´åˆã¯æ˜‡é †ã¨ãªã‚Šã¾ã™ã€‚
 							queryInfo->orders.push_back(TokenKind::ASC);
 						}
 					}
@@ -1446,37 +1446,37 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 			}
 		}
 
-		// WHERE‹å‚ğ“Ç‚İ‚İ‚Ü‚·B
+		// WHEREå¥ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 		if (tokenCursol->kind == TokenKind::WHERE){
 			readWhere = true;
 			++tokenCursol;
-			shared_ptr<ExtensionTreeNode> currentNode; // Œ»İ“Ç‚İ‚ñ‚Å‚¢‚éƒm[ƒh‚Å‚·B
+			shared_ptr<ExtensionTreeNode> currentNode; // ç¾åœ¨èª­ã¿è¾¼ã‚“ã§ã„ã‚‹ãƒãƒ¼ãƒ‰ã§ã™ã€‚
 			while (true){
-				// ƒIƒyƒ‰ƒ“ƒh‚ğ“Ç‚İ‚İ‚Ü‚·B
+				// ã‚ªãƒšãƒ©ãƒ³ãƒ‰ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 
-				// ƒIƒyƒ‰ƒ“ƒh‚Ìƒm[ƒh‚ğV‚µ‚­¶¬‚µ‚Ü‚·B
+				// ã‚ªãƒšãƒ©ãƒ³ãƒ‰ã®ãƒãƒ¼ãƒ‰ã‚’æ–°ã—ãç”Ÿæˆã—ã¾ã™ã€‚
 				auto newNode = make_shared<ExtensionTreeNode>();
 				if (currentNode){
-					// Œ»İ‚Ìƒm[ƒh‚ğ‰E‚Ìq‚É‚¸‚ç‚µAŒ³‚ÌˆÊ’u‚ÉV‚µ‚¢ƒm[ƒh‚ğ‘}“ü‚µ‚Ü‚·B
+					// ç¾åœ¨ã®ãƒãƒ¼ãƒ‰ã‚’å³ã®å­ã«ãšã‚‰ã—ã€å…ƒã®ä½ç½®ã«æ–°ã—ã„ãƒãƒ¼ãƒ‰ã‚’æŒ¿å…¥ã—ã¾ã™ã€‚
 					currentNode->right = newNode;
 					currentNode->right->parent = currentNode;
 					currentNode = currentNode->right;
 				}
 				else{
-					// Å‰‚ÍƒJƒŒƒ“ƒgƒm[ƒh‚ÉV‚µ‚¢ƒm[ƒh‚ğ“ü‚ê‚Ü‚·B
+					// æœ€åˆã¯ã‚«ãƒ¬ãƒ³ãƒˆãƒãƒ¼ãƒ‰ã«æ–°ã—ã„ãƒãƒ¼ãƒ‰ã‚’å…¥ã‚Œã¾ã™ã€‚
 					currentNode = newNode;
 				}
 
-				// ƒJƒbƒRŠJ‚­‚ğ“Ç‚İ‚İ‚Ü‚·B
+				// ã‚«ãƒƒã‚³é–‹ãã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 				while (tokenCursol->kind == TokenKind::OPEN_PAREN){
 					++currentNode->parenOpenBeforeClose;
 					++tokenCursol;
 				}
 
-				// ƒIƒyƒ‰ƒ“ƒh‚É‘O’u‚³‚ê‚é+‚©-‚ğ“Ç‚İ‚İ‚Ü‚·B
+				// ã‚ªãƒšãƒ©ãƒ³ãƒ‰ã«å‰ç½®ã•ã‚Œã‚‹+ã‹-ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 				if (tokenCursol->kind == TokenKind::PLUS || tokenCursol->kind == TokenKind::MINUS){
 
-					// +-‚ğ‘O’u‚·‚é‚Ì‚Í—ñ–¼‚Æ”’lƒŠƒeƒ‰ƒ‹‚Ì‚İ‚Å‚·B
+					// +-ã‚’å‰ç½®ã™ã‚‹ã®ã¯åˆ—åã¨æ•°å€¤ãƒªãƒ†ãƒ©ãƒ«ã®ã¿ã§ã™ã€‚
 					if (tokenCursol[1].kind != TokenKind::IDENTIFIER && tokenCursol[1].kind != TokenKind::INT_LITERAL){
 						throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 					}
@@ -1486,17 +1486,17 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 					++tokenCursol;
 				}
 
-				// —ñ–¼A®”ƒŠƒeƒ‰ƒ‹A•¶š—ñƒŠƒeƒ‰ƒ‹‚Ì‚¢‚¸‚ê‚©‚ğƒIƒyƒ‰ƒ“ƒh‚Æ‚µ‚Ä“Ç‚İ‚İ‚Ü‚·B
+				// åˆ—åã€æ•´æ•°ãƒªãƒ†ãƒ©ãƒ«ã€æ–‡å­—åˆ—ãƒªãƒ†ãƒ©ãƒ«ã®ã„ãšã‚Œã‹ã‚’ã‚ªãƒšãƒ©ãƒ³ãƒ‰ã¨ã—ã¦èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 				if (tokenCursol->kind == TokenKind::IDENTIFIER){
 
-					// ƒe[ƒuƒ‹–¼‚ªw’è‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Æ‰¼’è‚µ‚Ä“Ç‚İ‚İ‚Ü‚·B
+					// ãƒ†ãƒ¼ãƒ–ãƒ«åãŒæŒ‡å®šã•ã‚Œã¦ã„ãªã„å ´åˆã¨ä»®å®šã—ã¦èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 					currentNode->column = Column(tokenCursol->word);
 					++tokenCursol;
 					if (tokenCursol->kind == TokenKind::DOT){
 						++tokenCursol;
 						if (tokenCursol->kind == TokenKind::IDENTIFIER){
 
-							// ƒe[ƒuƒ‹–¼‚ªw’è‚³‚ê‚Ä‚¢‚é‚±‚Æ‚ª‚í‚©‚Á‚½‚Ì‚Å“Ç‚İ‘Ö‚¦‚Ü‚·B
+							// ãƒ†ãƒ¼ãƒ–ãƒ«åãŒæŒ‡å®šã•ã‚Œã¦ã„ã‚‹ã“ã¨ãŒã‚ã‹ã£ãŸã®ã§èª­ã¿æ›¿ãˆã¾ã™ã€‚
 							currentNode->column = Column(currentNode->column.columnName, tokenCursol->word);
 							++tokenCursol;
 						}
@@ -1510,7 +1510,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 					++tokenCursol;
 				}
 				else if (tokenCursol->kind == TokenKind::STRING_LITERAL){
-					// ‘OŒã‚ÌƒVƒ“ƒOƒ‹ƒNƒH[ƒg‚ğæ‚è‹‚Á‚½•¶š—ñ‚ğƒf[ƒ^‚Æ‚µ‚Ä“Ç‚İ‚İ‚Ü‚·B
+					// å‰å¾Œã®ã‚·ãƒ³ã‚°ãƒ«ã‚¯ã‚©ãƒ¼ãƒˆã‚’å–ã‚Šå»ã£ãŸæ–‡å­—åˆ—ã‚’ãƒ‡ãƒ¼ã‚¿ã¨ã—ã¦èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 					currentNode->value = Data(tokenCursol->word.substr(1, tokenCursol->word.size() - 2));
 					++tokenCursol;
 				}
@@ -1518,18 +1518,18 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 					throw ResultValue::ERR_SQL_SYNTAX;
 				}
 
-				// ƒIƒyƒ‰ƒ“ƒh‚Ì‰E‚ÌƒJƒbƒR•Â‚¶‚é‚ğ“Ç‚İ‚İ‚Ü‚·B
+				// ã‚ªãƒšãƒ©ãƒ³ãƒ‰ã®å³ã®ã‚«ãƒƒã‚³é–‰ã˜ã‚‹ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 				while (tokenCursol->kind == TokenKind::CLOSE_PAREN){
-					shared_ptr<ExtensionTreeNode> searchedAncestor = currentNode->parent; // ƒJƒbƒR•Â‚¶‚é‚Æ‘Î‰‚·‚éƒJƒbƒRŠJ‚­‚ğ—¼•ûŠÜ‚Ş‘cæƒm[ƒh‚ğ’T‚·‚½‚ß‚ÌƒJ[ƒ\ƒ‹‚Å‚·B
+					shared_ptr<ExtensionTreeNode> searchedAncestor = currentNode->parent; // ã‚«ãƒƒã‚³é–‰ã˜ã‚‹ã¨å¯¾å¿œã™ã‚‹ã‚«ãƒƒã‚³é–‹ãã‚’ä¸¡æ–¹å«ã‚€ç¥–å…ˆãƒãƒ¼ãƒ‰ã‚’æ¢ã™ãŸã‚ã®ã‚«ãƒ¼ã‚½ãƒ«ã§ã™ã€‚
 					while (searchedAncestor){
 
-						// searchedAncestor‚Ì¶‚Ìq‚É‘Î‰‚·‚éƒJƒbƒRŠJ‚­‚ª‚È‚¢‚©‚ğŒŸõ‚µ‚Ü‚·B
-						shared_ptr<ExtensionTreeNode> searched = searchedAncestor; // searchedAncestor‚Ì“à•”‚©‚çƒJƒbƒRŠJ‚­‚ğŒŸõ‚·‚é‚½‚ß‚ÌƒJ[ƒ\ƒ‹‚Å‚·B
+						// searchedAncestorã®å·¦ã®å­ã«å¯¾å¿œã™ã‚‹ã‚«ãƒƒã‚³é–‹ããŒãªã„ã‹ã‚’æ¤œç´¢ã—ã¾ã™ã€‚
+						shared_ptr<ExtensionTreeNode> searched = searchedAncestor; // searchedAncestorã®å†…éƒ¨ã‹ã‚‰ã‚«ãƒƒã‚³é–‹ãã‚’æ¤œç´¢ã™ã‚‹ãŸã‚ã®ã‚«ãƒ¼ã‚½ãƒ«ã§ã™ã€‚
 						while (searched && !searched->parenOpenBeforeClose){
 							searched = searched->left;
 						}
 						if (searched){
-							// ‘Î‰•t‚¯‚ç‚ê‚Ä‚¢‚È‚¢ƒJƒbƒRŠJ‚­‚ğˆê‚Âíœ‚µAƒm[ƒh‚ªƒJƒbƒR‚ÉˆÍ‚Ü‚ê‚Ä‚¢‚é‚±‚Æ‚ğ‹L˜^‚µ‚Ü‚·B
+							// å¯¾å¿œä»˜ã‘ã‚‰ã‚Œã¦ã„ãªã„ã‚«ãƒƒã‚³é–‹ãã‚’ä¸€ã¤å‰Šé™¤ã—ã€ãƒãƒ¼ãƒ‰ãŒã‚«ãƒƒã‚³ã«å›²ã¾ã‚Œã¦ã„ã‚‹ã“ã¨ã‚’è¨˜éŒ²ã—ã¾ã™ã€‚
 							--searched->parenOpenBeforeClose;
 							searchedAncestor->inParen = true;
 							break;
@@ -1542,35 +1542,35 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 				}
 
 
-				// ‰‰Zq(ƒIƒyƒŒ[ƒ^[‚ğ“Ç‚İ‚İ‚Ü‚·B
-				auto foundOperator = find_if(operators.begin(), operators.end(), [&](const Operator& op){return op.kind == tokenCursol->kind; }); // Œ»İ“Ç‚İ‚ñ‚Å‚¢‚é‰‰Zq‚Ìî•ñ‚Å‚·B
+				// æ¼”ç®—å­(ã‚ªãƒšãƒ¬ãƒ¼ã‚¿ãƒ¼ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
+				auto foundOperator = find_if(operators.begin(), operators.end(), [&](const Operator& op){return op.kind == tokenCursol->kind; }); // ç¾åœ¨èª­ã¿è¾¼ã‚“ã§ã„ã‚‹æ¼”ç®—å­ã®æƒ…å ±ã§ã™ã€‚
 
-				// Œ»İŒ©‚Ä‚¢‚é‰‰Zq‚Ìî•ñ‚ğ’T‚µ‚Ü‚·B
+				// ç¾åœ¨è¦‹ã¦ã„ã‚‹æ¼”ç®—å­ã®æƒ…å ±ã‚’æ¢ã—ã¾ã™ã€‚
 				if (foundOperator != operators.end()){
-					// Œ©‚Â‚©‚Á‚½‰‰Zq‚Ìî•ñ‚ğ‚à‚Æ‚Éƒm[ƒh‚ğ“ü‚ê‘Ö‚¦‚Ü‚·B
-					shared_ptr<ExtensionTreeNode> tmp = currentNode; //ƒm[ƒh‚ğ“ü‚ê‘Ö‚¦‚é‚½‚ß‚Ég‚¤•Ï”‚Å‚·B
+					// è¦‹ã¤ã‹ã£ãŸæ¼”ç®—å­ã®æƒ…å ±ã‚’ã‚‚ã¨ã«ãƒãƒ¼ãƒ‰ã‚’å…¥ã‚Œæ›¿ãˆã¾ã™ã€‚
+					shared_ptr<ExtensionTreeNode> tmp = currentNode; //ãƒãƒ¼ãƒ‰ã‚’å…¥ã‚Œæ›¿ãˆã‚‹ãŸã‚ã«ä½¿ã†å¤‰æ•°ã§ã™ã€‚
 
-					shared_ptr<ExtensionTreeNode> searched = tmp; // “ü‚ê‘Ö‚¦‚éƒm[ƒh‚ğ’T‚·‚½‚ß‚ÌƒJ[ƒ\ƒ‹‚Å‚·B
+					shared_ptr<ExtensionTreeNode> searched = tmp; // å…¥ã‚Œæ›¿ãˆã‚‹ãƒãƒ¼ãƒ‰ã‚’æ¢ã™ãŸã‚ã®ã‚«ãƒ¼ã‚½ãƒ«ã§ã™ã€‚
 
-					//ƒJƒbƒR‚É‚­‚­‚ç‚ê‚Ä‚¢‚È‚©‚Á‚½ê‡‚ÉA‰‰Zq‚Ì—Dæ‡ˆÊ‚ğQl‚ÉŒ‹‡‚·‚éƒm[ƒh‚ğ’T‚µ‚Ü‚·B
-					bool first = true; // ‰‰Zq‚Ì—Dæ‡ˆÊ‚ğŒŸõ‚·‚éÅ‰‚Ìƒ‹[ƒv‚Å‚·B
+					//ã‚«ãƒƒã‚³ã«ããã‚‰ã‚Œã¦ã„ãªã‹ã£ãŸå ´åˆã«ã€æ¼”ç®—å­ã®å„ªå…ˆé †ä½ã‚’å‚è€ƒã«çµåˆã™ã‚‹ãƒãƒ¼ãƒ‰ã‚’æ¢ã—ã¾ã™ã€‚
+					bool first = true; // æ¼”ç®—å­ã®å„ªå…ˆé †ä½ã‚’æ¤œç´¢ã™ã‚‹æœ€åˆã®ãƒ«ãƒ¼ãƒ—ã§ã™ã€‚
 					do{
 						if (!first){
 							tmp = tmp->parent;
 							searched = tmp;
 						}
-						// Œ»İ‚Ì“Ç‚İ‚İêŠ‚ğ‚­‚­‚éƒJƒbƒR‚ªŠJ‚­êŠ‚ğ’T‚µ‚Ü‚·B
+						// ç¾åœ¨ã®èª­ã¿è¾¼ã¿å ´æ‰€ã‚’ããã‚‹ã‚«ãƒƒã‚³ãŒé–‹ãå ´æ‰€ã‚’æ¢ã—ã¾ã™ã€‚
 						while (searched && !searched->parenOpenBeforeClose){
 							searched = searched->left;
 						}
 						first = false;
 					} while (!searched && tmp->parent && (tmp->parent->middleOperator.order <= foundOperator->order || tmp->parent->inParen));
 
-					// ‰‰Zq‚Ìƒm[ƒh‚ğV‚µ‚­¶¬‚µ‚Ü‚·B
+					// æ¼”ç®—å­ã®ãƒãƒ¼ãƒ‰ã‚’æ–°ã—ãç”Ÿæˆã—ã¾ã™ã€‚
 					currentNode = make_shared<ExtensionTreeNode>();
 					currentNode->middleOperator = *foundOperator;
 
-					// Œ©‚Â‚©‚Á‚½êŠ‚ÉV‚µ‚¢ƒm[ƒh‚ğ”z’u‚µ‚Ü‚·B‚±‚ê‚Ü‚Å‚»‚ÌˆÊ’u‚É‚ ‚Á‚½ƒm[ƒh‚Í¶‚Ìq‚Æ‚È‚é‚æ‚¤Aeƒm[ƒh‚Æqƒm[ƒh‚Ìƒ|ƒCƒ“ƒ^‚ğ‚Â‚¯‚©‚¦‚Ü‚·B
+					// è¦‹ã¤ã‹ã£ãŸå ´æ‰€ã«æ–°ã—ã„ãƒãƒ¼ãƒ‰ã‚’é…ç½®ã—ã¾ã™ã€‚ã“ã‚Œã¾ã§ãã®ä½ç½®ã«ã‚ã£ãŸãƒãƒ¼ãƒ‰ã¯å·¦ã®å­ã¨ãªã‚‹ã‚ˆã†ã€è¦ªãƒãƒ¼ãƒ‰ã¨å­ãƒãƒ¼ãƒ‰ã®ãƒã‚¤ãƒ³ã‚¿ã‚’ã¤ã‘ã‹ãˆã¾ã™ã€‚
 					currentNode->parent = tmp->parent;
 					if (currentNode->parent){
 						currentNode->parent->right = currentNode;
@@ -1581,17 +1581,17 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 					++tokenCursol;
 				}
 				else{
-					// Œ»İŒ©‚Ä‚¢‚éí—Ş‚ª‰‰Zq‚Ìˆê——‚©‚çŒ©‚Â‚©‚ç‚È‚¯‚ê‚ÎAWHERE‹å‚ÍI‚í‚è‚Ü‚·B
+					// ç¾åœ¨è¦‹ã¦ã„ã‚‹ç¨®é¡ãŒæ¼”ç®—å­ã®ä¸€è¦§ã‹ã‚‰è¦‹ã¤ã‹ã‚‰ãªã‘ã‚Œã°ã€WHEREå¥ã¯çµ‚ã‚ã‚Šã¾ã™ã€‚
 					break;
 				}
 			}
 
-			// –Ø‚ğª‚ÉŒü‚©‚Á‚Ä‚³‚©‚Ì‚Ú‚èAª‚Ìƒm[ƒh‚ğİ’è‚µ‚Ü‚·B
+			// æœ¨ã‚’æ ¹ã«å‘ã‹ã£ã¦ã•ã‹ã®ã¼ã‚Šã€æ ¹ã®ãƒãƒ¼ãƒ‰ã‚’è¨­å®šã—ã¾ã™ã€‚
 			queryInfo->whereTopNode = currentNode;
 			while (queryInfo->whereTopNode->parent){
 				queryInfo->whereTopNode = queryInfo->whereTopNode->parent;
 			}
-			// Šù‘¶”’l‚Ì•„†‚ğŒvZ‚µ‚Ü‚·B
+			// æ—¢å­˜æ•°å€¤ã®ç¬¦å·ã‚’è¨ˆç®—ã—ã¾ã™ã€‚
 			auto whereNodes = SelfAndDescendants(queryInfo->whereTopNode);
 			for (auto &whereNode : *whereNodes){
 				if (whereNode->middleOperator.kind == TokenKind::NOT_TOKEN &&
@@ -1603,14 +1603,14 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 		}
 	}
 
-	// FROM‹å‚ğ“Ç‚İ‚İ‚Ü‚·B
+	// FROMå¥ã‚’èª­ã¿è¾¼ã¿ã¾ã™ã€‚
 	if (tokenCursol->kind == TokenKind::FROM){
 		++tokenCursol;
 	}
 	else{
 		throw ResultValue::ERR_SQL_SYNTAX;
 	}
-	bool first = true; // FROM‹å‚ÌÅ‰‚Ìƒe[ƒuƒ‹–¼‚ğ“Ç‚İ‚İ’†‚©‚Ç‚¤‚©‚Å‚·B
+	bool first = true; // FROMå¥ã®æœ€åˆã®ãƒ†ãƒ¼ãƒ–ãƒ«åã‚’èª­ã¿è¾¼ã¿ä¸­ã‹ã©ã†ã‹ã§ã™ã€‚
 	while (tokenCursol != tokens.end() && tokenCursol->kind == TokenKind::COMMA || first){
 		if (tokenCursol->kind == TokenKind::COMMA){
 			++tokenCursol;
@@ -1625,7 +1625,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 		first = false;
 	}
 
-	// ÅŒã‚Ìƒg[ƒNƒ“‚Ü‚Å“Ç‚İ‚İ‚ªi‚ñ‚Å‚¢‚È‚©‚Á‚½‚çƒGƒ‰[‚Å‚·B
+	// æœ€å¾Œã®ãƒˆãƒ¼ã‚¯ãƒ³ã¾ã§èª­ã¿è¾¼ã¿ãŒé€²ã‚“ã§ã„ãªã‹ã£ãŸã‚‰ã‚¨ãƒ©ãƒ¼ã§ã™ã€‚
 	if (tokenCursol != tokens.end()){
 		throw ResultValue::ERR_SQL_SYNTAX;
 	}
@@ -1633,10 +1633,10 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 	return queryInfo;
 }
 
-//! SqlQueryƒNƒ‰ƒX‚ÌV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ‰Šú‰»‚µ‚Ü‚·B
-//! @param [in] sql Às‚·‚éSQL‚Å‚·B
+//! SqlQueryã‚¯ãƒ©ã‚¹ã®æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’åˆæœŸåŒ–ã—ã¾ã™ã€‚
+//! @param [in] sql å®Ÿè¡Œã™ã‚‹SQLã§ã™ã€‚
 SqlQuery::SqlQuery(const string sql) :
-// æ“ª‚©‚ç‡‚ÉŒŸõ‚³‚ê‚é‚Ì‚ÅA‘O•ûˆê’v‚Æ‚È‚é“ñ‚Â‚Ì€–Ú‚Í‡”Ô‚É‹C‚ğ‚Â‚¯‚Ä“o˜^‚µ‚È‚­‚Ä‚Í‚¢‚¯‚Ü‚¹‚ñB
+// å…ˆé ­ã‹ã‚‰é †ã«æ¤œç´¢ã•ã‚Œã‚‹ã®ã§ã€å‰æ–¹ä¸€è‡´ã¨ãªã‚‹äºŒã¤ã®é …ç›®ã¯é †ç•ªã«æ°—ã‚’ã¤ã‘ã¦ç™»éŒ²ã—ãªãã¦ã¯ã„ã‘ã¾ã›ã‚“ã€‚
 	tokenReaders({
 		make_shared<IntLiteralReader>(),
 		make_shared<StringLiteralReader>(),
@@ -1681,79 +1681,79 @@ SqlQuery::SqlQuery(const string sql) :
 	csv = make_shared<Csv>(AnalyzeTokens(*GetTokens(sql)));
 }
 
-//! ƒJƒŒƒ“ƒgƒfƒBƒŒƒNƒgƒŠ‚É‚ ‚éCSV‚É‘Î‚µAŠÈˆÕ“I‚ÈSQL‚ğÀs‚µAŒ‹‰Ê‚ğƒtƒ@ƒCƒ‹‚Éo—Í‚µ‚Ü‚·B
-//! @param[in] outputFileName SQL‚ÌÀsŒ‹‰Ê‚ğCSV‚Æ‚µ‚Äo—Í‚·‚éƒtƒ@ƒCƒ‹–¼‚Å‚·BŠg’£q‚ğŠÜ‚İ‚Ü‚·B
+//! ã‚«ãƒ¬ãƒ³ãƒˆãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã«ã‚ã‚‹CSVã«å¯¾ã—ã€ç°¡æ˜“çš„ãªSQLã‚’å®Ÿè¡Œã—ã€çµæœã‚’ãƒ•ã‚¡ã‚¤ãƒ«ã«å‡ºåŠ›ã—ã¾ã™ã€‚
+//! @param[in] outputFileName SQLã®å®Ÿè¡Œçµæœã‚’CSVã¨ã—ã¦å‡ºåŠ›ã™ã‚‹ãƒ•ã‚¡ã‚¤ãƒ«åã§ã™ã€‚æ‹¡å¼µå­ã‚’å«ã¿ã¾ã™ã€‚
 void SqlQuery::Execute(const string outputFileName)
 {
 	csv->WriteCsv(outputFileName, *csv->ReadCsv());
 }
 
-//! ƒJƒŒƒ“ƒgƒfƒBƒŒƒNƒgƒŠ‚É‚ ‚éCSV‚É‘Î‚µAŠÈˆÕ“I‚ÈSQL‚ğÀs‚µAŒ‹‰Ê‚ğƒtƒ@ƒCƒ‹‚Éo—Í‚µ‚Ü‚·B
-//! @param [in] sql Às‚·‚éSQL‚Å‚·B
-//! @param[in] outputFileName SQL‚ÌÀsŒ‹‰Ê‚ğCSV‚Æ‚µ‚Äo—Í‚·‚éƒtƒ@ƒCƒ‹–¼‚Å‚·BŠg’£q‚ğŠÜ‚İ‚Ü‚·B
-//! @return Às‚µ‚½Œ‹‰Ê‚Ìó‘Ô‚Å‚·B
-//! @retval OK=0                      –â‘è‚È‚­I—¹‚µ‚Ü‚µ‚½B
-//! @retval ERR_FILE_OPEN=1           ƒtƒ@ƒCƒ‹‚ğŠJ‚­‚±‚Æ‚É¸”s‚µ‚Ü‚µ‚½B
-//! @retval ERR_FILE_WRITE=2          ƒtƒ@ƒCƒ‹‚É‘‚«‚İ‚ğs‚¤‚±‚Æ‚É¸”s‚µ‚Ü‚µ‚½B
-//! @retval ERR_FILE_CLOSE=3          ƒtƒ@ƒCƒ‹‚ğ•Â‚¶‚é‚±‚Æ‚É¸”s‚µ‚Ü‚µ‚½B
-//! @retval ERR_TOKEN_CANT_READ=4     ƒg[ƒNƒ“‰ğÍ‚É¸”s‚µ‚Ü‚µ‚½B
-//! @retval ERR_SQL_SYNTAX=5          SQL‚Ì\•¶‰ğÍ‚ª¸”s‚µ‚Ü‚µ‚½B
-//! @retval ERR_BAD_COLUMN_NAME=6     ƒe[ƒuƒ‹w’è‚ğŠÜ‚Ş—ñ–¼‚ª“KØ‚Å‚Í‚ ‚è‚Ü‚¹‚ñB
-//! @retval ERR_WHERE_OPERAND_TYPE=7  ‰‰Z‚Ì¶‰E‚ÌŒ^‚ª“KØ‚Å‚Í‚ ‚è‚Ü‚¹‚ñB
-//! @retval ERR_CSV_SYNTAX=8          CSV‚Ì\•¶‰ğÍ‚ª¸”s‚µ‚Ü‚µ‚½B
-//! @retval ERR_MEMORY_ALLOCATE=9     ƒƒ‚ƒŠ‚Ìæ“¾‚É¸”s‚µ‚Ü‚µ‚½B
-//! @retval ERR_MEMORY_OVER=10        —pˆÓ‚µ‚½ƒƒ‚ƒŠ—Ìˆæ‚ÌãŒÀ‚ğ’´‚¦‚Ü‚µ‚½B
+//! ã‚«ãƒ¬ãƒ³ãƒˆãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã«ã‚ã‚‹CSVã«å¯¾ã—ã€ç°¡æ˜“çš„ãªSQLã‚’å®Ÿè¡Œã—ã€çµæœã‚’ãƒ•ã‚¡ã‚¤ãƒ«ã«å‡ºåŠ›ã—ã¾ã™ã€‚
+//! @param [in] sql å®Ÿè¡Œã™ã‚‹SQLã§ã™ã€‚
+//! @param[in] outputFileName SQLã®å®Ÿè¡Œçµæœã‚’CSVã¨ã—ã¦å‡ºåŠ›ã™ã‚‹ãƒ•ã‚¡ã‚¤ãƒ«åã§ã™ã€‚æ‹¡å¼µå­ã‚’å«ã¿ã¾ã™ã€‚
+//! @return å®Ÿè¡Œã—ãŸçµæœã®çŠ¶æ…‹ã§ã™ã€‚
+//! @retval OK=0                      å•é¡Œãªãçµ‚äº†ã—ã¾ã—ãŸã€‚
+//! @retval ERR_FILE_OPEN=1           ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ãã“ã¨ã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+//! @retval ERR_FILE_WRITE=2          ãƒ•ã‚¡ã‚¤ãƒ«ã«æ›¸ãè¾¼ã¿ã‚’è¡Œã†ã“ã¨ã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+//! @retval ERR_FILE_CLOSE=3          ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‰ã˜ã‚‹ã“ã¨ã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+//! @retval ERR_TOKEN_CANT_READ=4     ãƒˆãƒ¼ã‚¯ãƒ³è§£æã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+//! @retval ERR_SQL_SYNTAX=5          SQLã®æ§‹æ–‡è§£æãŒå¤±æ•—ã—ã¾ã—ãŸã€‚
+//! @retval ERR_BAD_COLUMN_NAME=6     ãƒ†ãƒ¼ãƒ–ãƒ«æŒ‡å®šã‚’å«ã‚€åˆ—åãŒé©åˆ‡ã§ã¯ã‚ã‚Šã¾ã›ã‚“ã€‚
+//! @retval ERR_WHERE_OPERAND_TYPE=7  æ¼”ç®—ã®å·¦å³ã®å‹ãŒé©åˆ‡ã§ã¯ã‚ã‚Šã¾ã›ã‚“ã€‚
+//! @retval ERR_CSV_SYNTAX=8          CSVã®æ§‹æ–‡è§£æãŒå¤±æ•—ã—ã¾ã—ãŸã€‚
+//! @retval ERR_MEMORY_ALLOCATE=9     ãƒ¡ãƒ¢ãƒªã®å–å¾—ã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+//! @retval ERR_MEMORY_OVER=10        ç”¨æ„ã—ãŸãƒ¡ãƒ¢ãƒªé ˜åŸŸã®ä¸Šé™ã‚’è¶…ãˆã¾ã—ãŸã€‚
 //! @details 
-//! QÆ‚·‚éƒe[ƒuƒ‹‚ÍAƒe[ƒuƒ‹–¼.csv‚ÌŒ`‚Åì¬‚µ‚Ü‚·B                                                     @n
-//! ˆês–Ú‚Íƒwƒbƒ_s‚ÅA‚»‚Ìs‚É—ñ–¼‚ğ‘‚«‚Ü‚·B                                                             @n
-//! ‘OŒã‚ÌƒXƒy[ƒX“Ç‚İ”ò‚Î‚µ‚âƒ_ƒuƒ‹ƒNƒH[ƒe[ƒVƒ‡ƒ“‚Å‚­‚­‚é‚È‚Ç‚Ì‹@”\‚Í‚ ‚è‚Ü‚¹‚ñB                         @n
-//! —ñ‚ÌŒ^‚Ì’è‹`‚Í‚Å‚«‚È‚¢‚Ì‚ÅA—ñ‚Ì‚·‚×‚Ä‚Ìƒf[ƒ^‚Ì’l‚ª”’l‚Æ‚µ‚Ä‰ğß‚Å‚«‚é—ñ‚Ìƒf[ƒ^‚ğ®”‚Æ‚µ‚Äˆµ‚¢‚Ü‚·B @n
-//! Às‚·‚éSQL‚Åg‚¦‚é‹@”\‚ğˆÈ‰º‚É—á‚Æ‚µ‚Ä‚ ‚°‚Ü‚·B                                                        @n
-//! —á1:                                                                                                     @n
+//! å‚ç…§ã™ã‚‹ãƒ†ãƒ¼ãƒ–ãƒ«ã¯ã€ãƒ†ãƒ¼ãƒ–ãƒ«å.csvã®å½¢ã§ä½œæˆã—ã¾ã™ã€‚                                                     @n
+//! ä¸€è¡Œç›®ã¯ãƒ˜ãƒƒãƒ€è¡Œã§ã€ãã®è¡Œã«åˆ—åã‚’æ›¸ãã¾ã™ã€‚                                                             @n
+//! å‰å¾Œã®ã‚¹ãƒšãƒ¼ã‚¹èª­ã¿é£›ã°ã—ã‚„ãƒ€ãƒ–ãƒ«ã‚¯ã‚©ãƒ¼ãƒ†ãƒ¼ã‚·ãƒ§ãƒ³ã§ããã‚‹ãªã©ã®æ©Ÿèƒ½ã¯ã‚ã‚Šã¾ã›ã‚“ã€‚                         @n
+//! åˆ—ã®å‹ã®å®šç¾©ã¯ã§ããªã„ã®ã§ã€åˆ—ã®ã™ã¹ã¦ã®ãƒ‡ãƒ¼ã‚¿ã®å€¤ãŒæ•°å€¤ã¨ã—ã¦è§£é‡ˆã§ãã‚‹åˆ—ã®ãƒ‡ãƒ¼ã‚¿ã‚’æ•´æ•°ã¨ã—ã¦æ‰±ã„ã¾ã™ã€‚ @n
+//! å®Ÿè¡Œã™ã‚‹SQLã§ä½¿ãˆã‚‹æ©Ÿèƒ½ã‚’ä»¥ä¸‹ã«ä¾‹ã¨ã—ã¦ã‚ã’ã¾ã™ã€‚                                                        @n
+//! ä¾‹1:                                                                                                     @n
 //! SELECT *                                                                                                 @n
 //! FROM USERS                                                                                               @n
 //!                                                                                                          @n
-//! —á2: ‘å•¶š¬•¶š‚Í‹æ•Ê‚µ‚Ü‚¹‚ñB                                                                        @n
+//! ä¾‹2: å¤§æ–‡å­—å°æ–‡å­—ã¯åŒºåˆ¥ã—ã¾ã›ã‚“ã€‚                                                                        @n
 //! select *                                                                                                 @n
 //! from users                                                                                               @n
 //!                                                                                                          @n
-//! —á3: —ñ‚Ìw’è‚ª‚Å‚«‚Ü‚·B                                                                                @n
+//! ä¾‹3: åˆ—ã®æŒ‡å®šãŒã§ãã¾ã™ã€‚                                                                                @n
 //! SELECT Id, Name                                                                                          @n
 //! FROM USERS                                                                                               @n
 //!                                                                                                          @n
-//! —á4: ƒe[ƒuƒ‹–¼‚ğw’è‚µ‚Ä—ñ‚Ìw’è‚ª‚Å‚«‚Ü‚·B                                                            @n
+//! ä¾‹4: ãƒ†ãƒ¼ãƒ–ãƒ«åã‚’æŒ‡å®šã—ã¦åˆ—ã®æŒ‡å®šãŒã§ãã¾ã™ã€‚                                                            @n
 //! SELECT USERS.Id                                                                                          @n
 //! FROM USERS                                                                                               @n
 //!                                                                                                          @n
-//! —á5: ORDER‹å‚ªg‚¦‚Ü‚·B                                                                                 @n
+//! ä¾‹5: ORDERå¥ãŒä½¿ãˆã¾ã™ã€‚                                                                                 @n
 //! SELECT *                                                                                                 @n
 //! ORDER BY NAME                                                                                            @n
 //! FROM USERS                                                                                               @n
 //!                                                                                                          @n
-//! —á6: ORDER‹å‚É•¡”—ñ‚â¸‡A~‡‚Ìw’è‚ª‚Å‚«‚Ü‚·B                                                       @n
+//! ä¾‹6: ORDERå¥ã«è¤‡æ•°åˆ—ã‚„æ˜‡é †ã€é™é †ã®æŒ‡å®šãŒã§ãã¾ã™ã€‚                                                       @n
 //! SELECT *                                                                                                 @n
 //! ORDER BY AGE DESC, Name ASC                                                                              @n
 //!                                                                                                          @n
-//! —á7: WHERE‹å‚ªg‚¦‚Ü‚·B                                                                                 @n
+//! ä¾‹7: WHEREå¥ãŒä½¿ãˆã¾ã™ã€‚                                                                                 @n
 //! SELECT *                                                                                                 @n
 //! WHERE AGE >= 20                                                                                          @n
 //! FROM USERS                                                                                               @n
 //!                                                                                                          @n
-//! —á8: WHERE‹å‚Å‚Í•¶š—ñ‚Ì”äŠr‚àg‚¦‚Ü‚·B                                                                 @n
+//! ä¾‹8: WHEREå¥ã§ã¯æ–‡å­—åˆ—ã®æ¯”è¼ƒã‚‚ä½¿ãˆã¾ã™ã€‚                                                                 @n
 //! SELECT *                                                                                                 @n
 //! WHERE NAME >= 'N'                                                                                        @n
 //! FROM USERS                                                                                               @n
 //!                                                                                                          @n
-//! —á9: WHERE‹å‚É‚Íl‘¥‰‰ZAƒJƒbƒRAANDAOR‚È‚Ç‚ğŠÜ‚Ş•¡G‚È®‚ª—˜—p‚Å‚«‚Ü‚·B                              @n
+//! ä¾‹9: WHEREå¥ã«ã¯å››å‰‡æ¼”ç®—ã€ã‚«ãƒƒã‚³ã€ANDã€ORãªã©ã‚’å«ã‚€è¤‡é›‘ãªå¼ãŒåˆ©ç”¨ã§ãã¾ã™ã€‚                              @n
 //! SELECT *                                                                                                 @n
 //! WHERE AGE >= 20 AND (AGE <= 40 || WEIGHT < 100)                                                          @n
 //! FROM USERS                                                                                               @n
 //!                                                                                                          @n
-//! —á10: FROM‹å‚É•¡”‚Ìƒe[ƒuƒ‹‚ªw’è‚Å‚«‚Ü‚·B‚»‚Ìê‡‚ÍƒNƒƒX‚ÅŒ‹‡‚µ‚Ü‚·B                               @n
+//! ä¾‹10: FROMå¥ã«è¤‡æ•°ã®ãƒ†ãƒ¼ãƒ–ãƒ«ãŒæŒ‡å®šã§ãã¾ã™ã€‚ãã®å ´åˆã¯ã‚¯ãƒ­ã‚¹ã§çµåˆã—ã¾ã™ã€‚                               @n
 //! SELECT *                                                                                                 @n
 //! FROM USERS, CHILDREN                                                                                     @n
 //!                                                                                                          @n
-//! —á11: WHERE‚ÅğŒ‚ğ‚Â‚¯‚é‚±‚Æ‚É‚æ‚èAƒe[ƒuƒ‹‚ÌŒ‹‡‚ª‚Å‚«‚Ü‚·B                                          @n
+//! ä¾‹11: WHEREã§æ¡ä»¶ã‚’ã¤ã‘ã‚‹ã“ã¨ã«ã‚ˆã‚Šã€ãƒ†ãƒ¼ãƒ–ãƒ«ã®çµåˆãŒã§ãã¾ã™ã€‚                                          @n
 //! SELECT USERS.NAME, CHILDREN.NAME                                                                         @n
 //! WHERE USERS.ID = CHILDREN.PARENTID                                                                       @n
 //! FROM USERS, CHILDREN                                                                                     @n
@@ -1764,7 +1764,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 		SqlQuery(sql).Execute(outputFileName);
 		return static_cast<int>(ResultValue::OK);
 	}
-	catch (ResultValue error) // ”­¶‚µ‚½ƒGƒ‰[‚Ìí—Ş‚Å‚·B
+	catch (ResultValue error) // ç™ºç”Ÿã—ãŸã‚¨ãƒ©ãƒ¼ã®ç¨®é¡ã§ã™ã€‚
 	{
 		return static_cast<int>(error);
 	}

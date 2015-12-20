@@ -10,20 +10,20 @@
 int ExecuteSQL(const char*, const char*);
 
 
-//! ExecuteSQL‚Ì–ß‚è’l‚Ìí—Ş‚ğ•\‚µ‚Ü‚·B
+//! ExecuteSQLã®æˆ»ã‚Šå€¤ã®ç¨®é¡ã‚’è¡¨ã—ã¾ã™ã€‚
 enum REAULT_VALUE
 {
-	OK = 0,                     //!< –â‘è‚È‚­I—¹‚µ‚Ü‚µ‚½B
-	ERR_FILE_OPEN = 1,          //!< ƒtƒ@ƒCƒ‹‚ğŠJ‚­‚±‚Æ‚É¸”s‚µ‚Ü‚µ‚½B
-	ERR_FILE_WRITE = 2,         //!< ƒtƒ@ƒCƒ‹‚É‘‚«‚İ‚ğs‚¤‚±‚Æ‚É¸”s‚µ‚Ü‚µ‚½B
-	ERR_FILE_CLOSE = 3,         //!< ƒtƒ@ƒCƒ‹‚ğ•Â‚¶‚é‚±‚Æ‚É¸”s‚µ‚Ü‚µ‚½B
-	ERR_TOKEN_CANT_READ = 4,    //!< ƒg[ƒNƒ“‰ğÍ‚É¸”s‚µ‚Ü‚µ‚½B
-	ERR_SQL_SYNTAX = 5,         //!< SQL‚Ì\•¶‰ğÍ‚ª¸”s‚µ‚Ü‚µ‚½B
-	ERR_BAD_COLUMN_NAME = 6,    //!< ƒe[ƒuƒ‹w’è‚ğŠÜ‚Ş—ñ–¼‚ª“KØ‚Å‚Í‚ ‚è‚Ü‚¹‚ñB
-	ERR_WHERE_OPERAND_TYPE = 7, //!< ‰‰Z‚Ì¶‰E‚ÌŒ^‚ª“KØ‚Å‚Í‚ ‚è‚Ü‚¹‚ñB
-	ERR_CSV_SYNTAX = 8,         //!< CSV‚Ì\•¶‰ğÍ‚ª¸”s‚µ‚Ü‚µ‚½B
-	ERR_MEMORY_ALLOCATE = 9,    //!< ƒƒ‚ƒŠ‚Ìæ“¾‚É¸”s‚µ‚Ü‚µ‚½B
-	ERR_MEMORY_OVER = 10        //!< —pˆÓ‚µ‚½ƒƒ‚ƒŠ—Ìˆæ‚ÌãŒÀ‚ğ’´‚¦‚Ü‚µ‚½B
+	OK = 0,                     //!< å•é¡Œãªãçµ‚äº†ã—ã¾ã—ãŸã€‚
+	ERR_FILE_OPEN = 1,          //!< ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ãã“ã¨ã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+	ERR_FILE_WRITE = 2,         //!< ãƒ•ã‚¡ã‚¤ãƒ«ã«æ›¸ãè¾¼ã¿ã‚’è¡Œã†ã“ã¨ã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+	ERR_FILE_CLOSE = 3,         //!< ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‰ã˜ã‚‹ã“ã¨ã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+	ERR_TOKEN_CANT_READ = 4,    //!< ãƒˆãƒ¼ã‚¯ãƒ³è§£æã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+	ERR_SQL_SYNTAX = 5,         //!< SQLã®æ§‹æ–‡è§£æãŒå¤±æ•—ã—ã¾ã—ãŸã€‚
+	ERR_BAD_COLUMN_NAME = 6,    //!< ãƒ†ãƒ¼ãƒ–ãƒ«æŒ‡å®šã‚’å«ã‚€åˆ—åãŒé©åˆ‡ã§ã¯ã‚ã‚Šã¾ã›ã‚“ã€‚
+	ERR_WHERE_OPERAND_TYPE = 7, //!< æ¼”ç®—ã®å·¦å³ã®å‹ãŒé©åˆ‡ã§ã¯ã‚ã‚Šã¾ã›ã‚“ã€‚
+	ERR_CSV_SYNTAX = 8,         //!< CSVã®æ§‹æ–‡è§£æãŒå¤±æ•—ã—ã¾ã—ãŸã€‚
+	ERR_MEMORY_ALLOCATE = 9,    //!< ãƒ¡ãƒ¢ãƒªã®å–å¾—ã«å¤±æ•—ã—ã¾ã—ãŸã€‚
+	ERR_MEMORY_OVER = 10        //!< ç”¨æ„ã—ãŸãƒ¡ãƒ¢ãƒªé ˜åŸŸã®ä¸Šé™ã‚’è¶…ãˆã¾ã—ãŸã€‚
 };
 
 using namespace std;
@@ -40,7 +40,7 @@ namespace Test
 		}
 	public:
 
-		TEST_METHOD_INITIALIZE(‰Šú‰»)
+		TEST_METHOD_INITIALIZE(åˆæœŸåŒ–)
 		{
 			ofstream o;
 			remove(testOutputPath);
@@ -104,7 +104,7 @@ namespace Test
 				<< "-6" << endl;
 		}
 
-		TEST_METHOD(ExecuteSQL‚Í’Pƒ‚ÈSQL‚ğÀs‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯å˜ç´”ãªSQLã‚’å®Ÿè¡Œã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -122,7 +122,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍÅŒã‚É‹ó”’‚ª‚ ‚Á‚Ä‚à³‚µ‚­“®ì‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯æœ€å¾Œã«ç©ºç™½ãŒã‚ã£ã¦ã‚‚æ­£ã—ãå‹•ä½œã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -140,7 +140,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚Í¯•Êq–¼‚É”š‚ğ—˜—p‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯è­˜åˆ¥å­åã«æ•°å­—ã‚’åˆ©ç”¨ã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -151,7 +151,7 @@ namespace Test
 			Assert::AreEqual((int)OK, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚Í¯•Êq–¼‚É”š‚Ån‚Ü‚é’PŒê‚Í—˜—p‚Å‚«‚Ü‚¹‚ñB)
+		TEST_METHOD(ExecuteSQLã¯è­˜åˆ¥å­åã«æ•°å­—ã§å§‹ã¾ã‚‹å˜èªã¯åˆ©ç”¨ã§ãã¾ã›ã‚“ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -162,7 +162,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_TOKEN_CANT_READ, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚Í¯•Êq–¼‚Ì‚Q•¶š–Ú‚É”š‚ğ—˜—p‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯è­˜åˆ¥å­åã®ï¼’æ–‡å­—ç›®ã«æ•°å­—ã‚’åˆ©ç”¨ã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -173,7 +173,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_FILE_OPEN, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚Í¯•Êq–¼‚Ìæ“ª‚ÉƒAƒ“ƒ_[ƒo[‚ğ—˜—p‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯è­˜åˆ¥å­åã®å…ˆé ­ã«ã‚¢ãƒ³ãƒ€ãƒ¼ãƒãƒ¼ã‚’åˆ©ç”¨ã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -184,7 +184,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_FILE_OPEN, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚Í¯•Êq–¼‚Ì“ñ•¶š–ÚˆÈ~‚ÉƒAƒ“ƒ_[ƒo[‚ğ—˜—p‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯è­˜åˆ¥å­åã®äºŒæ–‡å­—ç›®ä»¥é™ã«ã‚¢ãƒ³ãƒ€ãƒ¼ãƒãƒ¼ã‚’åˆ©ç”¨ã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -195,7 +195,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_FILE_OPEN, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚Í•¡”ŒÂ‘±‚­‹æØ‚è•¶š‚ğ—˜—p‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯è¤‡æ•°å€‹ç¶šãåŒºåˆ‡ã‚Šæ–‡å­—ã‚’åˆ©ç”¨ã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT  *  "
@@ -213,7 +213,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚Í‹æØ‚è•¶š‚Æ‚µ‚ÄƒXƒy[ƒX‚ğ”F¯‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯åŒºåˆ‡ã‚Šæ–‡å­—ã¨ã—ã¦ã‚¹ãƒšãƒ¼ã‚¹ã‚’èªè­˜ã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -231,7 +231,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚Í‹æØ‚è•¶š‚Æ‚µ‚Äƒ^ƒu‚ğ”F¯‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯åŒºåˆ‡ã‚Šæ–‡å­—ã¨ã—ã¦ã‚¿ãƒ–ã‚’èªè­˜ã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT\t*\t"
@@ -249,7 +249,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚Í‹æØ‚è•¶š‚Æ‚µ‚Ä‰üs‚ğ”F¯‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯åŒºåˆ‡ã‚Šæ–‡å­—ã¨ã—ã¦æ”¹è¡Œã‚’èªè­˜ã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT\n*\r\n"
@@ -267,7 +267,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚Í”F¯‚Å‚«‚È‚¢ƒg[ƒNƒ“‚ğŠÜ‚ŞŒê‚ğw’è‚µ‚½‚Æ‚«ERR_TOKEN_CANT_READƒGƒ‰[‚Æ‚È‚è‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯èªè­˜ã§ããªã„ãƒˆãƒ¼ã‚¯ãƒ³ã‚’å«ã‚€èªã‚’æŒ‡å®šã—ãŸã¨ãERR_TOKEN_CANT_READã‚¨ãƒ©ãƒ¼ã¨ãªã‚Šã¾ã™ã€‚)
 		{
 			char* sql =
 				"?";
@@ -278,7 +278,7 @@ namespace Test
 		}
 
 
-		TEST_METHOD(ExecuteSQL‚Íw’è‚µ‚½ƒe[ƒuƒ‹–¼‚ğæ“¾‚µA‘Î‰‚·‚éƒtƒ@ƒCƒ‹‚ğQÆ‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯æŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«åã‚’å–å¾—ã—ã€å¯¾å¿œã™ã‚‹ãƒ•ã‚¡ã‚¤ãƒ«ã‚’å‚ç…§ã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -296,7 +296,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚Í“ñ‚Â‚Ì‚Ìƒe[ƒuƒ‹‚ğ“Ç‚İ‚İA‘S‚Ä‚Ì‘g‚İ‡‚í‚¹‚ğo—Í‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯äºŒã¤ã®ã®ãƒ†ãƒ¼ãƒ–ãƒ«ã‚’èª­ã¿è¾¼ã¿ã€å…¨ã¦ã®çµ„ã¿åˆã‚ã›ã‚’å‡ºåŠ›ã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -320,7 +320,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍO‚ÂˆÈã‚Ìƒe[ƒuƒ‹‚ğ“Ç‚İ‚İA‘S‚Ä‚Ì‘g‚İ‡‚í‚¹‚ğo—Í‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ä¸‰ã¤ä»¥ä¸Šã®ãƒ†ãƒ¼ãƒ–ãƒ«ã‚’èª­ã¿è¾¼ã¿ã€å…¨ã¦ã®çµ„ã¿åˆã‚ã›ã‚’å‡ºåŠ›ã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -353,7 +353,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍSQLECT‹å‚Éƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚ğw’è‚µASQL‚ğÀs‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯SQLECTå¥ã«ãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã‚’æŒ‡å®šã—ã€SQLã‚’å®Ÿè¡Œã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT String "
@@ -371,7 +371,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍSQLECT‹å‚É•¡”‚Ìƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚ğw’è‚µASQL‚ğÀs‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯SQLECTå¥ã«è¤‡æ•°ã®ãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã‚’æŒ‡å®šã—ã€SQLã‚’å®Ÿè¡Œã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT String,Integer "
@@ -389,7 +389,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍSQLECT‹å‚ÉO‚ÂˆÈã‚Ìƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚ğw’è‚µASQL‚ğÀs‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯SQLECTå¥ã«ä¸‰ã¤ä»¥ä¸Šã®ãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã‚’æŒ‡å®šã—ã€SQLã‚’å®Ÿè¡Œã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT String,Integer,String,Integer "
@@ -407,7 +407,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍSELECT‚Ìw’è‚Éƒe[ƒuƒ‹–¼‚àw’è‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯SELECTã®æŒ‡å®šã«ãƒ†ãƒ¼ãƒ–ãƒ«åã‚‚æŒ‡å®šã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT TABLE1.Integer "
@@ -425,7 +425,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚Í•¡”‚Ì‚Ìƒe[ƒuƒ‹‚ğ“Ç‚İ‚İAƒe[ƒuƒ‹–¼‚Å‹æ•Ê‚µ‚Äƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚ğw’è‚·‚é‚±‚Æ‚ª‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯è¤‡æ•°ã®ã®ãƒ†ãƒ¼ãƒ–ãƒ«ã‚’èª­ã¿è¾¼ã¿ã€ãƒ†ãƒ¼ãƒ–ãƒ«åã§åŒºåˆ¥ã—ã¦ãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã‚’æŒ‡å®šã™ã‚‹ã“ã¨ãŒã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT Table1.Integer "
@@ -449,7 +449,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍSELECT‹å‚Åƒe[ƒuƒ‹–¼‚ğ“ñ‚Â–ÚˆÈ~‚Ìƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚Éw’è‚·‚é‚±‚Æ‚ª‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯SELECTå¥ã§ãƒ†ãƒ¼ãƒ–ãƒ«åã‚’äºŒã¤ç›®ä»¥é™ã®ãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã«æŒ‡å®šã™ã‚‹ã“ã¨ãŒã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT Table1.Integer, Table2.String "
@@ -473,7 +473,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍSELECT‚Ìƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚Ìw’è‚ª‚ ‚¢‚Ü‚¢‚Èê‡‚ÉERR_BAD_COLUMN_NAMEƒGƒ‰[‚Æ‚È‚è‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯SELECTã®ãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã®æŒ‡å®šãŒã‚ã„ã¾ã„ãªå ´åˆã«ERR_BAD_COLUMN_NAMEã‚¨ãƒ©ãƒ¼ã¨ãªã‚Šã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT Integer "
@@ -484,7 +484,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍSELECT‚Åw’è‚µ‚½ƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚Ìw’è‚Ìˆê•¶š–Ú‚Ìˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯SELECTã§æŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã®æŒ‡å®šã®ä¸€æ–‡å­—ç›®ã®é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT Ttring "
@@ -495,7 +495,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍSELECT‚Åw’è‚µ‚½ƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚Ìw’è‚Ì“ñ•¶š–Ú‚Ìˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯SELECTã§æŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã®æŒ‡å®šã®äºŒæ–‡å­—ç›®ã®é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT Suring "
@@ -506,7 +506,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍSELECT‚Åw’è‚µ‚½ƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚Ìw’è‚ÌÅI•¶š‚Ìˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯SELECTã§æŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã®æŒ‡å®šã®æœ€çµ‚æ–‡å­—ã®é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT Surinh "
@@ -517,7 +517,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍSELECT‚Åw’è‚µ‚½ƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚Ìw’è‚ªˆê•¶š‘½‚¢‚Æ‚¢‚¤ˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯SELECTã§æŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã®æŒ‡å®šãŒä¸€æ–‡å­—å¤šã„ã¨ã„ã†é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT Suringg "
@@ -528,7 +528,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍSELECT‚Åw’è‚µ‚½ƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚Ìw’è‚Ìˆê•¶š­‚È‚¢‚Æ‚¢‚¤ˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯SELECTã§æŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã®æŒ‡å®šã®ä¸€æ–‡å­—å°‘ãªã„ã¨ã„ã†é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT Surin "
@@ -539,7 +539,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍSELECT‚Åw’è‚µ‚½ƒe[ƒuƒ‹–¼‚Ìw’è‚Ìˆê•¶š–Ú‚Ìˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯SELECTã§æŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«åã®æŒ‡å®šã®ä¸€æ–‡å­—ç›®ã®é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT UABLE1.Integer "
@@ -550,7 +550,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍSELECT‚Åw’è‚µ‚½ƒe[ƒuƒ‹–¼‚Ìw’è‚Ì“ñ•¶š–Ú‚Ìˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯SELECTã§æŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«åã®æŒ‡å®šã®äºŒæ–‡å­—ç›®ã®é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT TBBLE1.Integer "
@@ -561,7 +561,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍSELECT‚Åw’è‚µ‚½ƒe[ƒuƒ‹–¼‚Ìw’è‚ÌÅI•¶š‚Ìˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯SELECTã§æŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«åã®æŒ‡å®šã®æœ€çµ‚æ–‡å­—ã®é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT TABLE2.Integer "
@@ -572,7 +572,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍSELECT‚Åw’è‚µ‚½ƒe[ƒuƒ‹–¼‚Ìw’è‚ªˆê•¶š‘½‚¢‚Æ‚¢‚¤ˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯SELECTã§æŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«åã®æŒ‡å®šãŒä¸€æ–‡å­—å¤šã„ã¨ã„ã†é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT TABLE1a.Integer "
@@ -583,7 +583,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍSELECT‚Åw’è‚µ‚½ƒe[ƒuƒ‹–¼‚Ìw’è‚Ìˆê•¶š­‚È‚¢‚Æ‚¢‚¤ˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯SELECTã§æŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«åã®æŒ‡å®šã®ä¸€æ–‡å­—å°‘ãªã„ã¨ã„ã†é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT TABLE.Integer "
@@ -595,7 +595,7 @@ namespace Test
 		}
 
 
-		TEST_METHOD(ExecuteSQL‚ÍORDER‹å‚Å•¶š—ñ‚ğ«‘‡‚Å•À‚×‘Ö‚¦‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORDERå¥ã§æ–‡å­—åˆ—ã‚’è¾æ›¸é †ã§ä¸¦ã¹æ›¿ãˆã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -617,7 +617,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍORDER‹å‚ÉSELECT‚Åw’è‚³‚ê‚È‚©‚Á‚½—ñ‚ğw’è‚·‚é‚±‚Æ‚ª‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORDERå¥ã«SELECTã§æŒ‡å®šã•ã‚Œãªã‹ã£ãŸåˆ—ã‚’æŒ‡å®šã™ã‚‹ã“ã¨ãŒã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT String "
@@ -639,7 +639,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍORDER‹å‚ÉSELECT‚Åw’è‚³‚ê‚È‚©‚Á‚½A“ü—Í‚ÌÅŒã‚Ì—ñ‚ğw’è‚·‚é‚±‚Æ‚ª‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORDERå¥ã«SELECTã§æŒ‡å®šã•ã‚Œãªã‹ã£ãŸã€å…¥åŠ›ã®æœ€å¾Œã®åˆ—ã‚’æŒ‡å®šã™ã‚‹ã“ã¨ãŒã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT Integer "
@@ -661,7 +661,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍORDER‹å‚Å”š—ñ‚ğ‘å¬‡‚Å•À‚×‘Ö‚¦‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORDERå¥ã§æ•°å­—åˆ—ã‚’å¤§å°é †ã§ä¸¦ã¹æ›¿ãˆã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -683,7 +683,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍORDER‹å‚Åƒ}ƒCƒiƒX‚Ì”’l‚ğˆµ‚¦‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORDERå¥ã§ãƒã‚¤ãƒŠã‚¹ã®æ•°å€¤ã‚’æ‰±ãˆã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -705,7 +705,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍORDER‹å‚Å•¡”‚Ì•¶š—ñ‚ğğŒ‚É‚µ‚Ä•À‚×‘Ö‚¦‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORDERå¥ã§è¤‡æ•°ã®æ–‡å­—åˆ—ã‚’æ¡ä»¶ã«ã—ã¦ä¸¦ã¹æ›¿ãˆã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT String1, String2 "
@@ -725,7 +725,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍORDER‹å‚Å•¡”‚Ì”’l—ñ‚ğğŒ‚É‚µ‚Ä•À‚×‘Ö‚¦‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORDERå¥ã§è¤‡æ•°ã®æ•°å€¤åˆ—ã‚’æ¡ä»¶ã«ã—ã¦ä¸¦ã¹æ›¿ãˆã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT Integer1, Integer2 "
@@ -745,7 +745,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍORDER‹å‚Å•¡”‚ÌğŒ‚ğw’è‚µ‚½ê‡‚Éæ‚Éw’è‚µ‚½ğŒ‚ğ—Dæ‚µ‚Ä•À‚×‘Ö‚¦‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORDERå¥ã§è¤‡æ•°ã®æ¡ä»¶ã‚’æŒ‡å®šã—ãŸå ´åˆã«å…ˆã«æŒ‡å®šã—ãŸæ¡ä»¶ã‚’å„ªå…ˆã—ã¦ä¸¦ã¹æ›¿ãˆã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT String1, String2 "
@@ -765,7 +765,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍORDER‹å‚Å¸‡‚ğw’è‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORDERå¥ã§æ˜‡é †ã‚’æŒ‡å®šã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT String1, String2 "
@@ -785,7 +785,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍORDER‹å‚Å~‡‚ğw’è‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORDERå¥ã§é™é †ã‚’æŒ‡å®šã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT String1, String2 "
@@ -805,7 +805,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍORDER‹å‚Å“ñ‚Â–ÚˆÈ~‚Ì€–Ú‚É¸‡‚ğw’è‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORDERå¥ã§äºŒã¤ç›®ä»¥é™ã®é …ç›®ã«æ˜‡é †ã‚’æŒ‡å®šã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT String1, String2 "
@@ -825,7 +825,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍORDER‹å‚Å“ñ‚Â–ÚˆÈ~‚Ì€–Ú‚É~‡‚ğw’è‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORDERå¥ã§äºŒã¤ç›®ä»¥é™ã®é …ç›®ã«é™é †ã‚’æŒ‡å®šã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT String1, String2 "
@@ -845,7 +845,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍORDER‹å‚Éƒe[ƒuƒ‹–¼•t‚Ìƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚ğw’è‚·‚é‚±‚Æ‚ª‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORDERå¥ã«ãƒ†ãƒ¼ãƒ–ãƒ«åä»˜ã®ãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã‚’æŒ‡å®šã™ã‚‹ã“ã¨ãŒã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT String "
@@ -867,7 +867,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍORDER‹å‚Éƒe[ƒuƒ‹–¼•t‚Ìƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚ğw’è‚µAƒe[ƒuƒ‹‚ğ‘I‘ğ‚·‚é‚±‚Æ‚ª‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORDERå¥ã«ãƒ†ãƒ¼ãƒ–ãƒ«åä»˜ã®ãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã‚’æŒ‡å®šã—ã€ãƒ†ãƒ¼ãƒ–ãƒ«ã‚’é¸æŠã™ã‚‹ã“ã¨ãŒã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT *"
@@ -892,7 +892,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍORDERBYw’è‚µ‚½ƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚Ìw’è‚Ìˆê•¶š–Ú‚Ìˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORDERBYæŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã®æŒ‡å®šã®ä¸€æ–‡å­—ç›®ã®é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -904,7 +904,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍORDERBYw’è‚µ‚½ƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚Ìw’è‚Ì“ñ•¶š–Ú‚Ìˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORDERBYæŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã®æŒ‡å®šã®äºŒæ–‡å­—ç›®ã®é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -916,7 +916,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍORDERBYw’è‚µ‚½ƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚Ìw’è‚ÌÅI•¶š‚Ìˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORDERBYæŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã®æŒ‡å®šã®æœ€çµ‚æ–‡å­—ã®é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -928,7 +928,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍORDERBYw’è‚µ‚½ƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚Ìw’è‚ªˆê•¶š‘½‚¢‚Æ‚¢‚¤ˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORDERBYæŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã®æŒ‡å®šãŒä¸€æ–‡å­—å¤šã„ã¨ã„ã†é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -940,7 +940,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍORDERBYw’è‚µ‚½ƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚Ìw’è‚Ìˆê•¶š­‚È‚¢‚Æ‚¢‚¤ˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORDERBYæŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã®æŒ‡å®šã®ä¸€æ–‡å­—å°‘ãªã„ã¨ã„ã†é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -952,7 +952,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍORDERBYw’è‚µ‚½ƒe[ƒuƒ‹–¼‚Ìw’è‚Ìˆê•¶š–Ú‚Ìˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORDERBYæŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«åã®æŒ‡å®šã®ä¸€æ–‡å­—ç›®ã®é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -964,7 +964,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍORDERBYw’è‚µ‚½ƒe[ƒuƒ‹–¼‚Ìw’è‚Ì“ñ•¶š–Ú‚Ìˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORDERBYæŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«åã®æŒ‡å®šã®äºŒæ–‡å­—ç›®ã®é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -976,7 +976,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍORDERBYw’è‚µ‚½ƒe[ƒuƒ‹–¼‚Ìw’è‚ÌÅI•¶š‚Ìˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORDERBYæŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«åã®æŒ‡å®šã®æœ€çµ‚æ–‡å­—ã®é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -988,7 +988,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍORDERBYw’è‚µ‚½ƒe[ƒuƒ‹–¼‚Ìw’è‚ªˆê•¶š‘½‚¢‚Æ‚¢‚¤ˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORDERBYæŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«åã®æŒ‡å®šãŒä¸€æ–‡å­—å¤šã„ã¨ã„ã†é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1000,7 +1000,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍORDERBYw’è‚µ‚½ƒe[ƒuƒ‹–¼‚Ìw’è‚Ìˆê•¶š­‚È‚¢‚Æ‚¢‚¤ˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORDERBYæŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«åã®æŒ‡å®šã®ä¸€æ–‡å­—å°‘ãªã„ã¨ã„ã†é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1012,7 +1012,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍORDERBY‚ÅB–†‚Èƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚ğw’è‚µ‚½ê‡‚ÉERR_BAD_COLUMN_NAMEƒGƒ‰[‚Æ‚È‚è‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORDERBYã§æ›–æ˜§ãªãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã‚’æŒ‡å®šã—ãŸå ´åˆã«ERR_BAD_COLUMN_NAMEã‚¨ãƒ©ãƒ¼ã¨ãªã‚Šã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1024,7 +1024,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å”’l—ñ‚É‘Î‚·‚éğŒ‚Æ‚µ‚Ä•¶š—ñ‚Íw’è‚Å‚«‚Ü‚¹‚ñB)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æ•°å€¤åˆ—ã«å¯¾ã™ã‚‹æ¡ä»¶ã¨ã—ã¦æ–‡å­—åˆ—ã¯æŒ‡å®šã§ãã¾ã›ã‚“ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1037,7 +1037,7 @@ namespace Test
 		}
 
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å”’l‚Æ‚µ‚Ä“™‚µ‚¢ğŒ‚Ìw’è‚ª‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æ•°å€¤ã¨ã—ã¦ç­‰ã—ã„æ¡ä»¶ã®æŒ‡å®šãŒã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1054,7 +1054,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å”’l‚Æ‚µ‚Ä“™‚µ‚­‚È‚¢ğŒ‚Ìw’è‚ª‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æ•°å€¤ã¨ã—ã¦ç­‰ã—ããªã„æ¡ä»¶ã®æŒ‡å®šãŒã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1072,7 +1072,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å”’l‚Æ‚µ‚Ä‘å‚«‚¢ğŒ‚Ìw’è‚ª‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æ•°å€¤ã¨ã—ã¦å¤§ãã„æ¡ä»¶ã®æŒ‡å®šãŒã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1089,7 +1089,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å”’l‚Æ‚µ‚Ä¬‚³‚¢ğŒ‚Ìw’è‚ª‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æ•°å€¤ã¨ã—ã¦å°ã•ã„æ¡ä»¶ã®æŒ‡å®šãŒã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1106,7 +1106,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å”’l‚Æ‚µ‚ÄˆÈã‚ÌğŒ‚Ìw’è‚ª‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æ•°å€¤ã¨ã—ã¦ä»¥ä¸Šã®æ¡ä»¶ã®æŒ‡å®šãŒã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1125,7 +1125,7 @@ namespace Test
 		}
 
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å”’l‚Æ‚µ‚ÄˆÈ‰º‚ÌğŒ‚Ìw’è‚ª‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æ•°å€¤ã¨ã—ã¦ä»¥ä¸‹ã®æ¡ä»¶ã®æŒ‡å®šãŒã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1143,7 +1143,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Åƒ}ƒCƒiƒX‚Ì”’l‚ªˆµ‚¦‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§ãƒã‚¤ãƒŠã‚¹ã®æ•°å€¤ãŒæ‰±ãˆã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1163,7 +1163,7 @@ namespace Test
 		}
 
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Åƒvƒ‰ƒX‚ğ–¾¦‚µ‚½‚Ì”’l‚ªˆµ‚¦‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§ãƒ—ãƒ©ã‚¹ã‚’æ˜ç¤ºã—ãŸã®æ•°å€¤ãŒæ‰±ãˆã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1181,7 +1181,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Åƒ}ƒCƒiƒX‚ğw’è‚µ‚½‚Ì—ñ–¼‚ªˆµ‚¦‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§ãƒã‚¤ãƒŠã‚¹ã‚’æŒ‡å®šã—ãŸã®åˆ—åãŒæ‰±ãˆã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1201,7 +1201,7 @@ namespace Test
 		}
 
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Åƒvƒ‰ƒX‚ğ–¾¦‚µ‚½—ñ–¼‚ªˆµ‚¦‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§ãƒ—ãƒ©ã‚¹ã‚’æ˜ç¤ºã—ãŸåˆ—åãŒæ‰±ãˆã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1219,7 +1219,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å•¶š—ñ‚Éƒ}ƒCƒiƒX‚Ìw’è‚Í‚Å‚«‚Ü‚¹‚ñB)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æ–‡å­—åˆ—ã«ãƒã‚¤ãƒŠã‚¹ã®æŒ‡å®šã¯ã§ãã¾ã›ã‚“ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1231,7 +1231,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å•¶š—ñ‚Éƒvƒ‰ƒX‚Ìw’è‚Í‚Å‚«‚Ü‚¹‚ñB)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æ–‡å­—åˆ—ã«ãƒ—ãƒ©ã‚¹ã®æŒ‡å®šã¯ã§ãã¾ã›ã‚“ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1243,7 +1243,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚ÅSELECT‹å‚Åw’è‚µ‚Ä‚¢‚È‚¢—ñ‚ÌğŒ‚Ìw’è‚ª‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§SELECTå¥ã§æŒ‡å®šã—ã¦ã„ãªã„åˆ—ã®æ¡ä»¶ã®æŒ‡å®šãŒã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT String "
@@ -1260,7 +1260,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚ÅSELECT‹å‚Åw’è‚µ‚Ä‚¢‚È‚¢A“ü—Í‚ÌÅŒã‚Ì—ñ‚ªƒe[ƒuƒ‹–¼‚ğw’è‚¹‚¸‚ÉğŒ‚Ìw’è‚ª‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§SELECTå¥ã§æŒ‡å®šã—ã¦ã„ãªã„ã€å…¥åŠ›ã®æœ€å¾Œã®åˆ—ãŒãƒ†ãƒ¼ãƒ–ãƒ«åã‚’æŒ‡å®šã›ãšã«æ¡ä»¶ã®æŒ‡å®šãŒã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT Integer "
@@ -1277,7 +1277,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚ÅSELECT‹å‚Åw’è‚µ‚Ä‚¢‚È‚¢A“ü—Í‚ÌÅŒã‚Ì—ñ‚ªƒe[ƒuƒ‹–¼‚ğw’è‚µ‚ÄğŒ‚Ìw’è‚ª‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§SELECTå¥ã§æŒ‡å®šã—ã¦ã„ãªã„ã€å…¥åŠ›ã®æœ€å¾Œã®åˆ—ãŒãƒ†ãƒ¼ãƒ–ãƒ«åã‚’æŒ‡å®šã—ã¦æ¡ä»¶ã®æŒ‡å®šãŒã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT Integer "
@@ -1294,7 +1294,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å•¶š—ñ‚Æ”’l‚Ì“™‚µ‚¢ğŒ‚Ì”äŠr‚ğ‚µ‚½ê‡‚ÉERR_WHERE_OPERAND_TYPEƒGƒ‰[‚Æ‚È‚è‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æ–‡å­—åˆ—ã¨æ•°å€¤ã®ç­‰ã—ã„æ¡ä»¶ã®æ¯”è¼ƒã‚’ã—ãŸå ´åˆã«ERR_WHERE_OPERAND_TYPEã‚¨ãƒ©ãƒ¼ã¨ãªã‚Šã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1306,7 +1306,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å•¶š—ñ‚Æ”’l‚Ì“™‚µ‚­‚È‚¢ğŒ‚Ì”äŠr‚ğ‚µ‚½ê‡‚ÉERR_WHERE_OPERAND_TYPEƒGƒ‰[‚Æ‚È‚è‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æ–‡å­—åˆ—ã¨æ•°å€¤ã®ç­‰ã—ããªã„æ¡ä»¶ã®æ¯”è¼ƒã‚’ã—ãŸå ´åˆã«ERR_WHERE_OPERAND_TYPEã‚¨ãƒ©ãƒ¼ã¨ãªã‚Šã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1318,7 +1318,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å•¶š—ñ‚Æ”’l‚Ì¬‚³‚¢ğŒ‚Ì”äŠr‚ğ‚µ‚½ê‡‚ÉERR_WHERE_OPERAND_TYPEƒGƒ‰[‚Æ‚È‚è‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æ–‡å­—åˆ—ã¨æ•°å€¤ã®å°ã•ã„æ¡ä»¶ã®æ¯”è¼ƒã‚’ã—ãŸå ´åˆã«ERR_WHERE_OPERAND_TYPEã‚¨ãƒ©ãƒ¼ã¨ãªã‚Šã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1330,7 +1330,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å•¶š—ñ‚Æ”’l‚ÌˆÈ‰ºğŒ‚Ì”äŠr‚ğ‚µ‚½ê‡‚ÉERR_WHERE_OPERAND_TYPEƒGƒ‰[‚Æ‚È‚è‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æ–‡å­—åˆ—ã¨æ•°å€¤ã®ä»¥ä¸‹æ¡ä»¶ã®æ¯”è¼ƒã‚’ã—ãŸå ´åˆã«ERR_WHERE_OPERAND_TYPEã‚¨ãƒ©ãƒ¼ã¨ãªã‚Šã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1342,7 +1342,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å•¶š—ñ‚Æ”’l‚Ì‘å‚«‚¢ğŒ‚Ì”äŠr‚ğ‚µ‚½ê‡‚ÉERR_WHERE_OPERAND_TYPEƒGƒ‰[‚Æ‚È‚è‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æ–‡å­—åˆ—ã¨æ•°å€¤ã®å¤§ãã„æ¡ä»¶ã®æ¯”è¼ƒã‚’ã—ãŸå ´åˆã«ERR_WHERE_OPERAND_TYPEã‚¨ãƒ©ãƒ¼ã¨ãªã‚Šã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1354,7 +1354,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å•¶š—ñ‚Æ”’l‚ÌˆÈãğŒ‚Ì”äŠr‚ğ‚µ‚½ê‡‚ÉERR_WHERE_OPERAND_TYPEƒGƒ‰[‚Æ‚È‚è‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æ–‡å­—åˆ—ã¨æ•°å€¤ã®ä»¥ä¸Šæ¡ä»¶ã®æ¯”è¼ƒã‚’ã—ãŸå ´åˆã«ERR_WHERE_OPERAND_TYPEã‚¨ãƒ©ãƒ¼ã¨ãªã‚Šã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1366,7 +1366,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å”’l‚Æ•¶š—ñ‚Ì“™‚µ‚¢ğŒ‚Ì”äŠr‚ğ‚µ‚½ê‡‚ÉERR_WHERE_OPERAND_TYPEƒGƒ‰[‚Æ‚È‚è‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æ•°å€¤ã¨æ–‡å­—åˆ—ã®ç­‰ã—ã„æ¡ä»¶ã®æ¯”è¼ƒã‚’ã—ãŸå ´åˆã«ERR_WHERE_OPERAND_TYPEã‚¨ãƒ©ãƒ¼ã¨ãªã‚Šã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1378,7 +1378,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å”’l‚Æ•¶š—ñ‚Ì“™‚µ‚­‚È‚¢ğŒ‚Ì”äŠr‚ğ‚µ‚½ê‡‚ÉERR_WHERE_OPERAND_TYPEƒGƒ‰[‚Æ‚È‚è‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æ•°å€¤ã¨æ–‡å­—åˆ—ã®ç­‰ã—ããªã„æ¡ä»¶ã®æ¯”è¼ƒã‚’ã—ãŸå ´åˆã«ERR_WHERE_OPERAND_TYPEã‚¨ãƒ©ãƒ¼ã¨ãªã‚Šã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1390,7 +1390,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å”’l‚Æ•¶š—ñ‚Ì¬‚³‚¢ğŒ‚Ì”äŠr‚ğ‚µ‚½ê‡‚ÉERR_WHERE_OPERAND_TYPEƒGƒ‰[‚Æ‚È‚è‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æ•°å€¤ã¨æ–‡å­—åˆ—ã®å°ã•ã„æ¡ä»¶ã®æ¯”è¼ƒã‚’ã—ãŸå ´åˆã«ERR_WHERE_OPERAND_TYPEã‚¨ãƒ©ãƒ¼ã¨ãªã‚Šã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1402,7 +1402,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å”’l‚Æ•¶š—ñ‚ÌˆÈ‰ºğŒ‚Ì”äŠr‚ğ‚µ‚½ê‡‚ÉERR_WHERE_OPERAND_TYPEƒGƒ‰[‚Æ‚È‚è‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æ•°å€¤ã¨æ–‡å­—åˆ—ã®ä»¥ä¸‹æ¡ä»¶ã®æ¯”è¼ƒã‚’ã—ãŸå ´åˆã«ERR_WHERE_OPERAND_TYPEã‚¨ãƒ©ãƒ¼ã¨ãªã‚Šã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1414,7 +1414,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å”’l‚Æ•¶š—ñ‚Ì‘å‚«‚¢ğŒ‚Ì”äŠr‚ğ‚µ‚½ê‡‚ÉERR_WHERE_OPERAND_TYPEƒGƒ‰[‚Æ‚È‚è‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æ•°å€¤ã¨æ–‡å­—åˆ—ã®å¤§ãã„æ¡ä»¶ã®æ¯”è¼ƒã‚’ã—ãŸå ´åˆã«ERR_WHERE_OPERAND_TYPEã‚¨ãƒ©ãƒ¼ã¨ãªã‚Šã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1426,7 +1426,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å”’l‚Æ•¶š—ñ‚ÌˆÈãğŒ‚Ì”äŠr‚ğ‚µ‚½ê‡‚ÉERR_WHERE_OPERAND_TYPEƒGƒ‰[‚Æ‚È‚è‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æ•°å€¤ã¨æ–‡å­—åˆ—ã®ä»¥ä¸Šæ¡ä»¶ã®æ¯”è¼ƒã‚’ã—ãŸå ´åˆã«ERR_WHERE_OPERAND_TYPEã‚¨ãƒ©ãƒ¼ã¨ãªã‚Šã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1438,7 +1438,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å•¶š—ñ‚Æ‚µ‚Ä“™‚µ‚¢ğŒ‚Ìw’è‚ª‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æ–‡å­—åˆ—ã¨ã—ã¦ç­‰ã—ã„æ¡ä»¶ã®æŒ‡å®šãŒã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1455,7 +1455,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å•¶š—ñ‚Æ‚µ‚Ä“™‚µ‚­‚È‚¢ğŒ‚Ìw’è‚ª‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æ–‡å­—åˆ—ã¨ã—ã¦ç­‰ã—ããªã„æ¡ä»¶ã®æŒ‡å®šãŒã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1473,7 +1473,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å•¶š—ñ‚Æ‚µ‚Ä‘å‚«‚¢ğŒ‚Ìw’è‚ª‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æ–‡å­—åˆ—ã¨ã—ã¦å¤§ãã„æ¡ä»¶ã®æŒ‡å®šãŒã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1490,7 +1490,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å•¶š—ñ‚Æ‚µ‚Ä¬‚³‚¢ğŒ‚Ìw’è‚ª‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æ–‡å­—åˆ—ã¨ã—ã¦å°ã•ã„æ¡ä»¶ã®æŒ‡å®šãŒã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1507,7 +1507,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å•¶š—ñ‚Æ‚µ‚ÄˆÈã‚ÌğŒ‚Ìw’è‚ª‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æ–‡å­—åˆ—ã¨ã—ã¦ä»¥ä¸Šã®æ¡ä»¶ã®æŒ‡å®šãŒã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1526,7 +1526,7 @@ namespace Test
 		}
 
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å•¶š—ñ‚Æ‚µ‚ÄˆÈ‰º‚ÌğŒ‚Ìw’è‚ª‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æ–‡å­—åˆ—ã¨ã—ã¦ä»¥ä¸‹ã®æ¡ä»¶ã®æŒ‡å®šãŒã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1544,7 +1544,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHEREw’è‚µ‚½ƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚Ìw’è‚Ìˆê•¶š–Ú‚Ìˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREæŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã®æŒ‡å®šã®ä¸€æ–‡å­—ç›®ã®é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1556,7 +1556,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHEREw’è‚µ‚½ƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚Ìw’è‚Ì“ñ•¶š–Ú‚Ìˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREæŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã®æŒ‡å®šã®äºŒæ–‡å­—ç›®ã®é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1568,7 +1568,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHEREw’è‚µ‚½ƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚Ìw’è‚ÌÅI•¶š‚Ìˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREæŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã®æŒ‡å®šã®æœ€çµ‚æ–‡å­—ã®é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1580,7 +1580,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHEREw’è‚µ‚½ƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚Ìw’è‚ªˆê•¶š‘½‚¢‚Æ‚¢‚¤ˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREæŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã®æŒ‡å®šãŒä¸€æ–‡å­—å¤šã„ã¨ã„ã†é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1592,7 +1592,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHEREw’è‚µ‚½ƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚Ìw’è‚Ìˆê•¶š­‚È‚¢‚Æ‚¢‚¤ˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREæŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã®æŒ‡å®šã®ä¸€æ–‡å­—å°‘ãªã„ã¨ã„ã†é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1604,7 +1604,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å”äŠr‚Ìƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚ğ‰E•Ó‚É‚Á‚Ä‚­‚é‚±‚Æ‚ª‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æ¯”è¼ƒã®ãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã‚’å³è¾ºã«æŒã£ã¦ãã‚‹ã“ã¨ãŒã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1621,7 +1621,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å‰ÁZ‰‰Zq‚ªg‚¦‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§åŠ ç®—æ¼”ç®—å­ãŒä½¿ãˆã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1638,7 +1638,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Ì‰ÁZ‰‰Zq‚Ì¶•Ó‚ª”’l‚Å‚È‚¢ê‡‚ÍERR_WHERE_OPERAND_TYPEƒGƒ‰[‚Æ‚È‚è‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã®åŠ ç®—æ¼”ç®—å­ã®å·¦è¾ºãŒæ•°å€¤ã§ãªã„å ´åˆã¯ERR_WHERE_OPERAND_TYPEã‚¨ãƒ©ãƒ¼ã¨ãªã‚Šã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1650,7 +1650,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Ì‰ÁZ‰‰Zq‚Ì‰E•Ó‚ª”’l‚Å‚È‚¢ê‡‚ÍERR_WHERE_OPERAND_TYPEƒGƒ‰[‚Æ‚È‚è‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã®åŠ ç®—æ¼”ç®—å­ã®å³è¾ºãŒæ•°å€¤ã§ãªã„å ´åˆã¯ERR_WHERE_OPERAND_TYPEã‚¨ãƒ©ãƒ¼ã¨ãªã‚Šã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1662,7 +1662,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚ÅŒ¸Z‰‰Zq‚ªg‚¦‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æ¸›ç®—æ¼”ç®—å­ãŒä½¿ãˆã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1679,7 +1679,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚ÌŒ¸Z‰‰Zq‚Ì¶•Ó‚ª”’l‚Å‚È‚¢ê‡‚ÍERR_WHERE_OPERAND_TYPEƒGƒ‰[‚Æ‚È‚è‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã®æ¸›ç®—æ¼”ç®—å­ã®å·¦è¾ºãŒæ•°å€¤ã§ãªã„å ´åˆã¯ERR_WHERE_OPERAND_TYPEã‚¨ãƒ©ãƒ¼ã¨ãªã‚Šã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1691,7 +1691,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚ÌŒ¸Z‰‰Zq‚Ì‰E•Ó‚ª”’l‚Å‚È‚¢ê‡‚ÍERR_WHERE_OPERAND_TYPEƒGƒ‰[‚Æ‚È‚è‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã®æ¸›ç®—æ¼”ç®—å­ã®å³è¾ºãŒæ•°å€¤ã§ãªã„å ´åˆã¯ERR_WHERE_OPERAND_TYPEã‚¨ãƒ©ãƒ¼ã¨ãªã‚Šã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1703,7 +1703,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚ÅæZ‰‰Zq‚ªg‚¦‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§ä¹—ç®—æ¼”ç®—å­ãŒä½¿ãˆã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1720,7 +1720,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚ÌæZ‰‰Zq‚Ì¶•Ó‚ª”’l‚Å‚È‚¢ê‡‚ÍERR_WHERE_OPERAND_TYPEƒGƒ‰[‚Æ‚È‚è‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã®ä¹—ç®—æ¼”ç®—å­ã®å·¦è¾ºãŒæ•°å€¤ã§ãªã„å ´åˆã¯ERR_WHERE_OPERAND_TYPEã‚¨ãƒ©ãƒ¼ã¨ãªã‚Šã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1732,7 +1732,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚ÌæZ‰‰Zq‚Ì‰E•Ó‚ª”’l‚Å‚È‚¢ê‡‚ÍERR_WHERE_OPERAND_TYPEƒGƒ‰[‚Æ‚È‚è‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã®ä¹—ç®—æ¼”ç®—å­ã®å³è¾ºãŒæ•°å€¤ã§ãªã„å ´åˆã¯ERR_WHERE_OPERAND_TYPEã‚¨ãƒ©ãƒ¼ã¨ãªã‚Šã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1744,7 +1744,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚ÅœZ‰‰Zq‚ªg‚¦‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§é™¤ç®—æ¼”ç®—å­ãŒä½¿ãˆã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1761,7 +1761,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚ÌœZ‰‰Zq‚Ì¶•Ó‚ª”’l‚Å‚È‚¢ê‡‚ÍERR_WHERE_OPERAND_TYPEƒGƒ‰[‚Æ‚È‚è‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã®é™¤ç®—æ¼”ç®—å­ã®å·¦è¾ºãŒæ•°å€¤ã§ãªã„å ´åˆã¯ERR_WHERE_OPERAND_TYPEã‚¨ãƒ©ãƒ¼ã¨ãªã‚Šã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1773,7 +1773,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚ÌœZ‰‰Zq‚Ì‰E•Ó‚ª”’l‚Å‚È‚¢ê‡‚ÍERR_WHERE_OPERAND_TYPEƒGƒ‰[‚Æ‚È‚è‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã®é™¤ç®—æ¼”ç®—å­ã®å³è¾ºãŒæ•°å€¤ã§ãªã„å ´åˆã¯ERR_WHERE_OPERAND_TYPEã‚¨ãƒ©ãƒ¼ã¨ãªã‚Šã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1785,7 +1785,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚ÅAND‰‰Zq‚ªg‚¦‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§ANDæ¼”ç®—å­ãŒä½¿ãˆã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1802,7 +1802,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚ÌAND‰‰Zq‚Ì¶•Ó‚ª^‹U’l‚Å‚È‚¢ê‡‚ÍERR_WHERE_OPERAND_TYPEƒGƒ‰[‚Æ‚È‚è‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã®ANDæ¼”ç®—å­ã®å·¦è¾ºãŒçœŸå½å€¤ã§ãªã„å ´åˆã¯ERR_WHERE_OPERAND_TYPEã‚¨ãƒ©ãƒ¼ã¨ãªã‚Šã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1814,7 +1814,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚ÌAND‰‰Zq‚Ì‰E•Ó‚ª^‹U’l‚Å‚È‚¢ê‡‚ÍERR_WHERE_OPERAND_TYPEƒGƒ‰[‚Æ‚È‚è‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã®ANDæ¼”ç®—å­ã®å³è¾ºãŒçœŸå½å€¤ã§ãªã„å ´åˆã¯ERR_WHERE_OPERAND_TYPEã‚¨ãƒ©ãƒ¼ã¨ãªã‚Šã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1826,7 +1826,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚ÅOR‰‰Zq‚ªg‚¦‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§ORæ¼”ç®—å­ãŒä½¿ãˆã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1844,7 +1844,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚ÌOR‰‰Zq‚Ì¶•Ó‚ª^‹U’l‚Å‚È‚¢ê‡‚ÍERR_WHERE_OPERAND_TYPEƒGƒ‰[‚Æ‚È‚è‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã®ORæ¼”ç®—å­ã®å·¦è¾ºãŒçœŸå½å€¤ã§ãªã„å ´åˆã¯ERR_WHERE_OPERAND_TYPEã‚¨ãƒ©ãƒ¼ã¨ãªã‚Šã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1856,7 +1856,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚ÌOR‰‰Zq‚Ì‰E•Ó‚ª^‹U’l‚Å‚È‚¢ê‡‚ÍERR_WHERE_OPERAND_TYPEƒGƒ‰[‚Æ‚È‚è‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã®ORæ¼”ç®—å­ã®å³è¾ºãŒçœŸå½å€¤ã§ãªã„å ´åˆã¯ERR_WHERE_OPERAND_TYPEã‚¨ãƒ©ãƒ¼ã¨ãªã‚Šã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1868,7 +1868,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_WHERE_OPERAND_TYPE, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å‰‰Zq‚Ì—Dæ‡ˆÊ‚ªl—¶‚³‚ê‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æ¼”ç®—å­ã®å„ªå…ˆé †ä½ãŒè€ƒæ…®ã•ã‚Œã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1885,7 +1885,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å‰ÁZ‰‰Zq‚ÍŒ¸Z‰‰Zq‚æ‚è‹­‚­‚Í‚È‚¢—Dæ‡ˆÊ‚Å‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§åŠ ç®—æ¼”ç®—å­ã¯æ¸›ç®—æ¼”ç®—å­ã‚ˆã‚Šå¼·ãã¯ãªã„å„ªå…ˆé †ä½ã§ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1902,7 +1902,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚ÅæZ‰‰Zq‚ÍŒ¸Z‰‰Zq‚æ‚è‹­‚¢—Dæ‡ˆÊ‚Å‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§ä¹—ç®—æ¼”ç®—å­ã¯æ¸›ç®—æ¼”ç®—å­ã‚ˆã‚Šå¼·ã„å„ªå…ˆé †ä½ã§ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1919,7 +1919,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚ÅæZ‰‰Zq‚Í‰ÁZ‰‰Zq‚æ‚è‹­‚¢—Dæ‡ˆÊ‚Å‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§ä¹—ç®—æ¼”ç®—å­ã¯åŠ ç®—æ¼”ç®—å­ã‚ˆã‚Šå¼·ã„å„ªå…ˆé †ä½ã§ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1936,7 +1936,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚ÅæZ‰‰Zq‚ÍœZ‰‰Zq‚Æ“¯‚¶—Dæ‡ˆÊ‚Å‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§ä¹—ç®—æ¼”ç®—å­ã¯é™¤ç®—æ¼”ç®—å­ã¨åŒã˜å„ªå…ˆé †ä½ã§ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1953,7 +1953,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å“™‚µ‚¢‰‰Zq‚Í‰ÁZ‰‰Zq‚æ‚èã‚¢—Dæ‡ˆÊ‚Å‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§ç­‰ã—ã„æ¼”ç®—å­ã¯åŠ ç®—æ¼”ç®—å­ã‚ˆã‚Šå¼±ã„å„ªå…ˆé †ä½ã§ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1970,7 +1970,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å“™‚µ‚­‚È‚¢‰‰Zq‚Í‰ÁZ‰‰Zq‚æ‚èã‚¢—Dæ‡ˆÊ‚Å‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§ç­‰ã—ããªã„æ¼”ç®—å­ã¯åŠ ç®—æ¼”ç®—å­ã‚ˆã‚Šå¼±ã„å„ªå…ˆé †ä½ã§ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -1988,7 +1988,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å‘å‚«‚¢‰‰Zq‚Í‰ÁZ‰‰Zq‚æ‚èã‚¢—Dæ‡ˆÊ‚Å‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§å¤§ãã„æ¼”ç®—å­ã¯åŠ ç®—æ¼”ç®—å­ã‚ˆã‚Šå¼±ã„å„ªå…ˆé †ä½ã§ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2005,7 +2005,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Å¬‚³‚¢‰‰Zq‚Í‰ÁZ‰‰Zq‚æ‚èã‚¢—Dæ‡ˆÊ‚Å‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§å°ã•ã„æ¼”ç®—å­ã¯åŠ ç®—æ¼”ç®—å­ã‚ˆã‚Šå¼±ã„å„ªå…ˆé †ä½ã§ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2022,7 +2022,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚ÅˆÈã‰‰Zq‚Í‰ÁZ‰‰Zq‚æ‚èã‚¢—Dæ‡ˆÊ‚Å‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§ä»¥ä¸Šæ¼”ç®—å­ã¯åŠ ç®—æ¼”ç®—å­ã‚ˆã‚Šå¼±ã„å„ªå…ˆé †ä½ã§ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2040,7 +2040,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚ÅˆÈ‰º‰‰Zq‚Í‰ÁZ‰‰Zq‚æ‚èã‚¢—Dæ‡ˆÊ‚Å‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§ä»¥ä¸‹æ¼”ç®—å­ã¯åŠ ç®—æ¼”ç®—å­ã‚ˆã‚Šå¼±ã„å„ªå…ˆé †ä½ã§ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2058,7 +2058,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚ÅAND‰‰Zq‚Í”äŠr‰‰Zq‚æ‚èã‚¢—Dæ‡ˆÊ‚Å‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§ANDæ¼”ç®—å­ã¯æ¯”è¼ƒæ¼”ç®—å­ã‚ˆã‚Šå¼±ã„å„ªå…ˆé †ä½ã§ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2075,7 +2075,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚ÅOR‰‰Zq‚ÍAND‰‰Zq‚æ‚èã‚¢—Dæ‡ˆÊ‚Å‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§ORæ¼”ç®—å­ã¯ANDæ¼”ç®—å­ã‚ˆã‚Šå¼±ã„å„ªå…ˆé †ä½ã§ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2093,7 +2093,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚ÅƒJƒbƒR‚É‚æ‚é—Dæ‡ˆÊ‚Ìw’è‚ª‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§ã‚«ãƒƒã‚³ã«ã‚ˆã‚‹å„ªå…ˆé †ä½ã®æŒ‡å®šãŒã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2110,7 +2110,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚ÅƒJƒbƒR‚É‚æ‚è¶Œ‹‡‚ğ§Œä‚·‚é‚±‚Æ‚ª‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§ã‚«ãƒƒã‚³ã«ã‚ˆã‚Šå·¦çµåˆã‚’åˆ¶å¾¡ã™ã‚‹ã“ã¨ãŒã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2127,7 +2127,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚ÅƒlƒXƒg‚µ‚½ƒJƒbƒR‚É‚æ‚é—Dæ‡ˆÊ‚Ìw’è‚ª‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§ãƒã‚¹ãƒˆã—ãŸã‚«ãƒƒã‚³ã«ã‚ˆã‚‹å„ªå…ˆé †ä½ã®æŒ‡å®šãŒã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2144,7 +2144,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚ÅƒJƒbƒR“à•”‚Ì‰‰Zq‚Ì—Dæ‡ˆÊ‚Ìw’è‚ª‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§ã‚«ãƒƒã‚³å†…éƒ¨ã®æ¼”ç®—å­ã®å„ªå…ˆé †ä½ã®æŒ‡å®šãŒã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2161,7 +2161,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚ÅƒJƒbƒRŠJ‚­‚ğ˜A‘±‚Å‹Lq‚·‚é‚±‚Æ‚ª‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§ã‚«ãƒƒã‚³é–‹ãã‚’é€£ç¶šã§è¨˜è¿°ã™ã‚‹ã“ã¨ãŒã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2178,7 +2178,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚ÅƒJƒbƒR•Â‚¶‚é‚ğ˜A‘±‚Å‹Lq‚·‚é‚±‚Æ‚ª‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§ã‚«ãƒƒã‚³é–‰ã˜ã‚‹ã‚’é€£ç¶šã§è¨˜è¿°ã™ã‚‹ã“ã¨ãŒã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2195,7 +2195,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Åƒe[ƒuƒ‹–¼‚Ìw’è‚ª‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§ãƒ†ãƒ¼ãƒ–ãƒ«åã®æŒ‡å®šãŒã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2212,7 +2212,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Éƒe[ƒuƒ‹–¼•t‚Ìƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚ğw’è‚µAƒe[ƒuƒ‹‚ğ‘I‘ğ‚·‚é‚±‚Æ‚ª‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã«ãƒ†ãƒ¼ãƒ–ãƒ«åä»˜ã®ãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã‚’æŒ‡å®šã—ã€ãƒ†ãƒ¼ãƒ–ãƒ«ã‚’é¸æŠã™ã‚‹ã“ã¨ãŒã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT *"
@@ -2231,7 +2231,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚ğ—˜—p‚µ‚ÄŒ‹‡‚ğs‚¤‚±‚Æ‚ª‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã‚’åˆ©ç”¨ã—ã¦çµåˆã‚’è¡Œã†ã“ã¨ãŒã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT PARENTS.Name, CHILDREN.Name "
@@ -2254,7 +2254,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Ìƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚Ìw’è‚ª‚ ‚¢‚Ü‚¢‚Èê‡‚ÉERR_BAD_COLUMN_NAMEƒGƒ‰[‚Æ‚È‚è‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã®ãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã®æŒ‡å®šãŒã‚ã„ã¾ã„ãªå ´åˆã«ERR_BAD_COLUMN_NAMEã‚¨ãƒ©ãƒ¼ã¨ãªã‚Šã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2266,7 +2266,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Åw’è‚µ‚½ƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚Ìw’è‚Ìˆê•¶š–Ú‚Ìˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã®æŒ‡å®šã®ä¸€æ–‡å­—ç›®ã®é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2278,7 +2278,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Åw’è‚µ‚½ƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚Ìw’è‚Ì“ñ•¶š–Ú‚Ìˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã®æŒ‡å®šã®äºŒæ–‡å­—ç›®ã®é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2290,7 +2290,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Åw’è‚µ‚½ƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚Ìw’è‚ÌÅI•¶š‚Ìˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã®æŒ‡å®šã®æœ€çµ‚æ–‡å­—ã®é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2302,7 +2302,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Åw’è‚µ‚½ƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚Ìw’è‚ªˆê•¶š‘½‚¢‚Æ‚¢‚¤ˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã®æŒ‡å®šãŒä¸€æ–‡å­—å¤šã„ã¨ã„ã†é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2314,7 +2314,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Åw’è‚µ‚½ƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚Ìw’è‚Ìˆê•¶š­‚È‚¢‚Æ‚¢‚¤ˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã®æŒ‡å®šã®ä¸€æ–‡å­—å°‘ãªã„ã¨ã„ã†é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2326,7 +2326,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Åw’è‚µ‚½ƒe[ƒuƒ‹–¼‚Ìw’è‚Ìˆê•¶š–Ú‚Ìˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«åã®æŒ‡å®šã®ä¸€æ–‡å­—ç›®ã®é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2338,7 +2338,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Åw’è‚µ‚½ƒe[ƒuƒ‹–¼‚Ìw’è‚Ì“ñ•¶š–Ú‚Ìˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«åã®æŒ‡å®šã®äºŒæ–‡å­—ç›®ã®é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2350,7 +2350,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Åw’è‚µ‚½ƒe[ƒuƒ‹–¼‚Ìw’è‚ÌÅI•¶š‚Ìˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«åã®æŒ‡å®šã®æœ€çµ‚æ–‡å­—ã®é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2362,7 +2362,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Åw’è‚µ‚½ƒe[ƒuƒ‹–¼‚Ìw’è‚ªˆê•¶š‘½‚¢‚Æ‚¢‚¤ˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«åã®æŒ‡å®šãŒä¸€æ–‡å­—å¤šã„ã¨ã„ã†é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2374,7 +2374,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Åw’è‚µ‚½ƒe[ƒuƒ‹–¼‚Ìw’è‚Ìˆê•¶š­‚È‚¢‚Æ‚¢‚¤ˆá‚¢‚ğŒ©•ª‚¯‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã§æŒ‡å®šã—ãŸãƒ†ãƒ¼ãƒ–ãƒ«åã®æŒ‡å®šã®ä¸€æ–‡å­—å°‘ãªã„ã¨ã„ã†é•ã„ã‚’è¦‹åˆ†ã‘ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2386,7 +2386,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_BAD_COLUMN_NAME, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚ÌŒã‚ÉORDER‹å‚ğ‹Lq‚·‚é‚±‚Æ‚ª‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã®å¾Œã«ORDERå¥ã‚’è¨˜è¿°ã™ã‚‹ã“ã¨ãŒã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2405,7 +2405,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍORDER‹å‚ÌŒã‚ÉWHERE‹å‚ğ‹Lq‚·‚é‚±‚Æ‚ª‚Å‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORDERå¥ã®å¾Œã«WHEREå¥ã‚’è¨˜è¿°ã™ã‚‹ã“ã¨ãŒã§ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2424,7 +2424,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍFROM‹å‚ÌŒã‚ÉSQL‚ª‘±‚¢‚½‚çERR_SQL_SYNTAXƒGƒ‰[‚Æ‚È‚è‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯FROMå¥ã®å¾Œã«SQLãŒç¶šã„ãŸã‚‰ERR_SQL_SYNTAXã‚¨ãƒ©ãƒ¼ã¨ãªã‚Šã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2435,7 +2435,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚ğ“ñ“x‹Lq‚·‚é‚ÆERR_SQL_SYNTAXƒGƒ‰[‚Æ‚È‚è‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã‚’äºŒåº¦è¨˜è¿°ã™ã‚‹ã¨ERR_SQL_SYNTAXã‚¨ãƒ©ãƒ¼ã¨ãªã‚Šã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2449,7 +2449,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍORDER‹å‚ğ“ñ“x‹Lq‚·‚é‚ÆERR_SQL_SYNTAXƒGƒ‰[‚Æ‚È‚è‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORDERå¥ã‚’äºŒåº¦è¨˜è¿°ã™ã‚‹ã¨ERR_SQL_SYNTAXã‚¨ãƒ©ãƒ¼ã¨ãªã‚Šã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2463,7 +2463,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍSELECTƒL[ƒ[ƒh‚ğA‘å•¶š‚Å‚à¬•¶š‚Å‚à¯•Ê‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯SELECTã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã‚’ã€å¤§æ–‡å­—ã§ã‚‚å°æ–‡å­—ã§ã‚‚è­˜åˆ¥ã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"select * "
@@ -2481,7 +2481,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍFROMƒL[ƒ[ƒh‚ğA‘å•¶š‚Å‚à¬•¶š‚Å‚à¯•Ê‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯FROMã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã‚’ã€å¤§æ–‡å­—ã§ã‚‚å°æ–‡å­—ã§ã‚‚è­˜åˆ¥ã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2499,7 +2499,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍORDERƒL[ƒ[ƒh‚ğA‘å•¶š‚Å‚à¬•¶š‚Å‚à¯•Ê‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORDERã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã‚’ã€å¤§æ–‡å­—ã§ã‚‚å°æ–‡å­—ã§ã‚‚è­˜åˆ¥ã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2521,7 +2521,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍBYƒL[ƒ[ƒh‚ğA‘å•¶š‚Å‚à¬•¶š‚Å‚à¯•Ê‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯BYã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã‚’ã€å¤§æ–‡å­—ã§ã‚‚å°æ–‡å­—ã§ã‚‚è­˜åˆ¥ã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2543,7 +2543,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍASCƒL[ƒ[ƒh‚ğA‘å•¶š‚Å‚à¬•¶š‚Å‚à¯•Ê‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ASCã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã‚’ã€å¤§æ–‡å­—ã§ã‚‚å°æ–‡å­—ã§ã‚‚è­˜åˆ¥ã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT String1, String2 "
@@ -2563,7 +2563,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍDESCƒL[ƒ[ƒh‚ğA‘å•¶š‚Å‚à¬•¶š‚Å‚à¯•Ê‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯DESCã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã‚’ã€å¤§æ–‡å­—ã§ã‚‚å°æ–‡å­—ã§ã‚‚è­˜åˆ¥ã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT String1, String2 "
@@ -2583,7 +2583,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHEREƒL[ƒ[ƒh‚ğA‘å•¶š‚Å‚à¬•¶š‚Å‚à¯•Ê‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã‚’ã€å¤§æ–‡å­—ã§ã‚‚å°æ–‡å­—ã§ã‚‚è­˜åˆ¥ã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2600,7 +2600,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍANDƒL[ƒ[ƒh‚ğA‘å•¶š‚Å‚à¬•¶š‚Å‚à¯•Ê‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ANDã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã‚’ã€å¤§æ–‡å­—ã§ã‚‚å°æ–‡å­—ã§ã‚‚è­˜åˆ¥ã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2616,7 +2616,7 @@ namespace Test
 			Assert::AreEqual((int)OK, result);
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
-		TEST_METHOD(ExecuteSQL‚ÍORƒL[ƒ[ƒh‚ğA‘å•¶š‚Å‚à¬•¶š‚Å‚à¯•Ê‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã‚’ã€å¤§æ–‡å­—ã§ã‚‚å°æ–‡å­—ã§ã‚‚è­˜åˆ¥ã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2635,7 +2635,7 @@ namespace Test
 		}
 
 
-		TEST_METHOD(ExecuteSQL‚ÍFrom‹å‚Ìƒe[ƒuƒ‹–¼‚ğA‘å•¶š‚Å‚à¬•¶š‚Å‚à¯•Ê‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯Fromå¥ã®ãƒ†ãƒ¼ãƒ–ãƒ«åã‚’ã€å¤§æ–‡å­—ã§ã‚‚å°æ–‡å­—ã§ã‚‚è­˜åˆ¥ã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2653,7 +2653,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍSELECT‹å‚Ìƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚ğA‘å•¶š‚Å‚à¬•¶š‚Å‚à¯•Ê‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯SELECTå¥ã®ãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã‚’ã€å¤§æ–‡å­—ã§ã‚‚å°æ–‡å­—ã§ã‚‚è­˜åˆ¥ã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT sTRING "
@@ -2671,7 +2671,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍSELECT‹å‚Ìƒe[ƒuƒ‹–¼‚ğA‘å•¶š‚Å‚à¬•¶š‚Å‚à¯•Ê‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯SELECTå¥ã®ãƒ†ãƒ¼ãƒ–ãƒ«åã‚’ã€å¤§æ–‡å­—ã§ã‚‚å°æ–‡å­—ã§ã‚‚è­˜åˆ¥ã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT table1.String "
@@ -2689,7 +2689,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍORDER‹å‚Ìƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚ğA‘å•¶š‚Å‚à¬•¶š‚Å‚à¯•Ê‚µ‚¶‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORDERå¥ã®ãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã‚’ã€å¤§æ–‡å­—ã§ã‚‚å°æ–‡å­—ã§ã‚‚è­˜åˆ¥ã—ã˜ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2711,7 +2711,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍORDER‹å‚Ìƒe[ƒuƒ‹–¼‚ğA‘å•¶š‚Å‚à¬•¶š‚Å‚à¯•Ê‚µ‚¶‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORDERå¥ã®ãƒ†ãƒ¼ãƒ–ãƒ«åã‚’ã€å¤§æ–‡å­—ã§ã‚‚å°æ–‡å­—ã§ã‚‚è­˜åˆ¥ã—ã˜ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2734,7 +2734,7 @@ namespace Test
 		}
 
 
-		TEST_METHOD(ExecuteSQL‚Íæ“ª‚ªSELECT‚Å‚Í‚È‚©‚Á‚½ê‡‚ÉERR_SQL_SYNTAX‚ğ•Ô‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯å…ˆé ­ãŒSELECTã§ã¯ãªã‹ã£ãŸå ´åˆã«ERR_SQL_SYNTAXã‚’è¿”ã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"a SELECT * "
@@ -2745,7 +2745,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍSELECT‚ÌŸ‚ÌŒê‚ª¯•Êq‚Å‚àƒAƒXƒ^ƒŠƒXƒN‚Å‚à‚È‚©‚Á‚½ê‡‚ÉERR_SQL_SYNTAX‚ğ•Ô‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯SELECTã®æ¬¡ã®èªãŒè­˜åˆ¥å­ã§ã‚‚ã‚¢ã‚¹ã‚¿ãƒªã‚¹ã‚¯ã§ã‚‚ãªã‹ã£ãŸå ´åˆã«ERR_SQL_SYNTAXã‚’è¿”ã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT "
@@ -2756,7 +2756,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍSELECT‹å‚ÌƒJƒ“ƒ}‚ÌŒã‚ª¯•Êq‚Å‚àƒAƒXƒ^ƒŠƒXƒN‚Å‚à‚È‚©‚Á‚½ê‡‚ÉERR_SQL_SYNTAX‚ğ•Ô‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯SELECTå¥ã®ã‚«ãƒ³ãƒã®å¾ŒãŒè­˜åˆ¥å­ã§ã‚‚ã‚¢ã‚¹ã‚¿ãƒªã‚¹ã‚¯ã§ã‚‚ãªã‹ã£ãŸå ´åˆã«ERR_SQL_SYNTAXã‚’è¿”ã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT String, "
@@ -2767,7 +2767,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍSELECT‹å‚Ìƒhƒbƒg‚ÌŒã‚Éƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚Ì‹Lq‚ª‚È‚©‚Á‚½ê‡‚ÉERR_SQL_SYNTAX‚ğ•Ô‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯SELECTå¥ã®ãƒ‰ãƒƒãƒˆã®å¾Œã«ãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã®è¨˜è¿°ãŒãªã‹ã£ãŸå ´åˆã«ERR_SQL_SYNTAXã‚’è¿”ã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT TABLE1. "
@@ -2778,7 +2778,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍSELECT‹å‚Ìƒhƒbƒg‚Ì‘O‚Éƒe[ƒuƒ‹–¼‚Ì‹Lq‚ª‚È‚©‚Á‚½ê‡‚ÉERR_SQL_SYNTAX‚ğ•Ô‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯SELECTå¥ã®ãƒ‰ãƒƒãƒˆã®å‰ã«ãƒ†ãƒ¼ãƒ–ãƒ«åã®è¨˜è¿°ãŒãªã‹ã£ãŸå ´åˆã«ERR_SQL_SYNTAXã‚’è¿”ã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT .String "
@@ -2789,7 +2789,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍORDER‚ÌŒã‚ªBY‚Å‚È‚©‚Á‚½ê‡‚ÉERR_SQL_SYNTAX‚ğ•Ô‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORDERã®å¾ŒãŒBYã§ãªã‹ã£ãŸå ´åˆã«ERR_SQL_SYNTAXã‚’è¿”ã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2801,7 +2801,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍBY‚ÌŒã‚ª¯•Êq‚Å‚È‚©‚Á‚½ê‡‚ÉERR_SQL_SYNTAX‚ğ•Ô‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯BYã®å¾ŒãŒè­˜åˆ¥å­ã§ãªã‹ã£ãŸå ´åˆã«ERR_SQL_SYNTAXã‚’è¿”ã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2813,7 +2813,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍORDER‹å‚Ìƒhƒbƒg‚ÌŒã‚Éƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚Ì‹Lq‚ª‚È‚©‚Á‚½ê‡‚ÉERR_SQL_SYNTAX‚ğ•Ô‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORDERå¥ã®ãƒ‰ãƒƒãƒˆã®å¾Œã«ãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã®è¨˜è¿°ãŒãªã‹ã£ãŸå ´åˆã«ERR_SQL_SYNTAXã‚’è¿”ã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2825,7 +2825,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍORDER‹å‚Ìƒhƒbƒg‚Ì‘O‚Éƒe[ƒuƒ‹–¼‚Ì‹Lq‚ª‚È‚©‚Á‚½ê‡‚ÉERR_SQL_SYNTAX‚ğ•Ô‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORDERå¥ã®ãƒ‰ãƒƒãƒˆã®å‰ã«ãƒ†ãƒ¼ãƒ–ãƒ«åã®è¨˜è¿°ãŒãªã‹ã£ãŸå ´åˆã«ERR_SQL_SYNTAXã‚’è¿”ã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2837,7 +2837,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍORDER‹å‚ÌƒJƒ“ƒ}‚ÌŒã‚ª‚Ì¯•Êq‚Å‚È‚©‚Á‚½ê‡‚ÉERR_SQL_SYNTAX‚ğ•Ô‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORDERå¥ã®ã‚«ãƒ³ãƒã®å¾ŒãŒã®è­˜åˆ¥å­ã§ãªã‹ã£ãŸå ´åˆã«ERR_SQL_SYNTAXã‚’è¿”ã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2849,7 +2849,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‚ÌŒã‚ª¯•Êq‚Å‚àƒŠƒeƒ‰ƒ‹‚Å‚à‚È‚©‚Á‚½ê‡‚ÉERR_SQL_SYNTAX‚ğ•Ô‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREã®å¾ŒãŒè­˜åˆ¥å­ã§ã‚‚ãƒªãƒ†ãƒ©ãƒ«ã§ã‚‚ãªã‹ã£ãŸå ´åˆã«ERR_SQL_SYNTAXã‚’è¿”ã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2861,7 +2861,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Ìƒhƒbƒg‚ÌŒã‚Éƒe[ƒuƒ‹‚Æˆê‚Éw’è‚µ‚½—ñ–¼‚Ì‹Lq‚ª‚È‚©‚Á‚½ê‡‚ÉERR_SQL_SYNTAX‚ğ•Ô‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã®ãƒ‰ãƒƒãƒˆã®å¾Œã«ãƒ†ãƒ¼ãƒ–ãƒ«ã¨ä¸€ç·’ã«æŒ‡å®šã—ãŸåˆ—åã®è¨˜è¿°ãŒãªã‹ã£ãŸå ´åˆã«ERR_SQL_SYNTAXã‚’è¿”ã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2873,7 +2873,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Ìƒhƒbƒg‚Ì‘O‚Éƒe[ƒuƒ‹–¼‚Ì‹Lq‚ª‚È‚©‚Á‚½ê‡‚ÉERR_SQL_SYNTAX‚ğ•Ô‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã®ãƒ‰ãƒƒãƒˆã®å‰ã«ãƒ†ãƒ¼ãƒ–ãƒ«åã®è¨˜è¿°ãŒãªã‹ã£ãŸå ´åˆã«ERR_SQL_SYNTAXã‚’è¿”ã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2885,7 +2885,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Ì¶•Ó‚ÌŒã‚ª‰‰Zq‚Å‚Í‚È‚©‚Á‚½ê‡‚ÉERR_SQL_SYNTAX‚ğ•Ô‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã®å·¦è¾ºã®å¾ŒãŒæ¼”ç®—å­ã§ã¯ãªã‹ã£ãŸå ´åˆã«ERR_SQL_SYNTAXã‚’è¿”ã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2897,7 +2897,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‹å‚Ì‰‰Zq‚ÌŒã‚ª¯•Êq‚Å‚àƒŠƒeƒ‰ƒ‹‚Å‚à‚È‚©‚Á‚½ê‡‚ÉERR_SQL_SYNTAX‚ğ•Ô‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREå¥ã®æ¼”ç®—å­ã®å¾ŒãŒè­˜åˆ¥å­ã§ã‚‚ãƒªãƒ†ãƒ©ãƒ«ã§ã‚‚ãªã‹ã£ãŸå ´åˆã«ERR_SQL_SYNTAXã‚’è¿”ã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2909,7 +2909,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍFROM‹å‚ª‚È‚©‚Á‚½ê‡‚ÉERR_SQL_SYNTAX‚ğ•Ô‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯FROMå¥ãŒãªã‹ã£ãŸå ´åˆã«ERR_SQL_SYNTAXã‚’è¿”ã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2920,7 +2920,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍFROM‚ÌŒã‚É¯•Êq‚ª‚È‚©‚Á‚½ê‡‚ÉERR_SQL_SYNTAX‚ğ•Ô‚µ‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯FROMã®å¾Œã«è­˜åˆ¥å­ãŒãªã‹ã£ãŸå ´åˆã«ERR_SQL_SYNTAXã‚’è¿”ã—ã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -2932,7 +2932,7 @@ namespace Test
 		}
 
 
-		TEST_METHOD(ExecuteSQL‚ÍSELECT‚ÌŒã‚ÉƒXƒy[ƒX‚ª‚È‚­‚Ä‚à–â‘è‚È‚­“®‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯SELECTã®å¾Œã«ã‚¹ãƒšãƒ¼ã‚¹ãŒãªãã¦ã‚‚å•é¡Œãªãå‹•ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT* "
@@ -2950,7 +2950,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚Íƒhƒbƒg‚ÌŒã‚ÉƒXƒy[ƒX‚ª‚ ‚Á‚Ä‚à–â‘è‚È‚­“®‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ãƒ‰ãƒƒãƒˆã®å¾Œã«ã‚¹ãƒšãƒ¼ã‚¹ãŒã‚ã£ã¦ã‚‚å•é¡Œãªãå‹•ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT TABLE1. Integer "
@@ -2968,7 +2968,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚Íƒhƒbƒg‚ÌŒã‚ÉƒXƒy[ƒX‚ª‚È‚­‚Ä‚à–â‘è‚È‚­“®‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ãƒ‰ãƒƒãƒˆã®å¾Œã«ã‚¹ãƒšãƒ¼ã‚¹ãŒãªãã¦ã‚‚å•é¡Œãªãå‹•ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT TABLE1.Integer "
@@ -2986,7 +2986,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍƒJƒ“ƒ}‚ÌŒã‚ÉƒXƒy[ƒX‚ª‚ ‚Á‚Ä‚à–â‘è‚È‚­“®‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ã‚«ãƒ³ãƒã®å¾Œã«ã‚¹ãƒšãƒ¼ã‚¹ãŒã‚ã£ã¦ã‚‚å•é¡Œãªãå‹•ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT Integer, String "
@@ -3004,7 +3004,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍƒJƒ“ƒ}‚ÌŒã‚ÉƒXƒy[ƒX‚ª‚È‚­‚Ä‚à–â‘è‚È‚­“®‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ã‚«ãƒ³ãƒã®å¾Œã«ã‚¹ãƒšãƒ¼ã‚¹ãŒãªãã¦ã‚‚å•é¡Œãªãå‹•ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT Integer,String "
@@ -3022,7 +3022,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚Íƒhƒbƒg‚ÌŒã‚ÉƒXƒy[ƒX‚ğ‹²‚Ü‚¸‚É•¶š‚ª‘±‚­‚ÆƒL[ƒ[ƒh‚Æ‚µ‚Ä“Ç‚İ‚Ü‚ê‚Ü‚¹‚ñB)
+		TEST_METHOD(ExecuteSQLã¯ãƒ‰ãƒƒãƒˆã®å¾Œã«ã‚¹ãƒšãƒ¼ã‚¹ã‚’æŒŸã¾ãšã«æ–‡å­—ãŒç¶šãã¨ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã¨ã—ã¦èª­ã¿è¾¼ã¾ã‚Œã¾ã›ã‚“ã€‚)
 		{
 			char* sql =
 				"SELECTSTRING "
@@ -3033,7 +3033,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍƒAƒXƒ^ƒŠƒXƒN‚ÌŒã‚ÉƒXƒy[ƒX‚ª‚È‚­‚Ä‚à–â‘è‚È‚­“®‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ã‚¢ã‚¹ã‚¿ãƒªã‚¹ã‚¯ã®å¾Œã«ã‚¹ãƒšãƒ¼ã‚¹ãŒãªãã¦ã‚‚å•é¡Œãªãå‹•ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT *"
@@ -3051,7 +3051,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍORDER‚ÌŒã‚ÉƒXƒy[ƒX‚ğ‹²‚Ü‚¸‚É•¶š‚ª‘±‚­‚ÆƒL[ƒ[ƒh‚Æ‚µ‚Ä“Ç‚İ‚Ü‚ê‚Ü‚¹‚ñB)
+		TEST_METHOD(ExecuteSQLã¯ORDERã®å¾Œã«ã‚¹ãƒšãƒ¼ã‚¹ã‚’æŒŸã¾ãšã«æ–‡å­—ãŒç¶šãã¨ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã¨ã—ã¦èª­ã¿è¾¼ã¾ã‚Œã¾ã›ã‚“ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -3063,7 +3063,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍBY‚ÌŒã‚ÉƒXƒy[ƒX‚ğ‹²‚Ü‚¸‚É•¶š‚ª‘±‚­‚ÆƒL[ƒ[ƒh‚Æ‚µ‚Ä“Ç‚İ‚Ü‚ê‚Ü‚¹‚ñB)
+		TEST_METHOD(ExecuteSQLã¯BYã®å¾Œã«ã‚¹ãƒšãƒ¼ã‚¹ã‚’æŒŸã¾ãšã«æ–‡å­—ãŒç¶šãã¨ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã¨ã—ã¦èª­ã¿è¾¼ã¾ã‚Œã¾ã›ã‚“ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -3076,7 +3076,7 @@ namespace Test
 		}
 
 
-		TEST_METHOD(ExecuteSQL‚ÍASC‚ÌŒã‚ÉƒXƒy[ƒX‚ğ‹²‚Ü‚¸‚É•¶š‚ª‘±‚­‚ÆƒL[ƒ[ƒh‚Æ‚µ‚Ä“Ç‚İ‚Ü‚ê‚Ü‚¹‚ñB)
+		TEST_METHOD(ExecuteSQLã¯ASCã®å¾Œã«ã‚¹ãƒšãƒ¼ã‚¹ã‚’æŒŸã¾ãšã«æ–‡å­—ãŒç¶šãã¨ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã¨ã—ã¦èª­ã¿è¾¼ã¾ã‚Œã¾ã›ã‚“ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -3088,7 +3088,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍDESC‚ÌŒã‚ÉƒXƒy[ƒX‚ğ‹²‚Ü‚¸‚É•¶š‚ª‘±‚­‚ÆƒL[ƒ[ƒh‚Æ‚µ‚Ä“Ç‚İ‚Ü‚ê‚Ü‚¹‚ñB)
+		TEST_METHOD(ExecuteSQLã¯DESCã®å¾Œã«ã‚¹ãƒšãƒ¼ã‚¹ã‚’æŒŸã¾ãšã«æ–‡å­—ãŒç¶šãã¨ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã¨ã—ã¦èª­ã¿è¾¼ã¾ã‚Œã¾ã›ã‚“ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -3100,7 +3100,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‚ÌŒã‚ÉƒXƒy[ƒX‚ª‚È‚­‚Ä‚à–â‘è‚È‚­“®‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯WHEREã®å¾Œã«ã‚¹ãƒšãƒ¼ã‚¹ãŒãªãã¦ã‚‚å•é¡Œãªãå‹•ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT *"
@@ -3117,7 +3117,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍWHERE‚ÌŒã‚É•¶š‚ª‘±‚­‚Æ®”ƒŠƒeƒ‰ƒ‹‚Æ‚µ‚Ä“Ç‚İ‚Ü‚ê‚Ü‚¹‚ñB)
+		TEST_METHOD(ExecuteSQLã¯WHEREã®å¾Œã«æ–‡å­—ãŒç¶šãã¨æ•´æ•°ãƒªãƒ†ãƒ©ãƒ«ã¨ã—ã¦èª­ã¿è¾¼ã¾ã‚Œã¾ã›ã‚“ã€‚)
 		{
 			char* sql =
 				"SELECT *"
@@ -3129,7 +3129,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_TOKEN_CANT_READ, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚Í¯•Êq‚ÌŒã‚ÉƒXƒy[ƒX‚ª‚È‚­‚Ä‚à–â‘è‚È‚­“®‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯è­˜åˆ¥å­ã®å¾Œã«ã‚¹ãƒšãƒ¼ã‚¹ãŒãªãã¦ã‚‚å•é¡Œãªãå‹•ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT *"
@@ -3146,7 +3146,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚Í®”ƒŠƒeƒ‰ƒ‹‚ÌŒã‚É•¶š‚ª‘±‚­‚Æ®”ƒŠƒeƒ‰ƒ‹‚Æ‚µ‚Ä“Ç‚İ‚Ü‚ê‚Ü‚¹‚ñB)
+		TEST_METHOD(ExecuteSQLã¯æ•´æ•°ãƒªãƒ†ãƒ©ãƒ«ã®å¾Œã«æ–‡å­—ãŒç¶šãã¨æ•´æ•°ãƒªãƒ†ãƒ©ãƒ«ã¨ã—ã¦èª­ã¿è¾¼ã¾ã‚Œã¾ã›ã‚“ã€‚)
 		{
 			char* sql =
 				"SELECT *"
@@ -3158,7 +3158,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_TOKEN_CANT_READ, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚Í•¶š—ñƒŠƒeƒ‰ƒ‹‚ÌŒã‚ÉƒXƒy[ƒX‚ª‚È‚­‚Ä‚à–â‘è‚È‚­“®‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯æ–‡å­—åˆ—ãƒªãƒ†ãƒ©ãƒ«ã®å¾Œã«ã‚¹ãƒšãƒ¼ã‚¹ãŒãªãã¦ã‚‚å•é¡Œãªãå‹•ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT *"
@@ -3175,7 +3175,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚Í“™‚µ‚¢‹L†‚ÌŒã‚ÉƒXƒy[ƒX‚ª‚È‚­‚Ä‚à–â‘è‚È‚­“®‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ç­‰ã—ã„è¨˜å·ã®å¾Œã«ã‚¹ãƒšãƒ¼ã‚¹ãŒãªãã¦ã‚‚å•é¡Œãªãå‹•ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT *"
@@ -3192,7 +3192,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚Í“™‚µ‚­‚È‚¢‹L†‚ÌŒã‚ÉƒXƒy[ƒX‚ª‚È‚­‚Ä‚à–â‘è‚È‚­“®‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ç­‰ã—ããªã„è¨˜å·ã®å¾Œã«ã‚¹ãƒšãƒ¼ã‚¹ãŒãªãã¦ã‚‚å•é¡Œãªãå‹•ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -3210,7 +3210,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚Í‘å‚È‚è‹L†‚ÌŒã‚ÉƒXƒy[ƒX‚ª‚È‚­‚Ä‚à–â‘è‚È‚­“®‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯å¤§ãªã‚Šè¨˜å·ã®å¾Œã«ã‚¹ãƒšãƒ¼ã‚¹ãŒãªãã¦ã‚‚å•é¡Œãªãå‹•ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -3227,7 +3227,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚Í¬‚È‚è‹L†‚ÌŒã‚ÉƒXƒy[ƒX‚ª‚È‚­‚Ä‚à–â‘è‚È‚­“®‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯å°ãªã‚Šè¨˜å·ã®å¾Œã«ã‚¹ãƒšãƒ¼ã‚¹ãŒãªãã¦ã‚‚å•é¡Œãªãå‹•ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -3244,7 +3244,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍˆÈã‹L†‚ÌŒã‚ÉƒXƒy[ƒX‚ª‚È‚­‚Ä‚à–â‘è‚È‚­“®‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ä»¥ä¸Šè¨˜å·ã®å¾Œã«ã‚¹ãƒšãƒ¼ã‚¹ãŒãªãã¦ã‚‚å•é¡Œãªãå‹•ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -3263,7 +3263,7 @@ namespace Test
 		}
 
 
-		TEST_METHOD(ExecuteSQL‚ÍˆÈ‰º‹L†‚ÌŒã‚ÉƒXƒy[ƒX‚ª‚È‚­‚Ä‚à–â‘è‚È‚­“®‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ä»¥ä¸‹è¨˜å·ã®å¾Œã«ã‚¹ãƒšãƒ¼ã‚¹ãŒãªãã¦ã‚‚å•é¡Œãªãå‹•ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT * "
@@ -3281,7 +3281,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚Í‰ÁZ‹L†‚ÌŒã‚ÉƒXƒy[ƒX‚ª‚È‚­‚Ä‚à–â‘è‚È‚­“®‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯åŠ ç®—è¨˜å·ã®å¾Œã«ã‚¹ãƒšãƒ¼ã‚¹ãŒãªãã¦ã‚‚å•é¡Œãªãå‹•ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT *"
@@ -3298,7 +3298,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍŒ¸Z‹L†‚ÌŒã‚ÉƒXƒy[ƒX‚ª‚È‚­‚Ä‚à–â‘è‚È‚­“®‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯æ¸›ç®—è¨˜å·ã®å¾Œã«ã‚¹ãƒšãƒ¼ã‚¹ãŒãªãã¦ã‚‚å•é¡Œãªãå‹•ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT *"
@@ -3315,7 +3315,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍæZ‹L†‚ÌŒã‚ÉƒXƒy[ƒX‚ª‚È‚­‚Ä‚à–â‘è‚È‚­“®‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ä¹—ç®—è¨˜å·ã®å¾Œã«ã‚¹ãƒšãƒ¼ã‚¹ãŒãªãã¦ã‚‚å•é¡Œãªãå‹•ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT *"
@@ -3332,7 +3332,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍœZ‹L†‚ÌŒã‚ÉƒXƒy[ƒX‚ª‚È‚­‚Ä‚à–â‘è‚È‚­“®‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯é™¤ç®—è¨˜å·ã®å¾Œã«ã‚¹ãƒšãƒ¼ã‚¹ãŒãªãã¦ã‚‚å•é¡Œãªãå‹•ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT *"
@@ -3349,7 +3349,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍAND‰‰Zq‚ÌŒã‚ÉƒXƒy[ƒX‚ª‚È‚­‚Ä‚à–â‘è‚È‚­“®‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ANDæ¼”ç®—å­ã®å¾Œã«ã‚¹ãƒšãƒ¼ã‚¹ãŒãªãã¦ã‚‚å•é¡Œãªãå‹•ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT *"
@@ -3365,7 +3365,7 @@ namespace Test
 			Assert::AreEqual((int)OK, result);
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
-		TEST_METHOD(ExecuteSQL‚ÍAND‰‰Zq‚ÌŒã‚ÉƒXƒy[ƒX‚ğ‹²‚Ü‚¸‚É•¶š‚ª‘±‚­‚ÆƒL[ƒ[ƒh‚Æ‚µ‚Ä“Ç‚İ‚Ü‚ê‚Ü‚¹‚ñB)
+		TEST_METHOD(ExecuteSQLã¯ANDæ¼”ç®—å­ã®å¾Œã«ã‚¹ãƒšãƒ¼ã‚¹ã‚’æŒŸã¾ãšã«æ–‡å­—ãŒç¶šãã¨ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã¨ã—ã¦èª­ã¿è¾¼ã¾ã‚Œã¾ã›ã‚“ã€‚)
 		{
 			char* sql =
 				"SELECT *"
@@ -3377,7 +3377,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍOR‰‰Zq‚ÌŒã‚ÉƒXƒy[ƒX‚ª‚È‚­‚Ä‚à–â‘è‚È‚­“®‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ORæ¼”ç®—å­ã®å¾Œã«ã‚¹ãƒšãƒ¼ã‚¹ãŒãªãã¦ã‚‚å•é¡Œãªãå‹•ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT *"
@@ -3394,7 +3394,7 @@ namespace Test
 			Assert::AreEqual((int)OK, result);
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
-		TEST_METHOD(ExecuteSQL‚ÍOR‰‰Zq‚ÌŒã‚ÉƒXƒy[ƒX‚ğ‹²‚Ü‚¸‚É•¶š‚ª‘±‚­‚ÆƒL[ƒ[ƒh‚Æ‚µ‚Ä“Ç‚İ‚Ü‚ê‚Ü‚¹‚ñB)
+		TEST_METHOD(ExecuteSQLã¯ORæ¼”ç®—å­ã®å¾Œã«ã‚¹ãƒšãƒ¼ã‚¹ã‚’æŒŸã¾ãšã«æ–‡å­—ãŒç¶šãã¨ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã¨ã—ã¦èª­ã¿è¾¼ã¾ã‚Œã¾ã›ã‚“ã€‚)
 		{
 			char* sql =
 				"SELECT *"
@@ -3406,7 +3406,7 @@ namespace Test
 			Assert::AreEqual((int)ERR_SQL_SYNTAX, result);
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍƒJƒbƒRŠJ‚­‚ÌŒã‚ÉƒXƒy[ƒX‚ª‚È‚­‚Ä‚à–â‘è‚È‚­“®‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ã‚«ãƒƒã‚³é–‹ãã®å¾Œã«ã‚¹ãƒšãƒ¼ã‚¹ãŒãªãã¦ã‚‚å•é¡Œãªãå‹•ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT *"
@@ -3423,7 +3423,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍƒJƒbƒRŠJ‚­‚ÌŒã‚ÉƒXƒy[ƒX‚ª‚ ‚Á‚Ä‚à–â‘è‚È‚­“®‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ã‚«ãƒƒã‚³é–‹ãã®å¾Œã«ã‚¹ãƒšãƒ¼ã‚¹ãŒã‚ã£ã¦ã‚‚å•é¡Œãªãå‹•ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT *"
@@ -3440,7 +3440,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍƒJƒbƒR•Â‚¶‚é‚ÌŒã‚ÉƒXƒy[ƒX‚ª‚È‚­‚Ä‚à–â‘è‚È‚­“®‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ã‚«ãƒƒã‚³é–‰ã˜ã‚‹ã®å¾Œã«ã‚¹ãƒšãƒ¼ã‚¹ãŒãªãã¦ã‚‚å•é¡Œãªãå‹•ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT *"
@@ -3457,7 +3457,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍƒJƒbƒR•Â‚¶‚é‚ÌŒã‚ÉƒXƒy[ƒX‚ª‚ ‚Á‚Ä‚à–â‘è‚È‚­“®‚«‚Ü‚·B)
+		TEST_METHOD(ExecuteSQLã¯ã‚«ãƒƒã‚³é–‰ã˜ã‚‹ã®å¾Œã«ã‚¹ãƒšãƒ¼ã‚¹ãŒã‚ã£ã¦ã‚‚å•é¡Œãªãå‹•ãã¾ã™ã€‚)
 		{
 			char* sql =
 				"SELECT *"
@@ -3474,7 +3474,7 @@ namespace Test
 			Assert::AreEqual(expectedCsv, ReadOutput());
 		}
 
-		TEST_METHOD(ExecuteSQL‚ÍFROM‚ÌŒã‚ÉƒXƒy[ƒX‚ğ‹²‚Ü‚¸‚É•¶š‚ª‘±‚­‚ÆƒL[ƒ[ƒh‚Æ‚µ‚Ä“Ç‚İ‚Ü‚ê‚Ü‚¹‚ñB)
+		TEST_METHOD(ExecuteSQLã¯FROMã®å¾Œã«ã‚¹ãƒšãƒ¼ã‚¹ã‚’æŒŸã¾ãšã«æ–‡å­—ãŒç¶šãã¨ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã¨ã—ã¦èª­ã¿è¾¼ã¾ã‚Œã¾ã›ã‚“ã€‚)
 		{
 			char* sql =
 				"SELECT *"
