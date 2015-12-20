@@ -411,6 +411,78 @@ public:
 	const shared_ptr<const Data> operator||(const shared_ptr<const Data>& right) const override;
 };
 
+//! 加算演算を行います。
+//! @param [in] left 左辺です。
+//! @param [in] right 右辺です。
+//! @return 加算した結果です。
+const shared_ptr<const Data> operator+(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right);
+
+//! 減算演算を行います。
+//! @param [in] left 左辺です。
+//! @param [in] right 右辺です。
+//! @return 減算した結果です。
+const shared_ptr<const Data> operator-(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right);
+
+
+//! 乗算演算を行います。
+//! @param [in] left 左辺です。
+//! @param [in] right 右辺です。
+//! @return 乗算した結果です。
+const shared_ptr<const Data> operator*(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right);
+
+//! 除算演算を行います。
+//! @param [in] left 左辺です。
+//! @param [in] right 右辺です。
+//! @return 除算した結果です。
+const shared_ptr<const Data> operator/(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right);
+
+//! 等値比較を行います。
+//! @param [in] left 左辺です。
+//! @param [in] right 右辺です。
+//! @return 比較した結果です。
+const shared_ptr<const Data> operator==(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right);
+
+//! 不等比較を行います。
+//! @param [in] left 左辺です。
+//! @param [in] right 右辺です。
+//! @return 比較した結果です。
+const shared_ptr<const Data> operator!=(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right);
+
+//! 以上比較を行います。
+//! @param [in] left 左辺です。
+//! @param [in] right 右辺です。
+//! @return 比較した結果です。
+const shared_ptr<const Data> operator>=(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right);
+
+//! 大きい比較を行います。
+//! @param [in] left 左辺です。
+//! @param [in] right 右辺です。
+//! @return 比較した結果です。
+const shared_ptr<const Data> operator>(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right);
+
+//! 以下比較を行います。
+//! @param [in] left 左辺です。
+//! @param [in] right 右辺です。
+//! @return 比較した結果です。
+const shared_ptr<const Data> operator<=(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right);
+
+//! 小さい比較を行います。
+//! @param [in] left 左辺です。
+//! @param [in] right 右辺です。
+//! @return 比較した結果です。
+const shared_ptr<const Data> operator<(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right);
+
+//! AND演算を行います。
+//! @param [in] left 左辺です。
+//! @param [in] right 右辺です。
+//! @return 演算した結果です。
+const shared_ptr<const Data> operator&&(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right);
+
+//! OR演算を行います。
+//! @param [in] left 左辺です。
+//! @param [in] right 右辺です。
+//! @return 演算した結果です。
+const shared_ptr<const Data> operator||(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right);
 //! WHERE句に指定する演算子の情報を表します。
 class Operator
 {
@@ -1287,6 +1359,115 @@ const shared_ptr<const Data> BooleanData::operator||(const shared_ptr<const Data
 	}
 }
 
+//! 加算演算を行います。
+//! @param [in] left 左辺です。
+//! @param [in] right 右辺です。
+//! @return 加算した結果です。
+const shared_ptr<const Data> operator+(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right)
+{
+	return *left + right;
+}
+
+//! 減算演算を行います。
+//! @param [in] left 左辺です。
+//! @param [in] right 右辺です。
+//! @return 減算した結果です。
+const shared_ptr<const Data> operator-(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right)
+{
+	return *left - right;
+}
+
+
+//! 乗算演算を行います。
+//! @param [in] left 左辺です。
+//! @param [in] right 右辺です。
+//! @return 乗算した結果です。
+const shared_ptr<const Data> operator*(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right)
+{
+	return *left * right;
+}
+
+//! 除算演算を行います。
+//! @param [in] left 左辺です。
+//! @param [in] right 右辺です。
+//! @return 除算した結果です。
+const shared_ptr<const Data> operator/(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right)
+{
+	return *left / right;
+}
+
+//! 等値比較を行います。
+//! @param [in] left 左辺です。
+//! @param [in] right 右辺です。
+//! @return 比較した結果です。
+const shared_ptr<const Data> operator==(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right)
+{
+	return *left == right;
+}
+
+//! 不等比較を行います。
+//! @param [in] left 左辺です。
+//! @param [in] right 右辺です。
+//! @return 比較した結果です。
+const shared_ptr<const Data> operator!=(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right)
+{
+	return *left != right;
+}
+
+//! 以上比較を行います。
+//! @param [in] left 左辺です。
+//! @param [in] right 右辺です。
+//! @return 比較した結果です。
+const shared_ptr<const Data> operator>=(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right)
+{
+	return *left >= right;
+}
+
+//! 大きい比較を行います。
+//! @param [in] left 左辺です。
+//! @param [in] right 右辺です。
+//! @return 比較した結果です。
+const shared_ptr<const Data> operator>(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right)
+{
+	return *left > right;
+}
+
+//! 以下比較を行います。
+//! @param [in] left 左辺です。
+//! @param [in] right 右辺です。
+//! @return 比較した結果です。
+const shared_ptr<const Data> operator<=(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right)
+{
+	return *left <= right;
+}
+
+//! 小さい比較を行います。
+//! @param [in] left 左辺です。
+//! @param [in] right 右辺です。
+//! @return 比較した結果です。
+const shared_ptr<const Data> operator<(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right)
+{
+	return *left < right;
+}
+
+//! AND演算を行います。
+//! @param [in] left 左辺です。
+//! @param [in] right 右辺です。
+//! @return 演算した結果です。
+const shared_ptr<const Data> operator&&(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right)
+{
+	return *left && right;
+}
+
+//! OR演算を行います。
+//! @param [in] left 左辺です。
+//! @param [in] right 右辺です。
+//! @return 演算した結果です。
+const shared_ptr<const Data> operator||(const shared_ptr<const Data>& left, const shared_ptr<const Data>& right)
+{
+	return *left || right;
+}
+
 //! Operatorクラスの新しいインスタンスを初期化します。
 Operator::Operator()
 {
@@ -1391,40 +1572,40 @@ void ExtensionTreeNode::Operate()
 	// 自ノードの値を計算します。
 	switch (middleOperator.kind){
 	case TokenKind::PLUS:
-		value = *left->value + right->value;
+		value = left->value + right->value;
 		break;
 	case TokenKind::MINUS:
-		value = *left->value - right->value;
+		value = left->value - right->value;
 		break;
 	case TokenKind::ASTERISK:
-		value = *left->value * right->value;
+		value = left->value * right->value;
 		break;
 	case TokenKind::SLASH:
-		value = *left->value / right->value;
+		value = left->value / right->value;
 		break;
 	case TokenKind::EQUAL:
-		value = *left->value == right->value;
+		value = left->value == right->value;
 		break;
 	case TokenKind::GREATER_THAN:
-		value = *left->value > right->value;
+		value = left->value > right->value;
 		break;
 	case TokenKind::GREATER_THAN_OR_EQUAL:
-		value = *left->value >= right->value;
+		value = left->value >= right->value;
 		break;
 	case TokenKind::LESS_THAN:
-		value = *left->value < right->value;
+		value = left->value < right->value;
 		break;
 	case TokenKind::LESS_THAN_OR_EQUAL:
-		value = *left->value <= right->value;
+		value = left->value <= right->value;
 		break;
 	case TokenKind::NOT_EQUAL:
-		value = *left->value != right->value;
+		value = left->value != right->value;
 		break;
 	case TokenKind::AND:
-		value = *left->value && right->value;
+		value = left->value && right->value;
 		break;
 	case TokenKind::OR:
-		value = *left->value || right->value;
+		value = left->value || right->value;
 		break;
 	}
 }
