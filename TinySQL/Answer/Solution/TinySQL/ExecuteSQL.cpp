@@ -14,7 +14,6 @@ using namespace std;
 #define MAX_DATA_LENGTH 256                //!< 入出力されるデータの、各列の最大長です。
 #define MAX_COLUMN_COUNT 16                //!< 入出力されるデータに含まれる列の最大数です。
 #define MAX_TABLE_COUNT 8                  //!< CSVとして入力されるテーブルの最大数です。
-#define MAX_EXTENSION_TREE_NODE_COUNT 256  //!< WHERE句に指定される式木のノードの最大数です。
 
 //! カレントディレクトリにあるCSVに対し、簡易的なSQLを実行し、結果をファイルに出力します。
 //! @param [in] sql 実行するSQLです。
@@ -375,7 +374,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 	Data ***currentRow = nullptr;                           // データ検索時に現在見ている行を表します。
 	vector<vector<Data**>> inputData;                       // 入力データです。
 	vector<Data**> outputData;                              // 出力データです。
-	vector<Data**> allColumnOutputData;                             // 出力するデータに対応するインデックスを持ち、すべての入力データを保管します。
+	vector<Data**> allColumnOutputData;                     // 出力するデータに対応するインデックスを持ち、すべての入力データを保管します。
 
 	const char *alpahUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ"; // 全てのアルファベットの大文字小文字とアンダーバーです。
 	const char *alpahNumUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; // 全ての数字とアルファベットの大文字小文字とアンダーバーです。
@@ -1119,10 +1118,10 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 			}
 		}
 
-		Data ***currentRows[MAX_TABLE_COUNT] = { nullptr }; // 入力された各テーブルの、現在出力している行を指すカーソルです。
+		vector<Data***> currentRows; // 入力された各テーブルの、現在出力している行を指すカーソルです。
 		for (size_t i = 0; i < tableNames.size(); ++i){
 			// 各テーブルの先頭行を設定します。
-			currentRows[i] = &inputData[i][0];
+			currentRows.push_back(&inputData[i][0]);
 		}
 
 		// 出力するデータを設定します。
