@@ -2639,32 +2639,23 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 	auto INT_LITERAL = token(TokenKind::INT_LITERAL); // 整数リテラルトークンのパーサーです。
 	auto STRING_LITERAL = token(TokenKind::STRING_LITERAL); // 文字列リテラルトークンのパーサーです。
 
-	// SELECT句の列指定の一つ目の識別子のパーサーです。
-	auto FIRST_SELECT_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
+	Column column; // 現在読み込んでいるORDER BY句での列を保持します。
+
+	// 列指定の一つ目の識別子のパーサーです。
+	auto FIRST_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
 		// テーブル名が指定されていない場合と仮定して読み込みます。
-		queryInfo->selectColumns.push_back(Column(token.word));
+		column = Column(token.word);
 	});
 
-	// SELECT句の列指定の二つ目の識別子のパーサーです。
-	auto SECOND_SELECT_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
+	// 列指定の二つ目の識別子のパーサーです。
+	auto SECOND_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
 		// テーブル名が指定されていることがわかったので読み替えます。
-		queryInfo->selectColumns.back() = Column(queryInfo->selectColumns.back().columnName, token.word);
+		column = Column(column.columnName, token.word);
 	});
 
-	Column orderColumn; // 現在読み込んでいるORDER BY句での列を保持します。
+	auto COLUMN = FIRST_COLUMN_NAME >> -(DOT >> SECOND_COLUMN_NAME); // 列指定一つのパーサーです。
+
 	bool isAsc = true; // 現在読み込んでいるORDER BY句での列が昇順であるかどうかです。
-
-	// ORDER BY句の列指定の一つ目の識別子のパーサーです。
-	auto FIRST_ORDER_BY_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
-		// テーブル名が指定されていない場合と仮定して読み込みます。
-		orderColumn = Column(token.word);
-	});
-
-	// ORDER BY句の列指定の二つ目の識別子のパーサーです。
-	auto SECOND_ORDER_BY_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
-		// テーブル名が指定されていることがわかったので読み替えます。
-		orderColumn = Column(orderColumn.columnName, token.word);
-	});
 
 	// 昇順降順を指定するためのDESCトークンのパーサーです。
 	auto SET_DESC = DESC->Action([&](const Token token){
@@ -2676,22 +2667,25 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 	// -A			:Aが任意
 	// ~A			:Aが0回以上続く
 
-	auto SELECT_COLUMN = FIRST_SELECT_COLUMN_NAME >> -(DOT >> SECOND_SELECT_COLUMN_NAME); // SELECT句の列指定一つのパーサーです。
+	// SELECT句の列指定一つのパーサーです。
+	auto SELECT_COLUMN = COLUMN->Action([&]{
+		queryInfo->selectColumns.push_back(column);
+	});
 
 	auto SELECT_COLUMNS = SELECT_COLUMN >> ~(COMMA >> SELECT_COLUMN); // SELECT句の一つ以上のの列指定のパーサーです。
 
 	auto SELECT_CLAUSE = SELECT >> (ASTERISK | SELECT_COLUMNS); // SELECT句のパーサーです。
 
-	auto ORDER_BY_COLUMN = FIRST_ORDER_BY_COLUMN_NAME >> -(DOT >> SECOND_ORDER_BY_COLUMN_NAME) >> -(ASC | SET_DESC); // ORDER BY句の列指定一つのパーサーです。
+	auto ORDER_BY_COLUMN = COLUMN >> -(ASC | SET_DESC); // ORDER BY句の列指定一つのパーサーです。
 
-	ORDER_BY_COLUMN = ORDER_BY_COLUMN->Action([&](){
-		queryInfo->orders.push_back(Order(orderColumn, isAsc));
+	ORDER_BY_COLUMN = ORDER_BY_COLUMN->Action([&]{
+		queryInfo->orders.push_back(Order(column, isAsc));
 
 		// この変数はまたつかわれるので初期化します。
 		isAsc = true;
 	});
 
-	auto ORDER_BY_COLUMNS = ORDER_BY_COLUMN >> ~(COMMA >> ORDER_BY_COLUMN); // ORDER BY句の一つ以上のの列指定のパーサーです。
+	auto ORDER_BY_COLUMNS = ORDER_BY_COLUMN >> ~(COMMA >> ORDER_BY_COLUMN); // ORDER BY句の一つ以上の列指定のパーサーです。
 
 	auto ORDER_BY_CLAUSE = ORDER >> BY >> ORDER_BY_COLUMNS; // ORDER BY句のパーサーです。
 
