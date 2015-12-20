@@ -2699,13 +2699,12 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 						++tokenCursol;
 						if (tokenCursol->kind == TokenKind::DOT){
 							++tokenCursol;
-							if (tokenCursol->kind == TokenKind::IDENTIFIER){
 
+							auto SECOND_ORDER_BY_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
 								// テーブル名が指定されていることがわかったので読み替えます。
 								orderColumn = Column(orderColumn.columnName, tokenCursol->word);
-								++tokenCursol;
-							}
-							else{
+							});
+							if (!SECOND_ORDER_BY_COLUMN_NAME->Parse(tokenCursol)){
 								throw ResultValue::ERR_SQL_SYNTAX;
 							}
 						}
