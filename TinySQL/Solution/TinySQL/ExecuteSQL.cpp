@@ -1258,22 +1258,22 @@ int ExecuteSQL(const string sql, const string outputFileName)
 						case DataType::INTEGER:
 							switch (currentNode->middleOperator.kind){
 							case TokenKind::EQUAL:
-								currentNode->value.value.boolean = currentNode->left->value.integer() == currentNode->right->value.integer();
+								currentNode->value = Data(currentNode->left->value.integer() == currentNode->right->value.integer());
 								break;
 							case TokenKind::GREATER_THAN:
-								currentNode->value.value.boolean = currentNode->left->value.integer() > currentNode->right->value.integer();
+								currentNode->value = Data(currentNode->left->value.integer() > currentNode->right->value.integer());
 								break;
 							case TokenKind::GREATER_THAN_OR_EQUAL:
-								currentNode->value.value.boolean = currentNode->left->value.integer() >= currentNode->right->value.integer();
+								currentNode->value = Data(currentNode->left->value.integer() >= currentNode->right->value.integer());
 								break;
 							case TokenKind::LESS_THAN:
-								currentNode->value.value.boolean = currentNode->left->value.integer() < currentNode->right->value.integer();
+								currentNode->value = Data(currentNode->left->value.integer() < currentNode->right->value.integer());
 								break;
 							case TokenKind::LESS_THAN_OR_EQUAL:
-								currentNode->value.value.boolean = currentNode->left->value.integer() <= currentNode->right->value.integer();
+								currentNode->value = Data(currentNode->left->value.integer() <= currentNode->right->value.integer());
 								break;
 							case TokenKind::NOT_EQUAL:
-								currentNode->value.value.boolean = currentNode->left->value.integer() != currentNode->right->value.integer();
+								currentNode->value = Data(currentNode->left->value.integer() != currentNode->right->value.integer());
 								break;
 							}
 							break;
