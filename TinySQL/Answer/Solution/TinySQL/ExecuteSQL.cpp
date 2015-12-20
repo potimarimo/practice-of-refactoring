@@ -967,16 +967,17 @@ int ExecuteSQL(const string sql, const string outputFileName)
 				found = false;
 				for (auto& inputRow : inputData[i]){
 					for (auto currentChar : inputRow[j]->string()){
-						bool isNum = false;
-						const char *currentNum = signNum.c_str();
-						while (*currentNum){
-							if (currentChar == *currentNum){
-								isNum = true;
-								break;
-							}
-							++currentNum;
-						}
-						if (!isNum){
+						//bool isNum = false;
+						//const char *currentNum = signNum.c_str();
+						//while (*currentNum){
+						//	if (currentChar == *currentNum){
+						//		isNum = true;
+						//		break;
+						//	}
+						//	++currentNum;
+						//}
+						//if (!isNum){
+						if (signNum.find(currentChar) == string::npos){
 							found = true;
 							break;
 						}
