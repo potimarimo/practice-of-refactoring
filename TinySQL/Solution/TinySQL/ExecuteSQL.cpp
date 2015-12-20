@@ -630,19 +630,18 @@ const shared_ptr<const vector<const InputTable>> Csv::ReadCsv() const
 	auto ret = make_shared<vector<const InputTable>>();
 	auto &tables = *ret;
 
-	vector<ifstream> inputTableFiles; // 読み込む入力ファイルの全てのファイルポインタです。
 	for (auto &tableName : queryInfo->tableNames){
 		tables.push_back(InputTable());
 		auto &table = tables.back();
 		// 入力ファイルを開きます。
-		inputTableFiles.push_back(ifstream(tableName + ".csv"));
-		if (!inputTableFiles.back()){
+		auto inputFile =ifstream(tableName + ".csv"); //入力するCSVファイルを扱うストリームです。
+		if (!inputFile){
 			throw ResultValue::ERR_FILE_OPEN;
 		}
 
 		// 入力CSVのヘッダ行を読み込みます。
 		string inputLine; // ファイルから読み込んだ行文字列です。
-		if (getline(inputTableFiles.back(), inputLine)){
+		if (getline(inputFile, inputLine)){
 			auto charactorCursol = inputLine.begin(); // ヘッダ入力行を検索するカーソルです。
 			auto lineEnd = inputLine.end(); // ヘッダ入力行のendを指します。
 
@@ -665,7 +664,7 @@ const shared_ptr<const vector<const InputTable>> Csv::ReadCsv() const
 		}
 
 		// 入力CSVのデータ行を読み込みます。
-		while (getline(inputTableFiles.back(), inputLine)){
+		while (getline(inputFile, inputLine)){
 			table.data.push_back(vector<const Data>()); // 入力されている一行分のデータです。
 			vector<const Data> &row = table.data.back();
 
@@ -707,13 +706,9 @@ const shared_ptr<const vector<const InputTable>> Csv::ReadCsv() const
 				}
 			}
 		}
-	}
-	for (auto &inputTableFile : inputTableFiles){
-		if (inputTableFile){
-			inputTableFile.close();
-			if (inputTableFile.bad()){
-				throw ResultValue::ERR_FILE_CLOSE;
-			}
+		inputFile.close();
+		if (inputFile.bad()){
+			throw ResultValue::ERR_FILE_CLOSE;
 		}
 	}
 	return ret;
