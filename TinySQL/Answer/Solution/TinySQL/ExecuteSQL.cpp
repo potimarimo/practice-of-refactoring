@@ -561,14 +561,15 @@ class OutputAllDataRow
 {
 	shared_ptr<const vector<const shared_ptr<const Data>>> data; //!< データを保持します。
 public:
+
 	//! OutputAllDataRowクラスの新しいインスタンスを初期化します。
 	//! @param [in] data OutputAllDataRowの持つデータです。
 	OutputAllDataRow(const shared_ptr<const vector<const shared_ptr<const Data>>> data);
 
-	//! インデックスで列を指定し、データを取得します。
-	//! @param [in] インデックス。
+	//! 列を指定し、データを取得します。指定する列は事前にSetAllColumns
+	//! @param [in] column 取得したい列。
 	//! @return 指定したデータ。
-	const shared_ptr<const Data> operator[](const int & index) const;
+	const shared_ptr<const Data> operator[](const Column &column) const;
 };
 
 //! WHERE句の条件の式木を表します。
@@ -1877,12 +1878,12 @@ void Column::SetAllColumns(const vector<const InputTable> &inputTables)
 OutputAllDataRow::OutputAllDataRow(const shared_ptr<const vector<const shared_ptr<const Data>>> data) : data(data)
 {}
 
-//! インデックスで列を指定し、データを取得します。
-//! @param [in] インデックス。
+//! 列を指定し、データを取得します。事前にSetAllColumnsを実行しておく必要があります。
+//! @param [in] column 取得したい列。
 //! @return 指定したデータ。
-const shared_ptr<const Data> OutputAllDataRow::operator[](const int & index) const
+const shared_ptr<const Data> OutputAllDataRow::operator[](const Column &column) const
 {
-	return (*data)[index];
+	return (*data)[column.allColumnsIndex];
 }
 
 //! ExtensionTreeNodeクラスの新しいインスタンスを初期化します。
@@ -1954,7 +1955,7 @@ bool ExtensionTreeNode::isDataNodeAsColumnName()
 void ExtensionTreeNode::SetColumnData(const OutputAllDataRow &outputRow)
 {
 	if (isDataNodeAsColumnName()){
-		value = outputRow[column.allColumnsIndex];
+		value = outputRow[column];
 
 		// 符号を考慮して値を計算します。
 		if (value->type() == DataType::INTEGER){
@@ -2627,8 +2628,8 @@ void OutputData::ApplyOrderBy(vector<const OutputAllDataRow> &outputRows) const
 			outputRows.end(),
 			[&](const OutputAllDataRow& lRow, const OutputAllDataRow& rRow){
 			for (auto &order : queryInfo.orders){
-				auto &lData = lRow[order.column.allColumnsIndex]; // インデックスがminIndexのデータです。
-				auto &rData = rRow[order.column.allColumnsIndex]; // インデックスがjのデータです。
+				auto &lData = lRow[order.column]; // インデックスがminIndexのデータです。
+				auto &rData = rRow[order.column]; // インデックスがjのデータです。
 				int cmp = 0; // 比較結果です。等しければ0、インデックスjの行が大きければプラス、インデックスminIndexの行が大きければマイナスとなります。
 				switch (lData->type())
 				{
@@ -2870,12 +2871,12 @@ void Csv::WriteData(ofstream &outputFile, const OutputData &data) const
 	for (auto& outputRow : *a){
 		size_t i = 0;
 		for (const auto &column : data.columns()){
-			switch (outputRow[column.allColumnsIndex]->type()){
+			switch (outputRow[column]->type()){
 			case DataType::INTEGER:
-				outputFile << outputRow[column.allColumnsIndex]->integer();
+				outputFile << outputRow[column]->integer();
 				break;
 			case DataType::STRING:
-				outputFile << outputRow[column.allColumnsIndex]->string();
+				outputFile << outputRow[column]->string();
 				break;
 			}
 			if (i++ < data.columns().size() - 1){
