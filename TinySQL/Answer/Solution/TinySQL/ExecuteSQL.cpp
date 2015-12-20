@@ -484,11 +484,15 @@ int ExecuteSQL(const string sql, const string outputFileName)
 		while (sqlCursol != sqlEnd){
 
 			// 空白を読み飛ばします。
-			for (search = space.c_str(); *search && *sqlCursol != *search; ++search){}
-			if (*search){
-				sqlCursol++;
-				continue;
+			sqlCursol = find_if(sqlCursol, sqlEnd, [&](char c){return space.find(c) == string::npos; });
+			if (sqlCursol == sqlEnd){
+				break;
 			}
+			//for (search = space.c_str(); *search && *sqlCursol != *search; ++search){}
+			//if (*search){
+			//	sqlCursol++;
+			//	continue;
+			//}
 
 			// 数値リテラルを読み込みます。
 
