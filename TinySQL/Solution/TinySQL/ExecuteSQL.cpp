@@ -925,12 +925,10 @@ int ExecuteSQL(const string sql, const string outputFileName)
 
 			// 入力ファイル名を生成します。
 			const string csvExtension = ".csv"; // csvの拡張子です。
-			char fileName[MAX_WORD_LENGTH + sizeof(csvExtension) - 1] = ""; // 拡張子を含む、入力ファイルのファイル名です。
-			strncat(fileName, tableNames[i].c_str(), MAX_WORD_LENGTH + sizeof(csvExtension) - 1);
-			strncat(fileName, csvExtension.c_str(), MAX_WORD_LENGTH + sizeof(csvExtension) - 1);
+			const string fileName = tableNames[i] + csvExtension; // 拡張子を含む、入力ファイルのファイル名です。
 
 			// 入力ファイルを開きます。
-			inputTableFiles.push_back(fopen(fileName, "r"));
+			inputTableFiles.push_back(fopen(fileName.c_str(), "r"));
 			if (!inputTableFiles.back()){
 				throw ResultValue::ERR_FILE_OPEN;
 			}
