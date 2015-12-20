@@ -3,6 +3,7 @@
 #include "ctype.h"
 
 #include <algorithm>
+#include <vector>
 #pragma warning(disable:4996)
 
 using namespace std;
@@ -367,7 +368,7 @@ ColumnIndex::ColumnIndex(const int table, const int column) : table(table), colu
 //! FROM USERS, CHILDREN                                                                                     @n
 int ExecuteSQL(const char* sql, const char* outputFileName)
 {
-	FILE *inputTableFiles[MAX_TABLE_COUNT] = { nullptr };   // 読み込む入力ファイルの全てのファイルポインタです。
+	vector<FILE*> inputTableFiles;                          // 読み込む入力ファイルの全てのファイルポインタです。
 	FILE *outputFile = nullptr;                             // 書き込むファイルのファイルポインタです。
 	int result = 0;                                         // 関数の戻り値を一時的に保存します。
 	bool found = false;                                     // 検索時に見つかったかどうかの結果を一時的に保存します。
@@ -592,7 +593,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 					if (MAX_TOKEN_COUNT <= tokensNum){
 						throw ResultValue::ERR_MEMORY_OVER;
 					}
-					tokens[tokensNum++] = Token(condition.kind);
+					tokens[tokensNum++] = Token(condition.kind;
 					found = true;
 				}
 				else{
@@ -1005,14 +1006,14 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 			strncat(fileName, csvExtension, MAX_WORD_LENGTH + sizeof(csvExtension) - 1);
 
 			// 入力ファイルを開きます。
-			inputTableFiles[i] = fopen(fileName, "r");
-			if (!inputTableFiles[i]){
+			inputTableFiles.push_back(fopen(fileName, "r"));
+			if (!inputTableFiles.back()){
 				throw ResultValue::ERR_FILE_OPEN;	
 			}
 
 			// 入力CSVのヘッダ行を読み込みます。
 			char inputLine[MAX_FILE_LINE_LENGTH] = ""; // ファイルから読み込んだ行文字列です。
-			if (fgets(inputLine, MAX_FILE_LINE_LENGTH, inputTableFiles[i])){
+			if (fgets(inputLine, MAX_FILE_LINE_LENGTH, inputTableFiles.back())){
 				charactorCursol = inputLine;
 
 				// 読み込んだ行を最後まで読みます。
@@ -1040,7 +1041,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 
 			// 入力CSVのデータ行を読み込みます。
 			int rowNum = 0;
-			while (fgets(inputLine, MAX_FILE_LINE_LENGTH, inputTableFiles[i])){
+			while (fgets(inputLine, MAX_FILE_LINE_LENGTH, inputTableFiles.back())){
 				if (MAX_ROW_COUNT <= rowNum){
 					throw ResultValue::ERR_MEMORY_OVER;
 				}
@@ -1608,9 +1609,9 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 		// 正常時の後処理です。
 
 		// ファイルリソースを解放します。
-		for (int i = 0; i < MAX_TABLE_COUNT; ++i){
-			if (inputTableFiles[i]){
-				fclose(inputTableFiles[i]);
+		for (auto &inputTableFile : inputTableFiles){
+			if (inputTableFile){
+				fclose(inputTableFile);
 				if (result == EOF){
 					throw ResultValue::ERR_FILE_CLOSE;
 				}
@@ -1661,9 +1662,9 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 		// エラー時の処理です。
 
 		// ファイルリソースを解放します。
-		for (int i = 0; i < MAX_TABLE_COUNT; ++i){
-			if (inputTableFiles[i]){
-				fclose(inputTableFiles[i]);
+		for (auto &inputTableFile : inputTableFiles){
+			if (inputTableFile){
+				fclose(inputTableFile);
 			}
 		}
 		if (outputFile){
