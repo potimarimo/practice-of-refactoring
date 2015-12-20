@@ -697,7 +697,7 @@ public:
 //! 引数として渡したノード及びその子孫のノードを取得します。順序は帰りがけ順です。
 //! @param [in] 戻り値のルートとなるノードです。
 //! @return 自身及び子孫のノードです。
-const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> SelfAndDescendants(shared_ptr<ExtensionTreeNode>);
+const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> SelfAndDescendants(const shared_ptr<ExtensionTreeNode>);
 
 //! Order句の列と順序の指定を表します。
 class Order
@@ -726,11 +726,42 @@ public:
 //! SqlQueryの構文情報を扱うクラスです。
 class SqlQueryInfo
 {
+	vector<const string> m_tableNames; //!< FROM句で指定しているテーブル名です。
+	vector<Column> m_selectColumns; //!< SELECT句に指定された列名です。
+	vector<Order> m_orders; //!< ORDER句に指定された順序の情報です。
+	shared_ptr<ExtensionTreeNode> m_whereTopNode; //!< 式木の根となるノードです。
 public:
-	vector<const string> tableNames; //!< FROM句で指定しているテーブル名です。
-	vector<Column> selectColumns; //!< SELECT句に指定された列名です。
-	vector<Order> orders; //!< ORDER句に指定された順序の情報です。
-	shared_ptr<ExtensionTreeNode> whereTopNode; //!< 式木の根となるノードです。
+	//! FROM句で指定しているテーブル名です。
+	//! @return FROM句で指定しているテーブル名。
+	vector<const string> &tableNames();
+
+	//! FROM句で指定しているテーブル名です。
+	//! @return FROM句で指定しているテーブル名。
+	const vector<const string> &tableNames() const;
+
+	//! SELECT句に指定された列名です。
+	//! @return SELECT句に指定された列名。
+	vector<Column> &selectColumns();
+
+	//! SELECT句に指定された列名です。
+	//! @return SELECT句に指定された列名。
+	const vector<Column> &selectColumns() const;
+
+	//! ORDER句に指定された順序の情報です。
+	//! @return ORDER句に指定された順序の情報。
+	vector<Order> &orders();
+
+	//! ORDER句に指定された順序の情報です。
+	//! @return ORDER句に指定された順序の情報。
+	const vector<Order> &orders() const;
+
+	//! 式木の根となるノードです。
+	//! @return 式木の根となるノード。
+	const shared_ptr<ExtensionTreeNode> &whereTopNode() const;
+
+	//! 式木の根となるノードを設定します。
+	//! @param [in] 式木の根となるノード。
+	void setWhereTopNode(const shared_ptr<ExtensionTreeNode> &whereTopNode);
 };
 
 //! CSVとして入力されたファイルの内容を表します。
@@ -2209,7 +2240,7 @@ void ExtensionTreeNode::setValue(const shared_ptr<Data> value)
 //! 引数として渡したノード及びその子孫のノードを取得します。
 //! @param [in] 戻り値のルートとなるノードです。順序は帰りがけ順です。
 //! @return 自身及び子孫のノードです。
-const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> SelfAndDescendants(shared_ptr<ExtensionTreeNode> self)
+const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> SelfAndDescendants(const shared_ptr<ExtensionTreeNode> self)
 {
 	auto selfAndDescendants = make_shared<vector<const shared_ptr<ExtensionTreeNode>>>();
 	if (self->left()){
@@ -2254,6 +2285,62 @@ const bool& Order::isAsc() const
 void Order::SetAllColumnsToColumn(const vector<const InputTable> &inputTables)
 {
 	m_column.SetAllColumns(inputTables);
+}
+
+//! FROM句で指定しているテーブル名です。
+//! @return FROM句で指定しているテーブル名。
+vector<const string>& SqlQueryInfo::tableNames()
+{
+	return m_tableNames;
+}
+
+//! FROM句で指定しているテーブル名です。
+//! @return FROM句で指定しているテーブル名。
+const vector<const string>& SqlQueryInfo::tableNames() const
+{
+	return m_tableNames;
+}
+
+//! SELECT句に指定された列名です。
+//! @return SELECT句に指定された列名。
+vector<Column>& SqlQueryInfo::selectColumns()
+{
+	return m_selectColumns;
+}
+
+//! SELECT句に指定された列名です。
+//! @return SELECT句に指定された列名。
+const vector<Column>& SqlQueryInfo::selectColumns() const
+{
+	return m_selectColumns;
+}
+
+//! ORDER句に指定された順序の情報です。
+//! @return ORDER句に指定された順序の情報。
+vector<Order>& SqlQueryInfo::orders()
+{
+	return m_orders;
+}
+
+//! ORDER句に指定された順序の情報です。
+//! @return ORDER句に指定された順序の情報。
+const vector<Order>& SqlQueryInfo::orders() const
+{
+	return m_orders;
+}
+
+//! 式木の根となるノードです。
+//! @return 式木の根となるノード。
+const shared_ptr<ExtensionTreeNode>& SqlQueryInfo::whereTopNode() const
+{
+	return m_whereTopNode;
+}
+
+//! 式木の根となるノードを設定します。
+//! @param [in] 式木の根となるノード。
+void SqlQueryInfo::setWhereTopNode(const shared_ptr<ExtensionTreeNode> &whereTopNode)
+{
+	m_whereTopNode = whereTopNode;
 }
 
 //! 全てが数値となる列は数値列に変換します。
@@ -2779,10 +2866,10 @@ const shared_ptr<vector<const OutputAllDataRow>> OutputData::GetAllRows() const
 		// 各テーブルの行のすべての組み合わせを出力します。
 
 		// 最後のテーブルのカレント行をインクリメントします。
-		++currentRows[queryInfo.tableNames.size() - 1];
+		++currentRows[queryInfo.tableNames().size() - 1];
 
 		// 最後のテーブルが最終行になっていた場合は先頭に戻し、順に前のテーブルのカレント行をインクリメントします。
-		for (int i = queryInfo.tableNames.size() - 1; currentRows[i] == inputTables[i].data()->end() && 0 < i; --i){
+		for (int i = queryInfo.tableNames().size() - 1; currentRows[i] == inputTables[i].data()->end() && 0 < i; --i){
 			++currentRows[i - 1];
 			currentRows[i] = inputTables[i].data()->begin();
 		}
@@ -2800,18 +2887,18 @@ const shared_ptr<vector<const OutputAllDataRow>> OutputData::GetAllRows() const
 void OutputData::ApplyWhere(vector<const OutputAllDataRow> &outputRows) const
 {
 	// WHERE条件を適用します。
-	if (queryInfo.whereTopNode){
+	if (queryInfo.whereTopNode()){
 		auto & newEnd = copy_if(
 			outputRows.begin(),
 			outputRows.end(),
 			outputRows.begin(),
 			[&](const OutputAllDataRow row){
-			auto allNodes = SelfAndDescendants(queryInfo.whereTopNode);
+			auto allNodes = SelfAndDescendants(queryInfo.whereTopNode());
 			for (auto& node : *allNodes){
 				node->SetColumnData(row);
 			}
-			queryInfo.whereTopNode->Operate();
-			return queryInfo.whereTopNode->value()->boolean();
+			queryInfo.whereTopNode()->Operate();
+			return queryInfo.whereTopNode()->value()->boolean();
 		});
 		outputRows.erase(newEnd, outputRows.end());
 	}
@@ -2822,12 +2909,12 @@ void OutputData::ApplyWhere(vector<const OutputAllDataRow> &outputRows) const
 void OutputData::ApplyOrderBy(vector<const OutputAllDataRow> &outputRows) const
 {
 	// ORDER句による並び替えの処理を行います。
-	if (!queryInfo.orders.empty()){
+	if (!queryInfo.orders().empty()){
 		sort(
 			outputRows.begin(),
 			outputRows.end(),
 			[&](const OutputAllDataRow& lRow, const OutputAllDataRow& rRow){
-			for (auto &order : queryInfo.orders){
+			for (auto &order : queryInfo.orders()){
 				auto &lData = lRow[order.column()]; // インデックスがminIndexのデータです。
 				auto &rData = rRow[order.column()]; // インデックスがjのデータです。
 				int cmp = 0; // 比較結果です。等しければ0、インデックスjの行が大きければプラス、インデックスminIndexの行が大きければマイナスとなります。
@@ -2858,26 +2945,26 @@ void OutputData::ApplyOrderBy(vector<const OutputAllDataRow> &outputRows) const
 //! SELECT句の列名指定が*だった場合は、入力CSVの列名がすべて選択されます。
 void OutputData::OpenSelectAsterisk()
 {
-	if (queryInfo.selectColumns.empty()){
-		copy(allInputColumns.begin(), allInputColumns.end(), back_inserter(queryInfo.selectColumns));
+	if (queryInfo.selectColumns().empty()){
+		copy(allInputColumns.begin(), allInputColumns.end(), back_inserter(queryInfo.selectColumns()));
 	}
 }
 
 //! 利用する列名が、何個目の入力ファイルの何列目に相当するかを判別します。
 void OutputData::SetAllColumns()
 {
-	for (auto &selectColumn : queryInfo.selectColumns){
+	for (auto &selectColumn : queryInfo.selectColumns()){
 		selectColumn.SetAllColumns(inputTables);
 	}
-	if (queryInfo.whereTopNode){
-		auto allWhereNode = SelfAndDescendants(queryInfo.whereTopNode);
+	if (queryInfo.whereTopNode()){
+		auto allWhereNode = SelfAndDescendants(queryInfo.whereTopNode());
 		for (auto& node : *allWhereNode){
 			if (!node->column().columnName().empty()){
 				node->SetAllColumnsToColumn(inputTables);
 			}
 		}
 	}
-	for (auto &order : queryInfo.orders){
+	for (auto &order : queryInfo.orders()){
 		order.SetAllColumnsToColumn(inputTables);
 	}
 }
@@ -2909,7 +2996,7 @@ const shared_ptr<vector<vector<const vector<const shared_ptr<const Data>>>::cons
 //! @return 出力するカラム名です。
 const vector<Column> OutputData::columns() const
 {
-	return queryInfo.selectColumns;
+	return queryInfo.selectColumns();
 }
 
 //! 出力するすべてのデータ行を取得します。
@@ -3099,7 +3186,7 @@ const shared_ptr<const vector<const InputTable>> Csv::Read() const
 {
 	auto tables = make_shared<vector<const InputTable>>();
 
-	for (auto &tableName : queryInfo->tableNames){
+	for (auto &tableName : queryInfo->tableNames()){
 		
 		auto inputFile = OpenInputFile(tableName + ".csv");
 		
@@ -3253,7 +3340,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 
 	// SELECT句の列指定一つのパーサーです。
 	auto SELECT_COLUMN = COLUMN->Action([&]{
-		queryInfo->selectColumns.push_back(column);
+		queryInfo->selectColumns().push_back(column);
 	});
 
 	auto SELECT_COLUMNS = SELECT_COLUMN >> ~(COMMA >> SELECT_COLUMN); // SELECT句の一つ以上のの列指定のパーサーです。
@@ -3267,7 +3354,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 	auto ORDER_BY_COLUMN = PRE_ORDERBY_COLUMN >> COLUMN >> -(ASC | SET_DESC); // ORDER BY句の列指定一つのパーサーです。
 
 	ORDER_BY_COLUMN = ORDER_BY_COLUMN->Action([&]{
-		queryInfo->orders.push_back(Order(column, isAsc));
+		queryInfo->orders().push_back(Order(column, isAsc));
 	});
 
 	auto ORDER_BY_COLUMNS = ORDER_BY_COLUMN >> ~(COMMA >> ORDER_BY_COLUMN); // ORDER BY句の一つ以上の列指定のパーサーです。
@@ -3355,17 +3442,15 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 	auto WHERE_CLAUSE = WHERE >> WHERE_EXTENSION;
 
 	WHERE_CLAUSE = WHERE_CLAUSE->Action([&]{
-		queryInfo->whereTopNode = currentNode;
-		// 木を根に向かってさかのぼり、根のノードを設定します。
-		while (queryInfo->whereTopNode->parent()){
-			queryInfo->whereTopNode = queryInfo->whereTopNode->parent();
+		if (!currentNode->ancestors()->empty()){
+			queryInfo->setWhereTopNode(currentNode->ancestors()->back());
 		}
 	});
 
 	auto WHERE_ORDER = (ORDER_BY_CLAUSE >> -WHERE_CLAUSE) | (WHERE_CLAUSE >> -ORDER_BY_CLAUSE);
 
 	auto TABLE_NAME = IDENTIFIER->Action([&](const Token &token){
-		queryInfo->tableNames.push_back(token.word());
+		queryInfo->tableNames().push_back(token.word());
 	});
 
 	auto FROM_CLAUSE = FROM >> TABLE_NAME >> ~(COMMA >> TABLE_NAME);
@@ -3378,9 +3463,9 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 
 	TINY_SQL = TINY_SQL->Action([&]{
 		// 構文エラーがないことを前提とした処理なので最後に実行しています。
-		if (queryInfo->whereTopNode){
+		if (queryInfo->whereTopNode()){
 			// 既存数値の符号を計算します。
-			auto whereNodes = SelfAndDescendants(queryInfo->whereTopNode);
+			auto whereNodes = SelfAndDescendants(queryInfo->whereTopNode());
 			for (auto &whereNode : *whereNodes){
 				if (whereNode->middleOperator().kind() == TokenKind::NOT_TOKEN &&
 					whereNode->column().columnName().empty() &&
