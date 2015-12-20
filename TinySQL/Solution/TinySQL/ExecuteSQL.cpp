@@ -415,7 +415,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 	vector<ifstream> inputTableFiles;                       // 読み込む入力ファイルの全てのファイルポインタです。
 	ofstream outputFile;                                   // 書き込むファイルのファイルポインタです。
 	bool found = false;                                     // 検索時に見つかったかどうかの結果を一時的に保存します。
-	vector<vector<vector<Data*>>> inputData;                       // 入力データです。
+	vector<vector<vector<Data>>> inputData;                       // 入力データです。
 	vector<Data**> outputData;                              // 出力データです。
 	vector<Data**> allColumnOutputData;                     // 出力するデータに対応するインデックスを持ち、すべての入力データを保管します。
 
@@ -933,11 +933,11 @@ int ExecuteSQL(const string sql, const string outputFileName)
 
 			// 入力CSVのデータ行を読み込みます。
 
-			inputData.push_back(vector<vector<Data*>>());
+			inputData.push_back(vector<vector<Data>>());
 
 			while (getline(inputTableFiles.back(), inputLine)){
-				inputData[i].push_back(vector<Data*>()); // 入力されている一行分のデータです。
-				vector<Data*> &row = inputData[i].back();
+				inputData[i].push_back(vector<Data>()); // 入力されている一行分のデータです。
+				vector<Data> &row = inputData[i].back();
 
 				auto charactorCursol = inputLine.begin(); // データ入力行を検索するカーソルです。
 				auto lineEnd = inputLine.end(); // データ入力行のendを指します。
@@ -949,10 +949,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					auto columnStart = charactorCursol; // 現在の列の最初を記録しておきます。
 					charactorCursol = find(charactorCursol, lineEnd, ',');
 
-					row.push_back(new Data(string(columnStart, charactorCursol)));
-					if (!row.back()){
-						throw ResultValue::ERR_MEMORY_ALLOCATE;
-					}
+					row.push_back(Data(string(columnStart, charactorCursol)));
 
 					// 入力行のカンマの分を読み進めます。
 					if (charactorCursol != lineEnd){
@@ -968,15 +965,15 @@ int ExecuteSQL(const string sql, const string outputFileName)
 				if (none_of(
 					inputData[i].begin(),
 					inputData[i].end(),
-					[&](const vector<Data*> &inputRow){
+					[&](const vector<Data> &inputRow){
 					return any_of(
-						inputRow[j]->string().begin(),
-						inputRow[j]->string().end(),
+						inputRow[j].string().begin(),
+						inputRow[j].string().end(),
 						[&](const char& c){return signNum.find(c) == string::npos; }); })){
 
 					// 符号と数字以外が見つからない列については、数値列に変換します。
 					for (auto& inputRow : inputData[i]){
-						*inputRow[j] = Data(atoi(inputRow[j]->string().c_str()));
+						inputRow[j] = Data(atoi(inputRow[j].string().c_str()));
 					}
 				}
 			}
@@ -1045,7 +1042,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			}
 		}
 
-		vector<vector<vector<Data*>>::iterator> currentRows; // 入力された各テーブルの、現在出力している行を指すカーソルです。
+		vector<vector<vector<Data>>::iterator> currentRows; // 入力された各テーブルの、現在出力している行を指すカーソルです。
 		for (size_t i = 0; i < tableNames.size(); ++i){
 			// 各テーブルの先頭行を設定します。
 			currentRows.push_back(inputData[i].begin());
@@ -1070,7 +1067,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 				if (!row[i]){
 					throw ResultValue::ERR_MEMORY_ALLOCATE;
 				}
-				*row[i] = *(*currentRows[selectColumnIndexes[i].table])[selectColumnIndexes[i].column];
+				*row[i] = (*currentRows[selectColumnIndexes[i].table])[selectColumnIndexes[i].column];
 			}
 
 			allColumnOutputData.push_back((Data**)malloc(MAX_TABLE_COUNT * MAX_COLUMN_COUNT * sizeof(Data*)));
@@ -1091,7 +1088,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					if (!allColumnsRow[allColumnsNum]){
 						throw ResultValue::ERR_MEMORY_ALLOCATE;
 					}
-					*allColumnsRow[allColumnsNum++] = *(*currentRows[i])[j];
+					*allColumnsRow[allColumnsNum++] = (*currentRows[i])[j];
 				}
 			}
 			// WHEREの条件となる値を再帰的に計算します。
@@ -1420,13 +1417,6 @@ int ExecuteSQL(const string sql, const string outputFileName)
 		}
 
 		// メモリリソースを解放します。
-		for (auto& inputTableData : inputData){
-			for (auto& inputRow : inputTableData){
-				for (auto& data : inputRow){
-					delete data;
-				}
-			}
-		}
 		for (auto& outputRow : outputData){
 			Data **dataCursol = outputRow;
 			while (*dataCursol){
@@ -1450,13 +1440,6 @@ int ExecuteSQL(const string sql, const string outputFileName)
 		// エラー時の処理です。
 
 		// メモリリソースを解放します。
-		for (auto& inputTableData : inputData){
-			for (auto& inputRow : inputTableData){
-				for (auto& data : inputRow){
-					delete data;
-				}
-			}
-		}
 		for (auto& outputRow : outputData){
 			Data **dataCursol = outputRow;
 			while (*dataCursol){
