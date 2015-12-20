@@ -2651,6 +2651,23 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 		queryInfo->selectColumns.back() = Column(queryInfo->selectColumns.back().columnName, token.word);
 	});
 
+	Column orderColumn;
+	bool isAsc = true;
+
+	auto FIRST_ORDER_BY_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
+		// テーブル名が指定されていない場合と仮定して読み込みます。
+		orderColumn = Column(token.word);
+	});
+
+	auto SECOND_ORDER_BY_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
+		// テーブル名が指定されていることがわかったので読み替えます。
+		orderColumn = Column(orderColumn.columnName, token.word);
+	});
+
+	auto SET_DESC = DESC->Action([&](const Token token){
+		isAsc = false;
+	});
+
 	// 記号の意味
 	// A >> B		:Aの後にBが続く
 	// -A			:Aが任意
@@ -2661,6 +2678,17 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 	auto SELECT_COLUMNS = SELECT_COLUMN >> ~(COMMA >> SELECT_COLUMN);
 
 	auto SELECT_CLAUSE = SELECT >> (ASTERISK | SELECT_COLUMNS);
+
+	auto ORDER_BY_COLUMN = FIRST_ORDER_BY_COLUMN_NAME >> -(DOT >> SECOND_ORDER_BY_COLUMN_NAME) >> -(ASC | SET_DESC);
+
+	ORDER_BY_COLUMN = ORDER_BY_COLUMN->Action([&](){
+		queryInfo->orders.push_back(Order(orderColumn, isAsc));
+
+		// この変数はまたつかわれるので初期化します。
+		isAsc = true;
+	});
+
+	auto ORDER_BY_COLUMNS = ORDER_BY_COLUMN >> ~(COMMA >> ORDER_BY_COLUMN);
 
 	auto tokenCursol = tokens.begin(); // 現在見ているトークンを指します。
 
@@ -2688,34 +2716,6 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 			++tokenCursol;
 			if (tokenCursol->kind == TokenKind::BY){
 				++tokenCursol;
-
-				Column orderColumn;
-				bool isAsc = true;
-
-				auto FIRST_ORDER_BY_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
-					// テーブル名が指定されていない場合と仮定して読み込みます。
-					orderColumn = Column(tokenCursol->word);
-				});
-
-				auto SECOND_ORDER_BY_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
-					// テーブル名が指定されていることがわかったので読み替えます。
-					orderColumn = Column(orderColumn.columnName, tokenCursol->word);
-				});
-
-				auto SET_DESC = DESC->Action([&](const Token token){
-					isAsc = false;
-				});
-
-				auto ORDER_BY_COLUMN = FIRST_ORDER_BY_COLUMN_NAME >> -(DOT >> SECOND_ORDER_BY_COLUMN_NAME) >> -(ASC | SET_DESC);
-
-				ORDER_BY_COLUMN = ORDER_BY_COLUMN->Action([&](){
-					queryInfo->orders.push_back(Order(orderColumn, isAsc));
-
-					// この変数はまたつかわれるので初期化します。
-					isAsc = true;
-				});
-
-				auto ORDER_BY_COLUMNS = ORDER_BY_COLUMN >> ~(COMMA >> ORDER_BY_COLUMN);
 
 				if (!ORDER_BY_COLUMNS->Parse(tokenCursol)){
 					throw ResultValue::ERR_SQL_SYNTAX;
