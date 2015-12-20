@@ -160,7 +160,7 @@ public:
 	//! Columnクラスの新しいインスタンスを初期化します。
 	//! @param [in] tableName 列が所属するテーブル名です。指定されていない場合は空文字列となります。
 	//! @param [in] columnName 指定された列の列名です。
-	Column(const char* tableName, const char* columnName);
+	Column(const string tableName, const char* columnName);
 };
 
 //! WHERE句の条件の式木を表します。
@@ -272,7 +272,7 @@ Column::Column(const char* columnName) : Column("", columnName)
 //! Columnクラスの新しいインスタンスを初期化します。
 //! @param [in] tableName 列が所属するテーブル名です。指定されていない場合は空文字列となります。
 //! @param [in] columnName 指定された列の列名です。
-Column::Column(const char* tableName, const char* columnName)
+Column::Column(const string tableName, const char* columnName)
 {
 	this->tableName = tableName;
 	strncpy(this->columnName, columnName, max(MAX_DATA_LENGTH, MAX_WORD_LENGTH));
@@ -922,7 +922,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 
 				// 読み込んだ行を最後まで読みます。
 				while (*charactorCursol && *charactorCursol != '\r' && *charactorCursol != '\n'){
-					inputColumns[i].push_back(Column(tableNames[i].c_str(), ""));					
+					inputColumns[i].push_back(Column(tableNames[i], ""));					
 					char *writeCursol = inputColumns[i].back().columnName; // 列名の書き込みに利用するカーソルです。
 
 					// 列名を一つ読みます。
@@ -1030,7 +1030,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 		// 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
 		for (size_t i = 0; i < tableNames.size(); ++i){
 			for (auto &inputColumn : inputColumns[i]){
-				allInputColumns.push_back(Column(tableNames[i].c_str(), inputColumn.columnName));
+				allInputColumns.push_back(Column(tableNames[i], inputColumn.columnName));
 			}
 		}
 
