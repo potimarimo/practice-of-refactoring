@@ -415,7 +415,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 	bool found = false;                                     // 検索時に見つかったかどうかの結果を一時的に保存します。
 	vector<vector<vector<Data>>> inputData;                 // 入力データです。
 	vector<vector<Data>> outputData;                        // 出力データです。
-	vector<vector<Data*>> allColumnOutputData;              // 出力するデータに対応するインデックスを持ち、すべての入力データを保管します。
+	vector<vector<Data>> allColumnOutputData;               // 出力するデータに対応するインデックスを持ち、すべての入力データを保管します。
 
 	const string alpahUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ"; // 全てのアルファベットの大文字小文字とアンダーバーです。
 	const string alpahNumUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; // 全ての数字とアルファベットの大文字小文字とアンダーバーです。
@@ -1056,17 +1056,13 @@ int ExecuteSQL(const string sql, const string outputFileName)
 				row.push_back((*currentRows[selectColumnIndexes[i].table])[selectColumnIndexes[i].column]);
 			}
 
-			allColumnOutputData.push_back(vector<Data*>());
-			vector<Data*> &allColumnsRow = allColumnOutputData.back();// WHEREやORDERのためにすべての情報を含む行。rowとインデックスを共有します。
+			allColumnOutputData.push_back(vector<Data>());
+			vector<Data> &allColumnsRow = allColumnOutputData.back();// WHEREやORDERのためにすべての情報を含む行。rowとインデックスを共有します。
 
 			// allColumnsRowの列を設定します。
 			for (size_t i = 0; i < tableNames.size(); ++i){
 				for (size_t j = 0; j < inputColumns[i].size(); ++j){
-					allColumnsRow.push_back(new Data);
-					if (!allColumnsRow.back()){
-						throw ResultValue::ERR_MEMORY_ALLOCATE;
-					}
-					*allColumnsRow.back() = (*currentRows[i])[j];
+					allColumnsRow.push_back((*currentRows[i])[j]);
 				}
 			}
 			// WHEREの条件となる値を再帰的に計算します。
@@ -1100,7 +1096,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 										throw ResultValue::ERR_BAD_COLUMN_NAME;
 									}
 									found = true;
-									currentNode->value = *allColumnsRow[i];
+									currentNode->value = allColumnsRow[i];
 								}
 							}
 							// 一つも見つからなくてもエラーです。
@@ -1290,16 +1286,16 @@ int ExecuteSQL(const string sql, const string outputFileName)
 				for (size_t j = i + 1; j < outputData.size(); ++j){
 					bool jLessThanMin = false; // インデックスがjの値が、minIndexの値より小さいかどうかです。
 					for (size_t k = 0; k < orderByColumnIndexes.size(); ++k){
-						Data *mData = allColumnOutputData[minIndex][orderByColumnIndexes[k]]; // インデックスがminIndexのデータです。
-						Data *jData = allColumnOutputData[j][orderByColumnIndexes[k]]; // インデックスがjのデータです。
+						const Data &mData = allColumnOutputData[minIndex][orderByColumnIndexes[k]]; // インデックスがminIndexのデータです。
+						const Data &jData = allColumnOutputData[j][orderByColumnIndexes[k]]; // インデックスがjのデータです。
 						int cmp = 0; // 比較結果です。等しければ0、インデックスjの行が大きければプラス、インデックスminIndexの行が大きければマイナスとなります。
-						switch (mData->type)
+						switch (mData.type)
 						{
 						case DataType::INTEGER:
-							cmp = jData->integer() - mData->integer();
+							cmp = jData.integer() - mData.integer();
 							break;
 						case DataType::STRING:
-							cmp = strcmp(jData->string().c_str(), mData->string().c_str());
+							cmp = strcmp(jData.string().c_str(), mData.string().c_str());
 							break;
 						}
 
@@ -1323,9 +1319,9 @@ int ExecuteSQL(const string sql, const string outputFileName)
 				outputData[minIndex] = outputData[i];
 				outputData[i] = tmp;
 
-				vector<Data*> allTmp = allColumnOutputData[minIndex];
+				tmp = allColumnOutputData[minIndex];
 				allColumnOutputData[minIndex] = allColumnOutputData[i];
-				allColumnOutputData[i] = allTmp;
+				allColumnOutputData[i] = tmp;
 			}
 		}
 
@@ -1392,25 +1388,10 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			}
 		}
 
-		// メモリリソースを解放します。
-		for (auto& allDataRow : allColumnOutputData){
-			for (auto data : allDataRow){
-				delete data;
-			}
-		}
-
 		return static_cast<int>(ResultValue::OK);
 	}
 	catch (ResultValue error) // 発生したエラーの種類です。
 	{
-		// エラー時の処理です。
-
-		// メモリリソースを解放します。
-		for (auto& allDataRow : allColumnOutputData){
-			for (auto data : allDataRow){
-				delete data;
-			}
-		}
 		return static_cast<int>(error);
 	}
 }
