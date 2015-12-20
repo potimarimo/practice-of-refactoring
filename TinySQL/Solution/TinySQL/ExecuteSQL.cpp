@@ -2953,10 +2953,8 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 	auto WHERE_CLOSE_PAREN = CLOSE_PAREN->Action([&](const Token token){
 		auto ancestors = currentNode->ancestors();
 		for (auto & ancestor : *ancestors){
-			shared_ptr<ExtensionTreeNode> searched = ancestor; // searchedAncestorの内部からカッコ開くを検索するためのカーソルです。
-			while (searched && !searched->parenOpenBeforeClose){
-				searched = searched->left;
-			}
+			auto searched = ancestor;
+			for (; searched && !searched->parenOpenBeforeClose; searched = searched->left){}
 			if (searched){
 				// 対応付けられていないカッコ開くを一つ削除し、ノードがカッコに囲まれていることを記録します。
 				--searched->parenOpenBeforeClose;
