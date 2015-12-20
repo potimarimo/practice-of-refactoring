@@ -575,6 +575,10 @@ public:
 	//! @param [in] inputTables ファイルから読み取ったデータです。
 	//! @param [in] 実際に出力する行です。
 	void SetColumnData(const vector<const shared_ptr<const Data>> &outputRow);
+
+	//! 自身の祖先ノードを自身に近いほうから順に列挙します。
+	//! @return 祖先ノードの一覧。
+	const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> ancestors() const;
 };
 
 //! 引数として渡したノード及びその子孫のノードを取得します。順序は帰りがけ順です。
@@ -1880,6 +1884,18 @@ void ExtensionTreeNode::SetColumnData(const vector<const shared_ptr<const Data>>
 	}
 }
 
+//! 自身の祖先ノードを自身に近いほうから順に列挙します。
+//! @return 祖先ノードの一覧。
+const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> ExtensionTreeNode::ancestors() const
+{
+	auto ancestors = make_shared<vector<const shared_ptr<ExtensionTreeNode>>>();
+	
+	for (auto current = parent; current; current = current->parent){
+		ancestors->push_back(current);
+	}
+	return ancestors;
+}
+
 //! 引数として渡したノード及びその子孫のノードを取得します。
 //! @param [in] 戻り値のルートとなるノードです。順序は帰りがけ順です。
 //! @return 自身及び子孫のノードです。
@@ -2935,22 +2951,17 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 	auto WHERE_UNIAEY_PLUS_MINUS = (PLUS | WHERE_UNIARY_MINUS) >> WHERE_UNIALY_NEXT;
 
 	auto WHERE_CLOSE_PAREN = CLOSE_PAREN->Action([&](const Token token){
-		shared_ptr<ExtensionTreeNode> searchedAncestor = currentNode->parent; // カッコ閉じると対応するカッコ開くを両方含む祖先ノードを探すためのカーソルです。
-		while (searchedAncestor){
-
-			// searchedAncestorの左の子に対応するカッコ開くがないかを検索します。
-			shared_ptr<ExtensionTreeNode> searched = searchedAncestor; // searchedAncestorの内部からカッコ開くを検索するためのカーソルです。
+		auto ancestors = currentNode->ancestors();
+		for (auto & ancestor : *ancestors){
+			shared_ptr<ExtensionTreeNode> searched = ancestor; // searchedAncestorの内部からカッコ開くを検索するためのカーソルです。
 			while (searched && !searched->parenOpenBeforeClose){
 				searched = searched->left;
 			}
 			if (searched){
 				// 対応付けられていないカッコ開くを一つ削除し、ノードがカッコに囲まれていることを記録します。
 				--searched->parenOpenBeforeClose;
-				searchedAncestor->inParen = true;
+				ancestor->inParen = true;
 				break;
-			}
-			else{
-				searchedAncestor = searchedAncestor->parent;
 			}
 		}
 	});
