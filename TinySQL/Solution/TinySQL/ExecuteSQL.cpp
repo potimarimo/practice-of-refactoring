@@ -274,7 +274,7 @@ protected:
 //! キーワードトークンを読み込む機能を提供します。
 class KeywordReader : public TokenReader
 {
-	Token keyword;
+	Token keyword; //!< 読み込むキーワードトークンと等しいトークンです。
 protected:
 	//! 実際にトークンを読み込みます。
 	//! @param [in] cursol 読み込み開始位置です。
@@ -282,6 +282,9 @@ protected:
 	//! @return 切り出されたトークンです。読み込みが失敗した場合はnullptrを返します。
 	const shared_ptr<const Token> ReadCore(string::const_iterator &cursol, const string::const_iterator& end) const override;
 public:
+	//! KeywordReaderクラスの新しいインスタンスを初期化します。
+	//! @param [in] kind トークンの種類です。
+	//! @param [in] word キーワードの文字列です。
 	KeywordReader(const TokenKind kind, const string word);
 };
 
@@ -294,8 +297,7 @@ class SqlQuery
 	const string num = "0123456789"; //!< 全ての数字です。
 	const string space = " \t\r\n"; //!< 全ての空白文字です。
 
-	// keywordConditionsとsignConditionsは先頭から順に検索されるので、前方一致となる二つの項目は順番に気をつけて登録しなくてはいけません。
-	const vector<const Token> keywordConditions;//!< キーワードをトークンとして認識するためのキーワード一覧情報です。
+	// signConditionsは先頭から順に検索されるので、前方一致となる二つの項目は順番に気をつけて登録しなくてはいけません。
 	const vector<const Token> signConditions;//!< 記号をトークンとして認識するための記号一覧情報です。
 	const vector<const Operator> operators; //!< 演算子の情報です。
 
@@ -523,6 +525,9 @@ const shared_ptr<const Token> KeywordReader::ReadCore(string::const_iterator &cu
 	}
 }
 
+//! KeywordReaderクラスの新しいインスタンスを初期化します。
+//! @param [in] kind トークンの種類です。
+//! @param [in] word キーワードの文字列です。
 KeywordReader::KeywordReader(const TokenKind kind, const string word) : keyword(Token(kind, word)){}
 
 //! 二つの文字列を、大文字小文字を区別せずに比較し、等しいかどうかです。
@@ -542,11 +547,20 @@ bool Equali(const string str1, const string str2){
 const shared_ptr<const vector<const Token>> SqlQuery::GetTokens(const string sql) const
 {
 	// トークンを読み込む方法の集合です。
+	// 先頭から順に検索されるので、前方一致となる二つの項目は順番に気をつけて登録しなくてはいけません。
 	vector<shared_ptr<TokenReader>> readers =
 	{
 		make_shared<IntLiteralReader>(),
 		make_shared<StringLiteralReader>(),
 		make_shared<KeywordReader>(TokenKind::AND, "AND"),
+		make_shared<KeywordReader>(TokenKind::ASC, "ASC"),
+		make_shared<KeywordReader>(TokenKind::BY, "BY"),
+		make_shared<KeywordReader>(TokenKind::DESC, "DESC"),
+		make_shared<KeywordReader>(TokenKind::FROM, "FROM"),
+		make_shared<KeywordReader>(TokenKind::ORDER, "ORDER"),
+		make_shared<KeywordReader>(TokenKind::OR, "OR"),
+		make_shared<KeywordReader>(TokenKind::SELECT, "SELECT"),
+		make_shared<KeywordReader>(TokenKind::WHERE, "WHERE"),
 	};
 
 	auto backPoint = sql.begin(); // SQLをトークンに分割して読み込む時に戻るポイントを記録しておきます。
@@ -578,29 +592,6 @@ const shared_ptr<const vector<const Token>> SqlQuery::GetTokens(const string sql
 		if (found){
 			continue;
 		}
-
-		// キーワードを読み込みます。
-		auto keyword = find_if(keywordConditions.begin(), keywordConditions.end(),
-			[&](Token keyword){
-			auto result =
-				mismatch(keyword.word.begin(), keyword.word.end(), cursol,
-				[](const char keywordChar, const char sqlChar){return keywordChar == toupper(sqlChar); });
-
-			if (result.first == keyword.word.end() && // キーワードの最後の文字まで同じです。
-				result.second != end && alpahNumUnder.find(*result.second) == string::npos){ //キーワードに識別子が区切りなしに続いていないかを確認します。 
-				cursol = result.second;
-				return true;
-			}
-			else{
-				return false;
-			}
-		});
-		if (keyword != keywordConditions.end()){
-			tokens->push_back(Token(keyword->kind));
-			continue;
-		}
-
-
 
 		// 記号を読み込みます。
 		auto sign = find_if(signConditions.begin(), signConditions.end(),
@@ -1446,16 +1437,6 @@ void SqlQuery::WriteCsv(const string outputFileName, const vector<const InputTab
 //! SqlQueryクラスの新しいインスタンスを初期化します。
 //! @param [in] sql 実行するSQLです。
 SqlQuery::SqlQuery(const string sql) :
-	keywordConditions({
-		//{ TokenKind::AND, "AND" },
-		{ TokenKind::ASC, "ASC" },
-		{ TokenKind::BY, "BY" },
-		{ TokenKind::DESC, "DESC" },
-		{ TokenKind::FROM, "FROM" },
-		{ TokenKind::ORDER, "ORDER" },
-		{ TokenKind::OR, "OR" },
-		{ TokenKind::SELECT, "SELECT" },
-		{ TokenKind::WHERE, "WHERE" }}),
 	signConditions({
 		{ TokenKind::GREATER_THAN_OR_EQUAL, ">=" },
 		{ TokenKind::LESS_THAN_OR_EQUAL, "<=" },
