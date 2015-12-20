@@ -2961,45 +2961,22 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 		}
 	});
 
+	auto WHERE_ORDER = (ORDER_BY_CLAUSE >> -WHERE_CLAUSE) | (WHERE_CLAUSE >> -ORDER_BY_CLAUSE);
+
 	auto TABLE_NAME = IDENTIFIER->Action([&](const Token &token){
 		queryInfo->tableNames.push_back(token.word);
 	});
 
 	auto FROM_CLAUSE = FROM >> TABLE_NAME >> ~(COMMA >> TABLE_NAME);
 
+	auto TINY_SQL =
+		SELECT_CLAUSE >>
+		-WHERE_ORDER >>
+		FROM_CLAUSE;
+
 	auto tokenCursol = tokens.begin(); // 現在見ているトークンを指します。
 
-	if (!SELECT_CLAUSE->Parse(tokenCursol, tokens.end())){
-		throw ResultValue::ERR_SQL_SYNTAX;
-	}
-
-	auto WHERE_ORDER = (ORDER_BY_CLAUSE >> -WHERE_CLAUSE) | (WHERE_CLAUSE >> -ORDER_BY_CLAUSE);
-
-	WHERE_ORDER->Parse(tokenCursol, tokens.end());
-
-	//// FROM句を読み込みます。
-	//if (tokenCursol->kind == TokenKind::FROM){
-	//	++tokenCursol;
-	//}
-	//else{
-	//	throw ResultValue::ERR_SQL_SYNTAX;
-	//}
-	//bool first = true; // FROM句の最初のテーブル名を読み込み中かどうかです。
-	//while (tokenCursol != tokens.end() && tokenCursol->kind == TokenKind::COMMA || first){
-	//	if (tokenCursol->kind == TokenKind::COMMA){
-	//		++tokenCursol;
-	//	}
-	//	if (tokenCursol->kind == TokenKind::IDENTIFIER){
-	//		queryInfo->tableNames.push_back(tokenCursol->word);
-	//		++tokenCursol;
-	//	}
-	//	else{
-	//		throw ResultValue::ERR_SQL_SYNTAX;
-	//	}
-	//	first = false;
-	//}
-
-	if (!FROM_CLAUSE->Parse(tokenCursol, tokens.end())){
+	if (!TINY_SQL->Parse(tokenCursol, tokens.end())){
 		throw ResultValue::ERR_SQL_SYNTAX;
 	}
 	
