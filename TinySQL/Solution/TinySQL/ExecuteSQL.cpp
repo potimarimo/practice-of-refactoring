@@ -2818,6 +2818,68 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 	// オペランドに前置される + か - を読み込むパーサーです。
 	auto WHERE_UNIAEY_PLUS_MINUS = (PLUS | WHERE_UNIARY_MINUS) >> WHERE_UNIALY_NEXT;
 
+	auto WHERE_CLOSE_PAREN = CLOSE_PAREN->Action([&](const Token token){
+		shared_ptr<ExtensionTreeNode> searchedAncestor = currentNode->parent; // カッコ閉じると対応するカッコ開くを両方含む祖先ノードを探すためのカーソルです。
+		while (searchedAncestor){
+
+			// searchedAncestorの左の子に対応するカッコ開くがないかを検索します。
+			shared_ptr<ExtensionTreeNode> searched = searchedAncestor; // searchedAncestorの内部からカッコ開くを検索するためのカーソルです。
+			while (searched && !searched->parenOpenBeforeClose){
+				searched = searched->left;
+			}
+			if (searched){
+				// 対応付けられていないカッコ開くを一つ削除し、ノードがカッコに囲まれていることを記録します。
+				--searched->parenOpenBeforeClose;
+				searchedAncestor->inParen = true;
+				break;
+			}
+			else{
+				searchedAncestor = searchedAncestor->parent;
+			}
+		}
+	});
+
+	auto OPERAND = WHERE_COLUMN | WHERE_INT_LITERAL | WHERE_STRING_LITERAL;
+
+	auto WHERE_OPERAND = -~WHERE_OPEN_PAREN >> -WHERE_UNIAEY_PLUS_MINUS >> OPERAND >> -~WHERE_CLOSE_PAREN;
+
+	auto OPERATOR = ASTERISK->or(SLASH)->or(PLUS)->or(MINUS)->or(EQUAL)->or(GREATER_THAN)->or(GREATER_THAN_OR_EQUAL)->or(LESS_THAN)->or(LESS_THAN_OR_EQUAL)->or(NOT_EQUAL)->or(AND)->or(AND)->or(OR)->Action([&](const Token token){
+		// 演算子(オペレーターを読み込みます。
+		auto foundOperator = find_if(operators.begin(), operators.end(), [&](const Operator& op){return op.kind == token.kind; }); // 現在読み込んでいる演算子の情報です。
+
+		// 現在見ている演算子の情報を探します。
+		// 見つかった演算子の情報をもとにノードを入れ替えます。
+		shared_ptr<ExtensionTreeNode> tmp = currentNode; //ノードを入れ替えるために使う変数です。
+
+		shared_ptr<ExtensionTreeNode> searched = tmp; // 入れ替えるノードを探すためのカーソルです。
+
+		//カッコにくくられていなかった場合に、演算子の優先順位を参考に結合するノードを探します。
+		bool first = true; // 演算子の優先順位を検索する最初のループです。
+		do{
+			if (!first){
+				tmp = tmp->parent;
+				searched = tmp;
+			}
+			// 現在の読み込み場所をくくるカッコが開く場所を探します。
+			while (searched && !searched->parenOpenBeforeClose){
+				searched = searched->left;
+			}
+			first = false;
+		} while (!searched && tmp->parent && (tmp->parent->middleOperator.order <= foundOperator->order || tmp->parent->inParen));
+
+		// 演算子のノードを新しく生成します。
+		currentNode = make_shared<ExtensionTreeNode>();
+		currentNode->middleOperator = *foundOperator;
+
+		// 見つかった場所に新しいノードを配置します。これまでその位置にあったノードは左の子となるよう、親ノードと子ノードのポインタをつけかえます。
+		currentNode->parent = tmp->parent;
+		if (currentNode->parent){
+			currentNode->parent->right = currentNode;
+		}
+		currentNode->left = tmp;
+		tmp->parent = currentNode;
+	});
+
 	auto tokenCursol = tokens.begin(); // 現在見ているトークンを指します。
 
 	if (!SELECT_CLAUSE->Parse(tokenCursol)){
@@ -2866,77 +2928,10 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 					currentNode = newNode;
 				}
 
-				(~WHERE_OPEN_PAREN)->Parse(tokenCursol);
-
-				WHERE_UNIAEY_PLUS_MINUS->Parse(tokenCursol);
-
-				auto OPERAND = WHERE_COLUMN | WHERE_INT_LITERAL | WHERE_STRING_LITERAL;
-
-				if (!OPERAND->Parse(tokenCursol)){
+				if (!WHERE_OPERAND->Parse(tokenCursol)){
 					throw ResultValue::ERR_SQL_SYNTAX;
 				}
-
-				auto WHERE_CLOSE_PAREN = CLOSE_PAREN->Action([&](const Token token){
-					shared_ptr<ExtensionTreeNode> searchedAncestor = currentNode->parent; // カッコ閉じると対応するカッコ開くを両方含む祖先ノードを探すためのカーソルです。
-					while (searchedAncestor){
-
-						// searchedAncestorの左の子に対応するカッコ開くがないかを検索します。
-						shared_ptr<ExtensionTreeNode> searched = searchedAncestor; // searchedAncestorの内部からカッコ開くを検索するためのカーソルです。
-						while (searched && !searched->parenOpenBeforeClose){
-							searched = searched->left;
-						}
-						if (searched){
-							// 対応付けられていないカッコ開くを一つ削除し、ノードがカッコに囲まれていることを記録します。
-							--searched->parenOpenBeforeClose;
-							searchedAncestor->inParen = true;
-							break;
-						}
-						else{
-							searchedAncestor = searchedAncestor->parent;
-						}
-					}
-				});
-
-				(~WHERE_CLOSE_PAREN)->Parse(tokenCursol);
-
-				 auto OPERATORS = ASTERISK->or(SLASH)->or(PLUS)->or(MINUS)->or(EQUAL)->or(GREATER_THAN)->or(GREATER_THAN_OR_EQUAL)->or(LESS_THAN)->or(LESS_THAN_OR_EQUAL)->or(NOT_EQUAL)->or(AND)->or(AND)->or(OR)->Action([&](const Token token){
-					// 演算子(オペレーターを読み込みます。
-					auto foundOperator = find_if(operators.begin(), operators.end(), [&](const Operator& op){return op.kind == token.kind; }); // 現在読み込んでいる演算子の情報です。
-
-					// 現在見ている演算子の情報を探します。
-					// 見つかった演算子の情報をもとにノードを入れ替えます。
-					shared_ptr<ExtensionTreeNode> tmp = currentNode; //ノードを入れ替えるために使う変数です。
-
-					shared_ptr<ExtensionTreeNode> searched = tmp; // 入れ替えるノードを探すためのカーソルです。
-
-					//カッコにくくられていなかった場合に、演算子の優先順位を参考に結合するノードを探します。
-					bool first = true; // 演算子の優先順位を検索する最初のループです。
-					do{
-						if (!first){
-							tmp = tmp->parent;
-							searched = tmp;
-						}
-						// 現在の読み込み場所をくくるカッコが開く場所を探します。
-						while (searched && !searched->parenOpenBeforeClose){
-							searched = searched->left;
-						}
-						first = false;
-					} while (!searched && tmp->parent && (tmp->parent->middleOperator.order <= foundOperator->order || tmp->parent->inParen));
-
-					// 演算子のノードを新しく生成します。
-					currentNode = make_shared<ExtensionTreeNode>();
-					currentNode->middleOperator = *foundOperator;
-
-					// 見つかった場所に新しいノードを配置します。これまでその位置にあったノードは左の子となるよう、親ノードと子ノードのポインタをつけかえます。
-					currentNode->parent = tmp->parent;
-					if (currentNode->parent){
-						currentNode->parent->right = currentNode;
-					}
-					currentNode->left = tmp;
-					tmp->parent = currentNode;
-				});
-
-				if (!OPERATORS->Parse(tokenCursol)){
+				if (!OPERATOR->Parse(tokenCursol)){
 					break;
 				}
 			}
