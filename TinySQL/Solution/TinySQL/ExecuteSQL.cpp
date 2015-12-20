@@ -1296,7 +1296,6 @@ int ExecuteSQL(const string sql, const string outputFileName)
 		}
 
 		// 番兵となるnullptrを登録します。
-		outputData.push_back(nullptr);
 		allColumnOutputData.push_back(nullptr);
 
 		// ORDER句による並び替えの処理を行います。
@@ -1325,9 +1324,9 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			}
 
 			// outputDataとallColumnOutputDataのソートを一緒に行います。簡便のため凝ったソートは使わず、選択ソートを利用します。
-			for (size_t i = 0; i < outputData.size() - 1; ++i){
+			for (size_t i = 0; i < outputData.size(); ++i){
 				int minIndex = i; // 現在までで最小の行のインデックスです。
-				for (size_t j = i + 1; j < outputData.size() - 1; ++j){
+				for (size_t j = i + 1; j < outputData.size(); ++j){
 					bool jLessThanMin = false; // インデックスがjの値が、minIndexの値より小さいかどうかです。
 					for (size_t k = 0; k < orderByColumnIndexes.size(); ++k){
 						Data *mData = allColumnOutputData[minIndex][orderByColumnIndexes[k]]; // インデックスがminIndexのデータです。
@@ -1389,9 +1388,6 @@ int ExecuteSQL(const string sql, const string outputFileName)
 		// 出力ファイルにデータを出力します。
 
 		for (auto& outputRow : outputData){
-			if (!outputRow){
-				break;
-			}
 			Data **column = outputRow;
 			for (size_t i = 0; i < selectColumns.size(); ++i){
 				char outputString[MAX_DATA_LENGTH] = "";
@@ -1446,9 +1442,6 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			}
 		}
 		for (auto& outputRow : outputData){
-			if (!outputRow){
-				break;
-			}
 			Data **dataCursol = outputRow;
 			while (*dataCursol){
 				delete *dataCursol++;
@@ -1484,9 +1477,6 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			}
 		}
 		for (auto& outputRow : outputData){
-			if (!outputRow){
-				break;
-			}
 			Data **dataCursol = outputRow;
 			while (*dataCursol){
 				delete *dataCursol++;
