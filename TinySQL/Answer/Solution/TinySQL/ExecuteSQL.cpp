@@ -352,6 +352,10 @@ class OutputData
 	//! 入力された各テーブルの、現在出力している行を指すカーソルを、初期化された状態で取得します。
 	//! @return 初期化されたカーソルです。
 	const shared_ptr<vector<vector<const vector<const Data>>::const_iterator>> OutputData::GetInitializedCurrentRows() const;
+
+	//! 出力するすべてのデータ行を取得します。
+	//! @return 出力するすべてのデータ行。入力されたすべての入力データを保管します。
+	const shared_ptr<vector<vector<Data>>> GetOutputRows();
 public:
 
 	//! OutputDataクラスの新しいインスタンスを初期化します。
@@ -827,29 +831,26 @@ const shared_ptr<vector<vector<const vector<const Data>>::const_iterator>> Outpu
 	return currentRows;
 }
 
-//! CSVファイルに出力データを書き込みます。
-//! @param [in] outputFileName 結果を出力するファイルのファイル名です。
-//! @param [in] inputTables ファイルから読み取ったデータです。
-void OutputData::WriteCsv(const string outputFileName, const vector<const InputTable> &inputTables)
+//! 出力するすべてのデータ行を取得します。
+//! @return 出力するすべてのデータ行。入力されたすべての入力データを保管します。
+const shared_ptr<vector<vector<Data>>> OutputData::GetOutputRows()
 {
-	ofstream outputFile; // 書き込むファイルのファイルポインタです。
-
+	auto outputRows = make_shared<vector<vector<Data>>>();
 	auto currentRowsPtr = GetInitializedCurrentRows();
 	auto &currentRows = *currentRowsPtr;
 
 	// 出力するデータを設定します。
-	vector<vector<Data>> allColumnOutputData; // 出力するデータに対応するインデックスを持ち、すべての入力データを保管します。
 	while (true){
 
-		allColumnOutputData.push_back(vector<Data>());
-		vector<Data> &allColumnsRow = allColumnOutputData.back();// WHEREやORDERのためにすべての情報を含む行。rowとインデックスを共有します。
+		outputRows->push_back(vector<Data>());
+		vector<Data> &outputRow = outputRows->back();// WHEREやORDERのためにすべての情報を含む行。rowとインデックスを共有します。
 
-		// allColumnsRowの列を設定します。
+		// outputRowの列を設定します。
 		for (auto &currentRow : currentRows){
 			copy(
 				currentRow->begin(),
 				currentRow->end(),
-				back_inserter(allColumnsRow));
+				back_inserter(outputRow));
 		}
 
 		// WHEREの条件となる値を再帰的に計算します。
@@ -883,7 +884,7 @@ void OutputData::WriteCsv(const string outputFileName, const vector<const InputT
 									throw ResultValue::ERR_BAD_COLUMN_NAME;
 								}
 								found = true;
-								currentNode->value = allColumnsRow[i];
+								currentNode->value = outputRow[i];
 							}
 						}
 						// 一つも見つからなくてもエラーです。
@@ -1016,7 +1017,7 @@ void OutputData::WriteCsv(const string outputFileName, const vector<const InputT
 
 			// 条件に合わない行は出力から削除します。
 			if (!queryInfo.whereTopNode->value.boolean()){
-				allColumnOutputData.pop_back();
+				outputRows->pop_back();
 			}
 			// WHERE条件の計算結果をリセットします。
 			auto whereNodes = SelfAndDescendants(queryInfo.whereTopNode);
@@ -1068,13 +1069,13 @@ void OutputData::WriteCsv(const string outputFileName, const vector<const InputT
 		}
 
 		// allColumnOutputDataのソートを行います。簡便のため凝ったソートは使わず、選択ソートを利用します。
-		for (size_t i = 0; i < allColumnOutputData.size(); ++i){
+		for (size_t i = 0; i < outputRows->size(); ++i){
 			int minIndex = i; // 現在までで最小の行のインデックスです。
-			for (size_t j = i + 1; j < allColumnOutputData.size(); ++j){
+			for (size_t j = i + 1; j < outputRows->size(); ++j){
 				bool jLessThanMin = false; // インデックスがjの値が、minIndexの値より小さいかどうかです。
 				for (size_t k = 0; k < orderByColumnIndexes.size(); ++k){
-					const Data &mData = allColumnOutputData[minIndex][orderByColumnIndexes[k]]; // インデックスがminIndexのデータです。
-					const Data &jData = allColumnOutputData[j][orderByColumnIndexes[k]]; // インデックスがjのデータです。
+					const Data &mData = (*outputRows)[minIndex][orderByColumnIndexes[k]]; // インデックスがminIndexのデータです。
+					const Data &jData = (*outputRows)[j][orderByColumnIndexes[k]]; // インデックスがjのデータです。
 					int cmp = 0; // 比較結果です。等しければ0、インデックスjの行が大きければプラス、インデックスminIndexの行が大きければマイナスとなります。
 					switch (mData.type)
 					{
@@ -1103,11 +1104,22 @@ void OutputData::WriteCsv(const string outputFileName, const vector<const InputT
 				}
 			}
 
-			vector<Data> tmp = allColumnOutputData[minIndex];
-			allColumnOutputData[minIndex] = allColumnOutputData[i];
-			allColumnOutputData[i] = tmp;
+			vector<Data> tmp = (*outputRows)[minIndex];
+			(*outputRows)[minIndex] = (*outputRows)[i];
+			(*outputRows)[i] = tmp;
 		}
 	}
+	return outputRows;
+}
+
+//! CSVファイルに出力データを書き込みます。
+//! @param [in] outputFileName 結果を出力するファイルのファイル名です。
+//! @param [in] inputTables ファイルから読み取ったデータです。
+void OutputData::WriteCsv(const string outputFileName, const vector<const InputTable> &inputTables)
+{
+	ofstream outputFile; // 書き込むファイルのファイルポインタです。
+
+	auto outputRows = GetOutputRows();
 
 	// 出力ファイルを開きます。
 	outputFile = ofstream(outputFileName);
@@ -1127,15 +1139,15 @@ void OutputData::WriteCsv(const string outputFileName, const vector<const InputT
 	}
 
 	// 出力ファイルにデータを出力します。
-	for (auto& allColumnsRow : allColumnOutputData){
+	for (auto& outputRow : *outputRows){
 		size_t i = 0;
 		for (const auto &column : queryInfo.selectColumns){
-			switch (allColumnsRow[column.allColumnsIndex].type){
+			switch (outputRow[column.allColumnsIndex].type){
 			case DataType::INTEGER:
-				outputFile << allColumnsRow[column.allColumnsIndex].integer();
+				outputFile << outputRow[column.allColumnsIndex].integer();
 				break;
 			case DataType::STRING:
-				outputFile << allColumnsRow[column.allColumnsIndex].string();
+				outputFile << outputRow[column.allColumnsIndex].string();
 				break;
 			}
 			if (i++ < queryInfo.selectColumns.size() - 1){
