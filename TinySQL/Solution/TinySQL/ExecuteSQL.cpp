@@ -556,6 +556,11 @@ public:
 	void Column::SetAllColumns(const vector<const InputTable> &inputTables);
 };
 
+class OutputAllDataRow : public vector <const shared_ptr<const Data>>
+{
+
+};
+
 //! WHERE句の条件の式木を表します。
 class ExtensionTreeNode : public enable_shared_from_this<ExtensionTreeNode>
 {
@@ -588,7 +593,7 @@ public:
 	//! 実際に出力する行に合わせて列にデータを設定します。
 	//! @param [in] inputTables ファイルから読み取ったデータです。
 	//! @param [in] 実際に出力する行です。
-	void SetColumnData(const vector<const shared_ptr<const Data>> &outputRow);
+	void SetColumnData(const OutputAllDataRow &outputRow);
 
 	//! 自身の祖先ノードを自身に近いほうから順に列挙します。
 	//! @return 祖先ノードの一覧。
@@ -1031,15 +1036,15 @@ class OutputData
 
 	//! WHEREやORDER BYを適用していないすべての行を取得します。
 	//! @return すべてのデータ行。入力されたすべての入力データを保管します。
-	const shared_ptr<vector<const vector<const shared_ptr<const Data>>>> GetAllRows() const;
+	const shared_ptr<vector<const OutputAllDataRow>> GetAllRows() const;
 
 	//! データに対してWHERE句を適用します。
 	//! @params [in] outputRows 適用されるデータ。
-	void ApplyWhere(vector<const vector<const shared_ptr<const Data>>> &outputRows) const;
+	void ApplyWhere(vector<const OutputAllDataRow> &outputRows) const;
 
 	//! データに対してORDER BY句を適用します。
 	//! @params [in] outputRows 適用されるデータ。
-	void ApplyOrderBy(vector<const vector<const shared_ptr<const Data>>> &outputRows) const;
+	void ApplyOrderBy(vector<const OutputAllDataRow> &outputRows) const;
 public:
 
 	//! OutputDataクラスの新しいインスタンスを初期化します。
@@ -1053,7 +1058,7 @@ public:
 
 	//! 出力するすべてのデータ行を取得します。
 	//! @return 出力するすべてのデータ行。入力されたすべての入力データを保管します。
-	const shared_ptr<const vector<const vector<const shared_ptr<const Data>>>> outputRows() const;
+	const shared_ptr<const vector<const OutputAllDataRow>> outputRows() const;
 };
 
 //! SqlQueryのCsvに対する入出力を扱います。
@@ -1923,7 +1928,7 @@ bool ExtensionTreeNode::isDataNodeAsColumnName()
 
 //! 実際に出力する行に合わせて列にデータを設定します。
 //! @param [in] 実際に出力する行です。
-void ExtensionTreeNode::SetColumnData(const vector<const shared_ptr<const Data>> &outputRow)
+void ExtensionTreeNode::SetColumnData(const OutputAllDataRow &outputRow)
 {
 	if (isDataNodeAsColumnName()){
 		value = outputRow[column.allColumnsIndex];
@@ -2528,15 +2533,15 @@ void OutputData::InitializeAllInputColumns()
 
 //! WHEREやORDER BYを適用していないすべての行を取得します。
 //! @return すべてのデータ行。入力されたすべての入力データを保管します。
-const shared_ptr<vector<const vector<const shared_ptr<const Data>>>> OutputData::GetAllRows() const
+const shared_ptr<vector<const OutputAllDataRow>> OutputData::GetAllRows() const
 {
-	auto outputRows = make_shared<vector<const vector<const shared_ptr<const Data>>>>();
+	auto outputRows = make_shared<vector<const OutputAllDataRow>>();
 	auto currentRowsPtr = GetInitializedCurrentRows();
 	auto &currentRows = *currentRowsPtr;
 
 	// 出力するデータを設定します。
 	while (true){
-		outputRows->push_back(vector<const shared_ptr<const Data>>());
+		outputRows->push_back(OutputAllDataRow());
 		auto &outputRow = outputRows->back();// WHEREやORDERのためにすべての情報を含む行。rowとインデックスを共有します。
 
 		// outputRowの列を設定します。
@@ -2568,7 +2573,7 @@ const shared_ptr<vector<const vector<const shared_ptr<const Data>>>> OutputData:
 
 //! データに対してWHERE句を適用します。
 //! @params [in] outputRows 適用されるデータ。
-void OutputData::ApplyWhere(vector<const vector<const shared_ptr<const Data>>> &outputRows) const
+void OutputData::ApplyWhere(vector<const OutputAllDataRow> &outputRows) const
 {
 	// WHERE条件を適用します。
 	if (queryInfo.whereTopNode){
@@ -2576,7 +2581,7 @@ void OutputData::ApplyWhere(vector<const vector<const shared_ptr<const Data>>> &
 			outputRows.begin(),
 			outputRows.end(),
 			outputRows.begin(),
-			[&](vector<const shared_ptr<const Data>> row){
+			[&](const OutputAllDataRow row){
 			auto allNodes = SelfAndDescendants(queryInfo.whereTopNode);
 			for (auto& node : *allNodes){
 				node->SetColumnData(row);
@@ -2590,14 +2595,14 @@ void OutputData::ApplyWhere(vector<const vector<const shared_ptr<const Data>>> &
 
 //! データに対してORDER BY句を適用します。
 //! @params [in] outputRows 適用されるデータ。
-void OutputData::ApplyOrderBy(vector<const vector<const shared_ptr<const Data>>> &outputRows) const
+void OutputData::ApplyOrderBy(vector<const OutputAllDataRow> &outputRows) const
 {
 	// ORDER句による並び替えの処理を行います。
 	if (!queryInfo.orders.empty()){
 		sort(
 			outputRows.begin(),
 			outputRows.end(),
-			[&](const vector<const shared_ptr<const Data>>& lRow, const vector<const shared_ptr<const Data>>& rRow){
+			[&](const OutputAllDataRow& lRow, const OutputAllDataRow& rRow){
 			for (auto &order : queryInfo.orders){
 				auto &lData = lRow[order.column.allColumnsIndex]; // インデックスがminIndexのデータです。
 				auto &rData = rRow[order.column.allColumnsIndex]; // インデックスがjのデータです。
@@ -2685,7 +2690,7 @@ const vector<Column> OutputData::columns() const
 
 //! 出力するすべてのデータ行を取得します。
 //! @return 出力するすべてのデータ行。入力されたすべての入力データを保管します。
-const shared_ptr<const vector<const vector<const shared_ptr<const Data>>>> OutputData::outputRows() const
+const shared_ptr<const vector<const OutputAllDataRow>> OutputData::outputRows() const
 {
 	auto outputRows = GetAllRows();
 	ApplyWhere(*outputRows);
@@ -2836,8 +2841,10 @@ void Csv::WriteHeader(ofstream &outputFile, const vector<Column> &columns) const
 //! columns [in] 出力するデータです。
 void Csv::WriteData(ofstream &outputFile, const OutputData &data) const
 {
-	auto &outputRows = data.outputRows();
-	for (auto& outputRow : *outputRows){
+	auto outputRows = data.outputRows();
+
+	auto a = outputRows;
+	for (auto& outputRow : *a){
 		size_t i = 0;
 		for (const auto &column : data.columns()){
 			switch (outputRow[column.allColumnsIndex]->type()){
