@@ -79,8 +79,6 @@ class Data
 {
 	DataType m_type = DataType::STRING; //!< データの型です。
 
-	string m_string; //!< データが文字列型の場合の値です。
-
 	//! 実際のデータを格納する共用体です。
 	union
 	{
@@ -93,22 +91,19 @@ protected:
 public:
 	//! Dataクラスの新しいインスタンスを初期化します。
 	//! @param [in] value データの値です。
-	Data(const string value);
-
-	//! Dataクラスの新しいインスタンスを初期化します。
-	//! @param [in] value データの値です。
 	Data(const int value);
 
 	//! Dataクラスの新しいインスタンスを初期化します。
 	//! @param [in] value データの値です。
 	Data(const bool value);
 
-	// データの型を取得します。
-	const DataType& type() const;
+	//! データの型を取得します。
+	//! @return データの型です。
+	virtual const DataType& type() const;
 
 	//! データが文字列型の場合の値を取得します。
 	//! @return データが文字列型の場合の値です。
-	const string& string() const;
+	virtual const string& string() const;
 
 	//! データが整数型の場合の値を取得します。
 	//! @return データが整数型の場合の値です。
@@ -117,6 +112,27 @@ public:
 	//! データが真偽値型の場合の値を取得します。
 	//! @return データが真偽値型の場合の値です。
 	const bool& boolean() const;
+};
+
+//! 文字列の値を持つDataです。
+class StringData : public Data
+{
+	std::string m_string; //!< データが文字列型の場合の値です。
+
+public:
+	//! Dataクラスの新しいインスタンスを初期化します。
+	//! @param [in] value データの値です。
+	StringData(const std::string value);
+
+	//! データの型を取得します。
+	//! @return データの型です。
+	const DataType& type() const override;
+
+	//! データが文字列型の場合の値を取得します。
+	//! @return データが文字列型の場合の値です。
+	const std::string& string() const override;
+
+
 };
 
 //! WHERE句に指定する演算子の情報を表します。
@@ -518,13 +534,6 @@ Data::Data() :m_value({ 0 })
 
 //! Dataクラスの新しいインスタンスを初期化します。
 //! @param [in] value データの値です。
-Data::Data(const std::string value) : m_value({ 0 })
-{
-	m_string = value;
-}
-
-//! Dataクラスの新しいインスタンスを初期化します。
-//! @param [in] value データの値です。
 Data::Data(const int value) : m_type(DataType::INTEGER)
 {
 	m_value.integer = value;
@@ -548,7 +557,7 @@ const DataType& Data::type() const
 //! @return データが文字列型の場合の値です。
 const string& Data::string() const
 {
-	return m_string;
+	return "";
 }
 
 //! データが整数型の場合の値を取得します。
@@ -563,6 +572,24 @@ const int& Data::integer() const
 const bool& Data::boolean() const
 {
 	return m_value.boolean;
+}
+
+//! Dataクラスの新しいインスタンスを初期化します。
+//! @param [in] value データの値です。
+StringData::StringData(const std::string value) : m_string(value){}
+
+//! データの型を取得します。
+//! @return データの型です。
+const DataType& StringData::type() const
+{
+	return DataType::STRING;
+}
+
+//! データが文字列型の場合の値を取得します。
+//! @return データが文字列型の場合の値です。
+const string& StringData::string() const
+{
+	return m_string;
 }
 
 //! Operatorクラスの新しいインスタンスを初期化します。
@@ -1261,7 +1288,7 @@ const shared_ptr<vector<const vector<const shared_ptr<const Data>>>> Csv::ReadDa
 			lineData->begin(),
 			lineData->end(),
 			back_inserter(row),
-			[&](const string& column){return make_shared<Data>(column); });
+			[&](const string& column){return make_shared<StringData>(column); });
 		data->push_back(row);
 	}
 	return data;
@@ -1592,7 +1619,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 				}
 				else if (tokenCursol->kind == TokenKind::STRING_LITERAL){
 					// 前後のシングルクォートを取り去った文字列をデータとして読み込みます。
-					currentNode->value = make_shared<Data>(tokenCursol->word.substr(1, tokenCursol->word.size() - 2));
+					currentNode->value = make_shared<StringData>(tokenCursol->word.substr(1, tokenCursol->word.size() - 2));
 					++tokenCursol;
 				}
 				else{
