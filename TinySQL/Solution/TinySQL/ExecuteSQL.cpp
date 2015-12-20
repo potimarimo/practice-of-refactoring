@@ -2651,19 +2651,22 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 		queryInfo->selectColumns.back() = Column(queryInfo->selectColumns.back().columnName, token.word);
 	});
 
-	Column orderColumn;
-	bool isAsc = true;
+	Column orderColumn; // 現在読み込んでいるORDER BY句での列を保持します。
+	bool isAsc = true; // 現在読み込んでいるORDER BY句での列が昇順であるかどうかです。
 
+	// ORDER BY句の列指定の一つ目の識別子のパーサーです。
 	auto FIRST_ORDER_BY_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
 		// テーブル名が指定されていない場合と仮定して読み込みます。
 		orderColumn = Column(token.word);
 	});
 
+	// ORDER BY句の列指定の二つ目の識別子のパーサーです。
 	auto SECOND_ORDER_BY_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
 		// テーブル名が指定されていることがわかったので読み替えます。
 		orderColumn = Column(orderColumn.columnName, token.word);
 	});
 
+	// 昇順降順を指定するためのDESCトークンのパーサーです。
 	auto SET_DESC = DESC->Action([&](const Token token){
 		isAsc = false;
 	});
@@ -2673,13 +2676,13 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 	// -A			:Aが任意
 	// ~A			:Aが0回以上続く
 
-	auto SELECT_COLUMN = FIRST_SELECT_COLUMN_NAME >> -(DOT >> SECOND_SELECT_COLUMN_NAME);
+	auto SELECT_COLUMN = FIRST_SELECT_COLUMN_NAME >> -(DOT >> SECOND_SELECT_COLUMN_NAME); // SELECT句の列指定一つのパーサーです。
 
-	auto SELECT_COLUMNS = SELECT_COLUMN >> ~(COMMA >> SELECT_COLUMN);
+	auto SELECT_COLUMNS = SELECT_COLUMN >> ~(COMMA >> SELECT_COLUMN); // SELECT句の一つ以上のの列指定のパーサーです。
 
-	auto SELECT_CLAUSE = SELECT >> (ASTERISK | SELECT_COLUMNS);
+	auto SELECT_CLAUSE = SELECT >> (ASTERISK | SELECT_COLUMNS); // SELECT句のパーサーです。
 
-	auto ORDER_BY_COLUMN = FIRST_ORDER_BY_COLUMN_NAME >> -(DOT >> SECOND_ORDER_BY_COLUMN_NAME) >> -(ASC | SET_DESC);
+	auto ORDER_BY_COLUMN = FIRST_ORDER_BY_COLUMN_NAME >> -(DOT >> SECOND_ORDER_BY_COLUMN_NAME) >> -(ASC | SET_DESC); // ORDER BY句の列指定一つのパーサーです。
 
 	ORDER_BY_COLUMN = ORDER_BY_COLUMN->Action([&](){
 		queryInfo->orders.push_back(Order(orderColumn, isAsc));
@@ -2688,7 +2691,9 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 		isAsc = true;
 	});
 
-	auto ORDER_BY_COLUMNS = ORDER_BY_COLUMN >> ~(COMMA >> ORDER_BY_COLUMN);
+	auto ORDER_BY_COLUMNS = ORDER_BY_COLUMN >> ~(COMMA >> ORDER_BY_COLUMN); // ORDER BY句の一つ以上のの列指定のパーサーです。
+
+	auto ORDER_BY_CLAUSE = ORDER >> BY >> ORDER_BY_COLUMNS; // ORDER BY句のパーサーです。
 
 	auto tokenCursol = tokens.begin(); // 現在見ているトークンを指します。
 
@@ -2710,20 +2715,10 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 		if (readWhere && tokenCursol->kind == TokenKind::WHERE){
 			throw ResultValue::ERR_SQL_SYNTAX;
 		}
-		// ORDER句を読み込みます。
-		if (tokenCursol->kind == TokenKind::ORDER){
-			readOrder = true;
-			++tokenCursol;
-			if (tokenCursol->kind == TokenKind::BY){
-				++tokenCursol;
 
-				if (!ORDER_BY_COLUMNS->Parse(tokenCursol)){
-					throw ResultValue::ERR_SQL_SYNTAX;
-				}
-			}
-			else{
-				throw ResultValue::ERR_SQL_SYNTAX;
-			}
+		// ORDER句を読み込みます。
+		if (ORDER_BY_CLAUSE->Parse(tokenCursol)){
+			readOrder = true;
 			continue;
 		}
 
