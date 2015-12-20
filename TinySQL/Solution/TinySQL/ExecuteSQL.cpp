@@ -945,11 +945,11 @@ const shared_ptr<const vector<const InputTable>> SqlQuery::ReadCsv() const
 	auto &tables = *ret;
 
 	vector<ifstream> inputTableFiles; // 読み込む入力ファイルの全てのファイルポインタです。
-	for (size_t i = 0; i < queryInfo->tableNames.size(); ++i){
+	for (auto &tableName : queryInfo->tableNames){
 		tables.push_back(InputTable());
 		auto &table = tables.back();
 		// 入力ファイルを開きます。
-		inputTableFiles.push_back(ifstream(queryInfo->tableNames[i] + ".csv"));
+		inputTableFiles.push_back(ifstream(tableName + ".csv"));
 		if (!inputTableFiles.back()){
 			throw ResultValue::ERR_FILE_OPEN;
 		}
@@ -966,7 +966,7 @@ const shared_ptr<const vector<const InputTable>> SqlQuery::ReadCsv() const
 				// 列名を一つ読みます。
 				auto columnStart = charactorCursol; // 現在の列の最初を記録しておきます。
 				charactorCursol = find(charactorCursol, lineEnd, ',');
-				table.columns.push_back(Column(queryInfo->tableNames[i], string(columnStart, charactorCursol)));
+				table.columns.push_back(Column(tableName, string(columnStart, charactorCursol)));
 
 				// 入力行のカンマの分を読み進めます。
 				if (charactorCursol != lineEnd){
