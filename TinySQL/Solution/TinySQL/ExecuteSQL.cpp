@@ -623,7 +623,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 
 		vector<Column> orderByColumns; // ORDER句に指定された列名です。
 
-		TokenKind orders[MAX_COLUMN_COUNT] = { TokenKind::NOT_TOKEN }; // 同じインデックスのorderByColumnsに対応している、昇順、降順の指定です。
+		vector<TokenKind> orders; // 同じインデックスのorderByColumnsに対応している、昇順、降順の指定です。
 
 		ExtensionTreeNode whereExtensionNodes[MAX_EXTENSION_TREE_NODE_COUNT]; // WHEREに指定された木のノードを、木構造とは無関係に格納します。
 		// whereExtensionNodesを初期化します。
@@ -723,16 +723,16 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 
 							// 並び替えの昇順、降順を指定します。
 							if (tokenCursol->kind == TokenKind::ASC){
-								orders[orderByColumns.size() - 1] = TokenKind::ASC;
+								orders.push_back(TokenKind::ASC);
 								++tokenCursol;
 							}
 							else if (tokenCursol->kind == TokenKind::DESC){
-								orders[orderByColumns.size() - 1] = TokenKind::DESC;
+								orders.push_back(TokenKind::DESC);
 								++tokenCursol;
 							}
 							else{
 								// 指定がない場合は昇順となります。
-								orders[orderByColumns.size() - 1] = TokenKind::ASC;
+								orders.push_back(TokenKind::ASC);
 							}
 						}
 						else{
