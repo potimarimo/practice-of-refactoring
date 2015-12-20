@@ -4,6 +4,7 @@
 #include <cctype>
 #include <fstream>
 #include <sstream>
+#include <functional>
 #include <algorithm>
 #include <memory>
 #include <vector>
@@ -185,7 +186,7 @@ public:
 	StringData(const std::string value);
 
 	//! データの型を取得します。
-	//! @return データの型です。
+	//! @return データ	の型です。
 	const DataType type() const override;
 
 	//! データが文字列型の場合の値を取得します。
@@ -724,7 +725,8 @@ protected:
 //! トークンをひとつ読み取るパーサーです。
 class TokenParser
 {
-	TokenKind m_kind; //!< 読み取るトークンの種類です 
+	TokenKind m_kind; //!< 読み取るトークンの種類です。
+	function<void(const Token)> m_action; //!< 読み取りが成功したら実行する処理です。
 public:
 	//! TokenParserクラスの新しいインスタンスを初期化します。
 	//! @params [in] kind 読み取るトークンの種類です。
@@ -734,6 +736,10 @@ public:
 	//! @params [in] cursol 現在の読み取り位置を表すカーソルです。
 	//! @return パースが成功したかどうかです。
 	const bool Parse(vector<const Token>::const_iterator& cursol) const;
+
+	//! 読み取りが成功したら実行する処理を登録します。
+	//! @param [in] 読み取りが成功したら実行する処理です。
+	void Action(function<void(const Token)> action);
 };
 
 
@@ -1852,12 +1858,22 @@ TokenParser::TokenParser(TokenKind kind) : m_kind(kind){}
 const bool TokenParser::Parse(vector<const Token>::const_iterator& cursol) const
 {
 	if (cursol->kind == m_kind){
+		if (m_action){
+			m_action(*cursol);
+		}
 		++cursol;
 		return true;
 	}
 	else{
 		return false;
 	}
+}
+
+//! 読み取りが成功したら実行する処理を登録します。
+//! @param [in] 読み取りが成功したら実行する処理です。
+void TokenParser::Action(function<void(const Token)> action)
+{
+	m_action = action;
 }
 
 //! 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
@@ -2309,11 +2325,11 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 				++tokenCursol;
 				if (tokenCursol->kind == TokenKind::DOT){
 					++tokenCursol;
-					if (IDENTIFIER.Parse(tokenCursol)){
+					IDENTIFIER.Action([&](const Token token){
 						// テーブル名が指定されていることがわかったので読み替えます。
-						queryInfo->selectColumns.back() = Column(queryInfo->selectColumns.back().columnName, (tokenCursol-1)->word);
-					}
-					else{
+						queryInfo->selectColumns.back() = Column(queryInfo->selectColumns.back().columnName, token.word);
+					});
+					if (!IDENTIFIER.Parse(tokenCursol)){
 						throw ResultValue::ERR_SQL_SYNTAX;
 					}
 				}
