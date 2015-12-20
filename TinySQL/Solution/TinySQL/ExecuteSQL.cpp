@@ -199,6 +199,11 @@ public:
 
 	// leftとrightをmiddleOperatorで演算します。
 	void Operate();
+
+	//! 実際に出力する行に合わせて列にデータを設定します。
+	//! @param [in] inputTables ファイルから読み取ったデータです。
+	//! @param [in] 実際に出力する行です。
+	void SetColumnData(const vector<const InputTable> &inputTables, const vector<const Data> &outputRow);
 };
 
 //! 引数として渡したノード及びその子孫のノードを取得します。順序は帰りがけ順です。
@@ -358,6 +363,7 @@ public:
 
 	//! OutputDataクラスの新しいインスタンスを初期化します。
 	//! @param [in] queryInfo SQLの情報です。
+	//! @param [in] inputTables ファイルから読み取ったデータです。
 	OutputData(const SqlQueryInfo queryInfo, const vector<const InputTable> &inputTables);
 
 	//! 出力するカラムを取得します。
@@ -737,6 +743,27 @@ void ExtensionTreeNode::Operate()
 	}
 }
 
+//! 実際に出力する行に合わせて列にデータを設定します。
+//! @param [in] inputTables ファイルから読み取ったデータです。
+//! @param [in] 実際に出力する行です。
+void ExtensionTreeNode::SetColumnData(const vector<const InputTable> &inputTables, const vector<const Data> &outputRow)
+{
+	switch (middleOperator.kind){
+	case TokenKind::NOT_TOKEN:
+		// ノードにデータが設定されている場合です。
+		if (!column.columnName.empty()){
+			column.SetAllColumns(inputTables);
+			value = outputRow[column.allColumnsIndex];
+
+			// 符号を考慮して値を計算します。
+			if (value.type == DataType::INTEGER){
+				value = Data(value.integer() * signCoefficient);
+			}
+		}
+		break;
+	}
+}
+
 //! 引数として渡したノード及びその子孫のノードを取得します。
 //! @param [in] 戻り値のルートとなるノードです。順序は帰りがけ順です。
 //! @return 自身及び子孫のノードです。
@@ -1010,21 +1037,7 @@ const shared_ptr<const vector<const vector<const Data>>> OutputData::outputRows(
 		if (queryInfo.whereTopNode){
 			auto allNodes = SelfAndDescendants(queryInfo.whereTopNode);
 			for (auto& node : *allNodes){
-				switch (node->middleOperator.kind){
-				case TokenKind::NOT_TOKEN:
-					// ノードにデータが設定されている場合です。
-					;
-					if (!node->column.columnName.empty()){
-						node->column.SetAllColumns(inputTables);
-						node->value = outputRow[node->column.allColumnsIndex];
-
-						// 符号を考慮して値を計算します。
-						if (node->value.type == DataType::INTEGER){
-							node->value = Data(node->value.integer() * node->signCoefficient);
-						}
-					}
-					break;
-				}
+				node->SetColumnData(inputTables, outputRow);
 			}
 			queryInfo.whereTopNode->Operate();
 
