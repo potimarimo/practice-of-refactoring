@@ -512,26 +512,26 @@ const shared_ptr<const vector<const Token>> SqlQuery::GetTokens(const string sql
 		make_shared<StringLiteralReader>(),
 	};
 
-	auto sqlBackPoint = sql.begin(); // SQLをトークンに分割して読み込む時に戻るポイントを記録しておきます。
+	auto backPoint = sql.begin(); // SQLをトークンに分割して読み込む時に戻るポイントを記録しておきます。
 
-	auto sqlCursol = sql.begin(); // SQLをトークンに分割して読み込む時に現在読んでいる文字の場所を表します。
+	auto cursol = sql.begin(); // SQLをトークンに分割して読み込む時に現在読んでいる文字の場所を表します。
 
-	auto sqlEnd = sql.end(); // sqlのendを指します。
+	auto end = sql.end(); // sqlのendを指します。
 
 	auto tokens = make_shared<vector<const Token>>(); //読み込んだトークンです。
 
 	// SQLをトークンに分割て読み込みます。
-	while (sqlCursol != sqlEnd){
+	while (cursol != end){
 
 		// 空白を読み飛ばします。
-		sqlCursol = find_if(sqlCursol, sqlEnd, [&](char c){return space.find(c) == string::npos; });
-		if (sqlCursol == sqlEnd){
+		cursol = find_if(cursol, end, [&](char c){return space.find(c) == string::npos; });
+		if (cursol == end){
 			break;
 		}
 		// 各種トークンを読み込みます。
 		bool found = false;
 		for (auto &reader : readers){
-			auto token = reader->Read(sqlCursol, sqlEnd);
+			auto token = reader->Read(cursol, end);
 			if (token){
 				tokens->push_back(*token);
 				found = true;
@@ -546,12 +546,12 @@ const shared_ptr<const vector<const Token>> SqlQuery::GetTokens(const string sql
 		auto keyword = find_if(keywordConditions.begin(), keywordConditions.end(),
 			[&](Token keyword){
 			auto result =
-				mismatch(keyword.word.begin(), keyword.word.end(), sqlCursol,
+				mismatch(keyword.word.begin(), keyword.word.end(), cursol,
 				[](const char keywordChar, const char sqlChar){return keywordChar == toupper(sqlChar); });
 
 			if (result.first == keyword.word.end() && // キーワードの最後の文字まで同じです。
-				result.second != sqlEnd && alpahNumUnder.find(*result.second) == string::npos){ //キーワードに識別子が区切りなしに続いていないかを確認します。 
-				sqlCursol = result.second;
+				result.second != end && alpahNumUnder.find(*result.second) == string::npos){ //キーワードに識別子が区切りなしに続いていないかを確認します。 
+				cursol = result.second;
 				return true;
 			}
 			else{
@@ -569,11 +569,11 @@ const shared_ptr<const vector<const Token>> SqlQuery::GetTokens(const string sql
 		auto sign = find_if(signConditions.begin(), signConditions.end(),
 			[&](Token keyword){
 			auto result =
-				mismatch(keyword.word.begin(), keyword.word.end(), sqlCursol,
+				mismatch(keyword.word.begin(), keyword.word.end(), cursol,
 				[](const char keywordChar, const char sqlChar){return keywordChar == toupper(sqlChar); });
 
 			if (result.first == keyword.word.end()){
-				sqlCursol = result.second;
+				cursol = result.second;
 				return true;
 			}
 			else{
@@ -586,10 +586,10 @@ const shared_ptr<const vector<const Token>> SqlQuery::GetTokens(const string sql
 		}
 
 		// 識別子を読み込みます。
-		sqlBackPoint = sqlCursol;
-		if (alpahUnder.find(*sqlCursol++) != string::npos){
-			sqlCursol = find_if(sqlCursol, sqlEnd, [&](const char c){return alpahNumUnder.find(c) == string::npos; });
-			tokens->push_back(Token(TokenKind::IDENTIFIER, string(sqlBackPoint, sqlCursol)));
+		backPoint = cursol;
+		if (alpahUnder.find(*cursol++) != string::npos){
+			cursol = find_if(cursol, end, [&](const char c){return alpahNumUnder.find(c) == string::npos; });
+			tokens->push_back(Token(TokenKind::IDENTIFIER, string(backPoint, cursol)));
 			continue;
 		}
 
