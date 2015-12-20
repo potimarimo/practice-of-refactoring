@@ -80,23 +80,13 @@ class Data
 	DataType m_type = DataType::STRING; //!< データの型です。
 
 	const string defaultString = ""; //!< データが文字列を持たない場合にstring()が返す値。
-
-	//! 実際のデータを格納する共用体です。
-	union
-	{
-		bool boolean;                 //!< データが真偽値型の場合の値です。
-	} m_value;
 protected:
 	//! Dataクラスの新しいインスタンスを初期化します。
 	Data();
 public:
-	//! Dataクラスの新しいインスタンスを初期化します。
-	//! @param [in] value データの値です。
-	Data(const bool value);
-
 	//! データの型を取得します。
 	//! @return データの型です。
-	virtual const DataType type() const;
+	virtual const DataType type() const = 0;
 
 	//! データが文字列型の場合の値を取得します。
 	//! @return データが文字列型の場合の値です。
@@ -108,7 +98,7 @@ public:
 
 	//! データが真偽値型の場合の値を取得します。
 	//! @return データが真偽値型の場合の値です。
-	const bool& boolean() const;
+	virtual const bool boolean() const;
 };
 
 //! 文字列の値を持つDataです。
@@ -147,6 +137,25 @@ public:
 	//! データが整数型の場合の値を取得します。
 	//! @return データが整数型の場合の値です。
 	const int integer() const override;
+};
+
+//! 真偽値の値を持つDataです。
+class BooleanData : public Data
+{
+	bool m_boolean;                  //!< データが真偽値型の場合の値です。
+
+public:
+	//! Dataクラスの新しいインスタンスを初期化します。
+	//! @param [in] value データの値です。
+	BooleanData(const bool value);
+
+	//! データの型を取得します。
+	//! @return データの型です。
+	const DataType type() const override;
+
+	//! データが整数型の場合の値を取得します。
+	//! @return データが整数型の場合の値です。
+	const bool boolean() const override;
 };
 
 //! WHERE句に指定する演算子の情報を表します。
@@ -542,16 +551,7 @@ bool Equali(const string str1, const string str2){
 }
 
 //! Dataクラスの新しいインスタンスを初期化します。
-Data::Data() :m_value({ 0 })
-{
-}
-
-//! Dataクラスの新しいインスタンスを初期化します。
-//! @param [in] value データの値です。
-Data::Data(const bool value) : m_type(DataType::BOOLEAN)
-{
-	m_value.boolean = value;
-}
+Data::Data(){}
 
 //! データが文字列型の場合の値を取得します。
 //! @return データが文字列型の場合の値です。
@@ -576,9 +576,9 @@ const int Data::integer() const
 
 //! データが真偽値型の場合の値を取得します。
 //! @return データが真偽値型の場合の値です。
-const bool& Data::boolean() const
+const bool Data::boolean() const
 {
-	return m_value.boolean;
+	return false;
 }
 
 //! Dataクラスの新しいインスタンスを初期化します。
@@ -617,6 +617,24 @@ const DataType IntegerData::type() const
 const int IntegerData::integer() const
 {
 	return m_integer;
+}
+
+//! Dataクラスの新しいインスタンスを初期化します。
+//! @param [in] value データの値です。
+BooleanData::BooleanData(const bool value) : m_boolean(value){}
+
+//! データの型を取得します。
+//! @return データの型です。
+const DataType BooleanData::type() const
+{
+	return DataType::BOOLEAN;
+}
+
+//! データが整数型の場合の値を取得します。
+//! @return データが整数型の場合の値です。
+const bool BooleanData::boolean() const
+{
+	return m_boolean;
 }
 
 //! Operatorクラスの新しいインスタンスを初期化します。
@@ -741,44 +759,44 @@ void ExtensionTreeNode::Operate()
 		case DataType::INTEGER:
 			switch (middleOperator.kind){
 			case TokenKind::EQUAL:
-				value = make_shared<Data>(left->value->integer() == right->value->integer());
+				value = make_shared<BooleanData>(left->value->integer() == right->value->integer());
 				break;
 			case TokenKind::GREATER_THAN:
-				value = make_shared<Data>(left->value->integer() > right->value->integer());
+				value = make_shared<BooleanData>(left->value->integer() > right->value->integer());
 				break;
 			case TokenKind::GREATER_THAN_OR_EQUAL:
-				value = make_shared<Data>(left->value->integer() >= right->value->integer());
+				value = make_shared<BooleanData>(left->value->integer() >= right->value->integer());
 				break;
 			case TokenKind::LESS_THAN:
-				value = make_shared<Data>(left->value->integer() < right->value->integer());
+				value = make_shared<BooleanData>(left->value->integer() < right->value->integer());
 				break;
 			case TokenKind::LESS_THAN_OR_EQUAL:
-				value = make_shared<Data>(left->value->integer() <= right->value->integer());
+				value = make_shared<BooleanData>(left->value->integer() <= right->value->integer());
 				break;
 			case TokenKind::NOT_EQUAL:
-				value = make_shared<Data>(left->value->integer() != right->value->integer());
+				value = make_shared<BooleanData>(left->value->integer() != right->value->integer());
 				break;
 			}
 			break;
 		case DataType::STRING:
 			switch (middleOperator.kind){
 			case TokenKind::EQUAL:
-				value = make_shared<Data>(left->value->string() == right->value->string());
+				value = make_shared<BooleanData>(left->value->string() == right->value->string());
 				break;
 			case TokenKind::GREATER_THAN:
-				value = make_shared<Data>(left->value->string() > right->value->string());
+				value = make_shared<BooleanData>(left->value->string() > right->value->string());
 				break;
 			case TokenKind::GREATER_THAN_OR_EQUAL:
-				value = make_shared<Data>(left->value->string() >= right->value->string());
+				value = make_shared<BooleanData>(left->value->string() >= right->value->string());
 				break;
 			case TokenKind::LESS_THAN:
-				value = make_shared<Data>(left->value->string() < right->value->string());
+				value = make_shared<BooleanData>(left->value->string() < right->value->string());
 				break;
 			case TokenKind::LESS_THAN_OR_EQUAL:
-				value = make_shared<Data>(left->value->string() <= right->value->string());
+				value = make_shared<BooleanData>(left->value->string() <= right->value->string());
 				break;
 			case TokenKind::NOT_EQUAL:
-				value = make_shared<Data>(left->value->string() != right->value->string());
+				value = make_shared<BooleanData>(left->value->string() != right->value->string());
 				break;
 			}
 			break;
@@ -823,10 +841,10 @@ void ExtensionTreeNode::Operate()
 		// 比較結果を演算子によって計算方法を変えて、計算します。
 		switch (middleOperator.kind){
 		case TokenKind::AND:
-			value = make_shared<Data>(left->value->boolean() && right->value->boolean());
+			value = make_shared<BooleanData>(left->value->boolean() && right->value->boolean());
 			break;
 		case TokenKind::OR:
-			value = make_shared<Data>(left->value->boolean() || right->value->boolean());
+			value = make_shared<BooleanData>(left->value->boolean() || right->value->boolean());
 			break;
 		}
 	}
