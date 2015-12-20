@@ -975,9 +975,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 
 		// SELECT句の列名指定が*だった場合は、入力CSVの列名がすべて選択されます。
 		if (selectColumns.empty()){
-			for (auto &inputColumn : allInputColumns){
-				selectColumns.push_back(inputColumn);
-			}
+			copy(allInputColumns.begin(), allInputColumns.end(), back_inserter(selectColumns));
 		}
 
 		vector<Column> outputColumns; // 出力するすべての行の情報です。
