@@ -2895,8 +2895,11 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 
 	// 記号の意味
 	// A >> B		:Aの後にBが続く
+	// A | B		:AもしくはB
+	// A->or(B)		:トークンAもしくはトークンB
 	// -A			:Aが任意
 	// ~A			:Aが0回以上続く
+	// A >> &B		:後にBが存在するA
 
 	// SELECT句の列指定一つのパーサーです。
 	auto SELECT_COLUMN = COLUMN->Action([&]{
@@ -3034,25 +3037,24 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 		FROM_CLAUSE >>
 		end();
 
-	auto tokenCursol = tokens.begin(); // 現在見ているトークンを指します。
-
-	if (!TINY_SQL->Parse(tokenCursol, tokens.end())){
-		throw ResultValue::ERR_SQL_SYNTAX;
-	}
-
-	// 構文エラーがないことを前提とした処理なので最後に実行しています。
-	if (queryInfo->whereTopNode){
-		// 既存数値の符号を計算します。
-		auto whereNodes = SelfAndDescendants(queryInfo->whereTopNode);
-		for (auto &whereNode : *whereNodes){
-			if (whereNode->middleOperator.kind == TokenKind::NOT_TOKEN &&
-				whereNode->column.columnName.empty() &&
-				whereNode->value->type() == DataType::INTEGER){
-				whereNode->value = Data::New(whereNode->value->integer() * whereNode->signCoefficient);
+	TINY_SQL = TINY_SQL->Action([&]{
+		// 構文エラーがないことを前提とした処理なので最後に実行しています。
+		if (queryInfo->whereTopNode){
+			// 既存数値の符号を計算します。
+			auto whereNodes = SelfAndDescendants(queryInfo->whereTopNode);
+			for (auto &whereNode : *whereNodes){
+				if (whereNode->middleOperator.kind == TokenKind::NOT_TOKEN &&
+					whereNode->column.columnName.empty() &&
+					whereNode->value->type() == DataType::INTEGER){
+					whereNode->value = Data::New(whereNode->value->integer() * whereNode->signCoefficient);
+				}
 			}
 		}
-	}
+	});
 
+	if (!TINY_SQL->Parse(tokens.begin(), tokens.end())){
+		throw ResultValue::ERR_SQL_SYNTAX;
+	}
 	return queryInfo;
 }
 
