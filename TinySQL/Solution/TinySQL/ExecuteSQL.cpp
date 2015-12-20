@@ -195,7 +195,7 @@ public:
 	int parenOpenBeforeClose = 0;        //!< 木の構築中に0以外となり、自身の左にあり、まだ閉じてないカッコの開始の数となります。
 	int signCoefficient = 1;             //!< 自身が葉にあり、マイナス単項演算子がついている場合は-1、それ以外は1となります。
 	Column column;                       //!< 列場指定されている場合に、その列を表します。列指定ではない場合はcolumnNameが空文字列となります。
-	Data value;                          //!< 指定された、もしくは計算された値です。
+	shared_ptr<const Data> value;                          //!< 指定された、もしくは計算された値です。
 
 	//! ExtensionTreeNodeクラスの新しいインスタンスを初期化します。
 	ExtensionTreeNode();
@@ -206,7 +206,7 @@ public:
 	//! 実際に出力する行に合わせて列にデータを設定します。
 	//! @param [in] inputTables ファイルから読み取ったデータです。
 	//! @param [in] 実際に出力する行です。
-	void SetColumnData(const vector<const Data> &outputRow);
+	void SetColumnData(const vector<const shared_ptr<const Data>> &outputRow);
 };
 
 //! 引数として渡したノード及びその子孫のノードを取得します。順序は帰りがけ順です。
@@ -243,7 +243,7 @@ class InputTable
 	const string signNum = "+-0123456789"; //!< 全ての符号と数字です。
 
 	const shared_ptr<const vector<const Column>> m_columns; //!< 列の情報です。
-	const shared_ptr<vector<const vector<const Data>>> m_data; //! データです。
+	const shared_ptr<vector<const vector<const shared_ptr<const Data>>>> m_data; //! データです。
 
 	//! 全てが数値となる列は数値列に変換します。
 	void InputTable::InitializeIntegerColumn();
@@ -251,7 +251,7 @@ public:
 	//! InputTableクラスの新しいインスタンスを初期化します。
 	//! @param [in] columns 読み込んだヘッダ情報です。
 	//! @param [in] data 読み込んだデータです。
-	InputTable(const shared_ptr<const vector<const Column>> columns, const shared_ptr<vector<const vector<const Data>>> data);
+	InputTable(const shared_ptr<const vector<const Column>> columns, const shared_ptr<vector<const vector<const shared_ptr<const Data>>>> data);
 
 	//! 列の情報を取得します。
 	//! @return 列の情報です。
@@ -259,7 +259,7 @@ public:
 
 	//! データを取得します。
 	//! @return データです。
-	const shared_ptr<vector<const vector<const Data>>> data() const;
+	const shared_ptr<vector<const vector<const shared_ptr<const Data>>>> data() const;
 };
 
 class TokenReader
@@ -373,19 +373,19 @@ class OutputData
 
 	//! 入力された各テーブルの、現在出力している行を指すカーソルを、初期化された状態で取得します。
 	//! @return 初期化されたカーソルです。
-	const shared_ptr<vector<vector<const vector<const Data>>::const_iterator>> OutputData::GetInitializedCurrentRows() const;
+	const shared_ptr<vector<vector<const vector<const shared_ptr<const Data>>>::const_iterator>> OutputData::GetInitializedCurrentRows() const;
 
 	//! WHEREやORDER BYを適用していないすべての行を取得します。
 	//! @return すべてのデータ行。入力されたすべての入力データを保管します。
-	const shared_ptr<vector<const vector<const Data>>> GetAllRows() const;
+	const shared_ptr<vector<const vector<const shared_ptr<const Data>>>> GetAllRows() const;
 
 	//! データに対してWHERE句を適用します。
 	//! @params [in] outputRows 適用されるデータ。
-	void ApplyWhere(vector<const vector<const Data>> &outputRows) const;
+	void ApplyWhere(vector<const vector<const shared_ptr<const Data>>> &outputRows) const;
 
 	//! データに対してORDER BY句を適用します。
 	//! @params [in] outputRows 適用されるデータ。
-	void ApplyOrderBy(vector<const vector<const Data>> &outputRows) const;
+	void ApplyOrderBy(vector<const vector<const shared_ptr<const Data>>> &outputRows) const;
 public:
 
 	//! OutputDataクラスの新しいインスタンスを初期化します。
@@ -399,7 +399,7 @@ public:
 
 	//! 出力するすべてのデータ行を取得します。
 	//! @return 出力するすべてのデータ行。入力されたすべての入力データを保管します。
-	const shared_ptr<const vector<const vector<const Data>>> outputRows() const;
+	const shared_ptr<const vector<const vector<const shared_ptr<const Data>>>> outputRows() const;
 };
 
 //! SqlQueryのCsvに対する入出力を扱います。
@@ -430,7 +430,7 @@ class Csv
 	//! 入力CSVのデータ行を読み込みます。
 	//! @param [in] inputFile 入力ファイルを扱うストリームです。すでにヘッダのみを読み込んだ後です。
 	//! @return ファイルから読み取ったデータです。
-	const shared_ptr<vector<const vector<const Data>>> ReadData(ifstream &inputFile) const;
+	const shared_ptr<vector<const vector<const shared_ptr<const Data>>>> ReadData(ifstream &inputFile) const;
 
 	//! 出力ファイルを開きます。
 	//! @param [in] filePath 開くファイルのファイルパスです。
@@ -668,55 +668,54 @@ void ExtensionTreeNode::Operate()
 		// 比較演算子の場合です。
 
 		// 比較できるのは文字列型か整数型で、かつ左右の型が同じ場合です。
-		if (left->value.type != DataType::INTEGER && left->value.type != DataType::STRING ||
-			left->value.type != right->value.type){
+		if (left->value->type != DataType::INTEGER && left->value->type != DataType::STRING ||
+			left->value->type != right->value->type){
 			throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 		}
-		value.type = DataType::BOOLEAN;
 
 		// 比較結果を型と演算子によって計算方法を変えて、計算します。
-		switch (left->value.type){
+		switch (left->value->type){
 		case DataType::INTEGER:
 			switch (middleOperator.kind){
 			case TokenKind::EQUAL:
-				value = Data(left->value.integer() == right->value.integer());
+				value = make_shared<Data>(left->value->integer() == right->value->integer());
 				break;
 			case TokenKind::GREATER_THAN:
-				value = Data(left->value.integer() > right->value.integer());
+				value = make_shared<Data>(left->value->integer() > right->value->integer());
 				break;
 			case TokenKind::GREATER_THAN_OR_EQUAL:
-				value = Data(left->value.integer() >= right->value.integer());
+				value = make_shared<Data>(left->value->integer() >= right->value->integer());
 				break;
 			case TokenKind::LESS_THAN:
-				value = Data(left->value.integer() < right->value.integer());
+				value = make_shared<Data>(left->value->integer() < right->value->integer());
 				break;
 			case TokenKind::LESS_THAN_OR_EQUAL:
-				value = Data(left->value.integer() <= right->value.integer());
+				value = make_shared<Data>(left->value->integer() <= right->value->integer());
 				break;
 			case TokenKind::NOT_EQUAL:
-				value = Data(left->value.integer() != right->value.integer());
+				value = make_shared<Data>(left->value->integer() != right->value->integer());
 				break;
 			}
 			break;
 		case DataType::STRING:
 			switch (middleOperator.kind){
 			case TokenKind::EQUAL:
-				value = Data(left->value.string() == right->value.string());
+				value = make_shared<Data>(left->value->string() == right->value->string());
 				break;
 			case TokenKind::GREATER_THAN:
-				value = Data(left->value.string() > right->value.string());
+				value = make_shared<Data>(left->value->string() > right->value->string());
 				break;
 			case TokenKind::GREATER_THAN_OR_EQUAL:
-				value = Data(left->value.string() >= right->value.string());
+				value = make_shared<Data>(left->value->string() >= right->value->string());
 				break;
 			case TokenKind::LESS_THAN:
-				value = Data(left->value.string() < right->value.string());
+				value = make_shared<Data>(left->value->string() < right->value->string());
 				break;
 			case TokenKind::LESS_THAN_OR_EQUAL:
-				value = Data(left->value.string() <= right->value.string());
+				value = make_shared<Data>(left->value->string() <= right->value->string());
 				break;
 			case TokenKind::NOT_EQUAL:
-				value = Data(left->value.string() != right->value.string());
+				value = make_shared<Data>(left->value->string() != right->value->string());
 				break;
 			}
 			break;
@@ -729,24 +728,23 @@ void ExtensionTreeNode::Operate()
 		// 四則演算の場合です。
 
 		// 演算できるのは整数型同士の場合のみです。
-		if (left->value.type != DataType::INTEGER || right->value.type != DataType::INTEGER){
+		if (left->value->type != DataType::INTEGER || right->value->type != DataType::INTEGER){
 			throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 		}
-		value.type = DataType::INTEGER;
 
 		// 比較結果を演算子によって計算方法を変えて、計算します。
 		switch (middleOperator.kind){
 		case TokenKind::PLUS:
-			value = Data(left->value.integer() + right->value.integer());
+			value = make_shared<Data>(left->value->integer() + right->value->integer());
 			break;
 		case TokenKind::MINUS:
-			value = Data(left->value.integer() - right->value.integer());
+			value = make_shared<Data>(left->value->integer() - right->value->integer());
 			break;
 		case TokenKind::ASTERISK:
-			value = Data(left->value.integer() * right->value.integer());
+			value = make_shared<Data>(left->value->integer() * right->value->integer());
 			break;
 		case TokenKind::SLASH:
-			value = Data(left->value.integer() / right->value.integer());
+			value = make_shared<Data>(left->value->integer() / right->value->integer());
 			break;
 		}
 		break;
@@ -755,18 +753,17 @@ void ExtensionTreeNode::Operate()
 		// 論理演算の場合です。
 
 		// 演算できるのは真偽値型同士の場合のみです。
-		if (left->value.type != DataType::BOOLEAN || right->value.type != DataType::BOOLEAN){
+		if (left->value->type != DataType::BOOLEAN || right->value->type != DataType::BOOLEAN){
 			throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 		}
-		value.type = DataType::BOOLEAN;
 
 		// 比較結果を演算子によって計算方法を変えて、計算します。
 		switch (middleOperator.kind){
 		case TokenKind::AND:
-			value = Data(left->value.boolean() && right->value.boolean());
+			value = make_shared<Data>(left->value->boolean() && right->value->boolean());
 			break;
 		case TokenKind::OR:
-			value = Data(left->value.boolean() || right->value.boolean());
+			value = make_shared<Data>(left->value->boolean() || right->value->boolean());
 			break;
 		}
 	}
@@ -781,14 +778,14 @@ bool ExtensionTreeNode::isDataNodeAsColumnName()
 
 //! 実際に出力する行に合わせて列にデータを設定します。
 //! @param [in] 実際に出力する行です。
-void ExtensionTreeNode::SetColumnData(const vector<const Data> &outputRow)
+void ExtensionTreeNode::SetColumnData(const vector<const shared_ptr<const Data>> &outputRow)
 {
 	if (isDataNodeAsColumnName()){
 		value = outputRow[column.allColumnsIndex];
 
 		// 符号を考慮して値を計算します。
-		if (value.type == DataType::INTEGER){
-			value = Data(value.integer() * signCoefficient);
+		if (value->type == DataType::INTEGER){
+			value = make_shared<Data>(value->integer() * signCoefficient);
 		}
 	}
 }
@@ -831,17 +828,17 @@ void InputTable::InitializeIntegerColumn()
 		if (none_of(
 			data()->begin(),
 			data()->end(),
-			[&](const vector<const Data> &inputRow){
+			[&](const vector<const shared_ptr<const Data>> &inputRow){
 			return
-				inputRow[i].type == DataType::STRING &&
+				inputRow[i]->type == DataType::STRING &&
 				any_of(
-				inputRow[i].string().begin(),
-				inputRow[i].string().end(),
+				inputRow[i]->string().begin(),
+				inputRow[i]->string().end(),
 				[&](const char& c){return signNum.find(c) == string::npos; }); })){
 
 			// 符号と数字以外が見つからない列については、数値列に変換します。
 			for (auto& inputRow : *data()){
-				inputRow[i] = Data(stoi(inputRow[i].string()));
+				inputRow[i] = make_shared<Data>(stoi(inputRow[i]->string()));
 			}
 		}
 	}
@@ -850,7 +847,7 @@ void InputTable::InitializeIntegerColumn()
 //! InputTableクラスの新しいインスタンスを初期化します。
 //! @param [in] columns 読み込んだヘッダ情報です。
 //! @param [in] data 読み込んだデータです。
-InputTable::InputTable(const shared_ptr<const vector<const Column>> columns, const shared_ptr<vector<const vector<const Data>>> data) : m_columns(columns), m_data(data)
+InputTable::InputTable(const shared_ptr<const vector<const Column>> columns, const shared_ptr<vector<const vector<const shared_ptr<const Data>>>> data) : m_columns(columns), m_data(data)
 {
 	InitializeIntegerColumn();
 }
@@ -864,7 +861,7 @@ const shared_ptr<const vector<const Column>> InputTable::columns() const
 
 //! データを取得します。
 //! @return 列の情報です。
-const shared_ptr<vector<const vector<const Data>>> InputTable::data() const
+const shared_ptr<vector<const vector<const shared_ptr<const Data>>>> InputTable::data() const
 {
 	return m_data;
 }
@@ -1001,15 +998,15 @@ void OutputData::InitializeAllInputColumns()
 
 //! WHEREやORDER BYを適用していないすべての行を取得します。
 //! @return すべてのデータ行。入力されたすべての入力データを保管します。
-const shared_ptr<vector<const vector<const Data>>> OutputData::GetAllRows() const
+const shared_ptr<vector<const vector<const shared_ptr<const Data>>>> OutputData::GetAllRows() const
 {
-	auto outputRows = make_shared<vector<const vector<const Data>>>();
+	auto outputRows = make_shared<vector<const vector<const shared_ptr<const Data>>>>();
 	auto currentRowsPtr = GetInitializedCurrentRows();
 	auto &currentRows = *currentRowsPtr;
 
 	// 出力するデータを設定します。
 	while (true){
-		outputRows->push_back(vector<const Data>());
+		outputRows->push_back(vector<const shared_ptr<const Data>>());
 		auto &outputRow = outputRows->back();// WHEREやORDERのためにすべての情報を含む行。rowとインデックスを共有します。
 
 		// outputRowの列を設定します。
@@ -1041,7 +1038,7 @@ const shared_ptr<vector<const vector<const Data>>> OutputData::GetAllRows() cons
 
 //! データに対してWHERE句を適用します。
 //! @params [in] outputRows 適用されるデータ。
-void OutputData::ApplyWhere(vector<const vector<const Data>> &outputRows) const
+void OutputData::ApplyWhere(vector<const vector<const shared_ptr<const Data>>> &outputRows) const
 {
 	// WHERE条件を適用します。
 	if (queryInfo.whereTopNode){
@@ -1049,13 +1046,13 @@ void OutputData::ApplyWhere(vector<const vector<const Data>> &outputRows) const
 			outputRows.begin(),
 			outputRows.end(),
 			outputRows.begin(),
-			[&](vector<const Data> row){
+			[&](vector<const shared_ptr<const Data>> row){
 			auto allNodes = SelfAndDescendants(queryInfo.whereTopNode);
 			for (auto& node : *allNodes){
 				node->SetColumnData(row);
 			}
 			queryInfo.whereTopNode->Operate();
-			return queryInfo.whereTopNode->value.boolean();
+			return queryInfo.whereTopNode->value->boolean();
 		});
 		outputRows.erase(newEnd, outputRows.end());
 	}
@@ -1063,25 +1060,25 @@ void OutputData::ApplyWhere(vector<const vector<const Data>> &outputRows) const
 
 //! データに対してORDER BY句を適用します。
 //! @params [in] outputRows 適用されるデータ。
-void OutputData::ApplyOrderBy(vector<const vector<const Data>> &outputRows) const
+void OutputData::ApplyOrderBy(vector<const vector<const shared_ptr<const Data>>> &outputRows) const
 {
 	// ORDER句による並び替えの処理を行います。
 	if (!queryInfo.orders.empty()){
 		sort(
 			outputRows.begin(),
 			outputRows.end(),
-			[&](const vector<const Data>& lRow, const vector<const Data>& rRow){
+			[&](const vector<const shared_ptr<const Data>>& lRow, const vector<const shared_ptr<const Data>>& rRow){
 			for (auto &order : queryInfo.orders){
-				const Data &lData = lRow[order.column.allColumnsIndex]; // インデックスがminIndexのデータです。
-				const Data &rData = rRow[order.column.allColumnsIndex]; // インデックスがjのデータです。
+				auto &lData = lRow[order.column.allColumnsIndex]; // インデックスがminIndexのデータです。
+				auto &rData = rRow[order.column.allColumnsIndex]; // インデックスがjのデータです。
 				int cmp = 0; // 比較結果です。等しければ0、インデックスjの行が大きければプラス、インデックスminIndexの行が大きければマイナスとなります。
-				switch (lData.type)
+				switch (lData->type)
 				{
 				case DataType::INTEGER:
-					cmp = lData.integer() - rData.integer();
+					cmp = lData->integer() - rData->integer();
 					break;
 				case DataType::STRING:
-					cmp = strcmp(lData.string().c_str(), rData.string().c_str());
+					cmp = strcmp(lData->string().c_str(), rData->string().c_str());
 					break;
 				}
 
@@ -1137,9 +1134,9 @@ OutputData::OutputData(const SqlQueryInfo queryInfo, const vector<const InputTab
 
 //! 入力された各テーブルの、現在出力している行を指すカーソルを、初期化された状態で取得します。
 //! @return 初期化されたカーソルです。
-const shared_ptr<vector<vector<const vector<const Data>>::const_iterator>> OutputData::GetInitializedCurrentRows() const
+const shared_ptr<vector<vector<const vector<const shared_ptr<const Data>>>::const_iterator>> OutputData::GetInitializedCurrentRows() const
 {
-	auto currentRows = make_shared<vector<vector<const vector<const Data>>::const_iterator>>();
+	auto currentRows = make_shared<vector<vector<const vector<const shared_ptr<const Data>>>::const_iterator>>();
 	transform(
 		inputTables.begin(),
 		inputTables.end(),
@@ -1158,7 +1155,7 @@ const vector<Column> OutputData::columns() const
 
 //! 出力するすべてのデータ行を取得します。
 //! @return 出力するすべてのデータ行。入力されたすべての入力データを保管します。
-const shared_ptr<const vector<const vector<const Data>>> OutputData::outputRows() const
+const shared_ptr<const vector<const vector<const shared_ptr<const Data>>>> OutputData::outputRows() const
 {
 	auto outputRows = GetAllRows();
 	ApplyWhere(*outputRows);
@@ -1245,17 +1242,17 @@ const shared_ptr<const vector<const Column>> Csv::ReadHeader(ifstream &inputFile
 //! 入力CSVのデータ行を読み込みます。
 //! @param [in] inputFile 入力ファイルを扱うストリームです。すでにヘッダのみを読み込んだ後です。
 //! @return ファイルから読み取ったデータです。
-const shared_ptr<vector<const vector<const Data>>> Csv::ReadData(ifstream &inputFile) const
+const shared_ptr<vector<const vector<const shared_ptr<const Data>>>> Csv::ReadData(ifstream &inputFile) const
 {
-	auto data = make_shared<vector<const vector<const Data>>>(); // 読み込んだデータの一覧。
+	auto data = make_shared<vector<const vector<const shared_ptr<const Data>>>>(); // 読み込んだデータの一覧。
 
 	while (auto lineData = ReadLineData(inputFile)){
-		vector<const Data> row;
+		vector<const shared_ptr<const Data>> row;
 		transform(
 			lineData->begin(),
 			lineData->end(),
 			back_inserter(row),
-			[&](const string& column){return Data(column); });
+			[&](const string& column){return make_shared<Data>(column); });
 		data->push_back(row);
 	}
 	return data;
@@ -1313,12 +1310,12 @@ void Csv::WriteData(ofstream &outputFile, const OutputData &data) const
 	for (auto& outputRow : *outputRows){
 		size_t i = 0;
 		for (const auto &column : data.columns()){
-			switch (outputRow[column.allColumnsIndex].type){
+			switch (outputRow[column.allColumnsIndex]->type){
 			case DataType::INTEGER:
-				outputFile << outputRow[column.allColumnsIndex].integer();
+				outputFile << outputRow[column.allColumnsIndex]->integer();
 				break;
 			case DataType::STRING:
-				outputFile << outputRow[column.allColumnsIndex].string();
+				outputFile << outputRow[column.allColumnsIndex]->string();
 				break;
 			}
 			if (i++ < data.columns().size() - 1){
@@ -1581,12 +1578,12 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 					}
 				}
 				else if (tokenCursol->kind == TokenKind::INT_LITERAL){
-					currentNode->value = Data(stoi(tokenCursol->word));
+					currentNode->value = make_shared<Data>(stoi(tokenCursol->word));
 					++tokenCursol;
 				}
 				else if (tokenCursol->kind == TokenKind::STRING_LITERAL){
 					// 前後のシングルクォートを取り去った文字列をデータとして読み込みます。
-					currentNode->value = Data(tokenCursol->word.substr(1, tokenCursol->word.size() - 2));
+					currentNode->value = make_shared<Data>(tokenCursol->word.substr(1, tokenCursol->word.size() - 2));
 					++tokenCursol;
 				}
 				else{
@@ -1671,8 +1668,8 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 			for (auto &whereNode : *whereNodes){
 				if (whereNode->middleOperator.kind == TokenKind::NOT_TOKEN &&
 					whereNode->column.columnName.empty() &&
-					whereNode->value.type == DataType::INTEGER){
-					whereNode->value = Data(whereNode->value.integer() * whereNode->signCoefficient);
+					whereNode->value->type == DataType::INTEGER){
+					whereNode->value = make_shared<Data>(whereNode->value->integer() * whereNode->signCoefficient);
 				}
 			}
 		}
