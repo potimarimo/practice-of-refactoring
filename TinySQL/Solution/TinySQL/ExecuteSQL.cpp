@@ -2712,13 +2712,14 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 
 						// 並び替えの昇順、降順を指定します。
 						bool isAsc = true;
-						if (tokenCursol->kind == TokenKind::ASC){
-							++tokenCursol;
-						}
-						else if (tokenCursol->kind == TokenKind::DESC){
+
+						auto SET_DESC = DESC->Action([&](const Token token){
 							isAsc = false;
-							++tokenCursol;
-						}
+						});
+
+						auto SET_ORDER = ASC | SET_DESC;
+
+						SET_ORDER->Parse(tokenCursol);
 
 						queryInfo->orders.push_back(Order(orderColumn, isAsc));
 					}
