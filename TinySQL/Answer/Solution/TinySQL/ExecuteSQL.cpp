@@ -19,7 +19,7 @@ using namespace std;
 //! @param [in] sql 実行するSQLです。
 //! @param[in] outputFileName SQLの実行結果をCSVとして出力するファイル名です。拡張子を含みます。
 //! @return 実行した結果の状態です。
-int ExecuteSQL(const char*, const char*);
+int ExecuteSQL(const string, const char*);
 
 //! ExecuteSQLの戻り値の種類を表します。
 enum class ResultValue
@@ -364,7 +364,7 @@ ColumnIndex::ColumnIndex(const int table, const int column) : table(table), colu
 //! SELECT USERS.NAME, CHILDREN.NAME                                                                         @n
 //! WHERE USERS.ID = CHILDREN.PARENTID                                                                       @n
 //! FROM USERS, CHILDREN                                                                                     @n
-int ExecuteSQL(const char* sql, const char* outputFileName)
+int ExecuteSQL(const string sql, const char* outputFileName)
 {
 	vector<FILE*> inputTableFiles;                          // 読み込む入力ファイルの全てのファイルポインタです。
 	FILE *outputFile = nullptr;                             // 書き込むファイルのファイルポインタです。
@@ -440,7 +440,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 
 	const char* charactorBackPoint = nullptr; // SQLをトークンに分割して読み込む時に戻るポイントを記録しておきます。
 
-	const char* charactorCursol = sql; // SQLをトークンに分割して読み込む時に現在読んでいる文字の場所を表します。
+	const char* charactorCursol = sql.c_str(); // SQLをトークンに分割して読み込む時に現在読んでいる文字の場所を表します。
 
 	vector<const string> tableNames; // FROM句で指定しているテーブル名です。
 	try
