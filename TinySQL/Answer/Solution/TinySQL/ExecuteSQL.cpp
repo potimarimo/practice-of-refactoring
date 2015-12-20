@@ -87,10 +87,10 @@ class Data
 		int integer;                  //!< データが整数型の場合の値です。
 		bool boolean;                 //!< データが真偽値型の場合の値です。
 	} m_value;
-public:
+protected:
 	//! Dataクラスの新しいインスタンスを初期化します。
 	Data();
-
+public:
 	//! Dataクラスの新しいインスタンスを初期化します。
 	//! @param [in] value データの値です。
 	Data(const string value);
