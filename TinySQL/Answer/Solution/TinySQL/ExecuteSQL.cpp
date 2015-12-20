@@ -160,7 +160,7 @@ public:
 	//! Columnクラスの新しいインスタンスを初期化します。
 	//! @param [in] tableName 列が所属するテーブル名です。指定されていない場合は空文字列となります。
 	//! @param [in] columnName 指定された列の列名です。
-	Column(const string tableName, const char* columnName);
+	Column(const string tableName, const string columnName);
 };
 
 //! WHERE句の条件の式木を表します。
@@ -272,7 +272,7 @@ Column::Column(const char* columnName) : Column("", columnName)
 //! Columnクラスの新しいインスタンスを初期化します。
 //! @param [in] tableName 列が所属するテーブル名です。指定されていない場合は空文字列となります。
 //! @param [in] columnName 指定された列の列名です。
-Column::Column(const string tableName, const char* columnName)
+Column::Column(const string tableName, const string columnName)
 {
 	this->tableName = tableName;
 	this->columnName = columnName;
@@ -629,7 +629,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 						if (tokenCursol->kind == TokenKind::IDENTIFIER){
 
 							// テーブル名が指定されていることがわかったので読み替えます。
-							selectColumns.back() = Column(selectColumns.back().columnName, tokenCursol->word.c_str());
+							selectColumns.back() = Column(selectColumns.back().columnName, tokenCursol->word);
 							++tokenCursol;
 						}
 						else{
@@ -678,7 +678,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 								if (tokenCursol->kind == TokenKind::IDENTIFIER){
 
 									// テーブル名が指定されていることがわかったので読み替えます。
-									orderByColumns.back() = Column(orderByColumns.back().columnName, tokenCursol->word.c_str());
+									orderByColumns.back() = Column(orderByColumns.back().columnName, tokenCursol->word);
 									++tokenCursol;
 								}
 								else{
@@ -762,7 +762,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 							if (tokenCursol->kind == TokenKind::IDENTIFIER){
 
 								// テーブル名が指定されていることがわかったので読み替えます。
-								currentNode->column = Column(currentNode->column.columnName, tokenCursol->word.c_str());
+								currentNode->column = Column(currentNode->column.columnName, tokenCursol->word);
 								++tokenCursol;
 							}
 							else{
@@ -929,7 +929,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					while (*charactorCursol && *charactorCursol != ',' && *charactorCursol != '\r'&& *charactorCursol != '\n'){
 						columnName.push_back(*charactorCursol++);
 					}
-					inputColumns[i].push_back(Column(tableNames[i], columnName.c_str()));
+					inputColumns[i].push_back(Column(tableNames[i], columnName));
 
 					// 入力行のカンマの分を読み進めます。
 					++charactorCursol;
@@ -1029,7 +1029,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 		// 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
 		for (size_t i = 0; i < tableNames.size(); ++i){
 			for (auto &inputColumn : inputColumns[i]){
-				allInputColumns.push_back(Column(tableNames[i], inputColumn.columnName.c_str()));
+				allInputColumns.push_back(Column(tableNames[i], inputColumn.columnName));
 			}
 		}
 
