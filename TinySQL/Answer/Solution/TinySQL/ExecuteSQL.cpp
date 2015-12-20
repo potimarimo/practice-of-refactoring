@@ -330,6 +330,11 @@ class Csv
 	//! @param [in] tableName SQLで指定されたテーブル名です。
 	//! @return ファイルから読み取ったヘッダ情報です。
 	const shared_ptr<const vector<const Column>> ReadHeader(ifstream &inputFile, const string tableName) const;
+
+	//! 入力CSVのデータ行を読み込みます。
+	//! @param [in] inputFile 入力ファイルを扱うストリームです。
+	//! @return ファイルから読み取ったデータです。
+	const shared_ptr<const vector<const vector<const Data>>> ReadData(ifstream &inputFile) const;
 public:
 
 	//! Csvクラスの新しいインスタンスを初期化します。
@@ -656,7 +661,38 @@ const shared_ptr<const vector<const Column>> Csv::ReadHeader(ifstream &inputFile
 	}
 	return columns;
 }
+//! 入力CSVのデータ行を読み込みます。
+//! @param [in] inputFile 入力ファイルを扱うストリームです。
+//! @return ファイルから読み取ったデータです。
+const shared_ptr<const vector<const vector<const Data>>> Csv::ReadData(ifstream &inputFile) const
+{
+	auto data = make_shared<vector<const vector<const Data>>>(); // 読み込んだデータの一覧。
 
+	string inputLine;
+	while (getline(inputFile, inputLine)){
+		data->push_back(vector<const Data>()); // 入力されている一行分のデータです。
+		auto &row = data->back();
+
+		auto charactorCursol = inputLine.begin(); // データ入力行を検索するカーソルです。
+		auto lineEnd = inputLine.end(); // データ入力行のendを指します。
+
+		// 読み込んだ行を最後まで読みます。
+		while (charactorCursol != lineEnd){
+
+			// 読み込んだデータを書き込む行のカラムを生成します。
+			auto columnStart = charactorCursol; // 現在の列の最初を記録しておきます。
+			charactorCursol = find(charactorCursol, lineEnd, ',');
+
+			row.push_back(Data(string(columnStart, charactorCursol)));
+
+			// 入力行のカンマの分を読み進めます。
+			if (charactorCursol != lineEnd){
+				++charactorCursol;
+			}
+		}
+	}
+	return data;
+}
 //! Csvクラスの新しいインスタンスを初期化します。
 //! @param [in] queryInfo SQLに記述された内容です。
 Csv::Csv(const shared_ptr<const SqlQueryInfo> queryInfo) : queryInfo(queryInfo){}
@@ -678,31 +714,8 @@ const shared_ptr<const vector<const InputTable>> Csv::ReadCsv() const
 		}
 
 		table.columns = *ReadHeader(inputFile, tableName);
+		table.data = *ReadData(inputFile);
 
-		string inputLine;
-		// 入力CSVのデータ行を読み込みます。
-		while (getline(inputFile, inputLine)){
-			table.data.push_back(vector<const Data>()); // 入力されている一行分のデータです。
-			vector<const Data> &row = table.data.back();
-
-			auto charactorCursol = inputLine.begin(); // データ入力行を検索するカーソルです。
-			auto lineEnd = inputLine.end(); // データ入力行のendを指します。
-
-			// 読み込んだ行を最後まで読みます。
-			while (charactorCursol != lineEnd){
-
-				// 読み込んだデータを書き込む行のカラムを生成します。
-				auto columnStart = charactorCursol; // 現在の列の最初を記録しておきます。
-				charactorCursol = find(charactorCursol, lineEnd, ',');
-
-				row.push_back(Data(string(columnStart, charactorCursol)));
-
-				// 入力行のカンマの分を読み進めます。
-				if (charactorCursol != lineEnd){
-					++charactorCursol;
-				}
-			}
-		}
 
 		// 全てが数値となる列は数値列に変換します。
 		for (size_t j = 0; j < table.columns.size(); ++j){
