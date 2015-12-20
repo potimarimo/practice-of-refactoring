@@ -100,11 +100,12 @@ public:
 };
 
 //! トークンを表します。
-typedef struct
+class Token
 {
+public:
 	TokenKind kind; //!< トークンの種類です。
 	char word[MAX_WORD_LENGTH]; //!< 記録されているトークンの文字列です。記録の必要がなければ空白です。
-} Token;
+};
 
 //! 指定された列の情報です。どのテーブルに所属するかの情報も含みます。
 typedef struct
