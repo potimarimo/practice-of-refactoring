@@ -959,8 +959,6 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					}
 				}
 			}
-			// 番兵となるnullptrを登録します。
-			inputData[i].push_back(nullptr);
 
 			// 全てが数値となる列は数値列に変換します。
 			for (size_t j = 0; j < inputColumns[i].size(); ++j){
@@ -968,9 +966,6 @@ int ExecuteSQL(const string sql, const string outputFileName)
 				// 全ての行のある列について、データ文字列から符号と数値以外の文字を探します。
 				found = false;
 				for (auto& inputRow : inputData[i]){
-					if (!inputRow){
-						break;
-					}
 					const char *currentChar = inputRow[j]->string().c_str();
 					while (*currentChar){
 						bool isNum = false;
@@ -996,9 +991,6 @@ int ExecuteSQL(const string sql, const string outputFileName)
 				// 符号と数字以外が見つからない列については、数値列に変換します。
 				if (!found){
 					for (auto& inputRow : inputData[i]){
-						if (!inputRow){
-							break;
-						}
 						*inputRow[j] = Data(atoi(inputRow[j]->string().c_str()));
 					}
 				}
@@ -1316,16 +1308,10 @@ int ExecuteSQL(const string sql, const string outputFileName)
 
 			// 最後のテーブルのカレント行をインクリメントします。
 			++currentRows[tableNames.size() - 1];
-			if (!*currentRows[tableNames.size() - 1]){
-				++currentRows[tableNames.size() - 1];
-			}
 
 			// 最後のテーブルが最終行になっていた場合は先頭に戻し、順に前のテーブルのカレント行をインクリメントします。
 			for (int i = tableNames.size() - 1; currentRows[i] == inputData[i].end() && 0 < i; --i){
 				++currentRows[i - 1];
-				if (!*currentRows[i - 1]){
-					++currentRows[i - 1];
-				}
 				currentRows[i] = inputData[i].begin();
 			}
 
@@ -1488,9 +1474,6 @@ int ExecuteSQL(const string sql, const string outputFileName)
 		// メモリリソースを解放します。
 		for (auto& inputTableData : inputData){
 			for (auto& inputRow : inputTableData){
-				if (!inputRow){
-					break;
-				}
 				Data **dataCursol = inputRow;
 				while (*dataCursol){
 					delete *dataCursol++;
@@ -1528,9 +1511,6 @@ int ExecuteSQL(const string sql, const string outputFileName)
 		// メモリリソースを解放します。
 		for (auto& inputTableData : inputData){
 			for (auto& inputRow : inputTableData){
-				if (!inputRow){
-					break;
-				}
 				Data **dataCursol = inputRow;
 				while (*dataCursol){
 					free(*dataCursol++);
