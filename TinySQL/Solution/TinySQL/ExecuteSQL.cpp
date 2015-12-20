@@ -721,6 +721,22 @@ protected:
 	const shared_ptr<const Token> ReadCore(string::const_iterator &cursol, const string::const_iterator& end) const override;
 };
 
+//! トークンをひとつ読み取るパーサーです。
+class TokenParser
+{
+	TokenKind m_kind; //!< 読み取るトークンの種類です 
+public:
+	//! TokenParserクラスの新しいインスタンスを初期化します。
+	//! @params [in] kind 読み取るトークンの種類です。
+	TokenParser(TokenKind kind);
+
+	//! トークンに対するパースを行います。
+	//! @params [in] cursol 現在の読み取り位置を表すカーソルです。
+	//! @return パースが成功したかどうかです。
+	const bool Parse(vector<const Token>::const_iterator& cursol) const;
+};
+
+
 //! 出力するデータを管理します。
 class OutputData
 {
@@ -1826,6 +1842,24 @@ const shared_ptr<const Token> IdentifierReader::ReadCore(string::const_iterator 
 	}
 }
 
+//! TokenParserクラスの新しいインスタンスを初期化します。
+//! @params [in] kind 読み取るトークンの種類です。
+TokenParser::TokenParser(TokenKind kind) : m_kind(kind){}
+
+//! トークンに対するパースを行います。
+//! @params [in] cursol 現在の読み取り位置を表すカーソルです。
+//! @return パースが成功したかどうかです。
+const bool TokenParser::Parse(vector<const Token>::const_iterator& cursol) const
+{
+	if (cursol->kind == m_kind){
+		++cursol;
+		return true;
+	}
+	else{
+		return false;
+	}
+}
+
 //! 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
 void OutputData::InitializeAllInputColumns()
 {
@@ -2252,11 +2286,9 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 	auto queryInfo = make_shared<SqlQueryInfo>();
 	auto tokenCursol = tokens.begin(); // 現在見ているトークンを指します。
 
-	// SELECT句を読み込みます。
-	if (tokenCursol->kind == TokenKind::SELECT){
-		++tokenCursol;
-	}
-	else{
+	TokenParser SELECT(TokenKind::SELECT);
+
+	if (!SELECT.Parse(tokenCursol)){
 		throw ResultValue::ERR_SQL_SYNTAX;
 	}
 
