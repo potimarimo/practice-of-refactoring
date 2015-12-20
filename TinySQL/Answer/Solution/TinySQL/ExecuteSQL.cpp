@@ -79,10 +79,11 @@ class Data
 {
 	DataType m_type = DataType::STRING; //!< データの型です。
 
+	const string defaultString = ""; //!< データが文字列を持たない場合にstring()が返す値。
+
 	//! 実際のデータを格納する共用体です。
 	union
 	{
-		int integer;                  //!< データが整数型の場合の値です。
 		bool boolean;                 //!< データが真偽値型の場合の値です。
 	} m_value;
 protected:
@@ -91,15 +92,11 @@ protected:
 public:
 	//! Dataクラスの新しいインスタンスを初期化します。
 	//! @param [in] value データの値です。
-	Data(const int value);
-
-	//! Dataクラスの新しいインスタンスを初期化します。
-	//! @param [in] value データの値です。
 	Data(const bool value);
 
 	//! データの型を取得します。
 	//! @return データの型です。
-	virtual const DataType& type() const;
+	virtual const DataType type() const;
 
 	//! データが文字列型の場合の値を取得します。
 	//! @return データが文字列型の場合の値です。
@@ -107,7 +104,7 @@ public:
 
 	//! データが整数型の場合の値を取得します。
 	//! @return データが整数型の場合の値です。
-	const int& integer() const;
+	virtual const int integer() const;
 
 	//! データが真偽値型の場合の値を取得します。
 	//! @return データが真偽値型の場合の値です。
@@ -126,13 +123,30 @@ public:
 
 	//! データの型を取得します。
 	//! @return データの型です。
-	const DataType& type() const override;
+	const DataType type() const override;
 
 	//! データが文字列型の場合の値を取得します。
 	//! @return データが文字列型の場合の値です。
 	const std::string& string() const override;
+};
 
+//! 整数の値を持つDataです。
+class IntegerData : public Data
+{
+	int m_integer;                  //!< データが整数型の場合の値です。
 
+public:
+	//! Dataクラスの新しいインスタンスを初期化します。
+	//! @param [in] value データの値です。
+	IntegerData(const int value);
+
+	//! データの型を取得します。
+	//! @return データの型です。
+	const DataType type() const override;
+
+	//! データが整数型の場合の値を取得します。
+	//! @return データが整数型の場合の値です。
+	const int integer() const override;
 };
 
 //! WHERE句に指定する演算子の情報を表します。
@@ -534,13 +548,6 @@ Data::Data() :m_value({ 0 })
 
 //! Dataクラスの新しいインスタンスを初期化します。
 //! @param [in] value データの値です。
-Data::Data(const int value) : m_type(DataType::INTEGER)
-{
-	m_value.integer = value;
-}
-
-//! Dataクラスの新しいインスタンスを初期化します。
-//! @param [in] value データの値です。
 Data::Data(const bool value) : m_type(DataType::BOOLEAN)
 {
 	m_value.boolean = value;
@@ -548,7 +555,7 @@ Data::Data(const bool value) : m_type(DataType::BOOLEAN)
 
 //! データが文字列型の場合の値を取得します。
 //! @return データが文字列型の場合の値です。
-const DataType& Data::type() const
+const DataType Data::type() const
 {
 	return m_type;
 }
@@ -557,14 +564,14 @@ const DataType& Data::type() const
 //! @return データが文字列型の場合の値です。
 const string& Data::string() const
 {
-	return "";
+	return defaultString;
 }
 
 //! データが整数型の場合の値を取得します。
 //! @return データが整数型の場合の値です。
-const int& Data::integer() const
+const int Data::integer() const
 {
-	return m_value.integer;
+	return 0;
 }
 
 //! データが真偽値型の場合の値を取得します。
@@ -580,7 +587,7 @@ StringData::StringData(const std::string value) : m_string(value){}
 
 //! データの型を取得します。
 //! @return データの型です。
-const DataType& StringData::type() const
+const DataType StringData::type() const
 {
 	return DataType::STRING;
 }
@@ -590,6 +597,26 @@ const DataType& StringData::type() const
 const string& StringData::string() const
 {
 	return m_string;
+}
+
+//! Dataクラスの新しいインスタンスを初期化します。
+//! @param [in] value データの値です。
+IntegerData::IntegerData(const int value) : m_integer(value)
+{
+}
+
+//! データの型を取得します。
+//! @return データの型です。
+const DataType IntegerData::type() const
+{
+	return DataType::INTEGER;
+}
+
+//! データが整数型の場合の値を取得します。
+//! @return データが整数型の場合の値です。
+const int IntegerData::integer() const
+{
+	return m_integer;
 }
 
 //! Operatorクラスの新しいインスタンスを初期化します。
@@ -771,16 +798,16 @@ void ExtensionTreeNode::Operate()
 		// 比較結果を演算子によって計算方法を変えて、計算します。
 		switch (middleOperator.kind){
 		case TokenKind::PLUS:
-			value = make_shared<Data>(left->value->integer() + right->value->integer());
+			value = make_shared<IntegerData>(left->value->integer() + right->value->integer());
 			break;
 		case TokenKind::MINUS:
-			value = make_shared<Data>(left->value->integer() - right->value->integer());
+			value = make_shared<IntegerData>(left->value->integer() - right->value->integer());
 			break;
 		case TokenKind::ASTERISK:
-			value = make_shared<Data>(left->value->integer() * right->value->integer());
+			value = make_shared<IntegerData>(left->value->integer() * right->value->integer());
 			break;
 		case TokenKind::SLASH:
-			value = make_shared<Data>(left->value->integer() / right->value->integer());
+			value = make_shared<IntegerData>(left->value->integer() / right->value->integer());
 			break;
 		}
 		break;
@@ -821,7 +848,7 @@ void ExtensionTreeNode::SetColumnData(const vector<const shared_ptr<const Data>>
 
 		// 符号を考慮して値を計算します。
 		if (value->type() == DataType::INTEGER){
-			value = make_shared<Data>(value->integer() * signCoefficient);
+			value = make_shared<IntegerData>(value->integer() * signCoefficient);
 		}
 	}
 }
@@ -874,7 +901,7 @@ void InputTable::InitializeIntegerColumn()
 
 			// 符号と数字以外が見つからない列については、数値列に変換します。
 			for (auto& inputRow : *data()){
-				inputRow[i] = make_shared<Data>(stoi(inputRow[i]->string()));
+				inputRow[i] = make_shared<IntegerData>(stoi(inputRow[i]->string()));
 			}
 		}
 	}
@@ -1614,7 +1641,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 					}
 				}
 				else if (tokenCursol->kind == TokenKind::INT_LITERAL){
-					currentNode->value = make_shared<Data>(stoi(tokenCursol->word));
+					currentNode->value = make_shared<IntegerData>(stoi(tokenCursol->word));
 					++tokenCursol;
 				}
 				else if (tokenCursol->kind == TokenKind::STRING_LITERAL){
@@ -1705,7 +1732,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 				if (whereNode->middleOperator.kind == TokenKind::NOT_TOKEN &&
 					whereNode->column.columnName.empty() &&
 					whereNode->value->type() == DataType::INTEGER){
-					whereNode->value = make_shared<Data>(whereNode->value->integer() * whereNode->signCoefficient);
+					whereNode->value = make_shared<IntegerData>(whereNode->value->integer() * whereNode->signCoefficient);
 				}
 			}
 		}
