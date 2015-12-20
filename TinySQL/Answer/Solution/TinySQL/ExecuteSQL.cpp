@@ -1,4 +1,4 @@
-//! @file
+	//! @file
 #include "stdafx.h"
 
 #include <cctype>
@@ -3005,21 +3005,29 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 		// 見つかった演算子の情報をもとにノードを入れ替えます。
 		shared_ptr<ExtensionTreeNode> tmp = currentNode; //ノードを入れ替えるために使う変数です。
 
-		shared_ptr<ExtensionTreeNode> searched; // 入れ替えるノードを探すためのカーソルです。
-
 		//カッコにくくられていなかった場合に、演算子の優先順位を参考に結合するノードを探します。
 		auto ancestors = tmp->ancestors();
 		ancestors->insert(ancestors->begin(), tmp);
 		for (auto &ancestor : *ancestors){
-			searched = ancestor;
+				
 			// 現在の読み込み場所をくくるカッコが開く場所を探します。
-			while (searched && !searched->parenOpenBeforeClose){
-				searched = searched->left;
-			}
+			auto allLefts = ancestor->allLeftList();
+			allLefts->insert(allLefts->begin(), ancestor);
+			auto found = any_of(allLefts->begin(), allLefts->end(),
+				[](shared_ptr<ExtensionTreeNode> node){return node->parenOpenBeforeClose; });
+
 			tmp = ancestor;
-			if (searched || !ancestor->parent || !(ancestor->parent->middleOperator.order <= foundOperator->order || ancestor->parent->inParen)){
+			if (found || !ancestor->parent || !(ancestor->parent->middleOperator.order <= foundOperator->order || ancestor->parent->inParen)){
 				break;
 			}
+			//// 現在の読み込み場所をくくるカッコが開く場所を探します。
+			//while (searched && !searched->parenOpenBeforeClose){
+			//	searched = searched->left;
+			//}
+			//tmp = ancestor;
+			//if (searched || !ancestor->parent || !(ancestor->parent->middleOperator.order <= foundOperator->order || ancestor->parent->inParen)){
+			//	break;
+			//}
 		}
 
 		// 演算子のノードを新しく生成します。
