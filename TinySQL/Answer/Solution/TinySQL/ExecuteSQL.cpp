@@ -12,8 +12,6 @@
 
 using namespace std;
 
-#define MAX_DATA_LENGTH 256                //!< 入出力されるデータの、各列の最大長です。
-
 //! カレントディレクトリにあるCSVに対し、簡易的なSQLを実行し、結果をファイルに出力します。
 //! @param [in] sql 実行するSQLです。
 //! @param[in] outputFileName SQLの実行結果をCSVとして出力するファイル名です。拡張子を含みます。
@@ -1347,16 +1345,15 @@ int ExecuteSQL(const string sql, const string outputFileName)
 		for (auto& outputRow : outputData){
 			Data* column = &outputRow[0];
 			for (size_t i = 0; i < selectColumns.size(); ++i){
-				char outputString[MAX_DATA_LENGTH] = "";
+				
 				switch (column->type){
 				case DataType::INTEGER:
-					itoa(column->integer(), outputString, 10);
+					outputFile << column->integer();
 					break;
 				case DataType::STRING:
-					strcpy(outputString, column->string().c_str());
+					outputFile << column->string();
 					break;
 				}
-				outputFile << outputString;
 				if (i < selectColumns.size() - 1){
 					outputFile << ",";
 				}
