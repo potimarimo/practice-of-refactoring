@@ -1,7 +1,7 @@
 //! @file
 #include "stdafx.h"
-#include "ctype.h"
 
+#include <cctype>
 #include <fstream>
 #include <sstream>
 #include <algorithm>
