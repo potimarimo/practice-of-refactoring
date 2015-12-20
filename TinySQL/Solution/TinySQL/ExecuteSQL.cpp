@@ -488,38 +488,18 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			if (sqlCursol == sqlEnd){
 				break;
 			}
-			//for (search = space.c_str(); *search && *sqlCursol != *search; ++search){}
-			//if (*search){
-			//	sqlCursol++;
-			//	continue;
-			//}
 
 			// 数値リテラルを読み込みます。
-
-			// 先頭文字が数字であるかどうかを確認します。
 			sqlBackPoint = sqlCursol;
-			for (search = num.c_str(); *search && *sqlCursol != *search; ++search){}
-			if (*search){
-				Token literal{TokenKind::INT_LITERAL}; // 読み込んだ数値リテラルの情報です。
-
-				// 数字が続く間、文字を読み込み続けます。
-				do {
-					for (search = num.c_str(); *search && *sqlCursol != *search; ++search){}
-					if (*search){
-						literal.word.push_back(*search);
-						++sqlCursol;
-					}
-				} while (*search);
-
-				// 数字の後にすぐに識別子が続くのは紛らわしいので数値リテラルとは扱いません。
-				for (search = alpahUnder.c_str(); *search && sqlCursol != sqlEnd && *sqlCursol != *search; ++search){}
-				if (!*search){
-					tokens.push_back(literal);
-					continue;
-				}
-				else{
-					sqlCursol = sqlBackPoint;
-				}
+			sqlCursol = find_if(sqlCursol, sqlEnd, [&](char c){return num.find(c) == string::npos; });
+			if (sqlCursol != sqlBackPoint && (
+					alpahUnder.find(*sqlCursol) == string::npos || // 数字の後にすぐに識別子が続くのは紛らわしいので数値リテラルとは扱いません。
+					sqlCursol == sqlEnd)){
+				tokens.push_back(Token(TokenKind::INT_LITERAL, string(sqlBackPoint, sqlCursol)));
+				continue;
+			}
+			else{
+				sqlCursol = sqlBackPoint;
 			}
 
 			// 文字列リテラルを読み込みます。
