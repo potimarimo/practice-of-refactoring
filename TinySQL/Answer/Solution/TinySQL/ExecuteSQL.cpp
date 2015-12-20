@@ -736,13 +736,17 @@ public:
 //! トークンをひとつ読み取るパーサーです。
 class TokenParser : public Parser
 {
-	vector<TokenKind> m_kinds; //!< 読み取るトークンの種類です。
+	const vector<const TokenKind> m_kinds; //!< 読み取るトークンの種類です。
 	function<void(const Token)> m_action; //!< 読み取りが成功したら実行する処理です。
 public:
 	//! TokenParserクラスの新しいインスタンスを初期化します。
 	//! @param [in] 読み取りが成功したら実行する処理です。
 	//! @params [in] kind 読み取るトークンの種類です。
-	TokenParser(const function<void(const Token)> action, const TokenKind kind);
+	TokenParser(const function<void(const Token)> action, const vector<const TokenKind> kinds);
+
+	//! TokenParserクラスの新しいインスタンスを初期化します。
+	//! @params [in] kind 読み取るトークンの種類です。
+	TokenParser(const vector<const TokenKind> kinds);
 
 	//! TokenParserクラスの新しいインスタンスを初期化します。
 	//! @params [in] kind 読み取るトークンの種類です。
@@ -2023,7 +2027,7 @@ const shared_ptr<const Token> IdentifierReader::ReadCore(string::const_iterator 
 //! TokenParserクラスの新しいインスタンスを初期化します。
 //! @param [in] 読み取りが成功したら実行する処理です。
 //! @params [in] kind 読み取るトークンの種類です。
-TokenParser::TokenParser(function<void(const Token)> action, TokenKind kind) : m_action(action), m_kinds({ kind }){}
+TokenParser::TokenParser(function<void(const Token)> action, const vector<const TokenKind> kinds) : m_action(action), m_kinds(kinds){}
 
 //! TokenParserクラスの新しいインスタンスを初期化します。
 //! @params [in] kind 読み取るトークンの種類です。
@@ -2034,22 +2038,24 @@ TokenParser::TokenParser(TokenKind kind) : m_kinds({ kind }){}
 //! @return パースが成功したかどうかです。
 const bool TokenParser::Parse(vector<const Token>::const_iterator& cursol) const
 {
-	if (cursol->kind == m_kinds[0]){
-		if (m_action){
-			m_action(*cursol);
+	return any_of(m_kinds.begin(), m_kinds.end(),[&](const TokenKind &kind){
+		if (cursol->kind == kind){
+			if (m_action){
+				m_action(*cursol);
+			}
+			++cursol;
+			return true;
 		}
-		++cursol;
-		return true;
-	}
-	else{
-		return false;
-	}
+		else{
+			return false;
+		}
+	});
 }
 //! 読み取りが成功したら実行する処理を登録します。
 //! @param [in] 読み取りが成功したら実行する処理です。
 const shared_ptr<const TokenParser> TokenParser::Action(const function<void(const Token)> action) const
 {
-	return make_shared<TokenParser>(action, m_kinds[0]);
+	return make_shared<TokenParser>(action, m_kinds);
 }
 
 //! トークンのパーサーを生成します。
