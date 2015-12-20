@@ -325,6 +325,11 @@ class Csv
 	const string signNum = "+-0123456789"; //!< 全ての符号と数字です。
 
 	const shared_ptr<const SqlQueryInfo> queryInfo; //!< SQLに記述された内容です。
+
+	//! @param [in] inputFile 入力ファイルを扱うストリームです。
+	//! @param [in] tableName SQLで指定されたテーブル名です。
+	//! @return ファイルから読み取ったヘッダ情報です。
+	const shared_ptr<const vector<const Column>> ReadHeader(ifstream &inputFile, const string tableName) const;
 public:
 
 	//! Csvクラスの新しいインスタンスを初期化します。
@@ -619,6 +624,39 @@ bool Equali(const string str1, const string str2){
 		[](const char &c1, const char &c2){return toupper(c1) == toupper(c2); });
 }
 
+//! 入力CSVのヘッダ行を読み込みます。
+//! @param [in] inputFile 入力ファイルを扱うストリームです。
+//! @param [in] tableName SQLで指定されたテーブル名です。
+//! @return ファイルから読み取ったヘッダ情報です。
+const shared_ptr<const vector<const Column>> Csv::ReadHeader(ifstream &inputFile, const string tableName) const
+{
+	auto columns = make_shared<vector<const Column>>(); // 読み込んだ列の一覧。
+
+	string inputLine; // ファイルから読み込んだ行文字列です。
+	if (getline(inputFile, inputLine)){
+		auto charactorCursol = inputLine.begin(); // ヘッダ入力行を検索するカーソルです。
+		auto lineEnd = inputLine.end(); // ヘッダ入力行のendを指します。
+
+		// 読み込んだ行を最後まで読みます。
+		while (charactorCursol != lineEnd){
+
+			// 列名を一つ読みます。
+			auto columnStart = charactorCursol; // 現在の列の最初を記録しておきます。
+			charactorCursol = find(charactorCursol, lineEnd, ',');
+			columns->push_back(Column(tableName, string(columnStart, charactorCursol)));
+
+			// 入力行のカンマの分を読み進めます。
+			if (charactorCursol != lineEnd){
+				++charactorCursol;
+			}
+		}
+	}
+	else{
+		throw ResultValue::ERR_CSV_SYNTAX;
+	}
+	return columns;
+}
+
 //! Csvクラスの新しいインスタンスを初期化します。
 //! @param [in] queryInfo SQLに記述された内容です。
 Csv::Csv(const shared_ptr<const SqlQueryInfo> queryInfo) : queryInfo(queryInfo){}
@@ -639,30 +677,9 @@ const shared_ptr<const vector<const InputTable>> Csv::ReadCsv() const
 			throw ResultValue::ERR_FILE_OPEN;
 		}
 
-		// 入力CSVのヘッダ行を読み込みます。
-		string inputLine; // ファイルから読み込んだ行文字列です。
-		if (getline(inputFile, inputLine)){
-			auto charactorCursol = inputLine.begin(); // ヘッダ入力行を検索するカーソルです。
-			auto lineEnd = inputLine.end(); // ヘッダ入力行のendを指します。
+		table.columns = *ReadHeader(inputFile, tableName);
 
-			// 読み込んだ行を最後まで読みます。
-			while (charactorCursol != lineEnd){
-
-				// 列名を一つ読みます。
-				auto columnStart = charactorCursol; // 現在の列の最初を記録しておきます。
-				charactorCursol = find(charactorCursol, lineEnd, ',');
-				table.columns.push_back(Column(tableName, string(columnStart, charactorCursol)));
-
-				// 入力行のカンマの分を読み進めます。
-				if (charactorCursol != lineEnd){
-					++charactorCursol;
-				}
-			}
-		}
-		else{
-			throw ResultValue::ERR_CSV_SYNTAX;
-		}
-
+		string inputLine;
 		// 入力CSVのデータ行を読み込みます。
 		while (getline(inputFile, inputLine)){
 			table.data.push_back(vector<const Data>()); // 入力されている一行分のデータです。
