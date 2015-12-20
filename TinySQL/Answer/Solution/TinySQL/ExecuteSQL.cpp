@@ -568,12 +568,13 @@ int ExecuteSQL(const string sql, const string outputFileName)
 				continue;
 			}
 
+
 			throw ResultValue::ERR_TOKEN_CANT_READ;
 		}
 
 		// トークン列を解析し、構文を読み取ります。
 
-		Token *tokenCursol = &tokens[0]; // 現在見ているトークンを指します。
+		auto tokenCursol = tokens.begin(); // 現在見ているトークンを指します。
 
 		vector<Column> selectColumns; // SELECT句に指定された列名です。
 
@@ -862,7 +863,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			throw ResultValue::ERR_SQL_SYNTAX;
 		}
 		bool first = true; // FROM句の最初のテーブル名を読み込み中かどうかです。
-		while (tokenCursol->kind == TokenKind::COMMA || first){
+		while (tokenCursol != tokens.end() && tokenCursol->kind == TokenKind::COMMA || first){
 			if (tokenCursol->kind == TokenKind::COMMA){
 				++tokenCursol;
 			}
@@ -877,7 +878,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 		}
 
 		// 最後のトークンまで読み込みが進んでいなかったらエラーです。
-		if (tokenCursol <= &tokens.back()){
+		if (tokenCursol != tokens.end()){
 			throw ResultValue::ERR_SQL_SYNTAX;
 		}
 		vector<vector<Column>> inputColumns; // 入力されたCSVの行の情報です。
