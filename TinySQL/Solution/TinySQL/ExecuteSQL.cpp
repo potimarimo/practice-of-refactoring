@@ -995,10 +995,11 @@ int ExecuteSQL(const string sql, const string outputFileName)
 
 				// 符号と数字以外が見つからない列については、数値列に変換します。
 				if (!found){
-					currentRow = &inputData[i][0];
-					while (*currentRow){
-						*(*currentRow)[j] = Data(atoi((*currentRow)[j]->string().c_str()));
-						++currentRow;
+					for (auto& inputRow : inputData[i]){
+						if (!inputRow){
+							break;
+						}
+						*inputRow[j] = Data(atoi(inputRow[j]->string().c_str()));
 					}
 				}
 			}
