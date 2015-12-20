@@ -112,8 +112,16 @@ public:
 class Operator
 {
 public:
-	TokenKind kind; //!< 演算子の種類を、演算子を記述するトークンの種類で表します。
-	int order; //!< 演算子の優先順位です。
+	TokenKind kind = TokenKind::NOT_TOKEN; //!< 演算子の種類を、演算子を記述するトークンの種類で表します。
+	int order = 0; //!< 演算子の優先順位です。
+
+	//! Operatorクラスの新しいインスタンスを初期化します。
+	Operator();
+
+	//! Operatorクラスの新しいインスタンスを初期化します。
+	//! @param [in] kind 演算子の種類を、演算子を記述するトークンの種類で表します。
+	//! @param [in] order 演算子の優先順位です。
+	Operator(const TokenKind kind, const int order);
 };
 
 //! トークンを表します。
@@ -182,6 +190,18 @@ Data::Data(const int value) : type(DataType::INTEGER)
 Data::Data(const bool value) : type(DataType::BOOLEAN)
 {
 	this->value.boolean = value;
+}
+
+//! Operatorクラスの新しいインスタンスを初期化します。
+Operator::Operator()
+{
+}
+
+//! Operatorクラスの新しいインスタンスを初期化します。
+//! @param [in] kind 演算子の種類を、演算子を記述するトークンの種類で表します。
+//! @param [in] order 演算子の優先順位です。
+Operator::Operator(const TokenKind kind, const int order) : kind(kind), order(order)
+{
 }
 
 //! カレントディレクトリにあるCSVに対し、簡易的なSQLを実行し、結果をファイルに出力します。
@@ -556,7 +576,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 			whereExtensionNodes[i] = {
 				nullptr,
 				nullptr,
-				{ TokenKind::NOT_TOKEN, 0 },
+				Operator(),
 				nullptr,
 				false,
 				0,
@@ -798,7 +818,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 
 
 					// 演算子(オペレーターを読み込みます。
-					Operator middleOperator = { TokenKind::NOT_TOKEN, 0 }; // 現在読み込んでいる演算子の情報です。
+					Operator middleOperator; // 現在読み込んでいる演算子の情報です。
 
 					// 現在見ている演算子の情報を探します。
 					found = false;
