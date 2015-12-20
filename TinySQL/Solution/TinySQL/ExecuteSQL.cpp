@@ -148,7 +148,7 @@ class Column
 {
 public:
 	string tableName; //!< 列が所属するテーブル名です。指定されていない場合は空文字列となります。
-	char columnName[MAX_WORD_LENGTH]; //!< 指定された列の列名です。
+	string columnName; //!< 指定された列の列名です。
 
 	//! Columnクラスの新しいインスタンスを初期化します。
 	Column();
@@ -275,7 +275,7 @@ Column::Column(const char* columnName) : Column("", columnName)
 Column::Column(const string tableName, const char* columnName)
 {
 	this->tableName = tableName;
-	strncpy(this->columnName, columnName, max(MAX_DATA_LENGTH, MAX_WORD_LENGTH));
+	this->columnName = columnName;
 }
 
 //! ExtensionTreeNodeクラスの新しいインスタンスを初期化します。
@@ -922,15 +922,14 @@ int ExecuteSQL(const string sql, const string outputFileName)
 
 				// 読み込んだ行を最後まで読みます。
 				while (*charactorCursol && *charactorCursol != '\r' && *charactorCursol != '\n'){
-					inputColumns[i].push_back(Column(tableNames[i], ""));					
-					char *writeCursol = inputColumns[i].back().columnName; // 列名の書き込みに利用するカーソルです。
+									
+					string columnName;
 
 					// 列名を一つ読みます。
 					while (*charactorCursol && *charactorCursol != ',' && *charactorCursol != '\r'&& *charactorCursol != '\n'){
-						*writeCursol++ = *charactorCursol++;
+						columnName.push_back(*charactorCursol++);
 					}
-					// 書き込んでいる列名の文字列に終端文字を書き込みます。
-					writeCursol[1] = '\0';
+					inputColumns[i].push_back(Column(tableNames[i], columnName.c_str()));
 
 					// 入力行のカンマの分を読み進めます。
 					++charactorCursol;
@@ -1030,7 +1029,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 		// 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
 		for (size_t i = 0; i < tableNames.size(); ++i){
 			for (auto &inputColumn : inputColumns[i]){
-				allInputColumns.push_back(Column(tableNames[i], inputColumn.columnName));
+				allInputColumns.push_back(Column(tableNames[i], inputColumn.columnName.c_str()));
 			}
 		}
 
@@ -1056,8 +1055,8 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					while (*selectTableNameCursol && toupper(*selectTableNameCursol) == toupper(*inputTableNameCursol++)){
 						++selectTableNameCursol;
 					}
-					char* selectColumnNameCursol = selectColumn.columnName;
-					char* inputColumnNameCursol = inputColumn.columnName;
+					const char* selectColumnNameCursol = selectColumn.columnName.c_str();
+					const char* inputColumnNameCursol = inputColumn.columnName.c_str();
 					while (*selectColumnNameCursol && toupper(*selectColumnNameCursol) == toupper(*inputColumnNameCursol++)){
 						++selectColumnNameCursol;
 					}
@@ -1091,7 +1090,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			// 既存数値の符号を計算します。
 			for (auto &whereExtensionNode : whereExtensionNodes){
 				if (whereExtensionNode.middleOperator.kind == TokenKind::NOT_TOKEN &&
-					!*whereExtensionNode.column.columnName &&
+					whereExtensionNode.column.columnName.empty() &&
 					whereExtensionNode.value.type == DataType::INTEGER){
 					whereExtensionNode.value.value.integer *= whereExtensionNode.signCoefficient;
 				}
@@ -1167,7 +1166,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 						// ノードにデータが設定されている場合です。
 
 						// データが列名で指定されている場合、今扱っている行のデータを設定します。
-						if (*currentNode->column.columnName){
+						if (!currentNode->column.columnName.empty()){
 							found = false;
 							for (size_t i = 0; i < allInputColumns.size(); ++i){
 								const char* whereTableNameCursol = currentNode->column.tableName.c_str();;
@@ -1175,8 +1174,8 @@ int ExecuteSQL(const string sql, const string outputFileName)
 								while (*whereTableNameCursol && toupper(*whereTableNameCursol) == toupper(*allInputTableNameCursol++)){
 									++whereTableNameCursol;
 								}
-								char* whereColumnNameCursol = currentNode->column.columnName;
-								char* allInputColumnNameCursol = allInputColumns[i].columnName;
+								const char* whereColumnNameCursol = currentNode->column.columnName.c_str();
+								const char* allInputColumnNameCursol = allInputColumns[i].columnName.c_str();
 								while (*whereColumnNameCursol && toupper(*whereColumnNameCursol) == toupper(*allInputColumnNameCursol++)){
 									++whereColumnNameCursol;
 								}
@@ -1367,8 +1366,8 @@ int ExecuteSQL(const string sql, const string outputFileName)
 						++orderByTableNameCursol;
 						++allInputTableNameCursol;
 					}
-					char* orderByColumnNameCursol = orderByColumn.columnName;
-					char* allInputColumnNameCursol = allInputColumns[i].columnName;
+					const char* orderByColumnNameCursol = orderByColumn.columnName.c_str();
+					const char* allInputColumnNameCursol = allInputColumns[i].columnName.c_str();
 					while (*orderByColumnNameCursol && toupper(*orderByColumnNameCursol) == toupper(*allInputColumnNameCursol)){
 						++orderByColumnNameCursol;
 						++allInputColumnNameCursol;
@@ -1443,7 +1442,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 
 		// 出力ファイルに列名を出力します。
 		for (size_t i = 0; i < selectColumns.size(); ++i){
-			result = fputs(outputColumns[i].columnName, outputFile);
+			result = fputs(outputColumns[i].columnName.c_str(), outputFile);
 			if (result == EOF){
 				throw ResultValue::ERR_FILE_WRITE;
 			}
