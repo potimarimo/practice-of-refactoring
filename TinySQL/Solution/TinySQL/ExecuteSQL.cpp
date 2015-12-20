@@ -579,6 +579,10 @@ public:
 	//! 自身の祖先ノードを自身に近いほうから順に列挙します。
 	//! @return 祖先ノードの一覧。
 	const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> ancestors() const;
+
+	//! 自身の子孫ノードをずっと左に辿っていき自身に近いほうから順に列挙します。
+	//! @return 左に辿った子孫ノードの一覧。
+	const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> allLeftList() const;
 };
 
 //! 引数として渡したノード及びその子孫のノードを取得します。順序は帰りがけ順です。
@@ -1896,6 +1900,18 @@ const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> ExtensionTreeNode:
 	return ancestors;
 }
 
+//! 自身の子孫ノードをずっと左に辿っていき自身に近いほうから順に列挙します。
+//! @return 左に辿った子孫ノードの一覧。
+const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> ExtensionTreeNode::allLeftList() const
+{
+	auto lefts = make_shared<vector<const shared_ptr<ExtensionTreeNode>>>();
+
+	for (auto current = left; current; current = current->left){
+		lefts->push_back(current);
+	}
+	return lefts;
+}
+
 //! 引数として渡したノード及びその子孫のノードを取得します。
 //! @param [in] 戻り値のルートとなるノードです。順序は帰りがけ順です。
 //! @return 自身及び子孫のノードです。
@@ -2952,15 +2968,25 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 
 	auto WHERE_CLOSE_PAREN = CLOSE_PAREN->Action([&](const Token token){
 		auto ancestors = currentNode->ancestors();
-		for (auto & ancestor : *ancestors){
-			auto searched = ancestor;
-			for (; searched && !searched->parenOpenBeforeClose; searched = searched->left){}
-			if (searched){
+		for (auto &ancestor : *ancestors){
+			auto leftNodes = ancestor->allLeftList();
+			auto node = find_if(leftNodes->begin(), leftNodes->end(), 
+				[](const shared_ptr<ExtensionTreeNode> node){return node->parenOpenBeforeClose; });
+			
+			if (node != leftNodes->end()){
 				// 対応付けられていないカッコ開くを一つ削除し、ノードがカッコに囲まれていることを記録します。
-				--searched->parenOpenBeforeClose;
+				--(*node)->parenOpenBeforeClose;
 				ancestor->inParen = true;
 				break;
 			}
+			//auto searched = ancestor;
+			//for (; searched && !searched->parenOpenBeforeClose; searched = searched->left){}
+			//if (searched){
+			//	// 対応付けられていないカッコ開くを一つ削除し、ノードがカッコに囲まれていることを記録します。
+			//	--searched->parenOpenBeforeClose;
+			//	ancestor->inParen = true;
+			//	break;
+			//}
 		}
 	});
 
@@ -2968,7 +2994,9 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 
 	auto WHERE_OPERAND = -~WHERE_OPEN_PAREN >> -WHERE_UNIAEY_PLUS_MINUS >> OPERAND >> -~WHERE_CLOSE_PAREN;
 
-	auto OPERATOR = ASTERISK->or(SLASH)->or(PLUS)->or(MINUS)->or(EQUAL)->or(GREATER_THAN)->or(GREATER_THAN_OR_EQUAL)->or(LESS_THAN)->or(LESS_THAN_OR_EQUAL)->or(NOT_EQUAL)->or(AND)->or(AND)->or(OR)->Action([&](const Token token){
+	auto OPERATOR = ASTERISK->or(SLASH)->or(PLUS)->or(MINUS)->or(EQUAL)->or(GREATER_THAN)->or(GREATER_THAN_OR_EQUAL)->or(LESS_THAN)->or(LESS_THAN_OR_EQUAL)->or(NOT_EQUAL)->or(AND)->or(AND)->or(OR);
+	
+	OPERATOR = OPERATOR->Action([&](const Token token){
 		// 演算子(オペレーターを読み込みます。
 		auto foundOperator = find_if(operators.begin(), operators.end(), [&](const Operator& op){return op.kind == token.kind; }); // 現在読み込んでいる演算子の情報です。
 
@@ -3024,7 +3052,9 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 
 	auto WHERE_EXTENSION = WHERE_OPERAND >> ~(OPERATOR >> WHERE_OPERAND);
 
-	auto WHERE_CLAUSE = (WHERE >> WHERE_EXTENSION)->Action([&]{
+	auto WHERE_CLAUSE = WHERE >> WHERE_EXTENSION;
+
+	WHERE_CLAUSE = WHERE_CLAUSE->Action([&]{
 		queryInfo->whereTopNode = currentNode;
 		// 木を根に向かってさかのぼり、根のノードを設定します。
 		while (queryInfo->whereTopNode->parent){
