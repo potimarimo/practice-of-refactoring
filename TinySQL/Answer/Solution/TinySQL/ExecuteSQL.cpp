@@ -10,7 +10,6 @@
 using namespace std;
 
 #define MAX_FILE_LINE_LENGTH 4096          //!< 読み込むファイルの一行の最大長です。
-#define MAX_WORD_LENGTH 256                //!< SQLの一語の最大長です。
 #define MAX_DATA_LENGTH 256                //!< 入出力されるデータの、各列の最大長です。
 #define MAX_COLUMN_COUNT 16                //!< 入出力されるデータに含まれる列の最大数です。
 #define MAX_TABLE_COUNT 8                  //!< CSVとして入力されるテーブルの最大数です。
@@ -809,12 +808,8 @@ int ExecuteSQL(const string sql, const string outputFileName)
 						++tokenCursol;
 					}
 					else if (tokenCursol->kind == TokenKind::STRING_LITERAL){
-						char str[MAX_DATA_LENGTH] = "";
 						// 前後のシングルクォートを取り去った文字列をデータとして読み込みます。
-						strncpy(str, tokenCursol->word.c_str() + 1, std::min(MAX_WORD_LENGTH, MAX_DATA_LENGTH));
-						str[MAX_DATA_LENGTH - 1] = '\0';
-						str[strlen(str) - 1] = '\0';
-						currentNode->value = Data(string(str));
+						currentNode->value = Data(tokenCursol->word.substr(1, tokenCursol->word.size() - 2));
 						++tokenCursol;
 					}
 					else{
