@@ -314,8 +314,6 @@ class SqlQuery
 	const string num = "0123456789"; //!< 全ての数字です。
 	const string space = " \t\r\n"; //!< 全ての空白文字です。
 
-	// signConditionsは先頭から順に検索されるので、前方一致となる二つの項目は順番に気をつけて登録しなくてはいけません。
-	const vector<const Token> signConditions;//!< 記号をトークンとして認識するための記号一覧情報です。
 	const vector<const Operator> operators; //!< 演算子の情報です。
 
 	shared_ptr<const SqlQueryInfo> queryInfo; //!< SQLに記述された内容です。
@@ -604,8 +602,20 @@ const shared_ptr<const vector<const Token>> SqlQuery::GetTokens(const string sql
 		make_shared<KeywordReader>(TokenKind::SELECT, "SELECT"),
 		make_shared<KeywordReader>(TokenKind::WHERE, "WHERE"),
 		make_shared<SignReader>(TokenKind::GREATER_THAN_OR_EQUAL, ">="),
+		make_shared<SignReader>(TokenKind::LESS_THAN_OR_EQUAL, "<="),
+		make_shared<SignReader>(TokenKind::NOT_EQUAL, "<>"),
+		make_shared<SignReader>(TokenKind::ASTERISK, "*"),
+		make_shared<SignReader>(TokenKind::COMMA, ","),
+		make_shared<SignReader>(TokenKind::CLOSE_PAREN, ")"),
+		make_shared<SignReader>(TokenKind::DOT, "."),
+		make_shared<SignReader>(TokenKind::EQUAL, "="),
+		make_shared<SignReader>(TokenKind::GREATER_THAN, ">"),
+		make_shared<SignReader>(TokenKind::LESS_THAN, "<"),
+		make_shared<SignReader>(TokenKind::MINUS, "-"),
+		make_shared<SignReader>(TokenKind::OPEN_PAREN, "("),
+		make_shared<SignReader>(TokenKind::PLUS, "+"),
+		make_shared<SignReader>(TokenKind::SLASH, "/"),
 	};
-
 	auto backPoint = sql.begin(); // SQLをトークンに分割して読み込む時に戻るポイントを記録しておきます。
 
 	auto cursol = sql.begin(); // SQLをトークンに分割して読み込む時に現在読んでいる文字の場所を表します。
@@ -633,26 +643,6 @@ const shared_ptr<const vector<const Token>> SqlQuery::GetTokens(const string sql
 			}
 		}
 		if (found){
-			continue;
-		}
-
-		// 記号を読み込みます。
-		auto sign = find_if(signConditions.begin(), signConditions.end(),
-			[&](Token keyword){
-			auto result =
-				mismatch(keyword.word.begin(), keyword.word.end(), cursol,
-				[](const char keywordChar, const char sqlChar){return keywordChar == toupper(sqlChar); });
-
-			if (result.first == keyword.word.end()){
-				cursol = result.second;
-				return true;
-			}
-			else{
-				return false;
-			}
-		});
-		if (sign != signConditions.end()){
-			tokens->push_back(Token(sign->kind));
 			continue;
 		}
 
@@ -1480,20 +1470,6 @@ void SqlQuery::WriteCsv(const string outputFileName, const vector<const InputTab
 //! SqlQueryクラスの新しいインスタンスを初期化します。
 //! @param [in] sql 実行するSQLです。
 SqlQuery::SqlQuery(const string sql) :
-	signConditions({
-		{ TokenKind::LESS_THAN_OR_EQUAL, "<=" },
-		{ TokenKind::NOT_EQUAL, "<>" },
-		{ TokenKind::ASTERISK, "*" },
-		{ TokenKind::COMMA, "," },
-		{ TokenKind::CLOSE_PAREN, ")" },
-		{ TokenKind::DOT, "." },
-		{ TokenKind::EQUAL, "=" },
-		{ TokenKind::GREATER_THAN, ">" },
-		{ TokenKind::LESS_THAN, "<" },
-		{ TokenKind::MINUS, "-" },
-		{ TokenKind::OPEN_PAREN, "(" },
-		{ TokenKind::PLUS, "+" },
-		{ TokenKind::SLASH, "/" } }),
 	operators({
 		{ TokenKind::ASTERISK, 1 },
 		{ TokenKind::SLASH, 1 },
