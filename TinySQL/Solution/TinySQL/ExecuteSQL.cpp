@@ -12,6 +12,7 @@
 
 using namespace std;
 
+
 //! カレントディレクトリにあるCSVに対し、簡易的なSQLを実行し、結果をファイルに出力します。
 //! @param [in] sql 実行するSQLです。
 //! @param[in] outputFileName SQLの実行結果をCSVとして出力するファイル名です。拡張子を含みます。
@@ -161,6 +162,16 @@ public:
 	//! @param [in] right 右辺です。
 	//! @return 比較した結果です。
 	virtual const shared_ptr<const Data> operator<(const shared_ptr<const Data>& right) const = 0;
+
+	//! AND演算を行います。
+	//! @param [in] right 右辺です。
+	//! @return 演算した結果です。
+	virtual const shared_ptr<const Data> operator&&(const shared_ptr<const Data>& right) const = 0;
+
+	//! OR演算を行います。
+	//! @param [in] right 右辺です。
+	//! @return 演算した結果です。
+	virtual const shared_ptr<const Data> operator||(const shared_ptr<const Data>& right) const = 0;
 };
 
 //! 文字列の値を持つDataです。
@@ -230,6 +241,16 @@ public:
 	//! @param [in] right 右辺です。
 	//! @return 比較した結果です。
 	const shared_ptr<const Data> operator<(const shared_ptr<const Data>& right) const override;
+
+	//! AND演算を行います。
+	//! @param [in] right 右辺です。
+	//! @return 演算した結果です。
+	const shared_ptr<const Data> operator&&(const shared_ptr<const Data>& right) const override;
+
+	//! OR演算を行います。
+	//! @param [in] right 右辺です。
+	//! @return 演算した結果です。
+	const shared_ptr<const Data> operator||(const shared_ptr<const Data>& right) const override;
 };
 
 //! 整数の値を持つDataです。
@@ -299,6 +320,16 @@ public:
 	//! @param [in] right 右辺です。
 	//! @return 比較した結果です。
 	const shared_ptr<const Data> operator<(const shared_ptr<const Data>& right) const override;
+
+	//! AND演算を行います。
+	//! @param [in] right 右辺です。
+	//! @return 演算した結果です。
+	const shared_ptr<const Data> operator&&(const shared_ptr<const Data>& right) const override;
+
+	//! OR演算を行います。
+	//! @param [in] right 右辺です。
+	//! @return 演算した結果です。
+	const shared_ptr<const Data> operator||(const shared_ptr<const Data>& right) const override;
 };
 
 //! 真偽値の値を持つDataです。
@@ -368,6 +399,16 @@ public:
 	//! @param [in] right 右辺です。
 	//! @return 比較した結果です。
 	const shared_ptr<const Data> operator<(const shared_ptr<const Data>& right) const override;
+
+	//! AND演算を行います。
+	//! @param [in] right 右辺です。
+	//! @return 演算した結果です。
+	const shared_ptr<const Data> operator&&(const shared_ptr<const Data>& right) const override;
+
+	//! OR演算を行います。
+	//! @param [in] right 右辺です。
+	//! @return 演算した結果です。
+	const shared_ptr<const Data> operator||(const shared_ptr<const Data>& right) const override;
 };
 
 //! WHERE句に指定する演算子の情報を表します。
@@ -942,6 +983,22 @@ const shared_ptr<const Data> StringData::operator<(const shared_ptr<const Data>&
 	}
 }
 
+//! AND演算を行います。
+//! @param [in] right 右辺です。
+//! @return 演算した結果です。
+const shared_ptr<const Data> StringData::operator&&(const shared_ptr<const Data>& right) const
+{
+	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+}
+
+//! OR演算を行います。
+//! @param [in] right 右辺です。
+//! @return 演算した結果です。
+const shared_ptr<const Data> StringData::operator||(const shared_ptr<const Data>& right) const
+{
+	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+}
+
 //! Dataクラスの新しいインスタンスを初期化します。
 //! @param [in] value データの値です。
 IntegerData::IntegerData(const int value) : m_integer(value){}
@@ -1090,6 +1147,21 @@ const shared_ptr<const Data> IntegerData::operator<(const shared_ptr<const Data>
 	}
 }
 
+//! AND演算を行います。
+//! @param [in] right 右辺です。
+//! @return 演算した結果です。
+const shared_ptr<const Data> IntegerData::operator&&(const shared_ptr<const Data>& right) const
+{
+	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+}
+
+//! OR演算を行います。
+//! @param [in] right 右辺です。
+//! @return 演算した結果です。
+const shared_ptr<const Data> IntegerData::operator||(const shared_ptr<const Data>& right) const
+{
+	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+}
 
 //! Dataクラスの新しいインスタンスを初期化します。
 //! @param [in] value データの値です。
@@ -1187,6 +1259,32 @@ const shared_ptr<const Data> BooleanData::operator<=(const shared_ptr<const Data
 const shared_ptr<const Data> BooleanData::operator<(const shared_ptr<const Data>& right) const
 {
 	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+}
+
+//! AND演算を行います。
+//! @param [in] right 右辺です。
+//! @return 演算した結果です。
+const shared_ptr<const Data> BooleanData::operator&&(const shared_ptr<const Data>& right) const
+{
+	if (right->type() == DataType::BOOLEAN){
+		return Data::New(boolean() && right->boolean());
+	}
+	else{
+		throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+	}
+}
+
+//! OR演算を行います。
+//! @param [in] right 右辺です。
+//! @return 演算した結果です。
+const shared_ptr<const Data> BooleanData::operator||(const shared_ptr<const Data>& right) const
+{
+	if (right->type() == DataType::BOOLEAN){
+		return Data::New(boolean() || right->boolean());
+	}
+	else{
+		throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+	}
 }
 
 //! Operatorクラスの新しいインスタンスを初期化します。
@@ -1323,23 +1421,11 @@ void ExtensionTreeNode::Operate()
 		value = *left->value != right->value;
 		break;
 	case TokenKind::AND:
+		value = *left->value && right->value;
+		break;
 	case TokenKind::OR:
-		// 論理演算の場合です。
-
-		// 演算できるのは真偽値型同士の場合のみです。
-		if (left->value->type() != DataType::BOOLEAN || right->value->type() != DataType::BOOLEAN){
-			throw ResultValue::ERR_WHERE_OPERAND_TYPE;
-		}
-
-		// 比較結果を演算子によって計算方法を変えて、計算します。
-		switch (middleOperator.kind){
-		case TokenKind::AND:
-			value = Data::New(left->value->boolean() && right->value->boolean());
-			break;
-		case TokenKind::OR:
-			value = Data::New(left->value->boolean() || right->value->boolean());
-			break;
-		}
+		value = *left->value || right->value;
+		break;
 	}
 }
 
