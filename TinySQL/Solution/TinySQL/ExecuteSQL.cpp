@@ -1316,16 +1316,16 @@ int ExecuteSQL(const string sql, const string outputFileName)
 						// 比較結果を演算子によって計算方法を変えて、計算します。
 						switch (currentNode->middleOperator.kind){
 						case TokenKind::PLUS:
-							currentNode->value.value.integer = currentNode->left->value.integer() + currentNode->right->value.integer();
+							currentNode->value = Data(currentNode->left->value.integer() + currentNode->right->value.integer());
 							break;
 						case TokenKind::MINUS:
-							currentNode->value.value.integer = currentNode->left->value.integer() - currentNode->right->value.integer();
+							currentNode->value = Data(currentNode->left->value.integer() - currentNode->right->value.integer());
 							break;
 						case TokenKind::ASTERISK:
-							currentNode->value.value.integer = currentNode->left->value.integer() * currentNode->right->value.integer();
+							currentNode->value = Data(currentNode->left->value.integer() * currentNode->right->value.integer());
 							break;
 						case TokenKind::SLASH:
-							currentNode->value.value.integer = currentNode->left->value.integer() / currentNode->right->value.integer();
+							currentNode->value = Data(currentNode->left->value.integer() / currentNode->right->value.integer());
 							break;
 						}
 						break;
@@ -1342,10 +1342,10 @@ int ExecuteSQL(const string sql, const string outputFileName)
 						// 比較結果を演算子によって計算方法を変えて、計算します。
 						switch (currentNode->middleOperator.kind){
 						case TokenKind::AND:
-							currentNode->value.value.boolean = currentNode->left->value.boolean() && currentNode->right->value.boolean();
+							currentNode->value = Data(currentNode->left->value.boolean() && currentNode->right->value.boolean());
 							break;
 						case TokenKind::OR:
-							currentNode->value.value.boolean = currentNode->left->value.boolean() || currentNode->right->value.boolean();
+							currentNode->value = Data(currentNode->left->value.boolean() || currentNode->right->value.boolean());
 							break;
 						}
 					}
