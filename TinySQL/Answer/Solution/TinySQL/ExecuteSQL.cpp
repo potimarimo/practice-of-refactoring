@@ -2474,18 +2474,24 @@ const shared_ptr<const vector<const Token>> SqlQuery::GetTokens(const string sql
 const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const Token> &tokens) const
 {
 	auto queryInfo = make_shared<SqlQueryInfo>();
-	auto tokenCursol = tokens.begin(); // 現在見ているトークンを指します。
 
-	auto SELECT = token(TokenKind::SELECT);
-	auto IDENTIFIER = token(TokenKind::IDENTIFIER);
 	auto DOT = token(TokenKind::DOT);
+	auto IDENTIFIER = token(TokenKind::IDENTIFIER);
+	auto SELECT = token(TokenKind::SELECT);
 
-	auto SECOND_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
+	auto FIRST_SELECT_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
+		// テーブル名が指定されていない場合と仮定して読み込みます。
+		queryInfo->selectColumns.push_back(Column(token.word));
+	});
+
+	auto SECOND_SELECT_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
 		// テーブル名が指定されていることがわかったので読み替えます。
 		queryInfo->selectColumns.back() = Column(queryInfo->selectColumns.back().columnName, token.word);
 	});
 
-	auto SECOND_COLUMN = -(DOT >> SECOND_COLUMN_NAME);
+	auto SELECT_COLUMN = FIRST_SELECT_COLUMN_NAME >> -(DOT >> SECOND_SELECT_COLUMN_NAME);
+
+	auto tokenCursol = tokens.begin(); // 現在見ているトークンを指します。
 
 	if (!SELECT->Parse(tokenCursol)){
 		throw ResultValue::ERR_SQL_SYNTAX;
@@ -2501,16 +2507,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 			if (tokenCursol->kind == TokenKind::COMMA){
 				++tokenCursol;
 			}
-			if (tokenCursol->kind == TokenKind::IDENTIFIER){
-				// テーブル名が指定されていない場合と仮定して読み込みます。
-				queryInfo->selectColumns.push_back(Column(tokenCursol->word));
-				++tokenCursol;
-
-				if (!SECOND_COLUMN->Parse(tokenCursol)){
-					throw ResultValue::ERR_SQL_SYNTAX;
-				}
-			}
-			else{
+			if (!SELECT_COLUMN->Parse(tokenCursol)){
 				throw ResultValue::ERR_SQL_SYNTAX;
 			}
 			first = false;
