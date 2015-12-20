@@ -374,7 +374,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 	bool found = false;                                     // 検索時に見つかったかどうかの結果を一時的に保存します。
 	const char *search = nullptr;                           // 文字列検索に利用するポインタです。
 	Data ***currentRow = nullptr;                           // データ検索時に現在見ている行を表します。
-	Data **inputData[MAX_TABLE_COUNT][MAX_ROW_COUNT];       // 入力データです。
+	vector<vector<Data**>> inputData;                       // 入力データです。
 	Data **outputData[MAX_ROW_COUNT] = { nullptr };         // 出力データです。
 	Data **allColumnOutputData[MAX_ROW_COUNT] = { nullptr };// 出力するデータに対応するインデックスを持ち、すべての入力データを保管します。
 
@@ -383,14 +383,6 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 	const char *signNum = "+-0123456789"; // 全ての符号と数字です。
 	const char *num = "0123456789"; // 全ての数字です。
 	const char* space = " \t\r\n"; // 全ての空白文字です。
-
-	// inputDataを初期化します。
-	for (size_t i = 0; i < sizeof(inputData) / sizeof(inputData[0]); i++)
-	{
-		for (size_t j = 0; j < sizeof(inputData[0]) / sizeof(inputData[0][0]); j++){
-			inputData[i][j] = nullptr;
-		}
-	}
 
 	// SQLからトークンを読み込みます。
 
@@ -972,15 +964,12 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 			}
 
 			// 入力CSVのデータ行を読み込みます。
-			int rowNum = 0;
+
+			inputData.push_back(vector<Data**>());
+
 			while (fgets(inputLine, MAX_FILE_LINE_LENGTH, inputTableFiles.back())){
-				if (MAX_ROW_COUNT <= rowNum){
-					throw ResultValue::ERR_MEMORY_OVER;
-				}
-				Data **row = inputData[i][rowNum++] = (Data**)malloc(MAX_COLUMN_COUNT * sizeof(Data*)); // 入力されている一行分のデータです。
-				if (!row){
-					throw ResultValue::ERR_MEMORY_ALLOCATE;
-				}
+				inputData[i].push_back((Data**)malloc(MAX_COLUMN_COUNT * sizeof(Data*))); // 入力されている一行分のデータです。
+				Data** row = inputData[i].back();
 				// 生成した行を初期化します。
 				for (int j = 0; j < MAX_COLUMN_COUNT; ++j){
 					row[j] = nullptr;
@@ -1014,12 +1003,14 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 					++charactorCursol;
 				}
 			}
+			// 番兵となるnullptrを登録します。
+			inputData[i].push_back(nullptr);
 
 			// 全てが数値となる列は数値列に変換します。
 			for (size_t j = 0; j < inputColumns[i].size(); ++j){
 
 				// 全ての行のある列について、データ文字列から符号と数値以外の文字を探します。
-				currentRow = inputData[i];
+				currentRow = &inputData[i][0];
 				found = false;
 				while (*currentRow){
 					char *currentChar = (*currentRow)[j]->value.string;
@@ -1047,7 +1038,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 
 				// 符号と数字以外が見つからない列については、数値列に変換します。
 				if (!found){
-					currentRow = inputData[i];
+					currentRow = &inputData[i][0];
 					while (*currentRow){
 						*(*currentRow)[j] = Data(atoi((*currentRow)[j]->value.string));
 						++currentRow;
@@ -1075,8 +1066,8 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 		vector<Column> outputColumns; // 出力するすべての行の情報です。
 
 		// SELECT句で指定された列名が、何個目の入力ファイルの何列目に相当するかを判別します。
-		ColumnIndex selectColumnIndexes[MAX_TABLE_COUNT * MAX_COLUMN_COUNT]; // SELECT句で指定された列の、入力ファイルとしてのインデックスです。
-		int selectColumnIndexesNum = 0; // selectColumnIndexesの現在の数。
+		vector<ColumnIndex> selectColumnIndexes; // SELECT句で指定された列の、入力ファイルとしてのインデックスです。
+
 		for (auto &selectColumn : selectColumns){
 			found = false;
 			for (size_t i = 0; i < tableNames.size(); ++i){
@@ -1102,10 +1093,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 						}
 						found = true;
 						// 見つかった値を持つ列のデータを生成します。
-						if (MAX_COLUMN_COUNT <= selectColumnIndexesNum){
-							throw ResultValue::ERR_MEMORY_OVER;
-						}
-						selectColumnIndexes[selectColumnIndexesNum++] = ColumnIndex(i, j);
+						selectColumnIndexes.push_back(ColumnIndex(i, j));
 					}
 					++j;
 				}
@@ -1137,7 +1125,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 		Data ***currentRows[MAX_TABLE_COUNT] = { nullptr }; // 入力された各テーブルの、現在出力している行を指すカーソルです。
 		for (size_t i = 0; i < tableNames.size(); ++i){
 			// 各テーブルの先頭行を設定します。
-			currentRows[i] = inputData[i];
+			currentRows[i] = &inputData[i][0];
 		}
 
 		// 出力するデータを設定します。
@@ -1156,7 +1144,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 			}
 
 			// 行の各列のデータを入力から持ってきて設定します。
-			for (int i = 0; i < selectColumnIndexesNum; ++i){
+			for (size_t i = 0; i < selectColumnIndexes.size(); ++i){
 				row[i] = (Data*)malloc(sizeof(Data));
 				if (!row[i]){
 					throw ResultValue::ERR_MEMORY_ALLOCATE;
@@ -1377,7 +1365,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 			// 最後のテーブルが最終行になっていた場合は先頭に戻し、順に前のテーブルのカレント行をインクリメントします。
 			for (int i = tableNames.size() - 1; !*currentRows[i] && 0 < i; --i){
 				++currentRows[i - 1];
-				currentRows[i] = inputData[i];
+				currentRows[i] = &inputData[i][0];
 			}
 
 			// 最初のテーブルが最後の行を超えたなら出力行の生成は終わりです。
@@ -1389,8 +1377,8 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 		// ORDER句による並び替えの処理を行います。
 		if (!orderByColumns.empty()){
 			// ORDER句で指定されている列が、全ての入力行の中のどの行なのかを計算します。
-			int orderByColumnIndexes[MAX_COLUMN_COUNT]; // ORDER句で指定された列の、すべての行の中でのインデックスです。
-			int orderByColumnIndexesNum = 0; // 現在のorderByColumnIndexesの数です。
+			vector<int> orderByColumnIndexes; // ORDER句で指定された列の、すべての行の中でのインデックスです。
+			
 			for (auto &orderByColumn : orderByColumns){
 				found = false;
 				for (size_t i = 0; i < allInputColumns.size(); ++i){
@@ -1414,10 +1402,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 							throw ResultValue::ERR_BAD_COLUMN_NAME;
 						}
 						found = true;
-						if (MAX_COLUMN_COUNT <= orderByColumnIndexesNum){
-							throw ResultValue::ERR_MEMORY_OVER;
-						}
-						orderByColumnIndexes[orderByColumnIndexesNum++] = i;
+						orderByColumnIndexes.push_back(i);
 					}
 				}
 				// 一つも見つからなくてもエラーです。
@@ -1431,7 +1416,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 				int minIndex = i; // 現在までで最小の行のインデックスです。
 				for (int j = i + 1; j < outputRowsNum; ++j){
 					bool jLessThanMin = false; // インデックスがjの値が、minIndexの値より小さいかどうかです。
-					for (int k = 0; k < orderByColumnIndexesNum; ++k){
+					for (size_t k = 0; k < orderByColumnIndexes.size(); ++k){
 						Data *mData = allColumnOutputData[minIndex][orderByColumnIndexes[k]]; // インデックスがminIndexのデータです。
 						Data *jData = allColumnOutputData[j][orderByColumnIndexes[k]]; // インデックスがjのデータです。
 						int cmp = 0; // 比較結果です。等しければ0、インデックスjの行が大きければプラス、インデックスminIndexの行が大きければマイナスとなります。
@@ -1551,8 +1536,11 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 		}
 
 		// メモリリソースを解放します。
-		for (size_t i = 0; i < tableNames.size(); ++i){
-			currentRow = inputData[i];
+		for (auto& inputTableData : inputData){
+			if (inputTableData.empty()){
+				continue;
+			}
+			currentRow = &inputTableData[0];
 			while (*currentRow){
 				Data **dataCursol = *currentRow;
 				while (*dataCursol){
@@ -1598,8 +1586,11 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 		}
 
 		// メモリリソースを解放します。
-		for (size_t i = 0; i < tableNames.size(); ++i){
-			currentRow = inputData[i];
+		for (auto& inputTableData : inputData){
+			if (inputTableData.empty()){
+				continue;
+			}
+			currentRow = &inputTableData[0];
 			while (*currentRow){
 				Data **dataCursol = *currentRow;
 				while (*dataCursol){
