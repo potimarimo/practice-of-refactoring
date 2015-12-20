@@ -305,6 +305,17 @@ public:
 	SignReader(const TokenKind kind, const string word);
 };
 
+//! 識別子トークンを読み込む機能を提供します。
+class IdentifierReader : public TokenReader
+{
+protected:
+	//! 実際にトークンを読み込みます。
+	//! @param [in] cursol 読み込み開始位置です。
+	//! @param [in] end SQL全体の終了位置です。
+	//! @return 切り出されたトークンです。読み込みが失敗した場合はnullptrを返します。
+	const shared_ptr<const Token> ReadCore(string::const_iterator &cursol, const string::const_iterator& end) const override;
+};
+
 //! ファイルに対して実行するSQLを表すクラスです。
 class SqlQuery
 {
@@ -570,6 +581,22 @@ const shared_ptr<const Token> SignReader::ReadCore(string::const_iterator &curso
 //! @param [in] word キーワードの文字列です。
 SignReader::SignReader(const TokenKind kind, const string word) : sign(Token(kind, word)){}
 
+//! 実際にトークンを読み込みます。
+//! @param [in] cursol 読み込み開始位置です。
+//! @param [in] end SQL全体の終了位置です。
+//! @return 切り出されたトークンです。読み込みが失敗した場合はnullptrを返します。
+const shared_ptr<const Token> IdentifierReader::ReadCore(string::const_iterator &cursol, const string::const_iterator &end) const
+{
+	auto start = cursol;
+	if (alpahUnder.find(*cursol++) != string::npos){
+		cursol = find_if(cursol, end, [&](const char c){return alpahNumUnder.find(c) == string::npos; });
+		return make_shared<Token>(TokenKind::IDENTIFIER, string(start, cursol));
+	}
+	else{
+		return nullptr;
+	}
+}
+
 //! 二つの文字列を、大文字小文字を区別せずに比較し、等しいかどうかです。
 //! @param [in] str1 比較される一つ目の文字列です。
 //! @param [in] str2 比較される二つ目の文字列です。
@@ -615,6 +642,7 @@ const shared_ptr<const vector<const Token>> SqlQuery::GetTokens(const string sql
 		make_shared<SignReader>(TokenKind::OPEN_PAREN, "("),
 		make_shared<SignReader>(TokenKind::PLUS, "+"),
 		make_shared<SignReader>(TokenKind::SLASH, "/"),
+		make_shared<IdentifierReader>(),
 	};
 	auto backPoint = sql.begin(); // SQLをトークンに分割して読み込む時に戻るポイントを記録しておきます。
 
@@ -643,14 +671,6 @@ const shared_ptr<const vector<const Token>> SqlQuery::GetTokens(const string sql
 			}
 		}
 		if (found){
-			continue;
-		}
-
-		// 識別子を読み込みます。
-		backPoint = cursol;
-		if (alpahUnder.find(*cursol++) != string::npos){
-			cursol = find_if(cursol, end, [&](const char c){return alpahNumUnder.find(c) == string::npos; });
-			tokens->push_back(Token(TokenKind::IDENTIFIER, string(backPoint, cursol)));
 			continue;
 		}
 
