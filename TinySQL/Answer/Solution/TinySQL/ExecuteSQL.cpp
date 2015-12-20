@@ -80,10 +80,11 @@ enum class TokenKind
 //! 一つの値を持つデータです。
 class Data
 {
+	char m_string[MAX_DATA_LENGTH]; //!< データが文字列型の場合の値です。
+
 	//! 実際のデータを格納する共用体です。
 	union
 	{
-		char string[MAX_DATA_LENGTH]; //!< データが文字列型の場合の値です。
 		int integer;                  //!< データが整数型の場合の値です。
 		bool boolean;                 //!< データが真偽値型の場合の値です。
 	} m_value;
@@ -212,15 +213,15 @@ public:
 // 以上ヘッダに相当する部分。
 
 //! Dataクラスの新しいインスタンスを初期化します。
-Data::Data() :m_value({ "" })
+Data::Data() :m_value({ 0 })
 {
 }
 
 //! Dataクラスの新しいインスタンスを初期化します。
 //! @param [in] value データの値です。
-Data::Data(const char* value) : m_value({ "" })
+Data::Data(const char* value) : m_value({ 0 })
 {
-	strncpy(m_value.string, value, max(MAX_DATA_LENGTH, MAX_WORD_LENGTH));
+	strncpy(m_string, value, max(MAX_DATA_LENGTH, MAX_WORD_LENGTH));
 }
 
 //! Dataクラスの新しいインスタンスを初期化します。
@@ -242,7 +243,7 @@ Data::Data(const bool value) : type(DataType::BOOLEAN)
 //! @return データが文字列型の場合の値です。
 const char* Data::string() const
 {
-	return m_value.string;
+	return m_string;
 }
 
 //! データが整数型の場合の値を取得します。
