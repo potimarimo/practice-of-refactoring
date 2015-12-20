@@ -155,7 +155,7 @@ public:
 
 	//! Columnクラスの新しいインスタンスを初期化します。
 	//! @param [in] columnName 指定された列の列名です。
-	Column(const char* columnName);
+	Column(const string columnName);
 
 	//! Columnクラスの新しいインスタンスを初期化します。
 	//! @param [in] tableName 列が所属するテーブル名です。指定されていない場合は空文字列となります。
@@ -265,7 +265,7 @@ Column::Column() : Column("", "")
 
 //! Columnクラスの新しいインスタンスを初期化します。
 //! @param [in] columnName 指定された列の列名です。
-Column::Column(const char* columnName) : Column("", columnName)
+Column::Column(const string columnName) : Column("", columnName)
 {
 }
 
@@ -622,7 +622,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 				}
 				if (tokenCursol->kind == TokenKind::IDENTIFIER){
 					// テーブル名が指定されていない場合と仮定して読み込みます。
-					selectColumns.push_back(Column(tokenCursol->word.c_str()));
+					selectColumns.push_back(Column(tokenCursol->word));
 					++tokenCursol;
 					if (tokenCursol->kind == TokenKind::DOT){
 						++tokenCursol;
@@ -671,7 +671,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 						}
 						if (tokenCursol->kind == TokenKind::IDENTIFIER){
 							// テーブル名が指定されていない場合と仮定して読み込みます。
-							orderByColumns.push_back(Column(tokenCursol->word.c_str()));
+							orderByColumns.push_back(Column(tokenCursol->word));
 							++tokenCursol;
 							if (tokenCursol->kind == TokenKind::DOT){
 								++tokenCursol;
@@ -755,7 +755,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					if (tokenCursol->kind == TokenKind::IDENTIFIER){
 
 						// テーブル名が指定されていない場合と仮定して読み込みます。
-						currentNode->column = Column(tokenCursol->word.c_str());
+						currentNode->column = Column(tokenCursol->word);
 						++tokenCursol;
 						if (tokenCursol->kind == TokenKind::DOT){
 							++tokenCursol;
