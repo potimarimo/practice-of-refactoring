@@ -748,19 +748,14 @@ void ExtensionTreeNode::Operate()
 //! @param [in] 実際に出力する行です。
 void ExtensionTreeNode::SetColumnData(const vector<const InputTable> &inputTables, const vector<const Data> &outputRow)
 {
-	switch (middleOperator.kind){
-	case TokenKind::NOT_TOKEN:
-		// ノードにデータが設定されている場合です。
-		if (!column.columnName.empty()){
-			column.SetAllColumns(inputTables);
-			value = outputRow[column.allColumnsIndex];
+	if (middleOperator.kind == TokenKind::NOT_TOKEN && !column.columnName.empty()){
+		column.SetAllColumns(inputTables);
+		value = outputRow[column.allColumnsIndex];
 
-			// 符号を考慮して値を計算します。
-			if (value.type == DataType::INTEGER){
-				value = Data(value.integer() * signCoefficient);
-			}
+		// 符号を考慮して値を計算します。
+		if (value.type == DataType::INTEGER){
+			value = Data(value.integer() * signCoefficient);
 		}
-		break;
 	}
 }
 
