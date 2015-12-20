@@ -2875,12 +2875,11 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 
 				(~WHERE_CLOSE_PAREN)->Parse(tokenCursol);
 
+				 auto OPERATORS = (ASTERISK | SLASH | PLUS | MINUS | EQUAL | GREATER_THAN | GREATER_THAN_OR_EQUAL | LESS_THAN | LESS_THAN_OR_EQUAL | NOT_EQUAL | AND | AND | OR)->Action([&]{
+					// 演算子(オペレーターを読み込みます。
+					auto foundOperator = find_if(operators.begin(), operators.end(), [&](const Operator& op){return op.kind == tokenCursol[-1].kind; }); // 現在読み込んでいる演算子の情報です。
 
-				// 演算子(オペレーターを読み込みます。
-				auto foundOperator = find_if(operators.begin(), operators.end(), [&](const Operator& op){return op.kind == tokenCursol->kind; }); // 現在読み込んでいる演算子の情報です。
-
-				// 現在見ている演算子の情報を探します。
-				if (foundOperator != operators.end()){
+					// 現在見ている演算子の情報を探します。
 					// 見つかった演算子の情報をもとにノードを入れ替えます。
 					shared_ptr<ExtensionTreeNode> tmp = currentNode; //ノードを入れ替えるために使う変数です。
 
@@ -2911,11 +2910,9 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 					}
 					currentNode->left = tmp;
 					tmp->parent = currentNode;
+				});
 
-					++tokenCursol;
-				}
-				else{
-					// 現在見ている種類が演算子の一覧から見つからなければ、WHERE句は終わります。
+				if (!OPERATORS->Parse(tokenCursol)){
 					break;
 				}
 			}
