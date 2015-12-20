@@ -532,10 +532,12 @@ InputTable::InputTable(const shared_ptr<const vector<const Column>> columns, con
 			data->begin(),
 			data->end(),
 			[&](const vector<Data> &inputRow){
-			return any_of(
-				inputRow[j].string().begin(),
-				inputRow[j].string().end(),
-				[&](const char& c){return signNum.find(c) == string::npos; }); })){
+			return 
+				inputRow[j].type == DataType::STRING &&
+				any_of(
+					inputRow[j].string().begin(),
+					inputRow[j].string().end(),
+					[&](const char& c){return signNum.find(c) == string::npos; }); })){
 
 			// 符号と数字以外が見つからない列については、数値列に変換します。
 			for (auto& inputRow : *data){
