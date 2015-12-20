@@ -1106,9 +1106,9 @@ const shared_ptr<const vector<const vector<const Data>>> OutputData::outputRows(
 			int minIndex = i; // 現在までで最小の行のインデックスです。
 			for (size_t j = i + 1; j < outputRows->size(); ++j){
 				bool jLessThanMin = false; // インデックスがjの値が、minIndexの値より小さいかどうかです。
-				for (size_t k = 0; k < queryInfo.orders.size(); ++k){
-					const Data &mData = (*outputRows)[minIndex][queryInfo.orders[k].column.allColumnsIndex]; // インデックスがminIndexのデータです。
-					const Data &jData = (*outputRows)[j][queryInfo.orders[k].column.allColumnsIndex]; // インデックスがjのデータです。
+				for (auto &order : queryInfo.orders){
+					const Data &mData = (*outputRows)[minIndex][order.column.allColumnsIndex]; // インデックスがminIndexのデータです。
+					const Data &jData = (*outputRows)[j][order.column.allColumnsIndex]; // インデックスがjのデータです。
 					int cmp = 0; // 比較結果です。等しければ0、インデックスjの行が大きければプラス、インデックスminIndexの行が大きければマイナスとなります。
 					switch (mData.type)
 					{
@@ -1121,7 +1121,7 @@ const shared_ptr<const vector<const vector<const Data>>> OutputData::outputRows(
 					}
 
 					// 降順ならcmpの大小を入れ替えます。
-					if (!queryInfo.orders[k].isAsc){
+					if (!order.isAsc){
 						cmp *= -1;
 					}
 					if (cmp < 0){
