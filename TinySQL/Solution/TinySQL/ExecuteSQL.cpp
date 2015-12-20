@@ -227,6 +227,50 @@ public:
 	vector<const vector<const Data>> data; //! データです。
 };
 
+class TokenReader
+{
+protected:
+	const string alpahUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ"; //!< 全てのアルファベットの大文字小文字とアンダーバーです。
+	const string alpahNumUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; //!< 全ての数字とアルファベットの大文字小文字とアンダーバーです。
+	const string signNum = "+-0123456789"; //!< 全ての符号と数字です。
+	const string num = "0123456789"; //!< 全ての数字です。
+	const string space = " \t\r\n"; //!< 全ての空白文字です。
+
+	//! 実際にトークンを読み込ます。
+	//! @param [in] cursol 読み込み開始位置です。
+	//! @param [in] end SQL全体の終了位置です。
+	//! @return 切り出されたトークンです。読み込みが失敗した場合はnullptrを返します。
+	virtual const shared_ptr<const Token> ReadCore(string::const_iterator &cursol, const string::const_iterator& end) const = 0;
+public:
+	//! トークンを読み込みます。
+	//! @param [in] cursol 読み込み開始位置です。
+	//! @param [in] end SQL全体の終了位置です。
+	//! @return 切り出されたトークンです。読み込みが失敗した場合はnullptrを返します。
+	const shared_ptr<const Token> Read(string::const_iterator &cursol, const string::const_iterator& end) const;
+};
+
+//! 数値リテラルトークンを読み込む機能を提供します。
+class IntLiteralReader : public TokenReader
+{
+protected:
+	//! 実際にトークンを読み込ます。
+	//! @param [in] cursol 読み込み開始位置です。
+	//! @param [in] end SQL全体の終了位置です。
+	//! @return 切り出されたトークンです。読み込みが失敗した場合はnullptrを返します。
+	const shared_ptr<const Token> ReadCore(string::const_iterator &cursol, const string::const_iterator& end) const override;
+};
+
+//! 文字列リテラルトークンを読み込む機能を提供します。
+class StringLiteralReader : public TokenReader
+{
+protected:
+	//! 実際にトークンを読み込みます。
+	//! @param [in] cursol 読み込み開始位置です。
+	//! @param [in] end SQL全体の終了位置です。
+	//! @return 切り出されたトークンです。読み込みが失敗した場合はnullptrを返します。
+	const shared_ptr<const Token> ReadCore(string::const_iterator &cursol, const string::const_iterator& end) const override;
+};
+
 //! ファイルに対して実行するSQLを表すクラスです。
 class SqlQuery
 {
@@ -390,6 +434,61 @@ ColumnIndex::ColumnIndex(const int table, const int column) : table(table), colu
 {
 }
 
+//! トークンを読み込みます。
+//! @param [in] cursol 読み込み開始位置です。
+//! @param [in] end SQL全体の終了位置です。
+//! @return 切り出されたトークンです。読み込みが失敗した場合はnullptrを返します。
+const shared_ptr<const Token> TokenReader::Read(string::const_iterator &cursol, const string::const_iterator &end) const
+{
+	auto backPoint = cursol;
+	auto token = ReadCore(cursol, end);
+	if (!token){
+		cursol = backPoint;
+	}
+	return token;
+}
+
+//! 実際にトークンを読み込みます。
+//! @param [in] cursol 読み込み開始位置です。
+//! @param [in] end SQL全体の終了位置です。
+//! @return 切り出されたトークンです。読み込みが失敗した場合はnullptrを返します。
+const shared_ptr<const Token> IntLiteralReader::ReadCore(string::const_iterator &cursol, const string::const_iterator &end) const
+{
+	auto start = cursol;
+	cursol = find_if(cursol, end, [&](char c){return num.find(c) == string::npos; });
+	if (start != cursol && (
+		alpahUnder.find(*cursol) == string::npos || // 数字の後にすぐに識別子が続くのは紛らわしいので数値リテラルとは扱いません。
+		cursol == end)){
+		return make_shared<Token>(TokenKind::INT_LITERAL, string(start, cursol));
+	}
+	else{
+		return nullptr;
+	}
+}
+
+//! 実際にトークンを読み込みます。
+//! @param [in] cursol 読み込み開始位置です。
+//! @param [in] end SQL全体の終了位置です。
+//! @return 切り出されたトークンです。読み込みが失敗した場合はnullptrを返します。
+const shared_ptr<const Token> StringLiteralReader::ReadCore(string::const_iterator &cursol, const string::const_iterator &end) const
+{
+	auto start = cursol;
+	// 文字列リテラルを開始するシングルクォートを判別し、読み込みます。
+	if (*cursol == "\'"[0]){
+		++cursol;
+		// メトリクス測定ツールのccccはシングルクォートの文字リテラル中のエスケープを認識しないため、文字リテラルを使わないことで回避しています。
+		cursol = find_if_not(cursol, end, [](char c){return c != "\'"[0]; });
+		if (cursol == end){
+			throw ResultValue::ERR_TOKEN_CANT_READ;
+		}
+		++cursol;
+		return make_shared<Token>(TokenKind::STRING_LITERAL, string(start, cursol));
+	}
+	else{
+		return nullptr;
+	}
+}
+
 //! 二つの文字列を、大文字小文字を区別せずに比較し、等しいかどうかです。
 //! @param [in] str1 比較される一つ目の文字列です。
 //! @param [in] str2 比較される二つ目の文字列です。
@@ -424,31 +523,18 @@ const shared_ptr<const vector<const Token>> SqlQuery::GetTokens(const string sql
 		}
 
 		// 数値リテラルを読み込みます。
-		sqlBackPoint = sqlCursol;
-		sqlCursol = find_if(sqlCursol, sqlEnd, [&](char c){return num.find(c) == string::npos; });
-		if (sqlCursol != sqlBackPoint && (
-			alpahUnder.find(*sqlCursol) == string::npos || // 数字の後にすぐに識別子が続くのは紛らわしいので数値リテラルとは扱いません。
-			sqlCursol == sqlEnd)){
-			tokens->push_back(Token(TokenKind::INT_LITERAL, string(sqlBackPoint, sqlCursol)));
+		IntLiteralReader reader;
+		auto token = reader.Read(sqlCursol, sqlEnd);
+		if (token){
+			tokens->push_back(*token);
 			continue;
-		}
-		else{
-			sqlCursol = sqlBackPoint;
 		}
 
 		// 文字列リテラルを読み込みます。
-		sqlBackPoint = sqlCursol;
-
-		// 文字列リテラルを開始するシングルクォートを判別し、読み込みます。
-		if (*sqlCursol == "\'"[0]){
-			++sqlCursol;
-			// メトリクス測定ツールのccccはシングルクォートの文字リテラル中のエスケープを認識しないため、文字リテラルを使わないことで回避しています。
-			sqlCursol = find_if_not(sqlCursol, sqlEnd, [](char c){return c != "\'"[0]; });
-			if (sqlCursol == sqlEnd){
-				throw ResultValue::ERR_TOKEN_CANT_READ;
-			}
-			++sqlCursol;
-			tokens->push_back(Token(TokenKind::STRING_LITERAL, string(sqlBackPoint, sqlCursol)));
+		StringLiteralReader reader2;
+		token = reader2.Read(sqlCursol, sqlEnd);
+		if (token){
+			tokens->push_back(*token);
 			continue;
 		}
 
