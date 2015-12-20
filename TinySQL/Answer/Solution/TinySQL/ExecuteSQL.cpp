@@ -849,6 +849,10 @@ public:
 	const bool Parse(vector<const Token>::const_iterator& cursol) const override;
 };
 
+////! ZeroOrMoreParserクラスの新しいインスタンスを生成します。
+////! @params [in] once 繰り返しの一回分となる規則です。
+const shared_ptr<const Parser> operator~(const shared_ptr<const Parser> once);
+
 //! 出力するデータを管理します。
 class OutputData
 {
@@ -2105,6 +2109,13 @@ const bool ZeroOrMoreParser::Parse(vector<const Token>::const_iterator& cursol) 
 	return true;
 }
 
+//! ZeroOrMoreParserクラスの新しいインスタンスを生成します。
+//! @params [in] once 繰り返しの一回分となる規則です。
+const shared_ptr<const Parser> operator~(const shared_ptr<const Parser> once)
+{
+	return make_shared<ZeroOrMoreParser>(once);
+}
+
 //! 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
 void OutputData::InitializeAllInputColumns()
 {
@@ -2530,24 +2541,31 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 {
 	auto queryInfo = make_shared<SqlQueryInfo>();
 
-	auto COMMA = token(TokenKind::COMMA);
-	auto DOT = token(TokenKind::DOT);
-	auto IDENTIFIER = token(TokenKind::IDENTIFIER);
-	auto SELECT = token(TokenKind::SELECT);
+	auto COMMA = token(TokenKind::COMMA); // カンマトークンのパーサーです。
+	auto DOT = token(TokenKind::DOT); // ドットトークンのパーサーです。
+	auto IDENTIFIER = token(TokenKind::IDENTIFIER); // 識別子トークンのパーサーです。
+	auto SELECT = token(TokenKind::SELECT);// SELECTキーワードトークンのパーサーです。
 
+	// SELECT句の列指定の一つ目の識別子のパーサーです。
 	auto FIRST_SELECT_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
 		// テーブル名が指定されていない場合と仮定して読み込みます。
 		queryInfo->selectColumns.push_back(Column(token.word));
 	});
 
+	// SELECT句の列指定の二つ目の識別子のパーサーです。
 	auto SECOND_SELECT_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
 		// テーブル名が指定されていることがわかったので読み替えます。
 		queryInfo->selectColumns.back() = Column(queryInfo->selectColumns.back().columnName, token.word);
 	});
 
+	// 記号の意味
+	// A >> B		:Aの後にBが続く
+	// -A			:Aが任意
+	// ~A			:Aが0回以上続く
+
 	auto SELECT_COLUMN = FIRST_SELECT_COLUMN_NAME >> -(DOT >> SECOND_SELECT_COLUMN_NAME);
 
-	auto SELECT_COLUMNS = SELECT_COLUMN >> make_shared<ZeroOrMoreParser>(COMMA >> SELECT_COLUMN);
+	auto SELECT_COLUMNS = SELECT_COLUMN >> ~(COMMA >> SELECT_COLUMN);
 
 	auto tokenCursol = tokens.begin(); // 現在見ているトークンを指します。
 
@@ -2560,20 +2578,9 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 	}
 	else
 	{
-
 		if (!SELECT_COLUMNS->Parse(tokenCursol)){
 			throw ResultValue::ERR_SQL_SYNTAX;
 		}
-		//bool first = true; // SELECT句に最初に指定された列名の読み込みかどうかです。
-		//while (tokenCursol->kind == TokenKind::COMMA || first){
-		//	if (tokenCursol->kind == TokenKind::COMMA){
-		//		++tokenCursol;
-		//	}
-		//	if (!SELECT_COLUMN->Parse(tokenCursol)){
-		//		throw ResultValue::ERR_SQL_SYNTAX;
-		//	}
-		//	first = false;
-		//}
 	}
 
 	// ORDER句とWHERE句を読み込みます。最大各一回ずつ書くことができます。
