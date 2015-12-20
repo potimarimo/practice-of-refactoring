@@ -730,7 +730,7 @@ public:
 	//! トークンに対するパースを行います。
 	//! @params [in] cursol 現在の読み取り位置を表すカーソルです。
 	//! @return パースが成功したかどうかです。
-	virtual const bool Parse(vector<const Token>::const_iterator& cursol) const = 0;
+	virtual const bool Parse(vector<const Token>::const_iterator& cursol, vector<const Token>::const_iterator& end) const = 0;
 };
 
 //! トークンをひとつ読み取るパーサーです。
@@ -755,7 +755,7 @@ public:
 	//! トークンに対するパースを行います。
 	//! @params [in] cursol 現在の読み取り位置を表すカーソルです。
 	//! @return パースが成功したかどうかです。
-	const bool Parse(vector<const Token>::const_iterator& cursol) const override;
+	const bool Parse(vector<const Token>::const_iterator& cursol, vector<const Token>::const_iterator& end) const override;
 
 	//! 読み取りが成功したら実行する処理を登録します。
 	//! @param [in] 読み取りが成功したら実行する処理です。
@@ -782,7 +782,7 @@ public:
 	//! トークンに対するパースを行います。
 	//! @params [in] cursol 現在の読み取り位置を表すカーソルです。
 	//! @return パースが成功したかどうかです。
-	const bool Parse(vector<const Token>::const_iterator& cursol) const override;
+	const bool Parse(vector<const Token>::const_iterator& cursol, vector<const Token>::const_iterator& end) const override;
 
 	//! 読み取りが成功したら実行する処理を登録します。
 	//! @param [in] 読み取りが成功したら実行する処理です。
@@ -817,7 +817,7 @@ public:
 	//! 二つの規則に対するパースを行います。
 	//! @params [in] cursol 現在の読み取り位置を表すカーソルです。
 	//! @return パースが成功したかどうかです。
-	const bool Parse(vector<const Token>::const_iterator& cursol) const override;
+	const bool Parse(vector<const Token>::const_iterator& cursol, vector<const Token>::const_iterator& end) const override;
 };
 
 //! SequenceParserクラスの新しいインスタンスを生成します。
@@ -850,7 +850,7 @@ public:
 	//! 二つの規則に対するパースを行います。
 	//! @params [in] cursol 現在の読み取り位置を表すカーソルです。
 	//! @return パースが成功したかどうかです。
-	const bool Parse(vector<const Token>::const_iterator& cursol) const override;
+	const bool Parse(vector<const Token>::const_iterator& cursol, vector<const Token>::const_iterator& end) const override;
 };
 
 //! OrderedChoiceParserクラスの新しいインスタンスを生成します。
@@ -880,7 +880,7 @@ public:
 	//! オプショナルなパースを行います。
 	//! @params [in] cursol 現在の読み取り位置を表すカーソルです。
 	//! @return パースが成功したかどうかです。
-	const bool Parse(vector<const Token>::const_iterator& cursol) const override;
+	const bool Parse(vector<const Token>::const_iterator& cursol, vector<const Token>::const_iterator& end) const override;
 };
 
 //! OptionalParserクラスの新しいインスタンスを生成します。
@@ -909,7 +909,7 @@ public:
 	//! 繰り返しのパースを行います。
 	//! @params [in] cursol 現在の読み取り位置を表すカーソルです。
 	//! @return パースが成功したかどうかです。
-	const bool Parse(vector<const Token>::const_iterator& cursol) const override;
+	const bool Parse(vector<const Token>::const_iterator& cursol, vector<const Token>::const_iterator& end) const override;
 };
 
 ////! ZeroOrMoreParserクラスの新しいインスタンスを生成します。
@@ -938,7 +938,7 @@ public:
 	//! 繰り返しのパースを行います。
 	//! @params [in] cursol 現在の読み取り位置を表すカーソルです。
 	//! @return パースが成功したかどうかです。
-	const bool Parse(vector<const Token>::const_iterator& cursol) const;
+	const bool Parse(vector<const Token>::const_iterator& cursol, vector<const Token>::const_iterator& end) const;
 };
 
 //! AndPredicateParserクラスの新しいインスタンスを初期化します。
@@ -2066,8 +2066,11 @@ TokenParser::TokenParser(TokenKind kind) : m_kinds({ kind }){}
 //! トークンに対するパースを行います。
 //! @params [in] cursol 現在の読み取り位置を表すカーソルです。
 //! @return パースが成功したかどうかです。
-const bool TokenParser::Parse(vector<const Token>::const_iterator& cursol) const
+const bool TokenParser::Parse(vector<const Token>::const_iterator& cursol, vector<const Token>::const_iterator& end) const
 {
+	if (cursol == end){
+		return false;
+	}
 	return any_of(m_kinds.begin(), m_kinds.end(),[&](const TokenKind &kind){
 		if (cursol->kind == kind){
 			if (m_action){
@@ -2112,7 +2115,7 @@ NoTokenParser::NoTokenParser(const function<void(void)> action) : m_action(actio
 //! トークンに対するパースを行います。
 //! @params [in] cursol 現在の読み取り位置を表すカーソルです。
 //! @return パースが成功したかどうかです。
-const bool NoTokenParser::Parse(vector<const Token>::const_iterator& cursol) const
+const bool NoTokenParser::Parse(vector<const Token>::const_iterator& cursol, vector<const Token>::const_iterator& end) const
 {
 	if (m_action){
 		m_action();
@@ -2147,10 +2150,10 @@ SequenceParser::SequenceParser(const shared_ptr<const Parser> parser1, const sha
 //! トークンに対するパースを行います。
 //! @params [in] cursol 現在の読み取り位置を表すカーソルです。
 //! @return パースが成功したかどうかです。
-const bool SequenceParser::Parse(vector<const Token>::const_iterator& cursol) const
+const bool SequenceParser::Parse(vector<const Token>::const_iterator& cursol, vector<const Token>::const_iterator& end) const
 {
 	auto beforeParse = cursol;
-	if (m_parser1->Parse(cursol) && m_parser2->Parse(cursol)){
+	if (m_parser1->Parse(cursol, end) && m_parser2->Parse(cursol, end)){
 		if (m_action){
 			m_action();
 		}
@@ -2197,9 +2200,9 @@ const shared_ptr<const OrderedChoiceParser> OrderedChoiceParser::Action(const fu
 //! 二つの規則に対するパースを行います。
 //! @params [in] cursol 現在の読み取り位置を表すカーソルです。
 //! @return パースが成功したかどうかです。
-const bool OrderedChoiceParser::Parse(vector<const Token>::const_iterator& cursol) const
+const bool OrderedChoiceParser::Parse(vector<const Token>::const_iterator& cursol, vector<const Token>::const_iterator& end) const
 {
-	if (m_parser1->Parse(cursol) || m_parser2->Parse(cursol)){
+	if (m_parser1->Parse(cursol, end) || m_parser2->Parse(cursol, end)){
 		if (m_action){
 			m_action();
 		}
@@ -2235,10 +2238,10 @@ const shared_ptr<const OptionalParser> OptionalParser::Action(const function<voi
 //! オプショナルなパースを行います。
 //! @params [in] cursol 現在の読み取り位置を表すカーソルです。
 //! @return パースが成功したかどうかです。
-const bool OptionalParser::Parse(vector<const Token>::const_iterator& cursol) const
+const bool OptionalParser::Parse(vector<const Token>::const_iterator& cursol, vector<const Token>::const_iterator& end) const
 {
 	auto beforeParse = cursol;
-	if (m_optional->Parse(cursol)){
+	if (m_optional->Parse(cursol, end)){
 		if (m_action){
 			m_action();
 		}
@@ -2274,9 +2277,9 @@ const shared_ptr<const ZeroOrMoreParser> ZeroOrMoreParser::Action(const function
 //! 繰り返しのパースを行います。
 //! @params [in] cursol 現在の読み取り位置を表すカーソルです。
 //! @return パースが成功したかどうかです。
-const bool ZeroOrMoreParser::Parse(vector<const Token>::const_iterator& cursol) const
+const bool ZeroOrMoreParser::Parse(vector<const Token>::const_iterator& cursol, vector<const Token>::const_iterator& end) const
 {
-	while (m_once->Parse(cursol)){}
+	while (m_once->Parse(cursol, end)){}
 	if (m_action){
 		m_action();
 	}
@@ -2309,10 +2312,10 @@ const shared_ptr<const AndPredicateParser> AndPredicateParser::Action(const func
 //! 繰り返しのパースを行います。
 //! @params [in] cursol 現在の読み取り位置を表すカーソルです。
 //! @return パースが成功したかどうかです。
-const bool AndPredicateParser::Parse(vector<const Token>::const_iterator& cursol) const
+const bool AndPredicateParser::Parse(vector<const Token>::const_iterator& cursol, vector<const Token>::const_iterator& end) const
 {
 	auto beforeParse = cursol;
-	if (m_parser->Parse(cursol)){
+	if (m_parser->Parse(cursol, end)){
 		if (m_action){
 			m_action(true);
 		}
@@ -2958,69 +2961,48 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 		}
 	});
 
-	
+	auto TABLE_NAME = IDENTIFIER->Action([&](const Token &token){
+		queryInfo->tableNames.push_back(token.word);
+	});
+
+	auto FROM_CLAUSE = FROM >> TABLE_NAME >> ~(COMMA >> TABLE_NAME);
 
 	auto tokenCursol = tokens.begin(); // 現在見ているトークンを指します。
 
-	if (!SELECT_CLAUSE->Parse(tokenCursol)){
+	if (!SELECT_CLAUSE->Parse(tokenCursol, tokens.end())){
 		throw ResultValue::ERR_SQL_SYNTAX;
 	}
 
 	auto WHERE_ORDER = (ORDER_BY_CLAUSE >> -WHERE_CLAUSE) | (WHERE_CLAUSE >> -ORDER_BY_CLAUSE);
 
-	WHERE_ORDER->Parse(tokenCursol);
+	WHERE_ORDER->Parse(tokenCursol, tokens.end());
 
-	// ORDER句とWHERE句を読み込みます。最大各一回ずつ書くことができます。
-	//bool readOrder = false; // すでにORDER句が読み込み済みかどうかです。
-	//bool readWhere = false; // すでにWHERE句が読み込み済みかどうかです。
-	//while (true){
-
-	//	// 二度目のORDER句はエラーです。
-	//	if (readOrder && tokenCursol->kind == TokenKind::ORDER){
+	//// FROM句を読み込みます。
+	//if (tokenCursol->kind == TokenKind::FROM){
+	//	++tokenCursol;
+	//}
+	//else{
+	//	throw ResultValue::ERR_SQL_SYNTAX;
+	//}
+	//bool first = true; // FROM句の最初のテーブル名を読み込み中かどうかです。
+	//while (tokenCursol != tokens.end() && tokenCursol->kind == TokenKind::COMMA || first){
+	//	if (tokenCursol->kind == TokenKind::COMMA){
+	//		++tokenCursol;
+	//	}
+	//	if (tokenCursol->kind == TokenKind::IDENTIFIER){
+	//		queryInfo->tableNames.push_back(tokenCursol->word);
+	//		++tokenCursol;
+	//	}
+	//	else{
 	//		throw ResultValue::ERR_SQL_SYNTAX;
 	//	}
-
-	//	// 二度目のWHERE句はエラーです。
-	//	if (readWhere && tokenCursol->kind == TokenKind::WHERE){
-	//		throw ResultValue::ERR_SQL_SYNTAX;
-	//	}
-
-	//	// ORDER句を読み込みます。
-	//	if (ORDER_BY_CLAUSE->Parse(tokenCursol)){
-	//		readOrder = true;
-	//		continue;
-	//	}
-
-	//	// WHERE句を読み込みます。
-	//	if (WHERE_CLAUSE->Parse(tokenCursol)){
-	//		readWhere = true;
-	//		continue;
-	//	}
-	//	break;
+	//	first = false;
 	//}
 
-	// FROM句を読み込みます。
-	if (tokenCursol->kind == TokenKind::FROM){
-		++tokenCursol;
-	}
-	else{
+	if (!FROM_CLAUSE->Parse(tokenCursol, tokens.end())){
 		throw ResultValue::ERR_SQL_SYNTAX;
 	}
-	bool first = true; // FROM句の最初のテーブル名を読み込み中かどうかです。
-	while (tokenCursol != tokens.end() && tokenCursol->kind == TokenKind::COMMA || first){
-		if (tokenCursol->kind == TokenKind::COMMA){
-			++tokenCursol;
-		}
-		if (tokenCursol->kind == TokenKind::IDENTIFIER){
-			queryInfo->tableNames.push_back(tokenCursol->word);
-			++tokenCursol;
-		}
-		else{
-			throw ResultValue::ERR_SQL_SYNTAX;
-		}
-		first = false;
-	}
-
+	
 	// 最後のトークンまで読み込みが進んでいなかったらエラーです。
 	if (tokenCursol != tokens.end()){
 		throw ResultValue::ERR_SQL_SYNTAX;
