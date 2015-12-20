@@ -416,7 +416,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 	ofstream outputFile;                                   // 書き込むファイルのファイルポインタです。
 	bool found = false;                                     // 検索時に見つかったかどうかの結果を一時的に保存します。
 	vector<vector<vector<Data>>> inputData;                       // 入力データです。
-	vector<Data**> outputData;                              // 出力データです。
+	vector<vector<Data*>> outputData;                              // 出力データです。
 	vector<Data**> allColumnOutputData;                     // 出力するデータに対応するインデックスを持ち、すべての入力データを保管します。
 
 	const string alpahUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ"; // 全てのアルファベットの大文字小文字とアンダーバーです。
@@ -1050,24 +1050,16 @@ int ExecuteSQL(const string sql, const string outputFileName)
 
 		// 出力するデータを設定します。
 		while (true){
-			outputData.push_back((Data**)malloc(MAX_COLUMN_COUNT * sizeof(Data*)));
-			Data **row = outputData.back(); // 出力している一行分のデータです。
-			if (!row){
-				throw ResultValue::ERR_MEMORY_ALLOCATE;
-			}
-
-			// 生成した行を初期化します。
-			for (int i = 0; i < MAX_COLUMN_COUNT; ++i){
-				row[i] = nullptr;
-			}
+			outputData.push_back(vector<Data*>());
+			vector<Data*> &row = outputData.back(); // 出力している一行分のデータです。
 
 			// 行の各列のデータを入力から持ってきて設定します。
 			for (size_t i = 0; i < selectColumnIndexes.size(); ++i){
-				row[i] = new Data;
-				if (!row[i]){
+				row.push_back(new Data);
+				if (!row.back()){
 					throw ResultValue::ERR_MEMORY_ALLOCATE;
 				}
-				*row[i] = (*currentRows[selectColumnIndexes[i].table])[selectColumnIndexes[i].column];
+				*row.back() = (*currentRows[selectColumnIndexes[i].table])[selectColumnIndexes[i].column];
 			}
 
 			allColumnOutputData.push_back((Data**)malloc(MAX_TABLE_COUNT * MAX_COLUMN_COUNT * sizeof(Data*)));
@@ -1255,7 +1247,6 @@ int ExecuteSQL(const string sql, const string outputFileName)
 
 				// 条件に合わない行は出力から削除します。
 				if (!whereTopNode->value.boolean()){
-					free(row);
 					free(allColumnsRow);
 					allColumnOutputData.pop_back();
 					outputData.pop_back();
@@ -1343,13 +1334,13 @@ int ExecuteSQL(const string sql, const string outputFileName)
 						minIndex = j;
 					}
 				}
-				Data** tmp = outputData[minIndex];
+				vector<Data*> tmp = outputData[minIndex];
 				outputData[minIndex] = outputData[i];
 				outputData[i] = tmp;
 
-				tmp = allColumnOutputData[minIndex];
+				Data **allTmp = allColumnOutputData[minIndex];
 				allColumnOutputData[minIndex] = allColumnOutputData[i];
-				allColumnOutputData[i] = tmp;
+				allColumnOutputData[i] = allTmp;
 			}
 		}
 
@@ -1373,7 +1364,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 		// 出力ファイルにデータを出力します。
 
 		for (auto& outputRow : outputData){
-			Data **column = outputRow;
+			Data** column = &outputRow[0];
 			for (size_t i = 0; i < selectColumns.size(); ++i){
 				char outputString[MAX_DATA_LENGTH] = "";
 				switch ((*column)->type){
@@ -1417,12 +1408,10 @@ int ExecuteSQL(const string sql, const string outputFileName)
 		}
 
 		// メモリリソースを解放します。
-		for (auto& outputRow : outputData){
-			Data **dataCursol = outputRow;
-			while (*dataCursol){
-				delete *dataCursol++;
+		for (auto &outputRow : outputData){
+			for(auto data : outputRow){
+				delete data;
 			}
-			free(outputRow);
 		}
 
 		for (auto& allDataRow : allColumnOutputData){
@@ -1441,11 +1430,9 @@ int ExecuteSQL(const string sql, const string outputFileName)
 
 		// メモリリソースを解放します。
 		for (auto& outputRow : outputData){
-			Data **dataCursol = outputRow;
-			while (*dataCursol){
-				delete *dataCursol++;
+			for (auto data : outputRow){
+				delete data;
 			}
-			free(outputRow);
 		}
 
 		for (auto& allDataRow : allColumnOutputData){
