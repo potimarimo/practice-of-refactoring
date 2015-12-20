@@ -2612,11 +2612,32 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 {
 	auto queryInfo = make_shared<SqlQueryInfo>();
 
-	auto ASTERISK = token(TokenKind::ASTERISK); // アスタリスクトークンのパーサーです。
-	auto COMMA = token(TokenKind::COMMA); // カンマトークンのパーサーです。
-	auto DOT = token(TokenKind::DOT); // ドットトークンのパーサーです。
-	auto IDENTIFIER = token(TokenKind::IDENTIFIER); // 識別子トークンのパーサーです。
+	auto AND = token(TokenKind::AND);// ANDキーワードトークンのパーサーです。
+	auto ASC = token(TokenKind::ASC);// ASCキーワードトークンのパーサーです。
+	auto BY = token(TokenKind::BY);// BYキーワードトークンのパーサーです。
+	auto DESC = token(TokenKind::DESC);// DESCキーワードトークンのパーサーです。
+	auto FROM = token(TokenKind::FROM);// FROMキーワードトークンのパーサーです。
+	auto OR = token(TokenKind::OR);// ORキーワードトークンのパーサーです。
+	auto ORDER = token(TokenKind::ORDER);// ORDERキーワードトークンのパーサーです。
 	auto SELECT = token(TokenKind::SELECT);// SELECTキーワードトークンのパーサーです。
+	auto WHERE = token(TokenKind::WHERE);// WHEREキーワードトークンのパーサーです。
+	auto ASTERISK = token(TokenKind::ASTERISK); // ＊ 記号トークンのパーサーです。
+	auto COMMA = token(TokenKind::COMMA); // ， 記号ですトークンのパーサーです。
+	auto CLOSE_PAREN = token(TokenKind::CLOSE_PAREN); // ） 記号トークンのパーサーです。
+	auto DOT = token(TokenKind::DOT); // ． 記号トークンのパーサーです。
+	auto EQUAL = token(TokenKind::EQUAL); // ＝ 記号トークンのパーサーです。
+	auto GREATER_THAN = token(TokenKind::GREATER_THAN); // ＞ 記号トークンのパーサーです。
+	auto GREATER_THAN_OR_EQUAL = token(TokenKind::GREATER_THAN_OR_EQUAL); // ＞＝ 記号トークンのパーサーです。
+	auto LESS_THAN = token(TokenKind::LESS_THAN); // ＜ 記号トークンのパーサーです。
+	auto LESS_THAN_OR_EQUAL = token(TokenKind::LESS_THAN_OR_EQUAL); // ＜＝ 記号トークンのパーサーです。
+	auto MINUS = token(TokenKind::MINUS); // － 記号トークンのパーサーです。
+	auto NOT_EQUAL = token(TokenKind::NOT_EQUAL); // ＜＞ 記号トークンのパーサーです。
+	auto OPEN_PAREN = token(TokenKind::OPEN_PAREN); // （ 記号トークンのパーサーです。
+	auto PLUS = token(TokenKind::PLUS); // ＋ 記号トークンのパーサーです。
+	auto SLASH = token(TokenKind::SLASH); // ／ 記号トークンのパーサーです。
+	auto IDENTIFIER = token(TokenKind::IDENTIFIER); // 識別子トークンのパーサーです。
+	auto INT_LITERAL = token(TokenKind::INT_LITERAL); // 整数リテラルトークンのパーサーです。
+	auto STRING_LITERAL = token(TokenKind::STRING_LITERAL); // 文字列リテラルトークンのパーサーです。
 
 	// SELECT句の列指定の一つ目の識別子のパーサーです。
 	auto FIRST_SELECT_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
