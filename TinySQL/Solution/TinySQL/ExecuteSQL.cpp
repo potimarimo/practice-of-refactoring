@@ -225,7 +225,7 @@ class InputTable
 	const string signNum = "+-0123456789"; //!< 全ての符号と数字です。
 
 	const shared_ptr<const vector<const Column>> m_columns; //!< 列の情報です。
-	const shared_ptr<vector<vector<Data>>> m_data; //! データです。
+	const shared_ptr<vector<const vector<const Data>>> m_data; //! データです。
 
 	//! 全てが数値となる列は数値列に変換します。
 	void InputTable::InitializeIntegerColumn();
@@ -233,13 +233,13 @@ public:
 	//! InputTableクラスの新しいインスタンスを初期化します。
 	//! @param [in] columns 読み込んだヘッダ情報です。
 	//! @param [in] data 読み込んだデータです。
-	InputTable(const shared_ptr<const vector<const Column>> columns, const shared_ptr<vector<vector<Data>>> data);
+	InputTable(const shared_ptr<const vector<const Column>> columns, const shared_ptr<vector<const vector<const Data>>> data);
 
 	//! 列の情報を取得します。
 	const shared_ptr<const vector<const Column>> columns() const;
 
 	//! データを取得します。
-	const shared_ptr<vector<vector<Data>>> data() const;
+	const shared_ptr<vector<const vector<const Data>>> data() const;
 };
 
 class TokenReader
@@ -357,7 +357,7 @@ class Csv
 	//! 入力CSVのデータ行を読み込みます。
 	//! @param [in] inputFile 入力ファイルを扱うストリームです。
 	//! @return ファイルから読み取ったデータです。
-	const shared_ptr<vector<vector<Data>>> ReadData(ifstream &inputFile) const;
+	const shared_ptr<vector<const vector<const Data>>> ReadData(ifstream &inputFile) const;
 public:
 
 	//! Csvクラスの新しいインスタンスを初期化します。
@@ -531,7 +531,7 @@ void InputTable::InitializeIntegerColumn()
 		if (none_of(
 			data()->begin(),
 			data()->end(),
-			[&](const vector<Data> &inputRow){
+			[&](const vector<const Data> &inputRow){
 			return
 				inputRow[i].type == DataType::STRING &&
 				any_of(
@@ -550,7 +550,7 @@ void InputTable::InitializeIntegerColumn()
 //! InputTableクラスの新しいインスタンスを初期化します。
 //! @param [in] columns 読み込んだヘッダ情報です。
 //! @param [in] data 読み込んだデータです。
-InputTable::InputTable(const shared_ptr<const vector<const Column>> columns, const shared_ptr<vector<vector<Data>>> data) : m_columns(columns), m_data(data)
+InputTable::InputTable(const shared_ptr<const vector<const Column>> columns, const shared_ptr<vector<const vector<const Data>>> data) : m_columns(columns), m_data(data)
 {
 	InitializeIntegerColumn();
 }
@@ -562,7 +562,7 @@ const shared_ptr<const vector<const Column>> InputTable::columns() const
 }
 
 //! データを取得します。
-const shared_ptr<vector<vector<Data>>> InputTable::data() const
+const shared_ptr<vector<const vector<const Data>>> InputTable::data() const
 {
 	return m_data;
 }
@@ -732,13 +732,13 @@ const shared_ptr<const vector<const Column>> Csv::ReadHeader(ifstream &inputFile
 //! 入力CSVのデータ行を読み込みます。
 //! @param [in] inputFile 入力ファイルを扱うストリームです。
 //! @return ファイルから読み取ったデータです。
-const shared_ptr<vector<vector<Data>>> Csv::ReadData(ifstream &inputFile) const
+const shared_ptr<vector<const vector<const Data>>> Csv::ReadData(ifstream &inputFile) const
 {
-	auto data = make_shared<vector<vector<Data>>>(); // 読み込んだデータの一覧。
+	auto data = make_shared<vector<const vector<const Data>>>(); // 読み込んだデータの一覧。
 
 	string inputLine;
 	while (getline(inputFile, inputLine)){
-		data->push_back(vector<Data>()); // 入力されている一行分のデータです。
+		data->push_back(vector<const Data>()); // 入力されている一行分のデータです。
 		auto &row = data->back();
 
 		auto charactorCursol = inputLine.begin(); // データ入力行を検索するカーソルです。
@@ -884,7 +884,7 @@ void Csv::WriteCsv(const string outputFileName, const vector<const InputTable> &
 		}
 	}
 
-	vector<vector<const vector<Data>>::const_iterator> currentRows; // 入力された各テーブルの、現在出力している行を指すカーソルです。
+	vector<vector<const vector<const Data>>::const_iterator> currentRows; // 入力された各テーブルの、現在出力している行を指すカーソルです。
 	transform(
 		inputTables.begin(),
 		inputTables.end(),
