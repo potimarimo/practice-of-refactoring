@@ -883,12 +883,8 @@ int ExecuteSQL(const string sql, const string outputFileName)
 
 		for (size_t i = 0; i < tableNames.size(); ++i){
 
-			// 入力ファイル名を生成します。
-			const string csvExtension = ".csv"; // csvの拡張子です。
-			const string fileName = tableNames[i] + csvExtension; // 拡張子を含む、入力ファイルのファイル名です。
-
 			// 入力ファイルを開きます。
-			inputTableFiles.push_back(ifstream(fileName));
+			inputTableFiles.push_back(ifstream(tableNames[i] + ".csv"));
 			if (!inputTableFiles.back()){
 				throw ResultValue::ERR_FILE_OPEN;
 			}
