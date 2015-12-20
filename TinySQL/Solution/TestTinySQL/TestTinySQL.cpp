@@ -7,8 +7,9 @@
 
 #include "CppUnitTest.h"
 
-
-int ExecuteSQL(const std::string, const std::string);
+extern "C"{
+	int ExecuteSQL(const char*, const char*);
+}
 
 
 //! ExecuteSQLの戻り値の種類を表します。
