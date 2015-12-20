@@ -601,6 +601,10 @@ public:
 	//! 自身の位置にノードを挿入し、自身は挿入したノードの左の子となります。
 	//! @param [in] inserted 挿入するノードです。
 	void InsertAndMoveLeft(const shared_ptr<ExtensionTreeNode> inserted);
+
+	//! 自身の右の子としてノードを挿入します。
+	//! @param [in] inserted 挿入するノードです。
+	void InsertRight(const shared_ptr<ExtensionTreeNode> inserted);
 };
 
 //! 引数として渡したノード及びその子孫のノードを取得します。順序は帰りがけ順です。
@@ -1961,6 +1965,14 @@ void ExtensionTreeNode::InsertAndMoveLeft(const shared_ptr<ExtensionTreeNode> in
 	parent = inserted;
 }
 
+//! 自身の右の子としてノードを挿入します。
+//! @param [in] inserted 挿入するノードです。
+void ExtensionTreeNode::InsertRight(const shared_ptr<ExtensionTreeNode> inserted)
+{
+	right = inserted;
+	right->parent = shared_from_this();
+}
+
 //! 引数として渡したノード及びその子孫のノードを取得します。
 //! @param [in] 戻り値のルートとなるノードです。順序は帰りがけ順です。
 //! @return 自身及び子孫のノードです。
@@ -3071,9 +3083,8 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 		auto newNode = make_shared<ExtensionTreeNode>();
 		if (currentNode){
 			// 現在のノードを右の子にずらし、元の位置に新しいノードを挿入します。
-			currentNode->right = newNode;
-			currentNode->right->parent = currentNode;
-			currentNode = currentNode->right;
+			currentNode->InsertRight(newNode);
+			currentNode = newNode;
 		}
 		else{
 			// 最初はカレントノードに新しいノードを入れます。
