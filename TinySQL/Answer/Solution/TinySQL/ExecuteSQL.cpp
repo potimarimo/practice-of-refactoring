@@ -615,7 +615,7 @@ const shared_ptr<const vector<const Token>> SqlQuery::GetTokens(const string sql
 {
 	// トークンを読み込む方法の集合です。
 	// 先頭から順に検索されるので、前方一致となる二つの項目は順番に気をつけて登録しなくてはいけません。
-	vector<shared_ptr<TokenReader>> readers =
+	const vector<const shared_ptr<const TokenReader>> readers =
 	{
 		make_shared<IntLiteralReader>(),
 		make_shared<StringLiteralReader>(),
@@ -644,12 +644,8 @@ const shared_ptr<const vector<const Token>> SqlQuery::GetTokens(const string sql
 		make_shared<SignReader>(TokenKind::SLASH, "/"),
 		make_shared<IdentifierReader>(),
 	};
-	auto backPoint = sql.begin(); // SQLをトークンに分割して読み込む時に戻るポイントを記録しておきます。
-
 	auto cursol = sql.begin(); // SQLをトークンに分割して読み込む時に現在読んでいる文字の場所を表します。
-
 	auto end = sql.end(); // sqlのendを指します。
-
 	auto tokens = make_shared<vector<const Token>>(); //読み込んだトークンです。
 
 	// SQLをトークンに分割て読み込みます。
@@ -661,20 +657,18 @@ const shared_ptr<const vector<const Token>> SqlQuery::GetTokens(const string sql
 			break;
 		}
 		// 各種トークンを読み込みます。
-		bool found = false;
-		for (auto &reader : readers){
-			auto token = reader->Read(cursol, end);
-			if (token){
-				tokens->push_back(*token);
-				found = true;
-				break;
-			}
+		shared_ptr<const Token> token;
+		if (any_of(
+			readers.begin(),
+			readers.end(),
+			[&](const shared_ptr<const TokenReader>& reader){
+				return token = reader->Read(cursol, end); 
+			})){
+			tokens->push_back(*token);
 		}
-		if (found){
-			continue;
+		else{
+			throw ResultValue::ERR_TOKEN_CANT_READ;
 		}
-
-		throw ResultValue::ERR_TOKEN_CANT_READ;
 	}
 	return tokens;
 }
