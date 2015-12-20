@@ -614,6 +614,14 @@ ExtensionTreeNode::ExtensionTreeNode()
 // leftとrightをmiddleOperatorで演算します。
 void ExtensionTreeNode::Operate()
 {
+	// 自ノードより前に子ノードを演算しておきます。
+	if (left){
+		left->Operate();
+	}
+	if (right){
+		right->Operate();
+	}
+
 	// 自ノードの値を計算します。
 	switch (middleOperator.kind){
 	case TokenKind::EQUAL:
@@ -1005,26 +1013,11 @@ const shared_ptr<const vector<const vector<const Data>>> OutputData::outputRows(
 				switch (node->middleOperator.kind){
 				case TokenKind::NOT_TOKEN:
 					// ノードにデータが設定されている場合です。
-
-					// データが列名で指定されている場合、今扱っている行のデータを設定します。
+					;
 					if (!node->column.columnName.empty()){
-						bool found = false;
-						for (size_t i = 0; i < allInputColumns.size(); ++i){
-							if (Equali(node->column.columnName, allInputColumns[i].columnName) &&
-								(node->column.tableName.empty() || // テーブル名が設定されている場合のみテーブル名の比較を行います。
-								Equali(node->column.tableName, allInputColumns[i].tableName))){
-								// 既に見つかっているのにもう一つ見つかったらエラーです。
-								if (found){
-									throw ResultValue::ERR_BAD_COLUMN_NAME;
-								}
-								found = true;
-								node->value = outputRow[i];
-							}
-						}
-						// 一つも見つからなくてもエラーです。
-						if (!found){
-							throw ResultValue::ERR_BAD_COLUMN_NAME;
-						}
+						node->column.SetAllColumns(inputTables);
+						node->value = outputRow[node->column.allColumnsIndex];
+
 						// 符号を考慮して値を計算します。
 						if (node->value.type == DataType::INTEGER){
 							node->value = Data(node->value.integer() * node->signCoefficient);
@@ -1032,8 +1025,8 @@ const shared_ptr<const vector<const vector<const Data>>> OutputData::outputRows(
 					}
 					break;
 				}
-				node->Operate();
 			}
+			queryInfo.whereTopNode->Operate();
 
 			// 条件に合わない行は出力から削除します。
 			if (!queryInfo.whereTopNode->value.boolean()){
