@@ -764,7 +764,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 						}
 					}
 					else if (tokenCursol->kind == TokenKind::INT_LITERAL){
-						currentNode->value = Data(atoi(tokenCursol->word.c_str()));
+						currentNode->value = Data(stoi(tokenCursol->word));
 						++tokenCursol;
 					}
 					else if (tokenCursol->kind == TokenKind::STRING_LITERAL){
@@ -969,7 +969,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 
 					// 符号と数字以外が見つからない列については、数値列に変換します。
 					for (auto& inputRow : inputData[i]){
-						inputRow[j] = Data(atoi(inputRow[j].string().c_str()));
+						inputRow[j] = Data(stoi(inputRow[j].string()));
 					}
 				}
 			}
