@@ -130,6 +130,18 @@ class Token
 public:
 	TokenKind kind; //!< トークンの種類です。
 	char word[MAX_WORD_LENGTH]; //!< 記録されているトークンの文字列です。記録の必要がなければ空白です。
+
+	//! Tokenクラスの新しいインスタンスを初期化します。
+	Token();
+
+	//! Tokenクラスの新しいインスタンスを初期化します。
+	//! @param [in] kind トークンの種類です。
+	Token(const TokenKind kind);
+
+	//! Tokenクラスの新しいインスタンスを初期化します。
+	//! @param [in] kind トークンの種類です。
+	//! @param [in] word 記録されているトークンの文字列です。記録の必要がなければ空白です。
+	Token(const TokenKind kind, const char *word);
 };
 
 //! 指定された列の情報です。どのテーブルに所属するかの情報も含みます。
@@ -202,6 +214,25 @@ Operator::Operator()
 //! @param [in] order 演算子の優先順位です。
 Operator::Operator(const TokenKind kind, const int order) : kind(kind), order(order)
 {
+}
+
+//! Tokenクラスの新しいインスタンスを初期化します。
+Token::Token() : Token(TokenKind::NOT_TOKEN, "")
+{
+}
+
+//! Tokenクラスの新しいインスタンスを初期化します。
+//! @param [in] kind トークンの種類です。
+Token::Token(const TokenKind kind) : Token(kind, "")
+{
+}
+
+//! Tokenクラスの新しいインスタンスを初期化します。
+//! @param [in] kind トークンの種類です。
+//! @param [in] word 記録されているトークンの文字列です。記録の必要がなければ空白です。
+Token::Token(const TokenKind kind, const char *word) :kind(kind)
+{
+	strncpy(this->word, word, max(MAX_DATA_LENGTH, MAX_WORD_LENGTH));
 }
 
 //! カレントディレクトリにあるCSVに対し、簡易的なSQLを実行し、結果をファイルに出力します。
@@ -385,7 +416,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 			charactorBackPoint = charactorCursol;
 			for (search = num; *search && *charactorCursol != *search; ++search){}
 			if (*search){
-				Token literal = { TokenKind::INT_LITERAL, "" }; // 読み込んだ数値リテラルの情報です。
+				Token literal{TokenKind::INT_LITERAL}; // 読み込んだ数値リテラルの情報です。
 				int wordLength = 0; // 数値リテラルに現在読み込んでいる文字の数です。
 
 				// 数字が続く間、文字を読み込み続けます。
@@ -421,7 +452,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 			// メトリクス測定ツールのccccはシングルクォートの文字リテラル中のエスケープを認識しないため、文字リテラルを使わないことで回避しています。
 			if (*charactorCursol == "\'"[0]){
 				++charactorCursol;
-				Token literal = { TokenKind::STRING_LITERAL, "\'" }; // 読み込んだ文字列リテラルの情報です。
+				Token literal{TokenKind::STRING_LITERAL, "\'"}; // 読み込んだ文字列リテラルの情報です。
 				int wordLength = 1; // 文字列リテラルに現在読み込んでいる文字の数です。初期値の段階で最初のシングルクォートは読み込んでいます。
 
 				// 次のシングルクォートがくるまで文字を読み込み続けます。
@@ -472,7 +503,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 					if (MAX_TOKEN_COUNT <= tokensNum){
 						throw ResultValue::ERR_MEMORY_OVER;
 					}
-					tokens[tokensNum++] = { condition.kind, "" };
+					tokens[tokensNum++] = Token(condition.kind);
 					found = true;
 				}
 				else{
@@ -516,7 +547,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 			// 識別子の最初の文字を確認します。
 			for (search = alpahUnder; *search && *charactorCursol != *search; ++search){};
 			if (*search){
-				Token identifier = { TokenKind::IDENTIFIER, "" }; // 読み込んだ識別子の情報です。
+				Token identifier{ TokenKind::IDENTIFIER}; // 読み込んだ識別子の情報です。
 				int wordLength = 0; // 識別子に現在読み込んでいる文字の数です。
 				do {
 					// 二文字目以降は数字も許可して文字の種類を確認します。
