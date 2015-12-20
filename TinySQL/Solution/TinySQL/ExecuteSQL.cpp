@@ -2745,6 +2745,18 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 		currentNode->signCoefficient = -1;
 	});
 
+	auto WHERE_COLUMN = COLUMN->Action([&]{
+		currentNode->column = column;
+	});
+
+	auto WHERE_INT_LITERAL = INT_LITERAL->Action([&](const Token token){
+		currentNode->value = Data::New(stoi(token.word));
+	});
+
+	auto WHERE_STRING_LITERAL = STRING_LITERAL->Action([&](const Token token){
+		currentNode->value = Data::New(token.word.substr(1, token.word.size() - 2));
+	});
+
 	// 記号の意味
 	// A >> B		:Aの後にBが続く
 	// -A			:Aが任意
@@ -2834,35 +2846,9 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 
 				WHERE_UNIAEY_PLUS_MINUS->Parse(tokenCursol);
 
-				// 列名、整数リテラル、文字列リテラルのいずれかをオペランドとして読み込みます。
-				if (tokenCursol->kind == TokenKind::IDENTIFIER){
+				auto OPERAND = WHERE_COLUMN | WHERE_INT_LITERAL | WHERE_STRING_LITERAL;
 
-					// テーブル名が指定されていない場合と仮定して読み込みます。
-					currentNode->column = Column(tokenCursol->word);
-					++tokenCursol;
-					if (tokenCursol->kind == TokenKind::DOT){
-						++tokenCursol;
-						if (tokenCursol->kind == TokenKind::IDENTIFIER){
-
-							// テーブル名が指定されていることがわかったので読み替えます。
-							currentNode->column = Column(currentNode->column.columnName, tokenCursol->word);
-							++tokenCursol;
-						}
-						else{
-							throw ResultValue::ERR_SQL_SYNTAX;
-						}
-					}
-				}
-				else if (tokenCursol->kind == TokenKind::INT_LITERAL){
-					currentNode->value = Data::New(stoi(tokenCursol->word));
-					++tokenCursol;
-				}
-				else if (tokenCursol->kind == TokenKind::STRING_LITERAL){
-					// 前後のシングルクォートを取り去った文字列をデータとして読み込みます。
-					currentNode->value = Data::New(tokenCursol->word.substr(1, tokenCursol->word.size() - 2));
-					++tokenCursol;
-				}
-				else{
+				if (!OPERAND->Parse(tokenCursol)){
 					throw ResultValue::ERR_SQL_SYNTAX;
 				}
 
