@@ -379,7 +379,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 	const string alpahUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ"; // 全てのアルファベットの大文字小文字とアンダーバーです。
 	const string alpahNumUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; // 全ての数字とアルファベットの大文字小文字とアンダーバーです。
 	const string signNum = "+-0123456789"; // 全ての符号と数字です。
-	const char *num = "0123456789"; // 全ての数字です。
+	const string num = "0123456789"; // 全ての数字です。
 	const char* space = " \t\r\n"; // 全ての空白文字です。
 
 	// SQLからトークンを読み込みます。
@@ -459,14 +459,14 @@ int ExecuteSQL(const string sql, const string outputFileName)
 
 			// 先頭文字が数字であるかどうかを確認します。
 			charactorBackPoint = charactorCursol;
-			for (search = num; *search && *charactorCursol != *search; ++search){}
+			for (search = num.c_str(); *search && *charactorCursol != *search; ++search){}
 			if (*search){
 				Token literal{TokenKind::INT_LITERAL}; // 読み込んだ数値リテラルの情報です。
 				int wordLength = 0; // 数値リテラルに現在読み込んでいる文字の数です。
 
 				// 数字が続く間、文字を読み込み続けます。
 				do {
-					for (search = num; *search && *charactorCursol != *search; ++search){}
+					for (search = num.c_str(); *search && *charactorCursol != *search; ++search){}
 					if (*search){
 						if (MAX_WORD_LENGTH - 1 <= wordLength){
 							throw ResultValue::ERR_MEMORY_OVER;
