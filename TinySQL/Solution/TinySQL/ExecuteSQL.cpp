@@ -160,6 +160,7 @@ public:
 	string tableName; //!< 列が所属するテーブル名です。指定されていない場合は空文字列となります。
 	string columnName; //!< 指定された列の列名です。
 	int allColumnsIndex; //!< 全てのテーブルのすべての列の中で、この列が何番目かです。
+	string outputName; //!< この列を出力する時の表示名です。
 
 	//! Columnクラスの新しいインスタンスを初期化します。
 	Column();
@@ -196,22 +197,6 @@ public:
 
 	//! ExtensionTreeNodeクラスの新しいインスタンスを初期化します。
 	ExtensionTreeNode();
-};
-
-//! 行の情報を入力のテーブルインデックス、列インデックスの形で持ちます。
-class ColumnIndex
-{
-public:
-	int table;  //!< 列が入力の何テーブル目の列かです。
-	int column; //!< 列が入力のテーブルの何列目かです。
-
-	//! Columnクラスの新しいインスタンスを初期化します。
-	ColumnIndex();
-
-	//! Columnクラスの新しいインスタンスを初期化します。
-	//! @param [in] table 列が入力の何テーブル目の列かです。
-	//! @param [in] column 列が入力のテーブルの何列目かです。
-	ColumnIndex(const int table, const int column);
 };
 
 //! SqlQueryの構文情報を扱うクラスです。
@@ -564,6 +549,7 @@ void Column::SetAllColumns(const vector<const InputTable> &inputTables)
 				found = true;
 				// 見つかった値を持つ列のデータを生成します。
 				allColumnsIndex = i;
+				outputName = inputColumn.columnName;
 			}
 			++i;
 		}
@@ -576,18 +562,6 @@ void Column::SetAllColumns(const vector<const InputTable> &inputTables)
 
 //! ExtensionTreeNodeクラスの新しいインスタンスを初期化します。
 ExtensionTreeNode::ExtensionTreeNode()
-{
-}
-
-//! Columnクラスの新しいインスタンスを初期化します。
-ColumnIndex::ColumnIndex() : ColumnIndex(0, 0)
-{
-}
-
-//! Columnクラスの新しいインスタンスを初期化します。
-//! @param [in] table 列が入力の何テーブル目の列かです。
-//! @param [in] column 列が入力のテーブルの何列目かです。
-ColumnIndex::ColumnIndex(const int table, const int column) : table(table), column(column)
 {
 }
 
@@ -787,46 +761,10 @@ void OutputData::WriteCsv(const string outputFileName, const vector<const InputT
 		copy(allInputColumns.begin(), allInputColumns.end(), back_inserter(queryInfo.selectColumns));
 	}
 
-	vector<Column> outputColumns; // 出力するすべての行の情報です。
-
 	// SELECT句で指定された列名が、何個目の入力ファイルの何列目に相当するかを判別します。
 	for (auto &selectColumn : queryInfo.selectColumns){
 		selectColumn.SetAllColumns(inputTables);
 	}
-	vector<ColumnIndex> selectColumnIndexes; // SELECT句で指定された列の、入力ファイルとしてのインデックスです。
-
-	for (auto &selectColumn : queryInfo.selectColumns){
-		bool found = false;
-		for (size_t i = 0; i < queryInfo.tableNames.size(); ++i){
-			int j = 0;
-			for (auto &inputColumn : *inputTables[i].columns()){
-				if (Equali(selectColumn.columnName, inputColumn.columnName) &&
-					(selectColumn.tableName.empty() || // テーブル名が設定されている場合のみテーブル名の比較を行います。
-					Equali(selectColumn.tableName, inputColumn.tableName))){
-
-					// 既に見つかっているのにもう一つ見つかったらエラーです。
-					if (found){
-						throw ResultValue::ERR_BAD_COLUMN_NAME;
-					}
-					found = true;
-					// 見つかった値を持つ列のデータを生成します。
-					selectColumnIndexes.push_back(ColumnIndex(i, j));
-				}
-				++j;
-			}
-		}
-		// 一つも見つからなくてもエラーです。
-		if (!found){
-			throw ResultValue::ERR_BAD_COLUMN_NAME;
-		}
-	}
-
-	// 出力する列名を設定します。
-	transform(
-		selectColumnIndexes.begin(),
-		selectColumnIndexes.end(),
-		back_inserter(outputColumns),
-		[&](const ColumnIndex& index){return (*inputTables[index.table].columns())[index.column]; });
 
 	if (queryInfo.whereTopNode){
 		// 既存数値の符号を計算します。
@@ -1137,7 +1075,7 @@ void OutputData::WriteCsv(const string outputFileName, const vector<const InputT
 
 	// 出力ファイルに列名を出力します。
 	for (size_t i = 0; i < queryInfo.selectColumns.size(); ++i){
-		outputFile << outputColumns[i].columnName;
+		outputFile << queryInfo.selectColumns[i].outputName;
 		if (i < queryInfo.selectColumns.size() - 1){
 			outputFile << ",";
 		}
