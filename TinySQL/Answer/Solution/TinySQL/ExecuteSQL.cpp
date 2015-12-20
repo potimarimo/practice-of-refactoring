@@ -5,6 +5,8 @@
 #include <algorithm>
 #pragma warning(disable:4996)
 
+using namespace std;
+
 #define MAX_FILE_LINE_LENGTH 4096          //!< 読み込むファイルの一行の最大長です。
 #define MAX_WORD_LENGTH 256                //!< SQLの一語の最大長です。
 #define MAX_DATA_LENGTH 256                //!< 入出力されるデータの、各列の最大長です。
@@ -80,7 +82,7 @@ enum class TokenKind
 class Data
 {
 public:
-	DataType type; //!< データの型です。
+	DataType type = DataType::STRING; //!< データの型です。
 
 	//! 実際のデータを格納する共用体です。
 	union
@@ -89,6 +91,21 @@ public:
 		int integer;                  //!< データが整数型の場合の値です。
 		bool boolean;                 //!< データが真偽値型の場合の値です。
 	} value;
+
+	//! Dataクラスの新しいインスタンスを初期化します。
+	Data();
+
+	//! Dataクラスの新しいインスタンスを初期化します。
+	//! @param [in] value データの値です。
+	Data(const char* value);
+
+	//! Dataクラスの新しいインスタンスを初期化します。
+	//! @param [in] value データの値です。
+	Data(const int value);
+
+	//! Dataクラスの新しいインスタンスを初期化します。
+	//! @param [in] value データの値です。
+	Data(const bool value);
 };
 
 //! WHERE句に指定する演算子の情報を表します。
@@ -140,6 +157,32 @@ public:
 };
 
 // 以上ヘッダに相当する部分。
+
+//! Dataクラスの新しいインスタンスを初期化します。
+Data::Data() :value({ "" })
+{
+}
+
+//! Dataクラスの新しいインスタンスを初期化します。
+//! @param [in] value データの値です。
+Data::Data(const char* value) : value({ "" })
+{
+	strncpy(this->value.string, value, max(MAX_DATA_LENGTH, MAX_WORD_LENGTH));
+}
+
+//! Dataクラスの新しいインスタンスを初期化します。
+//! @param [in] value データの値です。
+Data::Data(const int value) : type(DataType::INTEGER)
+{
+	this->value.integer = value;
+}
+
+//! Dataクラスの新しいインスタンスを初期化します。
+//! @param [in] value データの値です。
+Data::Data(const bool value) : type(DataType::BOOLEAN)
+{
+	this->value.boolean = value;
+}
 
 //! カレントディレクトリにあるCSVに対し、簡易的なSQLを実行し、結果をファイルに出力します。
 //! @param [in] sql 実行するSQLです。
@@ -520,7 +563,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 				1,
 				{ "", "" },
 				false,
-				{ DataType::STRING, { "" } },
+				Data(),
 			};
 		}
 		int whereExtensionNodesNum = 0; // 現在読み込まれているのwhereExtensionNodesの数です。
@@ -714,12 +757,11 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 						}
 					}
 					else if (tokenCursol->kind == TokenKind::INT_LITERAL){
-						currentNode->value = { DataType::INTEGER, { "" } };
-						currentNode->value.value.integer = atoi(tokenCursol->word);
+						currentNode->value = Data(atoi(tokenCursol->word));
 						++tokenCursol;
 					}
 					else if (tokenCursol->kind == TokenKind::STRING_LITERAL){
-						currentNode->value = { DataType::STRING, { "" } };
+						currentNode->value = Data();
 
 						// 前後のシングルクォートを取り去った文字列をデータとして読み込みます。
 						strncpy(currentNode->value.value.string, tokenCursol->word + 1, std::min(MAX_WORD_LENGTH, MAX_DATA_LENGTH));
@@ -930,7 +972,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 					if (!row[columnNum]){
 						throw ResultValue::ERR_MEMORY_ALLOCATE;
 					}
-					*row[columnNum] = { DataType::STRING, { "" } };
+					*row[columnNum] = Data("");
 					char *writeCursol = row[columnNum++]->value.string; // データ文字列の書き込みに利用するカーソルです。
 
 					// データ文字列を一つ読みます。
@@ -979,9 +1021,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 				if (!found){
 					currentRow = inputData[i];
 					while (*currentRow){
-						int integer = atoi((*currentRow)[j]->value.string);
-						*(*currentRow)[j] = { DataType::INTEGER, { "" } };
-						(*currentRow)[j]->value.integer = integer;
+						*(*currentRow)[j] = Data(atoi((*currentRow)[j]->value.string));
 						++currentRow;
 					}
 				}
