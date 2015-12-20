@@ -795,6 +795,35 @@ public:
 //! @params [in] parser2 二つ目のParserです。
 const shared_ptr<const SequenceParser> operator>>(const shared_ptr<const Parser> parser1, const shared_ptr<const Parser> parser2);
 
+//! 二つの規則のどちらかを読み取るパーサーです。
+class OrderedChoiceParser : public Parser
+{
+	const shared_ptr<const Parser> m_parser1; //!< 一つ目のパーサーです。
+	const shared_ptr<const Parser> m_parser2; //!< 二つ目のパーサーです。
+	const function<void(void)> m_action; //!< 読み取りが成功したら実行する処理です。
+public:
+	//! OrderedChoiceParserクラスの新しいインスタンスを初期化します。
+	//! @param [in] 読み取りが成功したら実行する処理です。
+	//! @params [in] parser1 一つ目のParserです。
+	//! @params [in] parser2 二つ目目のParserです。
+	OrderedChoiceParser(const function<void(void)> action, const shared_ptr<const Parser> parser1, const shared_ptr<const Parser> parser2);
+
+	//! OrderedChoiceParserクラスの新しいインスタンスを初期化します。
+	//! @params [in] parser1 一つ目のParserです。
+	//! @params [in] parser2 二つ目のParserです。
+	OrderedChoiceParser(const shared_ptr<const Parser> parser1, const shared_ptr<const Parser> parser2);
+
+	//! 読み取りが成功したら実行する処理を登録します。
+	//! @param [in] 読み取りが成功したら実行する処理です。
+	const shared_ptr<const OrderedChoiceParser> Action(const function<void(void)> action) const;
+
+	//! 二つの規則に対するパースを行います。
+	//! @params [in] cursol 現在の読み取り位置を表すカーソルです。
+	//! @return パースが成功したかどうかです。
+	const bool Parse(vector<const Token>::const_iterator& cursol) const override;
+};
+
+
 //! 存在しなくても失敗とならない規則を読み取るパーサーです。
 class OptionalParser : public Parser
 {
@@ -2042,6 +2071,39 @@ const shared_ptr<const SequenceParser> operator>>(const shared_ptr<const Parser>
 	return make_shared<SequenceParser>(parser1, parser2);
 }
 
+//! SequenceParserクラスの新しいインスタンスを初期化します。
+//! @param [in] 読み取りが成功したら実行する処理です。
+//! @params [in] parser1 一つ目のParserです。
+//! @params [in] parser2 二つ目目のParserです。
+OrderedChoiceParser::OrderedChoiceParser(const function<void(void)> action, const shared_ptr<const Parser> parser1, const shared_ptr<const Parser> parser2) : m_action(action), m_parser1(parser1), m_parser2(parser2){}
+
+
+//! SequenceParserクラスの新しいインスタンスを初期化します。
+//! @params [in] parser1 一つ目のParserです。
+//! @params [in] parser2 二つ目のParserです。
+OrderedChoiceParser::OrderedChoiceParser(const shared_ptr<const Parser> parser1, const shared_ptr<const Parser> parser2) : m_parser1(parser1), m_parser2(parser2){}
+
+//! 読み取りが成功したら実行する処理を登録します。
+//! @param [in] 読み取りが成功したら実行する処理です。
+const shared_ptr<const OrderedChoiceParser> OrderedChoiceParser::Action(const function<void(void)> action) const
+{
+	return make_shared<OrderedChoiceParser>(action, m_parser1, m_parser2);
+}
+
+//! 二つの規則に対するパースを行います。
+//! @params [in] cursol 現在の読み取り位置を表すカーソルです。
+//! @return パースが成功したかどうかです。
+const bool OrderedChoiceParser::Parse(vector<const Token>::const_iterator& cursol) const
+{
+	if (m_parser1->Parse(cursol) || m_parser2->Parse(cursol)){
+		if (m_action){
+			m_action();
+		}
+		return true;
+	}
+	return false;
+}
+
 //! OptionalParserクラスの新しいインスタンスを初期化します。
 //! @param [in] 読み取りが成功したら実行する処理です。
 //! @params [in] optional 存在してもしなくてもよい規則です。
@@ -2565,7 +2627,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 
 	auto SELECT_COLUMN = FIRST_SELECT_COLUMN_NAME >> -(DOT >> SECOND_SELECT_COLUMN_NAME);
 
-	auto SELECT_COLUMNS = SELECT_COLUMN >> ~(COMMA >> SELECT_COLUMN);
+	auto SELECT_COLUMNS = make_shared<OrderedChoiceParser>(token(TokenKind::ASTERISK), SELECT_COLUMN >> ~(COMMA >> SELECT_COLUMN));
 
 	auto tokenCursol = tokens.begin(); // 現在見ているトークンを指します。
 
@@ -2573,14 +2635,8 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 		throw ResultValue::ERR_SQL_SYNTAX;
 	}
 
-	if (tokenCursol->kind == TokenKind::ASTERISK){
-		++tokenCursol;
-	}
-	else
-	{
-		if (!SELECT_COLUMNS->Parse(tokenCursol)){
-			throw ResultValue::ERR_SQL_SYNTAX;
-		}
+	if (!SELECT_COLUMNS->Parse(tokenCursol)){
+		throw ResultValue::ERR_SQL_SYNTAX;
 	}
 
 	// ORDER句とWHERE句を読み込みます。最大各一回ずつ書くことができます。
