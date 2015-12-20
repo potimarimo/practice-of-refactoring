@@ -760,6 +760,10 @@ public:
 	//! 読み取りが成功したら実行する処理を登録します。
 	//! @param [in] 読み取りが成功したら実行する処理です。
 	const shared_ptr<const TokenParser> Action(const function<void(const Token)> action) const;
+
+	//! 二つのTokenPerserを元に複数の種類をとるTokenParserクラスの新しいインスタンスを初期化します。
+	//! @params [in] parser 追加する種類ののParserです。
+	const shared_ptr<const TokenParser> or(const shared_ptr<const TokenParser> parser) const;
 };
 
 //! トークンのパーサーを生成します。
@@ -2031,6 +2035,10 @@ TokenParser::TokenParser(function<void(const Token)> action, const vector<const 
 
 //! TokenParserクラスの新しいインスタンスを初期化します。
 //! @params [in] kind 読み取るトークンの種類です。
+TokenParser::TokenParser(const vector<const TokenKind> kinds) : m_kinds(kinds){}
+
+//! TokenParserクラスの新しいインスタンスを初期化します。
+//! @params [in] kind 読み取るトークンの種類です。
 TokenParser::TokenParser(TokenKind kind) : m_kinds({ kind }){}
 
 //! トークンに対するパースを行います。
@@ -2063,6 +2071,16 @@ const shared_ptr<const TokenParser> TokenParser::Action(const function<void(cons
 const shared_ptr<TokenParser> token(TokenKind kind)
 {
 	return make_shared<TokenParser>(kind);
+}
+
+//! 二つのTokenPerserを元に複数の種類をとるTokenParserクラスの新しいインスタンスを初期化します。
+//! @params [in] parser1 元のParserです。
+//! @params [in] parser2 追加する種類ののParserです。
+const shared_ptr<const TokenParser> TokenParser::or(const shared_ptr<const TokenParser> parser) const
+{
+	vector<const TokenKind> newKinds(m_kinds);
+	copy(parser->m_kinds.begin(), parser->m_kinds.end(), back_inserter(newKinds));
+	return make_shared<TokenParser>(newKinds);
 }
 
 //! SequenceParserクラスの新しいインスタンスを初期化します。
@@ -2881,9 +2899,9 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 
 				(~WHERE_CLOSE_PAREN)->Parse(tokenCursol);
 
-				 auto OPERATORS = (ASTERISK | SLASH | PLUS | MINUS | EQUAL | GREATER_THAN | GREATER_THAN_OR_EQUAL | LESS_THAN | LESS_THAN_OR_EQUAL | NOT_EQUAL | AND | AND | OR)->Action([&]{
+				 auto OPERATORS = ASTERISK->or(SLASH)->or(PLUS)->or(MINUS)->or(EQUAL)->or(GREATER_THAN)->or(GREATER_THAN_OR_EQUAL)->or(LESS_THAN)->or(LESS_THAN_OR_EQUAL)->or(NOT_EQUAL)->or(AND)->or(AND)->or(OR)->Action([&](const Token token){
 					// 演算子(オペレーターを読み込みます。
-					auto foundOperator = find_if(operators.begin(), operators.end(), [&](const Operator& op){return op.kind == tokenCursol[-1].kind; }); // 現在読み込んでいる演算子の情報です。
+					auto foundOperator = find_if(operators.begin(), operators.end(), [&](const Operator& op){return op.kind == token.kind; }); // 現在読み込んでいる演算子の情報です。
 
 					// 現在見ている演算子の情報を探します。
 					// 見つかった演算子の情報をもとにノードを入れ替えます。
