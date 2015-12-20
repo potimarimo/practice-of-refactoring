@@ -80,16 +80,15 @@ enum class TokenKind
 //! 一つの値を持つデータです。
 class Data
 {
-public:
-	DataType type = DataType::STRING; //!< データの型です。
-
 	//! 実際のデータを格納する共用体です。
 	union
 	{
 		char string[MAX_DATA_LENGTH]; //!< データが文字列型の場合の値です。
 		int integer;                  //!< データが整数型の場合の値です。
 		bool boolean;                 //!< データが真偽値型の場合の値です。
-	} value;
+	} m_value;
+public:
+	DataType type = DataType::STRING; //!< データの型です。
 
 	//! Dataクラスの新しいインスタンスを初期化します。
 	Data();
@@ -213,29 +212,29 @@ public:
 // 以上ヘッダに相当する部分。
 
 //! Dataクラスの新しいインスタンスを初期化します。
-Data::Data() :value({ "" })
+Data::Data() :m_value({ "" })
 {
 }
 
 //! Dataクラスの新しいインスタンスを初期化します。
 //! @param [in] value データの値です。
-Data::Data(const char* value) : value({ "" })
+Data::Data(const char* value) : m_value({ "" })
 {
-	strncpy(this->value.string, value, max(MAX_DATA_LENGTH, MAX_WORD_LENGTH));
+	strncpy(m_value.string, value, max(MAX_DATA_LENGTH, MAX_WORD_LENGTH));
 }
 
 //! Dataクラスの新しいインスタンスを初期化します。
 //! @param [in] value データの値です。
 Data::Data(const int value) : type(DataType::INTEGER)
 {
-	this->value.integer = value;
+	m_value.integer = value;
 }
 
 //! Dataクラスの新しいインスタンスを初期化します。
 //! @param [in] value データの値です。
 Data::Data(const bool value) : type(DataType::BOOLEAN)
 {
-	this->value.boolean = value;
+	m_value.boolean = value;
 }
 
 
@@ -243,21 +242,21 @@ Data::Data(const bool value) : type(DataType::BOOLEAN)
 //! @return データが文字列型の場合の値です。
 const char* Data::string() const
 {
-	return value.string;
+	return m_value.string;
 }
 
 //! データが整数型の場合の値を取得します。
 //! @return データが整数型の場合の値です。
 const int Data::integer() const
 {
-	return value.integer;
+	return m_value.integer;
 }
 
 //! データが真偽値型の場合の値を取得します。
 //! @return データが真偽値型の場合の値です。
 const int Data::boolean() const
 {
-	return value.boolean;
+	return m_value.boolean;
 }
 
 //! Operatorクラスの新しいインスタンスを初期化します。
