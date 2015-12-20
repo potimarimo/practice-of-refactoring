@@ -212,7 +212,6 @@ public:
 //! FROM USERS, CHILDREN                                                                                     @n
 int ExecuteSQL(const char* sql, const char* outputFileName)
 {
-	ResultValue error = ResultValue::OK;                    // 発生したエラーの種類です。
 	FILE *inputTableFiles[MAX_TABLE_COUNT] = { nullptr };   // 読み込む入力ファイルの全てのファイルポインタです。
 	FILE *outputFile = nullptr;                             // 書き込むファイルのファイルポインタです。
 	int result = 0;                                         // 関数の戻り値を一時的に保存します。
@@ -305,1257 +304,1206 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 		strncpy(tableNames[i], "", MAX_WORD_LENGTH);
 	}
 	int tableNamesNum = 0; // 現在読み込まれているテーブル名の数です。
+	try
+	{
+		// SQLをトークンに分割て読み込みます。
+		while (*charactorCursol){
 
-	// SQLをトークンに分割て読み込みます。
-	while (*charactorCursol){
-
-		// 空白を読み飛ばします。
-		for (search = space; *search && *charactorCursol != *search; ++search){}
-		if (*search){
-			charactorCursol++;
-			continue;
-		}
-
-		// 数値リテラルを読み込みます。
-
-		// 先頭文字が数字であるかどうかを確認します。
-		charactorBackPoint = charactorCursol;
-		for (search = num; *search && *charactorCursol != *search; ++search){}
-		if (*search){
-			Token literal = { TokenKind::INT_LITERAL, "" }; // 読み込んだ数値リテラルの情報です。
-			int wordLength = 0; // 数値リテラルに現在読み込んでいる文字の数です。
-
-			// 数字が続く間、文字を読み込み続けます。
-			do {
-				for (search = num; *search && *charactorCursol != *search; ++search){}
-				if (*search){
-					if (MAX_WORD_LENGTH - 1 <= wordLength){
-						error = ResultValue::ERR_MEMORY_OVER;
-						goto ERROR;
-					}
-					literal.word[wordLength++] = *search;
-					++charactorCursol;
-				}
-			} while (*search);
-
-			// 数字の後にすぐに識別子が続くのは紛らわしいので数値リテラルとは扱いません。
-			for (search = alpahUnder; *search && *charactorCursol != *search; ++search){}
-			if (!*search){
-				literal.word[wordLength] = '\0';
-				if (MAX_TOKEN_COUNT <= tokensNum){
-					error = ResultValue::ERR_MEMORY_OVER;
-					goto ERROR;
-				}
-				tokens[tokensNum++] = literal;
+			// 空白を読み飛ばします。
+			for (search = space; *search && *charactorCursol != *search; ++search){}
+			if (*search){
+				charactorCursol++;
 				continue;
 			}
-			else{
-				charactorCursol = charactorBackPoint;
-			}
-		}
 
-		// 文字列リテラルを読み込みます。
+			// 数値リテラルを読み込みます。
 
-		// 文字列リテラルを開始するシングルクォートを判別し、読み込みます。
-		// メトリクス測定ツールのccccはシングルクォートの文字リテラル中のエスケープを認識しないため、文字リテラルを使わないことで回避しています。
-		if (*charactorCursol == "\'"[0]){
-			++charactorCursol;
-			Token literal = { TokenKind::STRING_LITERAL, "\'" }; // 読み込んだ文字列リテラルの情報です。
-			int wordLength = 1; // 文字列リテラルに現在読み込んでいる文字の数です。初期値の段階で最初のシングルクォートは読み込んでいます。
-
-			// 次のシングルクォートがくるまで文字を読み込み続けます。
-			while (*charactorCursol && *charactorCursol != "\'"[0]){
-				if (MAX_WORD_LENGTH - 1 <= wordLength){
-					error = ResultValue::ERR_MEMORY_OVER;
-					goto ERROR;
-				}
-				literal.word[wordLength++] = *charactorCursol++;
-			}
-			if (*charactorCursol == "\'"[0]){
-				if (MAX_WORD_LENGTH - 1 <= wordLength){
-					error = ResultValue::ERR_MEMORY_OVER;
-					goto ERROR;
-				}
-				// 最後のシングルクォートを読み込みます。
-				literal.word[wordLength++] = *charactorCursol++;
-
-				// 文字列の終端文字をつけます。
-				literal.word[wordLength] = '\0';
-				if (MAX_TOKEN_COUNT <= tokensNum){
-					error = ResultValue::ERR_MEMORY_OVER;
-					goto ERROR;
-				}
-				tokens[tokensNum++] = literal;
-				continue;
-			}
-			else{
-				error = ResultValue::ERR_TOKEN_CANT_READ;
-				goto ERROR;
-			}
-		}
-
-		// キーワードを読み込みます。
-		found = false;
-		for (size_t i = 0; i < sizeof(keywordConditions) / sizeof(keywordConditions[0]); ++i){
+			// 先頭文字が数字であるかどうかを確認します。
 			charactorBackPoint = charactorCursol;
-			Token condition = keywordConditions[i]; // 確認するキーワードの条件です。
-			char *wordCursol = condition.word; // 確認するキーワードの文字列のうち、現在確認している一文字を指します。
+			for (search = num; *search && *charactorCursol != *search; ++search){}
+			if (*search){
+				Token literal = { TokenKind::INT_LITERAL, "" }; // 読み込んだ数値リテラルの情報です。
+				int wordLength = 0; // 数値リテラルに現在読み込んでいる文字の数です。
 
-			// キーワードが指定した文字列となっているか確認します。
-			while (*wordCursol && toupper(*charactorCursol++) == *wordCursol){
-				++wordCursol;
-			}
-
-			// キーワードに識別子が区切りなしに続いていないかを確認するため、キーワードの終わった一文字あとを調べます。
-			for (search = alpahNumUnder; *search && *charactorCursol != *search; ++search){};
-
-			if (!*wordCursol && !*search){
-
-				// 見つかったキーワードを生成します。
-				if (MAX_TOKEN_COUNT <= tokensNum){
-					error = ResultValue::ERR_MEMORY_OVER;
-					goto ERROR;
-				}
-				tokens[tokensNum++] = { condition.kind, "" };
-				found = true;
-			}
-			else{
-				charactorCursol = charactorBackPoint;
-			}
-		}
-		if (found){
-			continue;
-		}
-
-		// 記号を読み込みます。
-		found = false;
-		for (size_t i = 0; i < sizeof(signConditions) / sizeof(Token); ++i){
-			charactorBackPoint = charactorCursol;
-			Token condition = signConditions[i]; // 確認する記号の条件です。
-			char *wordCursol = condition.word; // 確認する記号の文字列のうち、現在確認している一文字を指します。
-
-			// 記号が指定した文字列となっているか確認します。
-			while (*wordCursol && toupper(*charactorCursol++) == *wordCursol){
-				++wordCursol;
-			}
-			if (!*wordCursol){
-
-				// 見つかった記号を生成します。
-				if (MAX_TOKEN_COUNT <= tokensNum){
-					error = ResultValue::ERR_MEMORY_OVER;
-					goto ERROR;
-				}
-				tokens[tokensNum++] = { condition.kind, "" };
-				found = true;
-			}
-			else{
-				charactorCursol = charactorBackPoint;
-			}
-		}
-		if (found){
-			continue;
-		}
-
-		// 識別子を読み込みます。
-
-		// 識別子の最初の文字を確認します。
-		for (search = alpahUnder; *search && *charactorCursol != *search; ++search){};
-		if (*search){
-			Token identifier = { TokenKind::IDENTIFIER, "" }; // 読み込んだ識別子の情報です。
-			int wordLength = 0; // 識別子に現在読み込んでいる文字の数です。
-			do {
-				// 二文字目以降は数字も許可して文字の種類を確認します。
-				for (search = alpahNumUnder; *search && *charactorCursol != *search; ++search){};
-				if (*search){
-					if (MAX_WORD_LENGTH - 1 <= wordLength){
-						error = ResultValue::ERR_MEMORY_OVER;
-						goto ERROR;
-					}
-					identifier.word[wordLength++] = *search;
-					charactorCursol++;
-				}
-			} while (*search);
-
-			// 識別子の文字列の終端文字を設定します。
-			identifier.word[wordLength] = '\0';
-
-			// 読み込んだ識別子を登録します。
-			if (MAX_TOKEN_COUNT <= tokensNum){
-				error = ResultValue::ERR_MEMORY_OVER;
-				goto ERROR;
-			}
-			tokens[tokensNum++] = identifier;
-			continue;
-		}
-		else{
-			charactorCursol = charactorBackPoint;
-		}
-
-		error = ResultValue::ERR_TOKEN_CANT_READ;
-		goto ERROR;
-	}
-
-	// トークン列を解析し、構文を読み取ります。
-
-	Token *tokenCursol = tokens; // 現在見ているトークンを指します。
-
-	Column selectColumns[MAX_TABLE_COUNT * MAX_COLUMN_COUNT]; // SELECT句に指定された列名です。
-	// selectColumnsを初期化します。
-	for (size_t i = 0; i < sizeof(selectColumns) / sizeof(selectColumns[0]); i++)
-	{
-		selectColumns[i] = { "", "" };
-	}
-	int selectColumnsNum = 0; // SELECT句から現在読み込まれた列名の数です。
-
-	Column orderByColumns[MAX_COLUMN_COUNT]; // ORDER句に指定された列名です。
-	// orderByColumnsを初期化します。
-	for (size_t i = 0; i < sizeof(orderByColumns) / sizeof(orderByColumns[0]); i++)
-	{
-		orderByColumns[i] = { "", "" };
-	}
-	int orderByColumnsNum = 0; // ORDER句から現在読み込まれた列名の数です。
-
-	TokenKind orders[MAX_COLUMN_COUNT] = { TokenKind::NOT_TOKEN }; // 同じインデックスのorderByColumnsに対応している、昇順、降順の指定です。
-
-	ExtensionTreeNode whereExtensionNodes[MAX_EXTENSION_TREE_NODE_COUNT]; // WHEREに指定された木のノードを、木構造とは無関係に格納します。
-	// whereExtensionNodesを初期化します。
-	for (size_t i = 0; i < sizeof(whereExtensionNodes) / sizeof(whereExtensionNodes[0]); i++)
-	{
-		whereExtensionNodes[i] = {
-			nullptr,
-			nullptr,
-			{ TokenKind::NOT_TOKEN, 0 },
-			nullptr,
-			false,
-			0,
-			1,
-			{ "", "" },
-			false,
-			{ DataType::STRING, { "" } },
-		};
-	}
-	int whereExtensionNodesNum = 0; // 現在読み込まれているのwhereExtensionNodesの数です。
-
-	ExtensionTreeNode *whereTopNode = nullptr; // 式木の根となるノードです。
-
-	// SQLの構文を解析し、必要な情報を取得します。
-
-	// SELECT句を読み込みます。
-	if (tokenCursol->kind == TokenKind::SELECT){
-		++tokenCursol;
-	}
-	else{
-		error = ResultValue::ERR_SQL_SYNTAX;
-		goto ERROR;
-	}
-
-	if (tokenCursol->kind == TokenKind::ASTERISK){
-		++tokenCursol;
-	}
-	else
-	{
-		bool first = true; // SELECT句に最初に指定された列名の読み込みかどうかです。
-		while (tokenCursol->kind == TokenKind::COMMA || first){
-			if (tokenCursol->kind == TokenKind::COMMA){
-				++tokenCursol;
-			}
-			if (tokenCursol->kind == TokenKind::IDENTIFIER){
-				if (MAX_COLUMN_COUNT <= selectColumnsNum){
-					error = ResultValue::ERR_MEMORY_OVER;
-					goto ERROR;
-				}
-				// テーブル名が指定されていない場合と仮定して読み込みます。
-				strncpy(selectColumns[selectColumnsNum].tableName, "", MAX_WORD_LENGTH);
-				strncpy(selectColumns[selectColumnsNum].columnName, tokenCursol->word, MAX_WORD_LENGTH);
-				++tokenCursol;
-				if (tokenCursol->kind == TokenKind::DOT){
-					++tokenCursol;
-					if (tokenCursol->kind == TokenKind::IDENTIFIER){
-
-						// テーブル名が指定されていることがわかったので読み替えます。
-						strncpy(selectColumns[selectColumnsNum].tableName, selectColumns[selectColumnsNum].columnName, MAX_WORD_LENGTH);
-						strncpy(selectColumns[selectColumnsNum].columnName, tokenCursol->word, MAX_WORD_LENGTH);
-						++tokenCursol;
-					}
-					else{
-						error = ResultValue::ERR_SQL_SYNTAX;
-						goto ERROR;
-					}
-				}
-				++selectColumnsNum;
-			}
-			else{
-				error = ResultValue::ERR_SQL_SYNTAX;
-				goto ERROR;
-			}
-			first = false;
-		}
-	}
-
-	// ORDER句とWHERE句を読み込みます。最大各一回ずつ書くことができます。
-	bool readOrder = false; // すでにORDER句が読み込み済みかどうかです。
-	bool readWhere = false; // すでにWHERE句が読み込み済みかどうかです。
-	while (tokenCursol->kind == TokenKind::ORDER || tokenCursol->kind == TokenKind::WHERE){
-
-		// 二度目のORDER句はエラーです。
-		if (readOrder && tokenCursol->kind == TokenKind::ORDER){
-			error = ResultValue::ERR_SQL_SYNTAX;
-			goto ERROR;
-		}
-
-		// 二度目のWHERE句はエラーです。
-		if (readWhere && tokenCursol->kind == TokenKind::WHERE){
-			error = ResultValue::ERR_SQL_SYNTAX;
-			goto ERROR;
-		}
-		// ORDER句を読み込みます。
-		if (tokenCursol->kind == TokenKind::ORDER){
-			readOrder = true;
-			++tokenCursol;
-			if (tokenCursol->kind == TokenKind::BY){
-				++tokenCursol;
-				bool first = true; // ORDER句の最初の列名の読み込みかどうかです。
-				while (tokenCursol->kind == TokenKind::COMMA || first){
-					if (tokenCursol->kind == TokenKind::COMMA){
-						++tokenCursol;
-					}
-					if (tokenCursol->kind == TokenKind::IDENTIFIER){
-						if (MAX_COLUMN_COUNT <= orderByColumnsNum){
-							error = ResultValue::ERR_MEMORY_OVER;
-							goto ERROR;
+				// 数字が続く間、文字を読み込み続けます。
+				do {
+					for (search = num; *search && *charactorCursol != *search; ++search){}
+					if (*search){
+						if (MAX_WORD_LENGTH - 1 <= wordLength){
+							throw ResultValue::ERR_MEMORY_OVER;
 						}
-						// テーブル名が指定されていない場合と仮定して読み込みます。
-						strncpy(orderByColumns[orderByColumnsNum].tableName, "", MAX_WORD_LENGTH);
-						strncpy(orderByColumns[orderByColumnsNum].columnName, tokenCursol->word, MAX_WORD_LENGTH);
-						++tokenCursol;
-						if (tokenCursol->kind == TokenKind::DOT){
-							++tokenCursol;
-							if (tokenCursol->kind == TokenKind::IDENTIFIER){
-
-								// テーブル名が指定されていることがわかったので読み替えます。
-								strncpy(orderByColumns[orderByColumnsNum].tableName, orderByColumns[orderByColumnsNum].columnName, MAX_WORD_LENGTH);
-								strncpy(orderByColumns[orderByColumnsNum].columnName, tokenCursol->word, MAX_WORD_LENGTH);
-								++tokenCursol;
-							}
-							else{
-								error = ResultValue::ERR_SQL_SYNTAX;
-								goto ERROR;
-							}
-						}
-
-						// 並び替えの昇順、降順を指定します。
-						if (tokenCursol->kind == TokenKind::ASC){
-							orders[orderByColumnsNum] = TokenKind::ASC;
-							++tokenCursol;
-						}
-						else if (tokenCursol->kind == TokenKind::DESC){
-							orders[orderByColumnsNum] = TokenKind::DESC;
-							++tokenCursol;
-						}
-						else{
-							// 指定がない場合は昇順となります。
-							orders[orderByColumnsNum] = TokenKind::ASC;
-						}
-						++orderByColumnsNum;
+						literal.word[wordLength++] = *search;
+						++charactorCursol;
 					}
-					else{
-						error = ResultValue::ERR_SQL_SYNTAX;
-						goto ERROR;
+				} while (*search);
+
+				// 数字の後にすぐに識別子が続くのは紛らわしいので数値リテラルとは扱いません。
+				for (search = alpahUnder; *search && *charactorCursol != *search; ++search){}
+				if (!*search){
+					literal.word[wordLength] = '\0';
+					if (MAX_TOKEN_COUNT <= tokensNum){
+						throw ResultValue::ERR_MEMORY_OVER;
 					}
-					first = false;
-				}
-			}
-			else{
-				error = ResultValue::ERR_SQL_SYNTAX;
-				goto ERROR;
-			}
-		}
-
-		// WHERE句を読み込みます。
-		if (tokenCursol->kind == TokenKind::WHERE){
-			readWhere = true;
-			++tokenCursol;
-			ExtensionTreeNode *currentNode = nullptr; // 現在読み込んでいるノードです。
-			while (true){
-				// オペランドを読み込みます。
-
-				// オペランドのノードを新しく生成します。
-				if (MAX_EXTENSION_TREE_NODE_COUNT <= whereExtensionNodesNum){
-					error = ResultValue::ERR_MEMORY_OVER;
-					goto ERROR;
-				}
-				if (currentNode){
-					// 現在のノードを右の子にずらし、元の位置に新しいノードを挿入します。
-					currentNode->right = &whereExtensionNodes[whereExtensionNodesNum++];
-					currentNode->right->parent = currentNode;
-					currentNode = currentNode->right;
+					tokens[tokensNum++] = literal;
+					continue;
 				}
 				else{
-					// 最初はカレントノードに新しいノードを入れます。
-					currentNode = &whereExtensionNodes[whereExtensionNodesNum++];
+					charactorCursol = charactorBackPoint;
+				}
+			}
+
+			// 文字列リテラルを読み込みます。
+
+			// 文字列リテラルを開始するシングルクォートを判別し、読み込みます。
+			// メトリクス測定ツールのccccはシングルクォートの文字リテラル中のエスケープを認識しないため、文字リテラルを使わないことで回避しています。
+			if (*charactorCursol == "\'"[0]){
+				++charactorCursol;
+				Token literal = { TokenKind::STRING_LITERAL, "\'" }; // 読み込んだ文字列リテラルの情報です。
+				int wordLength = 1; // 文字列リテラルに現在読み込んでいる文字の数です。初期値の段階で最初のシングルクォートは読み込んでいます。
+
+				// 次のシングルクォートがくるまで文字を読み込み続けます。
+				while (*charactorCursol && *charactorCursol != "\'"[0]){
+					if (MAX_WORD_LENGTH - 1 <= wordLength){
+						throw ResultValue::ERR_MEMORY_OVER;
+					}
+					literal.word[wordLength++] = *charactorCursol++;
+				}
+				if (*charactorCursol == "\'"[0]){
+					if (MAX_WORD_LENGTH - 1 <= wordLength){
+						throw ResultValue::ERR_MEMORY_OVER;
+					}
+					// 最後のシングルクォートを読み込みます。
+					literal.word[wordLength++] = *charactorCursol++;
+
+					// 文字列の終端文字をつけます。
+					literal.word[wordLength] = '\0';
+					if (MAX_TOKEN_COUNT <= tokensNum){
+						throw ResultValue::ERR_MEMORY_OVER;
+					}
+					tokens[tokensNum++] = literal;
+					continue;
+				}
+				else{
+					throw ResultValue::ERR_TOKEN_CANT_READ;
+				}
+			}
+
+			// キーワードを読み込みます。
+			found = false;
+			for (size_t i = 0; i < sizeof(keywordConditions) / sizeof(keywordConditions[0]); ++i){
+				charactorBackPoint = charactorCursol;
+				Token condition = keywordConditions[i]; // 確認するキーワードの条件です。
+				char *wordCursol = condition.word; // 確認するキーワードの文字列のうち、現在確認している一文字を指します。
+
+				// キーワードが指定した文字列となっているか確認します。
+				while (*wordCursol && toupper(*charactorCursol++) == *wordCursol){
+					++wordCursol;
 				}
 
-				// カッコ開くを読み込みます。
-				while (tokenCursol->kind == TokenKind::OPEN_PAREN){
-					++currentNode->parenOpenBeforeClose;
+				// キーワードに識別子が区切りなしに続いていないかを確認するため、キーワードの終わった一文字あとを調べます。
+				for (search = alpahNumUnder; *search && *charactorCursol != *search; ++search){};
+
+				if (!*wordCursol && !*search){
+
+					// 見つかったキーワードを生成します。
+					if (MAX_TOKEN_COUNT <= tokensNum){
+						throw ResultValue::ERR_MEMORY_OVER;
+					}
+					tokens[tokensNum++] = { condition.kind, "" };
+					found = true;
+				}
+				else{
+					charactorCursol = charactorBackPoint;
+				}
+			}
+			if (found){
+				continue;
+			}
+
+			// 記号を読み込みます。
+			found = false;
+			for (size_t i = 0; i < sizeof(signConditions) / sizeof(Token); ++i){
+				charactorBackPoint = charactorCursol;
+				Token condition = signConditions[i]; // 確認する記号の条件です。
+				char *wordCursol = condition.word; // 確認する記号の文字列のうち、現在確認している一文字を指します。
+
+				// 記号が指定した文字列となっているか確認します。
+				while (*wordCursol && toupper(*charactorCursol++) == *wordCursol){
+					++wordCursol;
+				}
+				if (!*wordCursol){
+
+					// 見つかった記号を生成します。
+					if (MAX_TOKEN_COUNT <= tokensNum){
+						throw ResultValue::ERR_MEMORY_OVER;
+					}
+					tokens[tokensNum++] = { condition.kind, "" };
+					found = true;
+				}
+				else{
+					charactorCursol = charactorBackPoint;
+				}
+			}
+			if (found){
+				continue;
+			}
+
+			// 識別子を読み込みます。
+
+			// 識別子の最初の文字を確認します。
+			for (search = alpahUnder; *search && *charactorCursol != *search; ++search){};
+			if (*search){
+				Token identifier = { TokenKind::IDENTIFIER, "" }; // 読み込んだ識別子の情報です。
+				int wordLength = 0; // 識別子に現在読み込んでいる文字の数です。
+				do {
+					// 二文字目以降は数字も許可して文字の種類を確認します。
+					for (search = alpahNumUnder; *search && *charactorCursol != *search; ++search){};
+					if (*search){
+						if (MAX_WORD_LENGTH - 1 <= wordLength){
+							throw ResultValue::ERR_MEMORY_OVER;
+						}
+						identifier.word[wordLength++] = *search;
+						charactorCursol++;
+					}
+				} while (*search);
+
+				// 識別子の文字列の終端文字を設定します。
+				identifier.word[wordLength] = '\0';
+
+				// 読み込んだ識別子を登録します。
+				if (MAX_TOKEN_COUNT <= tokensNum){
+					throw ResultValue::ERR_MEMORY_OVER;
+				}
+				tokens[tokensNum++] = identifier;
+				continue;
+			}
+			else{
+				charactorCursol = charactorBackPoint;
+			}
+
+			throw ResultValue::ERR_TOKEN_CANT_READ;
+		}
+
+		// トークン列を解析し、構文を読み取ります。
+
+		Token *tokenCursol = tokens; // 現在見ているトークンを指します。
+
+		Column selectColumns[MAX_TABLE_COUNT * MAX_COLUMN_COUNT]; // SELECT句に指定された列名です。
+		// selectColumnsを初期化します。
+		for (size_t i = 0; i < sizeof(selectColumns) / sizeof(selectColumns[0]); i++)
+		{
+			selectColumns[i] = { "", "" };
+		}
+		int selectColumnsNum = 0; // SELECT句から現在読み込まれた列名の数です。
+
+		Column orderByColumns[MAX_COLUMN_COUNT]; // ORDER句に指定された列名です。
+		// orderByColumnsを初期化します。
+		for (size_t i = 0; i < sizeof(orderByColumns) / sizeof(orderByColumns[0]); i++)
+		{
+			orderByColumns[i] = { "", "" };
+		}
+		int orderByColumnsNum = 0; // ORDER句から現在読み込まれた列名の数です。
+
+		TokenKind orders[MAX_COLUMN_COUNT] = { TokenKind::NOT_TOKEN }; // 同じインデックスのorderByColumnsに対応している、昇順、降順の指定です。
+
+		ExtensionTreeNode whereExtensionNodes[MAX_EXTENSION_TREE_NODE_COUNT]; // WHEREに指定された木のノードを、木構造とは無関係に格納します。
+		// whereExtensionNodesを初期化します。
+		for (size_t i = 0; i < sizeof(whereExtensionNodes) / sizeof(whereExtensionNodes[0]); i++)
+		{
+			whereExtensionNodes[i] = {
+				nullptr,
+				nullptr,
+				{ TokenKind::NOT_TOKEN, 0 },
+				nullptr,
+				false,
+				0,
+				1,
+				{ "", "" },
+				false,
+				{ DataType::STRING, { "" } },
+			};
+		}
+		int whereExtensionNodesNum = 0; // 現在読み込まれているのwhereExtensionNodesの数です。
+
+		ExtensionTreeNode *whereTopNode = nullptr; // 式木の根となるノードです。
+
+		// SQLの構文を解析し、必要な情報を取得します。
+
+		// SELECT句を読み込みます。
+		if (tokenCursol->kind == TokenKind::SELECT){
+			++tokenCursol;
+		}
+		else{
+			throw ResultValue::ERR_SQL_SYNTAX;
+		}
+
+		if (tokenCursol->kind == TokenKind::ASTERISK){
+			++tokenCursol;
+		}
+		else
+		{
+			bool first = true; // SELECT句に最初に指定された列名の読み込みかどうかです。
+			while (tokenCursol->kind == TokenKind::COMMA || first){
+				if (tokenCursol->kind == TokenKind::COMMA){
 					++tokenCursol;
 				}
-
-				// オペランドに前置される+か-を読み込みます。
-				if (tokenCursol->kind == TokenKind::PLUS || tokenCursol->kind == TokenKind::MINUS){
-
-					// +-を前置するのは列名と数値リテラルのみです。
-					if (tokenCursol[1].kind != TokenKind::IDENTIFIER && tokenCursol[1].kind != TokenKind::INT_LITERAL){
-						error = ResultValue::ERR_WHERE_OPERAND_TYPE;
-						goto ERROR;
-					}
-					if (tokenCursol->kind == TokenKind::MINUS){
-						currentNode->signCoefficient = -1;
-					}
-					++tokenCursol;
-				}
-
-				// 列名、整数リテラル、文字列リテラルのいずれかをオペランドとして読み込みます。
 				if (tokenCursol->kind == TokenKind::IDENTIFIER){
-
+					if (MAX_COLUMN_COUNT <= selectColumnsNum){
+						throw ResultValue::ERR_MEMORY_OVER;
+					}
 					// テーブル名が指定されていない場合と仮定して読み込みます。
-					strncpy(currentNode->column.tableName, "", MAX_WORD_LENGTH);
-					strncpy(currentNode->column.columnName, tokenCursol->word, MAX_WORD_LENGTH);
+					strncpy(selectColumns[selectColumnsNum].tableName, "", MAX_WORD_LENGTH);
+					strncpy(selectColumns[selectColumnsNum].columnName, tokenCursol->word, MAX_WORD_LENGTH);
 					++tokenCursol;
 					if (tokenCursol->kind == TokenKind::DOT){
 						++tokenCursol;
 						if (tokenCursol->kind == TokenKind::IDENTIFIER){
 
 							// テーブル名が指定されていることがわかったので読み替えます。
-							strncpy(currentNode->column.tableName, currentNode->column.columnName, MAX_WORD_LENGTH);
-							strncpy(currentNode->column.columnName, tokenCursol->word, MAX_WORD_LENGTH);
+							strncpy(selectColumns[selectColumnsNum].tableName, selectColumns[selectColumnsNum].columnName, MAX_WORD_LENGTH);
+							strncpy(selectColumns[selectColumnsNum].columnName, tokenCursol->word, MAX_WORD_LENGTH);
 							++tokenCursol;
 						}
 						else{
-							error = ResultValue::ERR_SQL_SYNTAX;
-							goto ERROR;
+							throw ResultValue::ERR_SQL_SYNTAX;
 						}
 					}
-				}
-				else if (tokenCursol->kind == TokenKind::INT_LITERAL){
-					currentNode->value = { DataType::INTEGER, { "" } };
-					currentNode->value.value.integer = atoi(tokenCursol->word);
-					++tokenCursol;
-				}
-				else if (tokenCursol->kind == TokenKind::STRING_LITERAL){
-					currentNode->value = { DataType::STRING, { "" } };
-
-					// 前後のシングルクォートを取り去った文字列をデータとして読み込みます。
-					strncpy(currentNode->value.value.string, tokenCursol->word + 1, std::min(MAX_WORD_LENGTH, MAX_DATA_LENGTH));
-					currentNode->value.value.string[MAX_DATA_LENGTH - 1] = '\0';
-					currentNode->value.value.string[strlen(currentNode->value.value.string) - 1] = '\0';
-					++tokenCursol;
+					++selectColumnsNum;
 				}
 				else{
-					error = ResultValue::ERR_SQL_SYNTAX;
-					goto ERROR;
+					throw ResultValue::ERR_SQL_SYNTAX;
 				}
+				first = false;
+			}
+		}
 
-				// オペランドの右のカッコ閉じるを読み込みます。
-				while (tokenCursol->kind == TokenKind::CLOSE_PAREN){
-					ExtensionTreeNode *searchedAncestor = currentNode->parent; // カッコ閉じると対応するカッコ開くを両方含む祖先ノードを探すためのカーソルです。
-					while (searchedAncestor){
+		// ORDER句とWHERE句を読み込みます。最大各一回ずつ書くことができます。
+		bool readOrder = false; // すでにORDER句が読み込み済みかどうかです。
+		bool readWhere = false; // すでにWHERE句が読み込み済みかどうかです。
+		while (tokenCursol->kind == TokenKind::ORDER || tokenCursol->kind == TokenKind::WHERE){
 
-						// searchedAncestorの左の子に対応するカッコ開くがないかを検索します。
-						ExtensionTreeNode *searched = searchedAncestor; // searchedAncestorの内部からカッコ開くを検索するためのカーソルです。
-						while (searched && !searched->parenOpenBeforeClose){
-							searched = searched->left;
+			// 二度目のORDER句はエラーです。
+			if (readOrder && tokenCursol->kind == TokenKind::ORDER){
+				throw ResultValue::ERR_SQL_SYNTAX;
+			}
+
+			// 二度目のWHERE句はエラーです。
+			if (readWhere && tokenCursol->kind == TokenKind::WHERE){
+				throw ResultValue::ERR_SQL_SYNTAX;
+			}
+			// ORDER句を読み込みます。
+			if (tokenCursol->kind == TokenKind::ORDER){
+				readOrder = true;
+				++tokenCursol;
+				if (tokenCursol->kind == TokenKind::BY){
+					++tokenCursol;
+					bool first = true; // ORDER句の最初の列名の読み込みかどうかです。
+					while (tokenCursol->kind == TokenKind::COMMA || first){
+						if (tokenCursol->kind == TokenKind::COMMA){
+							++tokenCursol;
 						}
-						if (searched){
-							// 対応付けられていないカッコ開くを一つ削除し、ノードがカッコに囲まれていることを記録します。
-							--searched->parenOpenBeforeClose;
-							searchedAncestor->inParen = true;
-							break;
+						if (tokenCursol->kind == TokenKind::IDENTIFIER){
+							if (MAX_COLUMN_COUNT <= orderByColumnsNum){
+								throw ResultValue::ERR_MEMORY_OVER;
+							}
+							// テーブル名が指定されていない場合と仮定して読み込みます。
+							strncpy(orderByColumns[orderByColumnsNum].tableName, "", MAX_WORD_LENGTH);
+							strncpy(orderByColumns[orderByColumnsNum].columnName, tokenCursol->word, MAX_WORD_LENGTH);
+							++tokenCursol;
+							if (tokenCursol->kind == TokenKind::DOT){
+								++tokenCursol;
+								if (tokenCursol->kind == TokenKind::IDENTIFIER){
+
+									// テーブル名が指定されていることがわかったので読み替えます。
+									strncpy(orderByColumns[orderByColumnsNum].tableName, orderByColumns[orderByColumnsNum].columnName, MAX_WORD_LENGTH);
+									strncpy(orderByColumns[orderByColumnsNum].columnName, tokenCursol->word, MAX_WORD_LENGTH);
+									++tokenCursol;
+								}
+								else{
+									throw ResultValue::ERR_SQL_SYNTAX;	
+								}
+							}
+
+							// 並び替えの昇順、降順を指定します。
+							if (tokenCursol->kind == TokenKind::ASC){
+								orders[orderByColumnsNum] = TokenKind::ASC;
+								++tokenCursol;
+							}
+							else if (tokenCursol->kind == TokenKind::DESC){
+								orders[orderByColumnsNum] = TokenKind::DESC;
+								++tokenCursol;
+							}
+							else{
+								// 指定がない場合は昇順となります。
+								orders[orderByColumnsNum] = TokenKind::ASC;
+							}
+							++orderByColumnsNum;
 						}
 						else{
-							searchedAncestor = searchedAncestor->parent;
-						}
-					}
-					++tokenCursol;
-				}
-
-
-				// 演算子(オペレーターを読み込みます。
-				Operator middleOperator = { TokenKind::NOT_TOKEN, 0 }; // 現在読み込んでいる演算子の情報です。
-
-				// 現在見ている演算子の情報を探します。
-				found = false;
-				for (int j = 0; j < sizeof(operators) / sizeof(operators[0]); ++j){
-					if (operators[j].kind == tokenCursol->kind){
-						middleOperator = operators[j];
-						found = true;
-						break;
-					}
-				}
-				if (found)
-				{
-					// 見つかった演算子の情報をもとにノードを入れ替えます。
-					ExtensionTreeNode *tmp = currentNode; //ノードを入れ替えるために使う変数です。
-
-					ExtensionTreeNode *searched = tmp; // 入れ替えるノードを探すためのカーソルです。
-
-					//カッコにくくられていなかった場合に、演算子の優先順位を参考に結合するノードを探します。
-					bool first = true; // 演算子の優先順位を検索する最初のループです。
-					do{
-						if (!first){
-							tmp = tmp->parent;
-							searched = tmp;
-						}
-						// 現在の読み込み場所をくくるカッコが開く場所を探します。
-						while (searched && !searched->parenOpenBeforeClose){
-							searched = searched->left;
+							throw ResultValue::ERR_SQL_SYNTAX;
 						}
 						first = false;
-					} while (!searched && tmp->parent && (tmp->parent->middleOperator.order <= middleOperator.order || tmp->parent->inParen));
-
-					// 演算子のノードを新しく生成します。
-					if (MAX_EXTENSION_TREE_NODE_COUNT <= whereExtensionNodesNum){
-						error = ResultValue::ERR_MEMORY_OVER;
-						goto ERROR;
 					}
-					currentNode = &whereExtensionNodes[whereExtensionNodesNum++];
-					currentNode->middleOperator = middleOperator;
-
-					// 見つかった場所に新しいノードを配置します。これまでその位置にあったノードは左の子となるよう、親ノードと子ノードのポインタをつけかえます。
-					currentNode->parent = tmp->parent;
-					if (currentNode->parent){
-						currentNode->parent->right = currentNode;
-					}
-					currentNode->left = tmp;
-					tmp->parent = currentNode;
-
-					++tokenCursol;
 				}
 				else{
-					// 現在見ている種類が演算子の一覧から見つからなければ、WHERE句は終わります。
-					break;
+					throw ResultValue::ERR_SQL_SYNTAX;
 				}
 			}
 
-			// 木を根に向かってさかのぼり、根のノードを設定します。
-			whereTopNode = currentNode;
-			while (whereTopNode->parent){
-				whereTopNode = whereTopNode->parent;
-			}
-		}
-	}
+			// WHERE句を読み込みます。
+			if (tokenCursol->kind == TokenKind::WHERE){
+				readWhere = true;
+				++tokenCursol;
+				ExtensionTreeNode *currentNode = nullptr; // 現在読み込んでいるノードです。
+				while (true){
+					// オペランドを読み込みます。
 
-	// FROM句を読み込みます。
-	if (tokenCursol->kind == TokenKind::FROM){
-		++tokenCursol;
-	}
-	else{
-		error = ResultValue::ERR_SQL_SYNTAX;
-		goto ERROR;
-	}
-	bool first = true; // FROM句の最初のテーブル名を読み込み中かどうかです。
-	while (tokenCursol->kind == TokenKind::COMMA || first){
-		if (tokenCursol->kind == TokenKind::COMMA){
-			++tokenCursol;
-		}
-		if (tokenCursol->kind == TokenKind::IDENTIFIER){
-			if (MAX_TABLE_COUNT <= tableNamesNum){
-				error = ResultValue::ERR_MEMORY_OVER;
-				goto ERROR;
-			}
-			strncpy(tableNames[tableNamesNum++], tokenCursol->word, MAX_WORD_LENGTH);
-			++tokenCursol;
-		}
-		else{
-			error = ResultValue::ERR_SQL_SYNTAX;
-			goto ERROR;
-		}
-		first = false;
-	}
+					// オペランドのノードを新しく生成します。
+					if (MAX_EXTENSION_TREE_NODE_COUNT <= whereExtensionNodesNum){
+						throw ResultValue::ERR_MEMORY_OVER;
+					}
+					if (currentNode){
+						// 現在のノードを右の子にずらし、元の位置に新しいノードを挿入します。
+						currentNode->right = &whereExtensionNodes[whereExtensionNodesNum++];
+						currentNode->right->parent = currentNode;
+						currentNode = currentNode->right;
+					}
+					else{
+						// 最初はカレントノードに新しいノードを入れます。
+						currentNode = &whereExtensionNodes[whereExtensionNodesNum++];
+					}
 
-	// 最後のトークンまで読み込みが進んでいなかったらエラーです。
-	if (tokenCursol < &tokens[tokensNum]){
-		error = ResultValue::ERR_SQL_SYNTAX;
-		goto ERROR;
-	}
-	Column inputColumns[MAX_TABLE_COUNT][MAX_COLUMN_COUNT]; // 入力されたCSVの行の情報です。
-	// inputColumnsを初期化します。
-	for (size_t i = 0; i < sizeof(inputColumns) / sizeof(inputColumns[0]); i++)
-	{
-		for (size_t j = 0; j < sizeof(inputColumns[0]) / sizeof(inputColumns[0][0]); j++)
-		{
-			inputColumns[i][j] = { "", "" };
-		}
-	}
-	int inputColumnNums[MAX_TABLE_COUNT] = { 0 }; // 各テーブルごとの列の数です。
+					// カッコ開くを読み込みます。
+					while (tokenCursol->kind == TokenKind::OPEN_PAREN){
+						++currentNode->parenOpenBeforeClose;
+						++tokenCursol;
+					}
 
-	for (int i = 0; i < tableNamesNum; ++i){
+					// オペランドに前置される+か-を読み込みます。
+					if (tokenCursol->kind == TokenKind::PLUS || tokenCursol->kind == TokenKind::MINUS){
 
-		// 入力ファイル名を生成します。
-		const char csvExtension[] = ".csv"; // csvの拡張子です。
-		char fileName[MAX_WORD_LENGTH + sizeof(csvExtension) - 1] = ""; // 拡張子を含む、入力ファイルのファイル名です。
-		strncat(fileName, tableNames[i], MAX_WORD_LENGTH + sizeof(csvExtension) - 1);
-		strncat(fileName, csvExtension, MAX_WORD_LENGTH + sizeof(csvExtension) - 1);
+						// +-を前置するのは列名と数値リテラルのみです。
+						if (tokenCursol[1].kind != TokenKind::IDENTIFIER && tokenCursol[1].kind != TokenKind::INT_LITERAL){
+							throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+						}
+						if (tokenCursol->kind == TokenKind::MINUS){
+							currentNode->signCoefficient = -1;
+						}
+						++tokenCursol;
+					}
 
-		// 入力ファイルを開きます。
-		inputTableFiles[i] = fopen(fileName, "r");
-		if (!inputTableFiles[i]){
-			error = ResultValue::ERR_FILE_OPEN;
-			goto ERROR;
-		}
+					// 列名、整数リテラル、文字列リテラルのいずれかをオペランドとして読み込みます。
+					if (tokenCursol->kind == TokenKind::IDENTIFIER){
 
-		// 入力CSVのヘッダ行を読み込みます。
-		char inputLine[MAX_FILE_LINE_LENGTH] = ""; // ファイルから読み込んだ行文字列です。
-		if (fgets(inputLine, MAX_FILE_LINE_LENGTH, inputTableFiles[i])){
-			charactorCursol = inputLine;
+						// テーブル名が指定されていない場合と仮定して読み込みます。
+						strncpy(currentNode->column.tableName, "", MAX_WORD_LENGTH);
+						strncpy(currentNode->column.columnName, tokenCursol->word, MAX_WORD_LENGTH);
+						++tokenCursol;
+						if (tokenCursol->kind == TokenKind::DOT){
+							++tokenCursol;
+							if (tokenCursol->kind == TokenKind::IDENTIFIER){
 
-			// 読み込んだ行を最後まで読みます。
-			while (*charactorCursol && *charactorCursol != '\r' && *charactorCursol != '\n'){
-				if (MAX_COLUMN_COUNT <= inputColumnNums[i]){
-					error = ResultValue::ERR_MEMORY_OVER;
-					goto ERROR;
-				}
-				strncpy(inputColumns[i][inputColumnNums[i]].tableName, tableNames[i], MAX_WORD_LENGTH);
-				char *writeCursol = inputColumns[i][inputColumnNums[i]++].columnName; // 列名の書き込みに利用するカーソルです。
+								// テーブル名が指定されていることがわかったので読み替えます。
+								strncpy(currentNode->column.tableName, currentNode->column.columnName, MAX_WORD_LENGTH);
+								strncpy(currentNode->column.columnName, tokenCursol->word, MAX_WORD_LENGTH);
+								++tokenCursol;
+							}
+							else{
+								throw ResultValue::ERR_SQL_SYNTAX;
+							}
+						}
+					}
+					else if (tokenCursol->kind == TokenKind::INT_LITERAL){
+						currentNode->value = { DataType::INTEGER, { "" } };
+						currentNode->value.value.integer = atoi(tokenCursol->word);
+						++tokenCursol;
+					}
+					else if (tokenCursol->kind == TokenKind::STRING_LITERAL){
+						currentNode->value = { DataType::STRING, { "" } };
 
-				// 列名を一つ読みます。
-				while (*charactorCursol && *charactorCursol != ',' && *charactorCursol != '\r'&& *charactorCursol != '\n'){
-					*writeCursol++ = *charactorCursol++;
-				}
-				// 書き込んでいる列名の文字列に終端文字を書き込みます。
-				writeCursol[1] = '\0';
+						// 前後のシングルクォートを取り去った文字列をデータとして読み込みます。
+						strncpy(currentNode->value.value.string, tokenCursol->word + 1, std::min(MAX_WORD_LENGTH, MAX_DATA_LENGTH));
+						currentNode->value.value.string[MAX_DATA_LENGTH - 1] = '\0';
+						currentNode->value.value.string[strlen(currentNode->value.value.string) - 1] = '\0';
+						++tokenCursol;
+					}
+					else{
+						throw ResultValue::ERR_SQL_SYNTAX;
+					}
 
-				// 入力行のカンマの分を読み進めます。
-				++charactorCursol;
-			}
-		}
-		else{
-			error = ResultValue::ERR_CSV_SYNTAX;
-			goto ERROR;
-		}
+					// オペランドの右のカッコ閉じるを読み込みます。
+					while (tokenCursol->kind == TokenKind::CLOSE_PAREN){
+						ExtensionTreeNode *searchedAncestor = currentNode->parent; // カッコ閉じると対応するカッコ開くを両方含む祖先ノードを探すためのカーソルです。
+						while (searchedAncestor){
 
-		// 入力CSVのデータ行を読み込みます。
-		int rowNum = 0;
-		while (fgets(inputLine, MAX_FILE_LINE_LENGTH, inputTableFiles[i])){
-			if (MAX_ROW_COUNT <= rowNum){
-				error = ResultValue::ERR_MEMORY_OVER;
-				goto ERROR;
-			}
-			Data **row = inputData[i][rowNum++] = (Data**)malloc(MAX_COLUMN_COUNT * sizeof(Data*)); // 入力されている一行分のデータです。
-			if (!row){
-				error = ResultValue::ERR_MEMORY_ALLOCATE;
-				goto ERROR;
-			}
-			// 生成した行を初期化します。
-			for (int j = 0; j < MAX_COLUMN_COUNT; ++j){
-				row[j] = nullptr;
-			}
+							// searchedAncestorの左の子に対応するカッコ開くがないかを検索します。
+							ExtensionTreeNode *searched = searchedAncestor; // searchedAncestorの内部からカッコ開くを検索するためのカーソルです。
+							while (searched && !searched->parenOpenBeforeClose){
+								searched = searched->left;
+							}
+							if (searched){
+								// 対応付けられていないカッコ開くを一つ削除し、ノードがカッコに囲まれていることを記録します。
+								--searched->parenOpenBeforeClose;
+								searchedAncestor->inParen = true;
+								break;
+							}
+							else{
+								searchedAncestor = searchedAncestor->parent;
+							}
+						}
+						++tokenCursol;
+					}
 
-			charactorCursol = inputLine;
-			int columnNum = 0; // いま何列目を読み込んでいるか。0基底の数字となります。
 
-			// 読み込んだ行を最後まで読みます。
-			while (*charactorCursol && *charactorCursol != '\r'&& *charactorCursol != '\n'){
+					// 演算子(オペレーターを読み込みます。
+					Operator middleOperator = { TokenKind::NOT_TOKEN, 0 }; // 現在読み込んでいる演算子の情報です。
 
-				// 読み込んだデータを書き込む行のカラムを生成します。
-				if (MAX_COLUMN_COUNT <= columnNum){
-					error = ResultValue::ERR_MEMORY_OVER;
-					goto ERROR;
-				}
-				row[columnNum] = (Data*)malloc(sizeof(Data));
-				if (!row[columnNum]){
-					error = ResultValue::ERR_MEMORY_ALLOCATE;
-					goto ERROR;
-				}
-				*row[columnNum] = { DataType::STRING, { "" } };
-				char *writeCursol = row[columnNum++]->value.string; // データ文字列の書き込みに利用するカーソルです。
-
-				// データ文字列を一つ読みます。
-				while (*charactorCursol && *charactorCursol != ',' && *charactorCursol != '\r'&& *charactorCursol != '\n'){
-					*writeCursol++ = *charactorCursol++;
-				}
-				// 書き込んでいる列名の文字列に終端文字を書き込みます。
-				writeCursol[1] = '\0';
-
-				// 入力行のカンマの分を読み進めます。
-				++charactorCursol;
-			}
-		}
-
-		// 全てが数値となる列は数値列に変換します。
-		for (int j = 0; j < inputColumnNums[i]; ++j){
-
-			// 全ての行のある列について、データ文字列から符号と数値以外の文字を探します。
-			currentRow = inputData[i];
-			found = false;
-			while (*currentRow){
-				char *currentChar = (*currentRow)[j]->value.string;
-				while (*currentChar){
-					bool isNum = false;
-					const char *currentNum = signNum;
-					while (*currentNum){
-						if (*currentChar == *currentNum){
-							isNum = true;
+					// 現在見ている演算子の情報を探します。
+					found = false;
+					for (int j = 0; j < sizeof(operators) / sizeof(operators[0]); ++j){
+						if (operators[j].kind == tokenCursol->kind){
+							middleOperator = operators[j];
+							found = true;
 							break;
 						}
-						++currentNum;
 					}
-					if (!isNum){
-						found = true;
+					if (found)
+					{
+						// 見つかった演算子の情報をもとにノードを入れ替えます。
+						ExtensionTreeNode *tmp = currentNode; //ノードを入れ替えるために使う変数です。
+
+						ExtensionTreeNode *searched = tmp; // 入れ替えるノードを探すためのカーソルです。
+
+						//カッコにくくられていなかった場合に、演算子の優先順位を参考に結合するノードを探します。
+						bool first = true; // 演算子の優先順位を検索する最初のループです。
+						do{
+							if (!first){
+								tmp = tmp->parent;
+								searched = tmp;
+							}
+							// 現在の読み込み場所をくくるカッコが開く場所を探します。
+							while (searched && !searched->parenOpenBeforeClose){
+								searched = searched->left;
+							}
+							first = false;
+						} while (!searched && tmp->parent && (tmp->parent->middleOperator.order <= middleOperator.order || tmp->parent->inParen));
+
+						// 演算子のノードを新しく生成します。
+						if (MAX_EXTENSION_TREE_NODE_COUNT <= whereExtensionNodesNum){
+							throw ResultValue::ERR_MEMORY_OVER;
+						}
+						currentNode = &whereExtensionNodes[whereExtensionNodesNum++];
+						currentNode->middleOperator = middleOperator;
+
+						// 見つかった場所に新しいノードを配置します。これまでその位置にあったノードは左の子となるよう、親ノードと子ノードのポインタをつけかえます。
+						currentNode->parent = tmp->parent;
+						if (currentNode->parent){
+							currentNode->parent->right = currentNode;
+						}
+						currentNode->left = tmp;
+						tmp->parent = currentNode;
+
+						++tokenCursol;
+					}
+					else{
+						// 現在見ている種類が演算子の一覧から見つからなければ、WHERE句は終わります。
 						break;
 					}
-					++currentChar;
 				}
-				if (found){
-					break;
+
+				// 木を根に向かってさかのぼり、根のノードを設定します。
+				whereTopNode = currentNode;
+				while (whereTopNode->parent){
+					whereTopNode = whereTopNode->parent;
 				}
-				++currentRow;
+			}
+		}
+
+		// FROM句を読み込みます。
+		if (tokenCursol->kind == TokenKind::FROM){
+			++tokenCursol;
+		}
+		else{
+			throw ResultValue::ERR_SQL_SYNTAX;
+		}
+		bool first = true; // FROM句の最初のテーブル名を読み込み中かどうかです。
+		while (tokenCursol->kind == TokenKind::COMMA || first){
+			if (tokenCursol->kind == TokenKind::COMMA){
+				++tokenCursol;
+			}
+			if (tokenCursol->kind == TokenKind::IDENTIFIER){
+				if (MAX_TABLE_COUNT <= tableNamesNum){
+					throw ResultValue::ERR_MEMORY_OVER;
+				}
+				strncpy(tableNames[tableNamesNum++], tokenCursol->word, MAX_WORD_LENGTH);
+				++tokenCursol;
+			}
+			else{
+				throw ResultValue::ERR_SQL_SYNTAX;
+			}
+			first = false;
+		}
+
+		// 最後のトークンまで読み込みが進んでいなかったらエラーです。
+		if (tokenCursol < &tokens[tokensNum]){
+			throw ResultValue::ERR_SQL_SYNTAX;
+		}
+		Column inputColumns[MAX_TABLE_COUNT][MAX_COLUMN_COUNT]; // 入力されたCSVの行の情報です。
+		// inputColumnsを初期化します。
+		for (size_t i = 0; i < sizeof(inputColumns) / sizeof(inputColumns[0]); i++)
+		{
+			for (size_t j = 0; j < sizeof(inputColumns[0]) / sizeof(inputColumns[0][0]); j++)
+			{
+				inputColumns[i][j] = { "", "" };
+			}
+		}
+		int inputColumnNums[MAX_TABLE_COUNT] = { 0 }; // 各テーブルごとの列の数です。
+
+		for (int i = 0; i < tableNamesNum; ++i){
+
+			// 入力ファイル名を生成します。
+			const char csvExtension[] = ".csv"; // csvの拡張子です。
+			char fileName[MAX_WORD_LENGTH + sizeof(csvExtension) - 1] = ""; // 拡張子を含む、入力ファイルのファイル名です。
+			strncat(fileName, tableNames[i], MAX_WORD_LENGTH + sizeof(csvExtension) - 1);
+			strncat(fileName, csvExtension, MAX_WORD_LENGTH + sizeof(csvExtension) - 1);
+
+			// 入力ファイルを開きます。
+			inputTableFiles[i] = fopen(fileName, "r");
+			if (!inputTableFiles[i]){
+				throw ResultValue::ERR_FILE_OPEN;	
 			}
 
-			// 符号と数字以外が見つからない列については、数値列に変換します。
-			if (!found){
+			// 入力CSVのヘッダ行を読み込みます。
+			char inputLine[MAX_FILE_LINE_LENGTH] = ""; // ファイルから読み込んだ行文字列です。
+			if (fgets(inputLine, MAX_FILE_LINE_LENGTH, inputTableFiles[i])){
+				charactorCursol = inputLine;
+
+				// 読み込んだ行を最後まで読みます。
+				while (*charactorCursol && *charactorCursol != '\r' && *charactorCursol != '\n'){
+					if (MAX_COLUMN_COUNT <= inputColumnNums[i]){
+						throw ResultValue::ERR_MEMORY_OVER;
+					}
+					strncpy(inputColumns[i][inputColumnNums[i]].tableName, tableNames[i], MAX_WORD_LENGTH);
+					char *writeCursol = inputColumns[i][inputColumnNums[i]++].columnName; // 列名の書き込みに利用するカーソルです。
+
+					// 列名を一つ読みます。
+					while (*charactorCursol && *charactorCursol != ',' && *charactorCursol != '\r'&& *charactorCursol != '\n'){
+						*writeCursol++ = *charactorCursol++;
+					}
+					// 書き込んでいる列名の文字列に終端文字を書き込みます。
+					writeCursol[1] = '\0';
+
+					// 入力行のカンマの分を読み進めます。
+					++charactorCursol;
+				}
+			}
+			else{
+				throw ResultValue::ERR_CSV_SYNTAX;
+			}
+
+			// 入力CSVのデータ行を読み込みます。
+			int rowNum = 0;
+			while (fgets(inputLine, MAX_FILE_LINE_LENGTH, inputTableFiles[i])){
+				if (MAX_ROW_COUNT <= rowNum){
+					throw ResultValue::ERR_MEMORY_OVER;
+				}
+				Data **row = inputData[i][rowNum++] = (Data**)malloc(MAX_COLUMN_COUNT * sizeof(Data*)); // 入力されている一行分のデータです。
+				if (!row){
+					throw ResultValue::ERR_MEMORY_ALLOCATE;
+				}
+				// 生成した行を初期化します。
+				for (int j = 0; j < MAX_COLUMN_COUNT; ++j){
+					row[j] = nullptr;
+				}
+
+				charactorCursol = inputLine;
+				int columnNum = 0; // いま何列目を読み込んでいるか。0基底の数字となります。
+
+				// 読み込んだ行を最後まで読みます。
+				while (*charactorCursol && *charactorCursol != '\r'&& *charactorCursol != '\n'){
+
+					// 読み込んだデータを書き込む行のカラムを生成します。
+					if (MAX_COLUMN_COUNT <= columnNum){
+						throw ResultValue::ERR_MEMORY_OVER;
+					}
+					row[columnNum] = (Data*)malloc(sizeof(Data));
+					if (!row[columnNum]){
+						throw ResultValue::ERR_MEMORY_ALLOCATE;
+					}
+					*row[columnNum] = { DataType::STRING, { "" } };
+					char *writeCursol = row[columnNum++]->value.string; // データ文字列の書き込みに利用するカーソルです。
+
+					// データ文字列を一つ読みます。
+					while (*charactorCursol && *charactorCursol != ',' && *charactorCursol != '\r'&& *charactorCursol != '\n'){
+						*writeCursol++ = *charactorCursol++;
+					}
+					// 書き込んでいる列名の文字列に終端文字を書き込みます。
+					writeCursol[1] = '\0';
+
+					// 入力行のカンマの分を読み進めます。
+					++charactorCursol;
+				}
+			}
+
+			// 全てが数値となる列は数値列に変換します。
+			for (int j = 0; j < inputColumnNums[i]; ++j){
+
+				// 全ての行のある列について、データ文字列から符号と数値以外の文字を探します。
 				currentRow = inputData[i];
+				found = false;
 				while (*currentRow){
-					int integer = atoi((*currentRow)[j]->value.string);
-					*(*currentRow)[j] = { DataType::INTEGER, { "" } };
-					(*currentRow)[j]->value.integer = integer;
+					char *currentChar = (*currentRow)[j]->value.string;
+					while (*currentChar){
+						bool isNum = false;
+						const char *currentNum = signNum;
+						while (*currentNum){
+							if (*currentChar == *currentNum){
+								isNum = true;
+								break;
+							}
+							++currentNum;
+						}
+						if (!isNum){
+							found = true;
+							break;
+						}
+						++currentChar;
+					}
+					if (found){
+						break;
+					}
 					++currentRow;
 				}
-			}
-		}
-	}
 
-	Column allInputColumns[MAX_TABLE_COUNT * MAX_COLUMN_COUNT]; // 入力に含まれるすべての列の一覧です。
-	// allInputColumnsを初期化します。
-	for (size_t i = 0; i < sizeof(allInputColumns) / sizeof(allInputColumns[0]); i++)
-	{
-		allInputColumns[i] = { "", "" };
-	}
-	int allInputColumnsNum = 0; // 入力に含まれるすべての列の数です。
-
-	// 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
-	for (int i = 0; i < tableNamesNum; ++i){
-		for (int j = 0; j < inputColumnNums[i]; ++j){
-			strncpy(allInputColumns[allInputColumnsNum].tableName, tableNames[i], MAX_WORD_LENGTH);
-			strncpy(allInputColumns[allInputColumnsNum++].columnName, inputColumns[i][j].columnName, MAX_WORD_LENGTH);
-		}
-	}
-
-	// SELECT句の列名指定が*だった場合は、入力CSVの列名がすべて選択されます。
-	if (!selectColumnsNum){
-		for (int i = 0; i < allInputColumnsNum; ++i){
-			strncpy(selectColumns[selectColumnsNum].tableName, allInputColumns[i].tableName, MAX_WORD_LENGTH);
-			strncpy(selectColumns[selectColumnsNum++].columnName, allInputColumns[i].columnName, MAX_WORD_LENGTH);
-		}
-	}
-
-	Column outputColumns[MAX_TABLE_COUNT * MAX_COLUMN_COUNT]; // 出力するすべての行の情報です。
-	int outputColumnNum = 0; // 出力するすべての行の現在の数です。
-
-	// SELECT句で指定された列名が、何個目の入力ファイルの何列目に相当するかを判別します。
-	ColumnIndex selectColumnIndexes[MAX_TABLE_COUNT * MAX_COLUMN_COUNT]; // SELECT句で指定された列の、入力ファイルとしてのインデックスです。
-	int selectColumnIndexesNum = 0; // selectColumnIndexesの現在の数。
-	for (int i = 0; i < selectColumnsNum; ++i){
-		found = false;
-		for (int j = 0; j < tableNamesNum; ++j){
-			for (int k = 0; k < inputColumnNums[j]; ++k){
-				char* selectTableNameCursol = selectColumns[i].tableName;
-				char* inputTableNameCursol = inputColumns[j][k].tableName;
-				while (*selectTableNameCursol && toupper(*selectTableNameCursol) == toupper(*inputTableNameCursol++)){
-					++selectTableNameCursol;
-				}
-				char* selectColumnNameCursol = selectColumns[i].columnName;
-				char* inputColumnNameCursol = inputColumns[j][k].columnName;
-				while (*selectColumnNameCursol && toupper(*selectColumnNameCursol) == toupper(*inputColumnNameCursol++)){
-					++selectColumnNameCursol;
-				}
-				if (!*selectColumnNameCursol && !*inputColumnNameCursol &&
-					(!*selectColumns[i].tableName || // テーブル名が設定されている場合のみテーブル名の比較を行います。
-					!*selectTableNameCursol && !*inputTableNameCursol)){
-
-					// 既に見つかっているのにもう一つ見つかったらエラーです。
-					if (found){
-						error = ResultValue::ERR_BAD_COLUMN_NAME;
-						goto ERROR;
+				// 符号と数字以外が見つからない列については、数値列に変換します。
+				if (!found){
+					currentRow = inputData[i];
+					while (*currentRow){
+						int integer = atoi((*currentRow)[j]->value.string);
+						*(*currentRow)[j] = { DataType::INTEGER, { "" } };
+						(*currentRow)[j]->value.integer = integer;
+						++currentRow;
 					}
-					found = true;
-					// 見つかった値を持つ列のデータを生成します。
-					if (MAX_COLUMN_COUNT <= selectColumnIndexesNum){
-						error = ResultValue::ERR_MEMORY_OVER;
-						goto ERROR;
-					}
-					selectColumnIndexes[selectColumnIndexesNum++] = { j, k };
 				}
 			}
 		}
-		// 一つも見つからなくてもエラーです。
-		if (!found){
-			error = ResultValue::ERR_BAD_COLUMN_NAME;
-			goto ERROR;
+
+		Column allInputColumns[MAX_TABLE_COUNT * MAX_COLUMN_COUNT]; // 入力に含まれるすべての列の一覧です。
+		// allInputColumnsを初期化します。
+		for (size_t i = 0; i < sizeof(allInputColumns) / sizeof(allInputColumns[0]); i++)
+		{
+			allInputColumns[i] = { "", "" };
 		}
-	}
+		int allInputColumnsNum = 0; // 入力に含まれるすべての列の数です。
 
-	// 出力する列名を設定します。
-	for (int i = 0; i < selectColumnsNum; ++i){
-		strncpy(outputColumns[outputColumnNum].tableName, inputColumns[selectColumnIndexes[i].table][selectColumnIndexes[i].column].tableName, MAX_WORD_LENGTH);
-		strncpy(outputColumns[outputColumnNum].columnName, inputColumns[selectColumnIndexes[i].table][selectColumnIndexes[i].column].columnName, MAX_WORD_LENGTH);
-		++outputColumnNum;
-	}
-
-	if (whereTopNode){
-		// 既存数値の符号を計算します。
-		for (int i = 0; i < whereExtensionNodesNum; ++i){
-			if (whereExtensionNodes[i].middleOperator.kind == TokenKind::NOT_TOKEN &&
-				!*whereExtensionNodes[i].column.columnName &&
-				whereExtensionNodes[i].value.type == DataType::INTEGER){
-				whereExtensionNodes[i].value.value.integer *= whereExtensionNodes[i].signCoefficient;
-			}
-		}
-	}
-
-	int outputRowsNum = 0; // 出力データの現在の行数です。
-
-	Data ***currentRows[MAX_TABLE_COUNT] = { nullptr }; // 入力された各テーブルの、現在出力している行を指すカーソルです。
-	for (int i = 0; i < tableNamesNum; ++i){
-		// 各テーブルの先頭行を設定します。
-		currentRows[i] = inputData[i];
-	}
-
-	// 出力するデータを設定します。
-	while (true){
-		if (MAX_ROW_COUNT <= outputRowsNum){
-			error = ResultValue::ERR_MEMORY_OVER;
-			goto ERROR;
-		}
-		Data **row = outputData[outputRowsNum] = (Data**)malloc(MAX_COLUMN_COUNT * sizeof(Data*)); // 出力している一行分のデータです。
-		if (!row){
-			error = ResultValue::ERR_MEMORY_ALLOCATE;
-			goto ERROR;
-		}
-
-		// 生成した行を初期化します。
-		for (int i = 0; i < MAX_COLUMN_COUNT; ++i){
-			row[i] = nullptr;
-		}
-
-		// 行の各列のデータを入力から持ってきて設定します。
-		for (int i = 0; i < selectColumnIndexesNum; ++i){
-			row[i] = (Data*)malloc(sizeof(Data));
-			if (!row[i]){
-				error = ResultValue::ERR_MEMORY_ALLOCATE;
-				goto ERROR;
-			}
-			*row[i] = *(*currentRows[selectColumnIndexes[i].table])[selectColumnIndexes[i].column];
-		}
-
-		Data **allColumnsRow = allColumnOutputData[outputRowsNum++] = (Data**)malloc(MAX_TABLE_COUNT * MAX_COLUMN_COUNT * sizeof(Data*)); // WHEREやORDERのためにすべての情報を含む行。rowとインデックスを共有します。
-		if (!allColumnsRow){
-			error = ResultValue::ERR_MEMORY_ALLOCATE;
-			goto ERROR;
-		}
-		// 生成した行を初期化します。
-		for (int i = 0; i < MAX_TABLE_COUNT * MAX_COLUMN_COUNT; ++i){
-			allColumnsRow[i] = nullptr;
-		}
-
-		// allColumnsRowの列を設定します。
-		int allColumnsNum = 0; // allColumnsRowの現在の列数です。
+		// 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
 		for (int i = 0; i < tableNamesNum; ++i){
 			for (int j = 0; j < inputColumnNums[i]; ++j){
-				allColumnsRow[allColumnsNum] = (Data*)malloc(sizeof(Data));
-				if (!allColumnsRow[allColumnsNum]){
-					error = ResultValue::ERR_MEMORY_ALLOCATE;
-					goto ERROR;
-				}
-				*allColumnsRow[allColumnsNum++] = *(*currentRows[i])[j];
-			}
-		}
-		// WHEREの条件となる値を再帰的に計算します。
-		if (whereTopNode){
-			ExtensionTreeNode *currentNode = whereTopNode; // 現在見ているノードです。
-			while (currentNode){
-				// 子ノードの計算が終わってない場合は、まずそちらの計算を行います。
-				if (currentNode->left && !currentNode->left->calculated){
-					currentNode = currentNode->left;
-					continue;
-				}
-				else if (currentNode->right && !currentNode->right->calculated){
-					currentNode = currentNode->right;
-					continue;
-				}
-
-				// 自ノードの値を計算します。
-				switch (currentNode->middleOperator.kind){
-				case TokenKind::NOT_TOKEN:
-					// ノードにデータが設定されている場合です。
-
-					// データが列名で指定されている場合、今扱っている行のデータを設定します。
-					if (*currentNode->column.columnName){
-						found = false;
-						for (int i = 0; i < allInputColumnsNum; ++i){
-							char* whereTableNameCursol = currentNode->column.tableName;
-							char* allInputTableNameCursol = allInputColumns[i].tableName;
-							while (*whereTableNameCursol && toupper(*whereTableNameCursol) == toupper(*allInputTableNameCursol++)){
-								++whereTableNameCursol;
-							}
-							char* whereColumnNameCursol = currentNode->column.columnName;
-							char* allInputColumnNameCursol = allInputColumns[i].columnName;
-							while (*whereColumnNameCursol && toupper(*whereColumnNameCursol) == toupper(*allInputColumnNameCursol++)){
-								++whereColumnNameCursol;
-							}
-							if (!*whereColumnNameCursol && !*allInputColumnNameCursol &&
-								(!*currentNode->column.tableName || // テーブル名が設定されている場合のみテーブル名の比較を行います。
-								!*whereTableNameCursol && !*allInputTableNameCursol)){
-								// 既に見つかっているのにもう一つ見つかったらエラーです。
-								if (found){
-									error = ResultValue::ERR_BAD_COLUMN_NAME;
-									goto ERROR;
-								}
-								found = true;
-								currentNode->value = *allColumnsRow[i];
-							}
-						}
-						// 一つも見つからなくてもエラーです。
-						if (!found){
-							error = ResultValue::ERR_BAD_COLUMN_NAME;
-							goto ERROR;
-						}
-						;
-						// 符号を考慮して値を計算します。
-						if (currentNode->value.type == DataType::INTEGER){
-							currentNode->value.value.integer *= currentNode->signCoefficient;
-						}
-					}
-					break;
-				case TokenKind::EQUAL:
-				case TokenKind::GREATER_THAN:
-				case TokenKind::GREATER_THAN_OR_EQUAL:
-				case TokenKind::LESS_THAN:
-				case TokenKind::LESS_THAN_OR_EQUAL:
-				case TokenKind::NOT_EQUAL:
-					// 比較演算子の場合です。
-
-					// 比較できるのは文字列型か整数型で、かつ左右の型が同じ場合です。
-					if (currentNode->left->value.type != DataType::INTEGER && currentNode->left->value.type != DataType::STRING ||
-						currentNode->left->value.type != currentNode->right->value.type){
-						error = ResultValue::ERR_WHERE_OPERAND_TYPE;
-						goto ERROR;
-					}
-					currentNode->value.type = DataType::BOOLEAN;
-
-					// 比較結果を型と演算子によって計算方法を変えて、計算します。
-					switch (currentNode->left->value.type){
-					case DataType::INTEGER:
-						switch (currentNode->middleOperator.kind){
-						case TokenKind::EQUAL:
-							currentNode->value.value.boolean = currentNode->left->value.value.integer == currentNode->right->value.value.integer;
-							break;
-						case TokenKind::GREATER_THAN:
-							currentNode->value.value.boolean = currentNode->left->value.value.integer > currentNode->right->value.value.integer;
-							break;
-						case TokenKind::GREATER_THAN_OR_EQUAL:
-							currentNode->value.value.boolean = currentNode->left->value.value.integer >= currentNode->right->value.value.integer;
-							break;
-						case TokenKind::LESS_THAN:
-							currentNode->value.value.boolean = currentNode->left->value.value.integer < currentNode->right->value.value.integer;
-							break;
-						case TokenKind::LESS_THAN_OR_EQUAL:
-							currentNode->value.value.boolean = currentNode->left->value.value.integer <= currentNode->right->value.value.integer;
-							break;
-						case TokenKind::NOT_EQUAL:
-							currentNode->value.value.boolean = currentNode->left->value.value.integer != currentNode->right->value.value.integer;
-							break;
-						}
-						break;
-					case DataType::STRING:
-						switch (currentNode->middleOperator.kind){
-						case TokenKind::EQUAL:
-							currentNode->value.value.boolean = strcmp(currentNode->left->value.value.string, currentNode->right->value.value.string) == 0;
-							break;
-						case TokenKind::GREATER_THAN:
-							currentNode->value.value.boolean = strcmp(currentNode->left->value.value.string, currentNode->right->value.value.string) > 0;
-							break;
-						case TokenKind::GREATER_THAN_OR_EQUAL:
-							currentNode->value.value.boolean = strcmp(currentNode->left->value.value.string, currentNode->right->value.value.string) >= 0;
-							break;
-						case TokenKind::LESS_THAN:
-							currentNode->value.value.boolean = strcmp(currentNode->left->value.value.string, currentNode->right->value.value.string) < 0;
-							break;
-						case TokenKind::LESS_THAN_OR_EQUAL:
-							currentNode->value.value.boolean = strcmp(currentNode->left->value.value.string, currentNode->right->value.value.string) <= 0;
-							break;
-						case TokenKind::NOT_EQUAL:
-							currentNode->value.value.boolean = strcmp(currentNode->left->value.value.string, currentNode->right->value.value.string) != 0;
-							break;
-						}
-						break;
-					}
-					break;
-				case TokenKind::PLUS:
-				case TokenKind::MINUS:
-				case TokenKind::ASTERISK:
-				case TokenKind::SLASH:
-					// 四則演算の場合です。
-
-					// 演算できるのは整数型同士の場合のみです。
-					if (currentNode->left->value.type != DataType::INTEGER || currentNode->right->value.type != DataType::INTEGER){
-						error = ResultValue::ERR_WHERE_OPERAND_TYPE;
-						goto ERROR;
-					}
-					currentNode->value.type = DataType::INTEGER;
-
-					// 比較結果を演算子によって計算方法を変えて、計算します。
-					switch (currentNode->middleOperator.kind){
-					case TokenKind::PLUS:
-						currentNode->value.value.integer = currentNode->left->value.value.integer + currentNode->right->value.value.integer;
-						break;
-					case TokenKind::MINUS:
-						currentNode->value.value.integer = currentNode->left->value.value.integer - currentNode->right->value.value.integer;
-						break;
-					case TokenKind::ASTERISK:
-						currentNode->value.value.integer = currentNode->left->value.value.integer * currentNode->right->value.value.integer;
-						break;
-					case TokenKind::SLASH:
-						currentNode->value.value.integer = currentNode->left->value.value.integer / currentNode->right->value.value.integer;
-						break;
-					}
-					break;
-				case TokenKind::AND:
-				case TokenKind::OR:
-					// 論理演算の場合です。
-
-					// 演算できるのは真偽値型同士の場合のみです。
-					if (currentNode->left->value.type != DataType::BOOLEAN || currentNode->right->value.type != DataType::BOOLEAN){
-						error = ResultValue::ERR_WHERE_OPERAND_TYPE;
-						goto ERROR;
-					}
-					currentNode->value.type = DataType::BOOLEAN;
-
-					// 比較結果を演算子によって計算方法を変えて、計算します。
-					switch (currentNode->middleOperator.kind){
-					case TokenKind::AND:
-						currentNode->value.value.boolean = currentNode->left->value.value.boolean && currentNode->right->value.value.boolean;
-						break;
-					case TokenKind::OR:
-						currentNode->value.value.boolean = currentNode->left->value.value.boolean || currentNode->right->value.value.boolean;
-						break;
-					}
-				}
-				currentNode->calculated = true;
-
-				// 自身の計算が終わった後は親の計算に戻ります。
-				currentNode = currentNode->parent;
-			}
-
-			// 条件に合わない行は出力から削除します。
-			if (!whereTopNode->value.value.boolean){
-				free(row);
-				free(allColumnsRow);
-				allColumnOutputData[--outputRowsNum] = nullptr;
-				outputData[outputRowsNum] = nullptr;
-			}
-			// WHERE条件の計算結果をリセットします。
-			for (int i = 0; i < whereExtensionNodesNum; ++i){
-				whereExtensionNodes[i].calculated = false;
+				strncpy(allInputColumns[allInputColumnsNum].tableName, tableNames[i], MAX_WORD_LENGTH);
+				strncpy(allInputColumns[allInputColumnsNum++].columnName, inputColumns[i][j].columnName, MAX_WORD_LENGTH);
 			}
 		}
 
-		// 各テーブルの行のすべての組み合わせを出力します。
-
-		// 最後のテーブルのカレント行をインクリメントします。
-		++currentRows[tableNamesNum - 1];
-
-		// 最後のテーブルが最終行になっていた場合は先頭に戻し、順に前のテーブルのカレント行をインクリメントします。
-		for (int i = tableNamesNum - 1; !*currentRows[i] && 0 < i; --i){
-			++currentRows[i - 1];
-			currentRows[i] = inputData[i];
+		// SELECT句の列名指定が*だった場合は、入力CSVの列名がすべて選択されます。
+		if (!selectColumnsNum){
+			for (int i = 0; i < allInputColumnsNum; ++i){
+				strncpy(selectColumns[selectColumnsNum].tableName, allInputColumns[i].tableName, MAX_WORD_LENGTH);
+				strncpy(selectColumns[selectColumnsNum++].columnName, allInputColumns[i].columnName, MAX_WORD_LENGTH);
+			}
 		}
 
-		// 最初のテーブルが最後の行を超えたなら出力行の生成は終わりです。
-		if (!*currentRows[0]){
-			break;
-		}
-	}
+		Column outputColumns[MAX_TABLE_COUNT * MAX_COLUMN_COUNT]; // 出力するすべての行の情報です。
+		int outputColumnNum = 0; // 出力するすべての行の現在の数です。
 
-	// ORDER句による並び替えの処理を行います。
-	if (orderByColumnsNum){
-		// ORDER句で指定されている列が、全ての入力行の中のどの行なのかを計算します。
-		int orderByColumnIndexes[MAX_COLUMN_COUNT]; // ORDER句で指定された列の、すべての行の中でのインデックスです。
-		int orderByColumnIndexesNum = 0; // 現在のorderByColumnIndexesの数です。
-		for (int i = 0; i < orderByColumnsNum; ++i){
+		// SELECT句で指定された列名が、何個目の入力ファイルの何列目に相当するかを判別します。
+		ColumnIndex selectColumnIndexes[MAX_TABLE_COUNT * MAX_COLUMN_COUNT]; // SELECT句で指定された列の、入力ファイルとしてのインデックスです。
+		int selectColumnIndexesNum = 0; // selectColumnIndexesの現在の数。
+		for (int i = 0; i < selectColumnsNum; ++i){
 			found = false;
-			for (int j = 0; j < allInputColumnsNum; ++j){
-				char* orderByTableNameCursol = orderByColumns[i].tableName;
-				char* allInputTableNameCursol = allInputColumns[j].tableName;
-				while (*orderByTableNameCursol && toupper(*orderByTableNameCursol) == toupper(*allInputTableNameCursol)){
-					++orderByTableNameCursol;
-					++allInputTableNameCursol;
-				}
-				char* orderByColumnNameCursol = orderByColumns[i].columnName;
-				char* allInputColumnNameCursol = allInputColumns[j].columnName;
-				while (*orderByColumnNameCursol && toupper(*orderByColumnNameCursol) == toupper(*allInputColumnNameCursol)){
-					++orderByColumnNameCursol;
-					++allInputColumnNameCursol;
-				}
-				if (!*orderByColumnNameCursol && !*allInputColumnNameCursol &&
-					(!*orderByColumns[i].tableName || // テーブル名が設定されている場合のみテーブル名の比較を行います。
-					!*orderByTableNameCursol && !*allInputTableNameCursol)){
-					// 既に見つかっているのにもう一つ見つかったらエラーです。
-					if (found){
-						error = ResultValue::ERR_BAD_COLUMN_NAME;
-						goto ERROR;
+			for (int j = 0; j < tableNamesNum; ++j){
+				for (int k = 0; k < inputColumnNums[j]; ++k){
+					char* selectTableNameCursol = selectColumns[i].tableName;
+					char* inputTableNameCursol = inputColumns[j][k].tableName;
+					while (*selectTableNameCursol && toupper(*selectTableNameCursol) == toupper(*inputTableNameCursol++)){
+						++selectTableNameCursol;
 					}
-					found = true;
-					if (MAX_COLUMN_COUNT <= orderByColumnIndexesNum){
-						error = ResultValue::ERR_MEMORY_OVER;
-						goto ERROR;
+					char* selectColumnNameCursol = selectColumns[i].columnName;
+					char* inputColumnNameCursol = inputColumns[j][k].columnName;
+					while (*selectColumnNameCursol && toupper(*selectColumnNameCursol) == toupper(*inputColumnNameCursol++)){
+						++selectColumnNameCursol;
 					}
-					orderByColumnIndexes[orderByColumnIndexesNum++] = j;
+					if (!*selectColumnNameCursol && !*inputColumnNameCursol &&
+						(!*selectColumns[i].tableName || // テーブル名が設定されている場合のみテーブル名の比較を行います。
+						!*selectTableNameCursol && !*inputTableNameCursol)){
+
+						// 既に見つかっているのにもう一つ見つかったらエラーです。
+						if (found){
+							throw ResultValue::ERR_BAD_COLUMN_NAME;
+						}
+						found = true;
+						// 見つかった値を持つ列のデータを生成します。
+						if (MAX_COLUMN_COUNT <= selectColumnIndexesNum){
+							throw ResultValue::ERR_MEMORY_OVER;
+						}
+						selectColumnIndexes[selectColumnIndexesNum++] = { j, k };
+					}
 				}
 			}
 			// 一つも見つからなくてもエラーです。
 			if (!found){
-				error = ResultValue::ERR_BAD_COLUMN_NAME;
-				goto ERROR;
+				throw ResultValue::ERR_BAD_COLUMN_NAME;
 			}
 		}
 
-		// outputDataとallColumnOutputDataのソートを一緒に行います。簡便のため凝ったソートは使わず、選択ソートを利用します。
-		for (int i = 0; i < outputRowsNum; ++i){
-			int minIndex = i; // 現在までで最小の行のインデックスです。
-			for (int j = i + 1; j < outputRowsNum; ++j){
-				bool jLessThanMin = false; // インデックスがjの値が、minIndexの値より小さいかどうかです。
-				for (int k = 0; k < orderByColumnIndexesNum; ++k){
-					Data *mData = allColumnOutputData[minIndex][orderByColumnIndexes[k]]; // インデックスがminIndexのデータです。
-					Data *jData = allColumnOutputData[j][orderByColumnIndexes[k]]; // インデックスがjのデータです。
-					int cmp = 0; // 比較結果です。等しければ0、インデックスjの行が大きければプラス、インデックスminIndexの行が大きければマイナスとなります。
-					switch (mData->type)
-					{
-					case DataType::INTEGER:
-						cmp = jData->value.integer - mData->value.integer;
-						break;
-					case DataType::STRING:
-						cmp = strcmp(jData->value.string, mData->value.string);
-						break;
-					}
-
-					// 降順ならcmpの大小を入れ替えます。
-					if (orders[k] == TokenKind::DESC){
-						cmp *= -1;
-					}
-					if (cmp < 0){
-						jLessThanMin = true;
-						break;
-					}
-					else if (0 < cmp){
-						break;
-					}
-				}
-				if (jLessThanMin){
-					minIndex = j;
-				}
-			}
-			Data** tmp = outputData[minIndex];
-			outputData[minIndex] = outputData[i];
-			outputData[i] = tmp;
-
-			tmp = allColumnOutputData[minIndex];
-			allColumnOutputData[minIndex] = allColumnOutputData[i];
-			allColumnOutputData[i] = tmp;
-		}
-	}
-
-	// 出力ファイルを開きます。
-	outputFile = fopen(outputFileName, "w");
-	if (outputFile == nullptr){
-		error = ResultValue::ERR_FILE_OPEN;
-		goto ERROR;
-	}
-
-	// 出力ファイルに列名を出力します。
-	for (int i = 0; i < selectColumnsNum; ++i){
-		result = fputs(outputColumns[i].columnName, outputFile);
-		if (result == EOF){
-			error = ResultValue::ERR_FILE_WRITE;
-			goto ERROR;
-		}
-		if (i < selectColumnsNum - 1){
-			result = fputs(",", outputFile);
-			if (result == EOF){
-				error = ResultValue::ERR_FILE_WRITE;
-				goto ERROR;
-			}
-		}
-		else{
-			result = fputs("\n", outputFile);
-			if (result == EOF){
-				error = ResultValue::ERR_FILE_WRITE;
-				goto ERROR;
-			}
-		}
-	}
-
-	// 出力ファイルにデータを出力します。
-	currentRow = outputData;
-	while (*currentRow){
-		Data **column = *currentRow;
+		// 出力する列名を設定します。
 		for (int i = 0; i < selectColumnsNum; ++i){
-			char outputString[MAX_DATA_LENGTH] = "";
-			switch ((*column)->type){
-			case DataType::INTEGER:
-				itoa((*column)->value.integer, outputString, 10);
-				break;
-			case DataType::STRING:
-				strcpy(outputString, (*column)->value.string);
+			strncpy(outputColumns[outputColumnNum].tableName, inputColumns[selectColumnIndexes[i].table][selectColumnIndexes[i].column].tableName, MAX_WORD_LENGTH);
+			strncpy(outputColumns[outputColumnNum].columnName, inputColumns[selectColumnIndexes[i].table][selectColumnIndexes[i].column].columnName, MAX_WORD_LENGTH);
+			++outputColumnNum;
+		}
+
+		if (whereTopNode){
+			// 既存数値の符号を計算します。
+			for (int i = 0; i < whereExtensionNodesNum; ++i){
+				if (whereExtensionNodes[i].middleOperator.kind == TokenKind::NOT_TOKEN &&
+					!*whereExtensionNodes[i].column.columnName &&
+					whereExtensionNodes[i].value.type == DataType::INTEGER){
+					whereExtensionNodes[i].value.value.integer *= whereExtensionNodes[i].signCoefficient;
+				}
+			}
+		}
+
+		int outputRowsNum = 0; // 出力データの現在の行数です。
+
+		Data ***currentRows[MAX_TABLE_COUNT] = { nullptr }; // 入力された各テーブルの、現在出力している行を指すカーソルです。
+		for (int i = 0; i < tableNamesNum; ++i){
+			// 各テーブルの先頭行を設定します。
+			currentRows[i] = inputData[i];
+		}
+
+		// 出力するデータを設定します。
+		while (true){
+			if (MAX_ROW_COUNT <= outputRowsNum){
+				throw ResultValue::ERR_MEMORY_OVER;
+			}
+			Data **row = outputData[outputRowsNum] = (Data**)malloc(MAX_COLUMN_COUNT * sizeof(Data*)); // 出力している一行分のデータです。
+			if (!row){
+				throw ResultValue::ERR_MEMORY_ALLOCATE;
+			}
+
+			// 生成した行を初期化します。
+			for (int i = 0; i < MAX_COLUMN_COUNT; ++i){
+				row[i] = nullptr;
+			}
+
+			// 行の各列のデータを入力から持ってきて設定します。
+			for (int i = 0; i < selectColumnIndexesNum; ++i){
+				row[i] = (Data*)malloc(sizeof(Data));
+				if (!row[i]){
+					throw ResultValue::ERR_MEMORY_ALLOCATE;
+				}
+				*row[i] = *(*currentRows[selectColumnIndexes[i].table])[selectColumnIndexes[i].column];
+			}
+
+			Data **allColumnsRow = allColumnOutputData[outputRowsNum++] = (Data**)malloc(MAX_TABLE_COUNT * MAX_COLUMN_COUNT * sizeof(Data*)); // WHEREやORDERのためにすべての情報を含む行。rowとインデックスを共有します。
+			if (!allColumnsRow){
+				throw ResultValue::ERR_MEMORY_ALLOCATE;
+			}
+			// 生成した行を初期化します。
+			for (int i = 0; i < MAX_TABLE_COUNT * MAX_COLUMN_COUNT; ++i){
+				allColumnsRow[i] = nullptr;
+			}
+
+			// allColumnsRowの列を設定します。
+			int allColumnsNum = 0; // allColumnsRowの現在の列数です。
+			for (int i = 0; i < tableNamesNum; ++i){
+				for (int j = 0; j < inputColumnNums[i]; ++j){
+					allColumnsRow[allColumnsNum] = (Data*)malloc(sizeof(Data));
+					if (!allColumnsRow[allColumnsNum]){
+						throw ResultValue::ERR_MEMORY_ALLOCATE;
+					}
+					*allColumnsRow[allColumnsNum++] = *(*currentRows[i])[j];
+				}
+			}
+			// WHEREの条件となる値を再帰的に計算します。
+			if (whereTopNode){
+				ExtensionTreeNode *currentNode = whereTopNode; // 現在見ているノードです。
+				while (currentNode){
+					// 子ノードの計算が終わってない場合は、まずそちらの計算を行います。
+					if (currentNode->left && !currentNode->left->calculated){
+						currentNode = currentNode->left;
+						continue;
+					}
+					else if (currentNode->right && !currentNode->right->calculated){
+						currentNode = currentNode->right;
+						continue;
+					}
+
+					// 自ノードの値を計算します。
+					switch (currentNode->middleOperator.kind){
+					case TokenKind::NOT_TOKEN:
+						// ノードにデータが設定されている場合です。
+
+						// データが列名で指定されている場合、今扱っている行のデータを設定します。
+						if (*currentNode->column.columnName){
+							found = false;
+							for (int i = 0; i < allInputColumnsNum; ++i){
+								char* whereTableNameCursol = currentNode->column.tableName;
+								char* allInputTableNameCursol = allInputColumns[i].tableName;
+								while (*whereTableNameCursol && toupper(*whereTableNameCursol) == toupper(*allInputTableNameCursol++)){
+									++whereTableNameCursol;
+								}
+								char* whereColumnNameCursol = currentNode->column.columnName;
+								char* allInputColumnNameCursol = allInputColumns[i].columnName;
+								while (*whereColumnNameCursol && toupper(*whereColumnNameCursol) == toupper(*allInputColumnNameCursol++)){
+									++whereColumnNameCursol;
+								}
+								if (!*whereColumnNameCursol && !*allInputColumnNameCursol &&
+									(!*currentNode->column.tableName || // テーブル名が設定されている場合のみテーブル名の比較を行います。
+									!*whereTableNameCursol && !*allInputTableNameCursol)){
+									// 既に見つかっているのにもう一つ見つかったらエラーです。
+									if (found){
+										throw ResultValue::ERR_BAD_COLUMN_NAME;
+									}
+									found = true;
+									currentNode->value = *allColumnsRow[i];
+								}
+							}
+							// 一つも見つからなくてもエラーです。
+							if (!found){
+								throw ResultValue::ERR_BAD_COLUMN_NAME;
+							}
+							;
+							// 符号を考慮して値を計算します。
+							if (currentNode->value.type == DataType::INTEGER){
+								currentNode->value.value.integer *= currentNode->signCoefficient;
+							}
+						}
+						break;
+					case TokenKind::EQUAL:
+					case TokenKind::GREATER_THAN:
+					case TokenKind::GREATER_THAN_OR_EQUAL:
+					case TokenKind::LESS_THAN:
+					case TokenKind::LESS_THAN_OR_EQUAL:
+					case TokenKind::NOT_EQUAL:
+						// 比較演算子の場合です。
+
+						// 比較できるのは文字列型か整数型で、かつ左右の型が同じ場合です。
+						if (currentNode->left->value.type != DataType::INTEGER && currentNode->left->value.type != DataType::STRING ||
+							currentNode->left->value.type != currentNode->right->value.type){
+							throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+						}
+						currentNode->value.type = DataType::BOOLEAN;
+
+						// 比較結果を型と演算子によって計算方法を変えて、計算します。
+						switch (currentNode->left->value.type){
+						case DataType::INTEGER:
+							switch (currentNode->middleOperator.kind){
+							case TokenKind::EQUAL:
+								currentNode->value.value.boolean = currentNode->left->value.value.integer == currentNode->right->value.value.integer;
+								break;
+							case TokenKind::GREATER_THAN:
+								currentNode->value.value.boolean = currentNode->left->value.value.integer > currentNode->right->value.value.integer;
+								break;
+							case TokenKind::GREATER_THAN_OR_EQUAL:
+								currentNode->value.value.boolean = currentNode->left->value.value.integer >= currentNode->right->value.value.integer;
+								break;
+							case TokenKind::LESS_THAN:
+								currentNode->value.value.boolean = currentNode->left->value.value.integer < currentNode->right->value.value.integer;
+								break;
+							case TokenKind::LESS_THAN_OR_EQUAL:
+								currentNode->value.value.boolean = currentNode->left->value.value.integer <= currentNode->right->value.value.integer;
+								break;
+							case TokenKind::NOT_EQUAL:
+								currentNode->value.value.boolean = currentNode->left->value.value.integer != currentNode->right->value.value.integer;
+								break;
+							}
+							break;
+						case DataType::STRING:
+							switch (currentNode->middleOperator.kind){
+							case TokenKind::EQUAL:
+								currentNode->value.value.boolean = strcmp(currentNode->left->value.value.string, currentNode->right->value.value.string) == 0;
+								break;
+							case TokenKind::GREATER_THAN:
+								currentNode->value.value.boolean = strcmp(currentNode->left->value.value.string, currentNode->right->value.value.string) > 0;
+								break;
+							case TokenKind::GREATER_THAN_OR_EQUAL:
+								currentNode->value.value.boolean = strcmp(currentNode->left->value.value.string, currentNode->right->value.value.string) >= 0;
+								break;
+							case TokenKind::LESS_THAN:
+								currentNode->value.value.boolean = strcmp(currentNode->left->value.value.string, currentNode->right->value.value.string) < 0;
+								break;
+							case TokenKind::LESS_THAN_OR_EQUAL:
+								currentNode->value.value.boolean = strcmp(currentNode->left->value.value.string, currentNode->right->value.value.string) <= 0;
+								break;
+							case TokenKind::NOT_EQUAL:
+								currentNode->value.value.boolean = strcmp(currentNode->left->value.value.string, currentNode->right->value.value.string) != 0;
+								break;
+							}
+							break;
+						}
+						break;
+					case TokenKind::PLUS:
+					case TokenKind::MINUS:
+					case TokenKind::ASTERISK:
+					case TokenKind::SLASH:
+						// 四則演算の場合です。
+
+						// 演算できるのは整数型同士の場合のみです。
+						if (currentNode->left->value.type != DataType::INTEGER || currentNode->right->value.type != DataType::INTEGER){
+							throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+						}
+						currentNode->value.type = DataType::INTEGER;
+
+						// 比較結果を演算子によって計算方法を変えて、計算します。
+						switch (currentNode->middleOperator.kind){
+						case TokenKind::PLUS:
+							currentNode->value.value.integer = currentNode->left->value.value.integer + currentNode->right->value.value.integer;
+							break;
+						case TokenKind::MINUS:
+							currentNode->value.value.integer = currentNode->left->value.value.integer - currentNode->right->value.value.integer;
+							break;
+						case TokenKind::ASTERISK:
+							currentNode->value.value.integer = currentNode->left->value.value.integer * currentNode->right->value.value.integer;
+							break;
+						case TokenKind::SLASH:
+							currentNode->value.value.integer = currentNode->left->value.value.integer / currentNode->right->value.value.integer;
+							break;
+						}
+						break;
+					case TokenKind::AND:
+					case TokenKind::OR:
+						// 論理演算の場合です。
+
+						// 演算できるのは真偽値型同士の場合のみです。
+						if (currentNode->left->value.type != DataType::BOOLEAN || currentNode->right->value.type != DataType::BOOLEAN){
+							throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+						}
+						currentNode->value.type = DataType::BOOLEAN;
+
+						// 比較結果を演算子によって計算方法を変えて、計算します。
+						switch (currentNode->middleOperator.kind){
+						case TokenKind::AND:
+							currentNode->value.value.boolean = currentNode->left->value.value.boolean && currentNode->right->value.value.boolean;
+							break;
+						case TokenKind::OR:
+							currentNode->value.value.boolean = currentNode->left->value.value.boolean || currentNode->right->value.value.boolean;
+							break;
+						}
+					}
+					currentNode->calculated = true;
+
+					// 自身の計算が終わった後は親の計算に戻ります。
+					currentNode = currentNode->parent;
+				}
+
+				// 条件に合わない行は出力から削除します。
+				if (!whereTopNode->value.value.boolean){
+					free(row);
+					free(allColumnsRow);
+					allColumnOutputData[--outputRowsNum] = nullptr;
+					outputData[outputRowsNum] = nullptr;
+				}
+				// WHERE条件の計算結果をリセットします。
+				for (int i = 0; i < whereExtensionNodesNum; ++i){
+					whereExtensionNodes[i].calculated = false;
+				}
+			}
+
+			// 各テーブルの行のすべての組み合わせを出力します。
+
+			// 最後のテーブルのカレント行をインクリメントします。
+			++currentRows[tableNamesNum - 1];
+
+			// 最後のテーブルが最終行になっていた場合は先頭に戻し、順に前のテーブルのカレント行をインクリメントします。
+			for (int i = tableNamesNum - 1; !*currentRows[i] && 0 < i; --i){
+				++currentRows[i - 1];
+				currentRows[i] = inputData[i];
+			}
+
+			// 最初のテーブルが最後の行を超えたなら出力行の生成は終わりです。
+			if (!*currentRows[0]){
 				break;
 			}
-			result = fputs(outputString, outputFile);
+		}
+
+		// ORDER句による並び替えの処理を行います。
+		if (orderByColumnsNum){
+			// ORDER句で指定されている列が、全ての入力行の中のどの行なのかを計算します。
+			int orderByColumnIndexes[MAX_COLUMN_COUNT]; // ORDER句で指定された列の、すべての行の中でのインデックスです。
+			int orderByColumnIndexesNum = 0; // 現在のorderByColumnIndexesの数です。
+			for (int i = 0; i < orderByColumnsNum; ++i){
+				found = false;
+				for (int j = 0; j < allInputColumnsNum; ++j){
+					char* orderByTableNameCursol = orderByColumns[i].tableName;
+					char* allInputTableNameCursol = allInputColumns[j].tableName;
+					while (*orderByTableNameCursol && toupper(*orderByTableNameCursol) == toupper(*allInputTableNameCursol)){
+						++orderByTableNameCursol;
+						++allInputTableNameCursol;
+					}
+					char* orderByColumnNameCursol = orderByColumns[i].columnName;
+					char* allInputColumnNameCursol = allInputColumns[j].columnName;
+					while (*orderByColumnNameCursol && toupper(*orderByColumnNameCursol) == toupper(*allInputColumnNameCursol)){
+						++orderByColumnNameCursol;
+						++allInputColumnNameCursol;
+					}
+					if (!*orderByColumnNameCursol && !*allInputColumnNameCursol &&
+						(!*orderByColumns[i].tableName || // テーブル名が設定されている場合のみテーブル名の比較を行います。
+						!*orderByTableNameCursol && !*allInputTableNameCursol)){
+						// 既に見つかっているのにもう一つ見つかったらエラーです。
+						if (found){
+							throw ResultValue::ERR_BAD_COLUMN_NAME;
+						}
+						found = true;
+						if (MAX_COLUMN_COUNT <= orderByColumnIndexesNum){
+							throw ResultValue::ERR_MEMORY_OVER;
+						}
+						orderByColumnIndexes[orderByColumnIndexesNum++] = j;
+					}
+				}
+				// 一つも見つからなくてもエラーです。
+				if (!found){
+					throw ResultValue::ERR_BAD_COLUMN_NAME;
+				}
+			}
+
+			// outputDataとallColumnOutputDataのソートを一緒に行います。簡便のため凝ったソートは使わず、選択ソートを利用します。
+			for (int i = 0; i < outputRowsNum; ++i){
+				int minIndex = i; // 現在までで最小の行のインデックスです。
+				for (int j = i + 1; j < outputRowsNum; ++j){
+					bool jLessThanMin = false; // インデックスがjの値が、minIndexの値より小さいかどうかです。
+					for (int k = 0; k < orderByColumnIndexesNum; ++k){
+						Data *mData = allColumnOutputData[minIndex][orderByColumnIndexes[k]]; // インデックスがminIndexのデータです。
+						Data *jData = allColumnOutputData[j][orderByColumnIndexes[k]]; // インデックスがjのデータです。
+						int cmp = 0; // 比較結果です。等しければ0、インデックスjの行が大きければプラス、インデックスminIndexの行が大きければマイナスとなります。
+						switch (mData->type)
+						{
+						case DataType::INTEGER:
+							cmp = jData->value.integer - mData->value.integer;
+							break;
+						case DataType::STRING:
+							cmp = strcmp(jData->value.string, mData->value.string);
+							break;
+						}
+
+						// 降順ならcmpの大小を入れ替えます。
+						if (orders[k] == TokenKind::DESC){
+							cmp *= -1;
+						}
+						if (cmp < 0){
+							jLessThanMin = true;
+							break;
+						}
+						else if (0 < cmp){
+							break;
+						}
+					}
+					if (jLessThanMin){
+						minIndex = j;
+					}
+				}
+				Data** tmp = outputData[minIndex];
+				outputData[minIndex] = outputData[i];
+				outputData[i] = tmp;
+
+				tmp = allColumnOutputData[minIndex];
+				allColumnOutputData[minIndex] = allColumnOutputData[i];
+				allColumnOutputData[i] = tmp;
+			}
+		}
+
+		// 出力ファイルを開きます。
+		outputFile = fopen(outputFileName, "w");
+		if (outputFile == nullptr){
+			throw ResultValue::ERR_FILE_OPEN;
+		}
+
+		// 出力ファイルに列名を出力します。
+		for (int i = 0; i < selectColumnsNum; ++i){
+			result = fputs(outputColumns[i].columnName, outputFile);
 			if (result == EOF){
-				error = ResultValue::ERR_FILE_WRITE;
-				goto ERROR;
+				throw ResultValue::ERR_FILE_WRITE;
 			}
 			if (i < selectColumnsNum - 1){
 				result = fputs(",", outputFile);
 				if (result == EOF){
-					error = ResultValue::ERR_FILE_WRITE;
-					goto ERROR;
+					throw ResultValue::ERR_FILE_WRITE;
 				}
 			}
 			else{
 				result = fputs("\n", outputFile);
 				if (result == EOF){
-					error = ResultValue::ERR_FILE_WRITE;
-					goto ERROR;
+					throw ResultValue::ERR_FILE_WRITE;
 				}
 			}
-			++column;
 		}
-		++currentRow;
-	}
 
-	// 正常時の後処理です。
+		// 出力ファイルにデータを出力します。
+		currentRow = outputData;
+		while (*currentRow){
+			Data **column = *currentRow;
+			for (int i = 0; i < selectColumnsNum; ++i){
+				char outputString[MAX_DATA_LENGTH] = "";
+				switch ((*column)->type){
+				case DataType::INTEGER:
+					itoa((*column)->value.integer, outputString, 10);
+					break;
+				case DataType::STRING:
+					strcpy(outputString, (*column)->value.string);
+					break;
+				}
+				result = fputs(outputString, outputFile);
+				if (result == EOF){
+					throw ResultValue::ERR_FILE_WRITE;
+				}
+				if (i < selectColumnsNum - 1){
+					result = fputs(",", outputFile);
+					if (result == EOF){
+						throw ResultValue::ERR_FILE_WRITE;
+					}
+				}
+				else{
+					result = fputs("\n", outputFile);
+					if (result == EOF){
+						throw ResultValue::ERR_FILE_WRITE;
+					}
+				}
+				++column;
+			}
+			++currentRow;
+		}
 
-	// ファイルリソースを解放します。
-	for (int i = 0; i < MAX_TABLE_COUNT; ++i){
-		if (inputTableFiles[i]){
-			fclose(inputTableFiles[i]);
+		// 正常時の後処理です。
+
+		// ファイルリソースを解放します。
+		for (int i = 0; i < MAX_TABLE_COUNT; ++i){
+			if (inputTableFiles[i]){
+				fclose(inputTableFiles[i]);
+				if (result == EOF){
+					throw ResultValue::ERR_FILE_CLOSE;
+				}
+			}
+		}
+		if (outputFile){
+			fclose(outputFile);
 			if (result == EOF){
-				error = ResultValue::ERR_FILE_CLOSE;
-				goto ERROR;
+				throw ResultValue::ERR_FILE_CLOSE;
 			}
 		}
-	}
-	if (outputFile){
-		fclose(outputFile);
-		if (result == EOF){
-			error = ResultValue::ERR_FILE_CLOSE;
-			goto ERROR;
-		}
-	}
 
-	// メモリリソースを解放します。
-	for (int i = 0; i < tableNamesNum; ++i){
-		currentRow = inputData[i];
+		// メモリリソースを解放します。
+		for (int i = 0; i < tableNamesNum; ++i){
+			currentRow = inputData[i];
+			while (*currentRow){
+				Data **dataCursol = *currentRow;
+				while (*dataCursol){
+					free(*dataCursol++);
+				}
+				free(*currentRow);
+				currentRow++;
+			}
+		}
+		currentRow = outputData;
 		while (*currentRow){
 			Data **dataCursol = *currentRow;
 			while (*dataCursol){
@@ -1564,44 +1512,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 			free(*currentRow);
 			currentRow++;
 		}
-	}
-	currentRow = outputData;
-	while (*currentRow){
-		Data **dataCursol = *currentRow;
-		while (*dataCursol){
-			free(*dataCursol++);
-		}
-		free(*currentRow);
-		currentRow++;
-	}
-	currentRow = allColumnOutputData;
-	while (*currentRow){
-		Data **dataCursol = *currentRow;
-		while (*dataCursol){
-			free(*dataCursol++);
-		}
-		free(*currentRow);
-		currentRow++;
-	}
-
-	return static_cast<int>(ResultValue::OK);
-
-ERROR:
-	// エラー時の処理です。
-
-	// ファイルリソースを解放します。
-	for (int i = 0; i < MAX_TABLE_COUNT; ++i){
-		if (inputTableFiles[i]){
-			fclose(inputTableFiles[i]);
-		}
-	}
-	if (outputFile){
-		fclose(outputFile);
-	}
-
-	// メモリリソースを解放します。
-	for (int i = 0; i < tableNamesNum; ++i){
-		currentRow = inputData[i];
+		currentRow = allColumnOutputData;
 		while (*currentRow){
 			Data **dataCursol = *currentRow;
 			while (*dataCursol){
@@ -1610,24 +1521,53 @@ ERROR:
 			free(*currentRow);
 			currentRow++;
 		}
+
+		return static_cast<int>(ResultValue::OK);
 	}
-	currentRow = outputData;
-	while (*currentRow){
-		Data **dataCursol = *currentRow;
-		while (*dataCursol){
-			free(*dataCursol++);
+	catch (ResultValue error) // 発生したエラーの種類です。
+	{
+		// エラー時の処理です。
+
+		// ファイルリソースを解放します。
+		for (int i = 0; i < MAX_TABLE_COUNT; ++i){
+			if (inputTableFiles[i]){
+				fclose(inputTableFiles[i]);
+			}
 		}
-		free(*currentRow);
-		currentRow++;
-	}
-	currentRow = allColumnOutputData;
-	while (*currentRow){
-		Data **dataCursol = *currentRow;
-		while (*dataCursol){
-			free(*dataCursol++);
+		if (outputFile){
+			fclose(outputFile);
 		}
-		free(*currentRow);
-		currentRow++;
+
+		// メモリリソースを解放します。
+		for (int i = 0; i < tableNamesNum; ++i){
+			currentRow = inputData[i];
+			while (*currentRow){
+				Data **dataCursol = *currentRow;
+				while (*dataCursol){
+					free(*dataCursol++);
+				}
+				free(*currentRow);
+				currentRow++;
+			}
+		}
+		currentRow = outputData;
+		while (*currentRow){
+			Data **dataCursol = *currentRow;
+			while (*dataCursol){
+				free(*dataCursol++);
+			}
+			free(*currentRow);
+			currentRow++;
+		}
+		currentRow = allColumnOutputData;
+		while (*currentRow){
+			Data **dataCursol = *currentRow;
+			while (*dataCursol){
+				free(*dataCursol++);
+			}
+			free(*currentRow);
+			currentRow++;
+		}
+		return static_cast<int>(error);
 	}
-	return static_cast<int>(error);
 }
