@@ -128,7 +128,7 @@ class Token
 {
 public:
 	TokenKind kind; //!< トークンの種類です。
-	char word[MAX_WORD_LENGTH]; //!< 記録されているトークンの文字列です。記録の必要がなければ空白です。
+	string word; //!< 記録されているトークンの文字列です。記録の必要がなければ空白です。
 
 	//! Tokenクラスの新しいインスタンスを初期化します。
 	Token();
@@ -254,7 +254,7 @@ Token::Token(const TokenKind kind) : Token(kind, "")
 //! @param [in] word 記録されているトークンの文字列です。記録の必要がなければ空白です。
 Token::Token(const TokenKind kind, const char *word) :kind(kind)
 {
-	strncpy(this->word, word, max(MAX_DATA_LENGTH, MAX_WORD_LENGTH));
+	this->word = word;
 }
 
 //! Columnクラスの新しいインスタンスを初期化します。
@@ -462,16 +462,12 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			for (search = num.c_str(); *search && *charactorCursol != *search; ++search){}
 			if (*search){
 				Token literal{TokenKind::INT_LITERAL}; // 読み込んだ数値リテラルの情報です。
-				int wordLength = 0; // 数値リテラルに現在読み込んでいる文字の数です。
 
 				// 数字が続く間、文字を読み込み続けます。
 				do {
 					for (search = num.c_str(); *search && *charactorCursol != *search; ++search){}
 					if (*search){
-						if (MAX_WORD_LENGTH - 1 <= wordLength){
-							throw ResultValue::ERR_MEMORY_OVER;
-						}
-						literal.word[wordLength++] = *search;
+						literal.word.push_back(*search);
 						++charactorCursol;
 					}
 				} while (*search);
@@ -479,7 +475,6 @@ int ExecuteSQL(const string sql, const string outputFileName)
 				// 数字の後にすぐに識別子が続くのは紛らわしいので数値リテラルとは扱いません。
 				for (search = alpahUnder.c_str(); *search && *charactorCursol != *search; ++search){}
 				if (!*search){
-					literal.word[wordLength] = '\0';
 					tokens.push_back(literal);
 					continue;
 				}
@@ -495,24 +490,16 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			if (*charactorCursol == "\'"[0]){
 				++charactorCursol;
 				Token literal{TokenKind::STRING_LITERAL, "\'"}; // 読み込んだ文字列リテラルの情報です。
-				int wordLength = 1; // 文字列リテラルに現在読み込んでいる文字の数です。初期値の段階で最初のシングルクォートは読み込んでいます。
 
 				// 次のシングルクォートがくるまで文字を読み込み続けます。
 				while (*charactorCursol && *charactorCursol != "\'"[0]){
-					if (MAX_WORD_LENGTH - 1 <= wordLength){
-						throw ResultValue::ERR_MEMORY_OVER;
-					}
-					literal.word[wordLength++] = *charactorCursol++;
+					literal.word.push_back(*charactorCursol++);
 				}
 				if (*charactorCursol == "\'"[0]){
-					if (MAX_WORD_LENGTH - 1 <= wordLength){
-						throw ResultValue::ERR_MEMORY_OVER;
-					}
 					// 最後のシングルクォートを読み込みます。
-					literal.word[wordLength++] = *charactorCursol++;
+					literal.word.push_back(*charactorCursol++);
 
 					// 文字列の終端文字をつけます。
-					literal.word[wordLength] = '\0';
 					tokens.push_back(literal);
 					continue;
 				}
@@ -525,7 +512,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			found = false;
 			for (auto & keywordCondition : keywordConditions){
 				charactorBackPoint = charactorCursol;
-				const char *wordCursol = keywordCondition.word; // 確認するキーワードの文字列のうち、現在確認している一文字を指します。
+				const char *wordCursol = keywordCondition.word.c_str(); // 確認するキーワードの文字列のうち、現在確認している一文字を指します。
 
 				// キーワードが指定した文字列となっているか確認します。
 				while (*wordCursol && toupper(*charactorCursol++) == *wordCursol){
@@ -553,7 +540,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			found = false;
 			for (auto &signCondition : signConditions){
 				charactorBackPoint = charactorCursol;
-				const char *wordCursol = signCondition.word; // 確認する記号の文字列のうち、現在確認している一文字を指します。
+				const char *wordCursol = signCondition.word.c_str(); // 確認する記号の文字列のうち、現在確認している一文字を指します。
 
 				// 記号が指定した文字列となっているか確認します。
 				while (*wordCursol && toupper(*charactorCursol++) == *wordCursol){
@@ -579,21 +566,14 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			for (search = alpahUnder.c_str(); *search && *charactorCursol != *search; ++search){};
 			if (*search){
 				Token identifier{ TokenKind::IDENTIFIER }; // 読み込んだ識別子の情報です。
-				int wordLength = 0; // 識別子に現在読み込んでいる文字の数です。
 				do {
 					// 二文字目以降は数字も許可して文字の種類を確認します。
 					for (search = alpahNumUnder.c_str(); *search && *charactorCursol != *search; ++search){};
 					if (*search){
-						if (MAX_WORD_LENGTH - 1 <= wordLength){
-							throw ResultValue::ERR_MEMORY_OVER;
-						}
-						identifier.word[wordLength++] = *search;
+						identifier.word.push_back(*search);
 						charactorCursol++;
 					}
 				} while (*search);
-
-				// 識別子の文字列の終端文字を設定します。
-				identifier.word[wordLength] = '\0';
 
 				// 読み込んだ識別子を登録します。
 				tokens.push_back(identifier);
@@ -642,14 +622,14 @@ int ExecuteSQL(const string sql, const string outputFileName)
 				}
 				if (tokenCursol->kind == TokenKind::IDENTIFIER){
 					// テーブル名が指定されていない場合と仮定して読み込みます。
-					selectColumns.push_back(Column(tokenCursol->word));
+					selectColumns.push_back(Column(tokenCursol->word.c_str()));
 					++tokenCursol;
 					if (tokenCursol->kind == TokenKind::DOT){
 						++tokenCursol;
 						if (tokenCursol->kind == TokenKind::IDENTIFIER){
 
 							// テーブル名が指定されていることがわかったので読み替えます。
-							selectColumns.back() = Column(selectColumns.back().columnName, tokenCursol->word);
+							selectColumns.back() = Column(selectColumns.back().columnName, tokenCursol->word.c_str());
 							++tokenCursol;
 						}
 						else{
@@ -691,14 +671,14 @@ int ExecuteSQL(const string sql, const string outputFileName)
 						}
 						if (tokenCursol->kind == TokenKind::IDENTIFIER){
 							// テーブル名が指定されていない場合と仮定して読み込みます。
-							orderByColumns.push_back(Column(tokenCursol->word));
+							orderByColumns.push_back(Column(tokenCursol->word.c_str()));
 							++tokenCursol;
 							if (tokenCursol->kind == TokenKind::DOT){
 								++tokenCursol;
 								if (tokenCursol->kind == TokenKind::IDENTIFIER){
 
 									// テーブル名が指定されていることがわかったので読み替えます。
-									orderByColumns.back() = Column(orderByColumns.back().columnName, tokenCursol->word);
+									orderByColumns.back() = Column(orderByColumns.back().columnName, tokenCursol->word.c_str());
 									++tokenCursol;
 								}
 								else{
@@ -775,14 +755,14 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					if (tokenCursol->kind == TokenKind::IDENTIFIER){
 
 						// テーブル名が指定されていない場合と仮定して読み込みます。
-						currentNode->column = Column(tokenCursol->word);
+						currentNode->column = Column(tokenCursol->word.c_str());
 						++tokenCursol;
 						if (tokenCursol->kind == TokenKind::DOT){
 							++tokenCursol;
 							if (tokenCursol->kind == TokenKind::IDENTIFIER){
 
 								// テーブル名が指定されていることがわかったので読み替えます。
-								currentNode->column = Column(currentNode->column.columnName, tokenCursol->word);
+								currentNode->column = Column(currentNode->column.columnName, tokenCursol->word.c_str());
 								++tokenCursol;
 							}
 							else{
@@ -791,14 +771,14 @@ int ExecuteSQL(const string sql, const string outputFileName)
 						}
 					}
 					else if (tokenCursol->kind == TokenKind::INT_LITERAL){
-						currentNode->value = Data(atoi(tokenCursol->word));
+						currentNode->value = Data(atoi(tokenCursol->word.c_str()));
 						++tokenCursol;
 					}
 					else if (tokenCursol->kind == TokenKind::STRING_LITERAL){
 						currentNode->value = Data();
 
 						// 前後のシングルクォートを取り去った文字列をデータとして読み込みます。
-						strncpy(currentNode->value.value.string, tokenCursol->word + 1, std::min(MAX_WORD_LENGTH, MAX_DATA_LENGTH));
+						strncpy(currentNode->value.value.string, tokenCursol->word.c_str() + 1, std::min(MAX_WORD_LENGTH, MAX_DATA_LENGTH));
 						currentNode->value.value.string[MAX_DATA_LENGTH - 1] = '\0';
 						currentNode->value.value.string[strlen(currentNode->value.value.string) - 1] = '\0';
 						++tokenCursol;
