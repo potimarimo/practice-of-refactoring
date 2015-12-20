@@ -549,11 +549,16 @@ public:
 };
 
 //! WHERE句の条件の式木を表します。
-class ExtensionTreeNode
+class ExtensionTreeNode : public enable_shared_from_this<ExtensionTreeNode>
 {
 	//! カラム名で指定されたデータを持つノードかどうかです。
 	//! @return カラム名で指定されたデータを持つノードかどうか。
 	bool ExtensionTreeNode::isDataNodeAsColumnName();
+
+	//! 次のノードを指定する関数を指定し、ノードの列を生成します。
+	//! @param [in] nextNode 現在のノードから次のノードを指定する関数です。
+	//! @return thisから次のノードをたどっていき、ノードがnullptrになる前までのすべてのノードの列。
+	const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> ExtensionTreeNode::allNodesOf(function<const shared_ptr<ExtensionTreeNode>(const shared_ptr<const ExtensionTreeNode>)> nextNode) const;
 public:
 	shared_ptr<ExtensionTreeNode> parent;//!< 親となるノードです。根の式木の場合はnullptrとなります。
 	shared_ptr<ExtensionTreeNode> left;  //!< 左の子となるノードです。自身が末端の葉となる式木の場合はnullptrとなります。
@@ -1888,28 +1893,31 @@ void ExtensionTreeNode::SetColumnData(const vector<const shared_ptr<const Data>>
 	}
 }
 
+//! 次のノードを指定する関数を指定し、ノードの列を生成します。
+//! @param [in] nextNode 現在のノードから次のノードを指定する関数です。
+//! @return thisから次のノードをたどっていき、ノードがnullptrになる前までのすべてのノードの列。
+const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> ExtensionTreeNode::allNodesOf(function<const shared_ptr<ExtensionTreeNode>(const shared_ptr<const ExtensionTreeNode>)> nextNode) const
+{
+	auto returnValue = make_shared<vector<const shared_ptr<ExtensionTreeNode>>>();
+
+	for (auto current = nextNode(shared_from_this()); current; current = nextNode(current)){
+		returnValue->push_back(current);
+	}
+	return returnValue;
+}
+
 //! 自身の祖先ノードを自身に近いほうから順に列挙します。
 //! @return 祖先ノードの一覧。
 const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> ExtensionTreeNode::ancestors() const
 {
-	auto ancestors = make_shared<vector<const shared_ptr<ExtensionTreeNode>>>();
-	
-	for (auto current = parent; current; current = current->parent){
-		ancestors->push_back(current);
-	}
-	return ancestors;
+	return allNodesOf([](const shared_ptr<const ExtensionTreeNode> thisNode){return thisNode->parent; });
 }
 
 //! 自身の子孫ノードをずっと左に辿っていき自身に近いほうから順に列挙します。
 //! @return 左に辿った子孫ノードの一覧。
 const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> ExtensionTreeNode::allLeftList() const
 {
-	auto lefts = make_shared<vector<const shared_ptr<ExtensionTreeNode>>>();
-
-	for (auto current = left; current; current = current->left){
-		lefts->push_back(current);
-	}
-	return lefts;
+	return allNodesOf([](const shared_ptr<const ExtensionTreeNode> thisNode){return thisNode->left; });
 }
 
 //! 引数として渡したノード及びその子孫のノードを取得します。
