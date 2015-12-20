@@ -319,10 +319,25 @@ protected:
 	const shared_ptr<const Token> ReadCore(string::const_iterator &cursol, const string::const_iterator& end) const override;
 };
 
+//! SqlQueryのCsvに対する入出力を扱います。
+class Csv
+{
+	const string signNum = "+-0123456789"; //!< 全ての符号と数字です。
+
+	const shared_ptr<const SqlQueryInfo> queryInfo; //!< SQLに記述された内容です。
+public:
+	//! Csvクラスの新しいインスタンスを初期化します。
+	//! @param [in] queryInfo SQLに記述された内容です。
+	Csv(const shared_ptr<const SqlQueryInfo> queryInfo);
+
+	//! CSVファイルから入力データを読み取ります。
+	//! @return ファイルから読み取ったデータです。
+	const shared_ptr<const vector<const InputTable>> ReadCsv() const;
+};
+
 //! ファイルに対して実行するSQLを表すクラスです。
 class SqlQuery
 {
-	const string signNum = "+-0123456789"; //!< 全ての符号と数字です。
 	const string space = " \t\r\n"; //!< 全ての空白文字です。
 
 	const vector<const shared_ptr<const TokenReader>> tokenReaders; //!< トークンの読み込みロジックの集合です。
@@ -339,10 +354,6 @@ class SqlQuery
 	//! @param [in] tokens 解析の対象となるトークンです。
 	//! @return 解析した結果の情報です。
 	const shared_ptr<const SqlQueryInfo> AnalyzeTokens(const vector<const Token> &tokens) const;
-
-	//! CSVファイルから入力データを読み取ります。
-	//! @return ファイルから読み取ったデータです。
-	const shared_ptr<const vector<const InputTable>> ReadCsv() const;
 
 	//! CSVファイルに出力データを書き込みます。
 	//! @param [in] outputFileName 結果を出力するファイルのファイル名です。
@@ -605,6 +616,106 @@ bool Equali(const string str1, const string str2){
 		str1.size() == str2.size() &&
 		equal(str1.begin(), str1.end(), str2.begin(),
 		[](const char &c1, const char &c2){return toupper(c1) == toupper(c2); });
+}
+
+//! Csvクラスの新しいインスタンスを初期化します。
+//! @param [in] queryInfo SQLに記述された内容です。
+Csv::Csv(const shared_ptr<const SqlQueryInfo> queryInfo) : queryInfo(queryInfo){}
+
+//! CSVファイルから入力データを読み取ります。
+//! @return ファイルから読み取ったデータです。
+const shared_ptr<const vector<const InputTable>> Csv::ReadCsv() const
+{
+	auto ret = make_shared<vector<const InputTable>>();
+	auto &tables = *ret;
+
+	vector<ifstream> inputTableFiles; // 読み込む入力ファイルの全てのファイルポインタです。
+	for (auto &tableName : queryInfo->tableNames){
+		tables.push_back(InputTable());
+		auto &table = tables.back();
+		// 入力ファイルを開きます。
+		inputTableFiles.push_back(ifstream(tableName + ".csv"));
+		if (!inputTableFiles.back()){
+			throw ResultValue::ERR_FILE_OPEN;
+		}
+
+		// 入力CSVのヘッダ行を読み込みます。
+		string inputLine; // ファイルから読み込んだ行文字列です。
+		if (getline(inputTableFiles.back(), inputLine)){
+			auto charactorCursol = inputLine.begin(); // ヘッダ入力行を検索するカーソルです。
+			auto lineEnd = inputLine.end(); // ヘッダ入力行のendを指します。
+
+			// 読み込んだ行を最後まで読みます。
+			while (charactorCursol != lineEnd){
+
+				// 列名を一つ読みます。
+				auto columnStart = charactorCursol; // 現在の列の最初を記録しておきます。
+				charactorCursol = find(charactorCursol, lineEnd, ',');
+				table.columns.push_back(Column(tableName, string(columnStart, charactorCursol)));
+
+				// 入力行のカンマの分を読み進めます。
+				if (charactorCursol != lineEnd){
+					++charactorCursol;
+				}
+			}
+		}
+		else{
+			throw ResultValue::ERR_CSV_SYNTAX;
+		}
+
+		// 入力CSVのデータ行を読み込みます。
+		while (getline(inputTableFiles.back(), inputLine)){
+			table.data.push_back(vector<const Data>()); // 入力されている一行分のデータです。
+			vector<const Data> &row = table.data.back();
+
+			auto charactorCursol = inputLine.begin(); // データ入力行を検索するカーソルです。
+			auto lineEnd = inputLine.end(); // データ入力行のendを指します。
+
+			// 読み込んだ行を最後まで読みます。
+			while (charactorCursol != lineEnd){
+
+				// 読み込んだデータを書き込む行のカラムを生成します。
+				auto columnStart = charactorCursol; // 現在の列の最初を記録しておきます。
+				charactorCursol = find(charactorCursol, lineEnd, ',');
+
+				row.push_back(Data(string(columnStart, charactorCursol)));
+
+				// 入力行のカンマの分を読み進めます。
+				if (charactorCursol != lineEnd){
+					++charactorCursol;
+				}
+			}
+		}
+
+		// 全てが数値となる列は数値列に変換します。
+		for (size_t j = 0; j < table.columns.size(); ++j){
+
+			// 全ての行のある列について、データ文字列から符号と数値以外の文字を探します。
+			if (none_of(
+				table.data.begin(),
+				table.data.end(),
+				[&](const vector<const Data> &inputRow){
+				return any_of(
+					inputRow[j].string().begin(),
+					inputRow[j].string().end(),
+					[&](const char& c){return signNum.find(c) == string::npos; }); })){
+
+				// 符号と数字以外が見つからない列については、数値列に変換します。
+				for (auto& inputRow : table.data){
+					inputRow[j] = Data(stoi(inputRow[j].string()));
+				}
+			}
+		}
+	}
+	for (auto &inputTableFile : inputTableFiles){
+		if (inputTableFile){
+			inputTableFile.close();
+			if (inputTableFile.bad()){
+				throw ResultValue::ERR_FILE_CLOSE;
+			}
+		}
+	}
+	return ret;
 }
 
 //! SQLの文字列からトークンを切り出します。
@@ -935,104 +1046,6 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 	}
 
 	return queryInfo;
-}
-
-//! CSVファイルから入力データを読み取ります。
-//! @return ファイルから読み取ったデータです。
-const shared_ptr<const vector<const InputTable>> SqlQuery::ReadCsv() const
-{
-	auto ret = make_shared<vector<const InputTable>>();
-	auto &tables = *ret;
-
-	vector<ifstream> inputTableFiles; // 読み込む入力ファイルの全てのファイルポインタです。
-	for (auto &tableName : queryInfo->tableNames){
-		tables.push_back(InputTable());
-		auto &table = tables.back();
-		// 入力ファイルを開きます。
-		inputTableFiles.push_back(ifstream(tableName + ".csv"));
-		if (!inputTableFiles.back()){
-			throw ResultValue::ERR_FILE_OPEN;
-		}
-
-		// 入力CSVのヘッダ行を読み込みます。
-		string inputLine; // ファイルから読み込んだ行文字列です。
-		if (getline(inputTableFiles.back(), inputLine)){
-			auto charactorCursol = inputLine.begin(); // ヘッダ入力行を検索するカーソルです。
-			auto lineEnd = inputLine.end(); // ヘッダ入力行のendを指します。
-
-			// 読み込んだ行を最後まで読みます。
-			while (charactorCursol != lineEnd){
-
-				// 列名を一つ読みます。
-				auto columnStart = charactorCursol; // 現在の列の最初を記録しておきます。
-				charactorCursol = find(charactorCursol, lineEnd, ',');
-				table.columns.push_back(Column(tableName, string(columnStart, charactorCursol)));
-
-				// 入力行のカンマの分を読み進めます。
-				if (charactorCursol != lineEnd){
-					++charactorCursol;
-				}
-			}
-		}
-		else{
-			throw ResultValue::ERR_CSV_SYNTAX;
-		}
-
-		// 入力CSVのデータ行を読み込みます。
-
-
-		while (getline(inputTableFiles.back(), inputLine)){
-			table.data.push_back(vector<const Data>()); // 入力されている一行分のデータです。
-			vector<const Data> &row = table.data.back();
-
-			auto charactorCursol = inputLine.begin(); // データ入力行を検索するカーソルです。
-			auto lineEnd = inputLine.end(); // データ入力行のendを指します。
-
-			// 読み込んだ行を最後まで読みます。
-			while (charactorCursol != lineEnd){
-
-				// 読み込んだデータを書き込む行のカラムを生成します。
-				auto columnStart = charactorCursol; // 現在の列の最初を記録しておきます。
-				charactorCursol = find(charactorCursol, lineEnd, ',');
-
-				row.push_back(Data(string(columnStart, charactorCursol)));
-
-				// 入力行のカンマの分を読み進めます。
-				if (charactorCursol != lineEnd){
-					++charactorCursol;
-				}
-			}
-		}
-
-		// 全てが数値となる列は数値列に変換します。
-		for (size_t j = 0; j < table.columns.size(); ++j){
-
-			// 全ての行のある列について、データ文字列から符号と数値以外の文字を探します。
-			if (none_of(
-				table.data.begin(),
-				table.data.end(),
-				[&](const vector<const Data> &inputRow){
-				return any_of(
-					inputRow[j].string().begin(),
-					inputRow[j].string().end(),
-					[&](const char& c){return signNum.find(c) == string::npos; }); })){
-
-				// 符号と数字以外が見つからない列については、数値列に変換します。
-				for (auto& inputRow : table.data){
-					inputRow[j] = Data(stoi(inputRow[j].string()));
-				}
-			}
-		}
-	}
-	for (auto &inputTableFile : inputTableFiles){
-		if (inputTableFile){
-			inputTableFile.close();
-			if (inputTableFile.bad()){
-				throw ResultValue::ERR_FILE_CLOSE;
-			}
-		}
-	}
-	return ret;
 }
 
 //! CSVファイルに出力データを書き込みます。
@@ -1502,7 +1515,8 @@ SqlQuery::SqlQuery(const string sql) :
 //! @param[in] outputFileName SQLの実行結果をCSVとして出力するファイル名です。拡張子を含みます。
 void SqlQuery::Execute(const string outputFileName)
 {
-	auto inputTables = ReadCsv();
+	Csv csv(queryInfo);
+	auto inputTables = csv.ReadCsv();
 	WriteCsv(outputFileName, *inputTables);
 }
 
