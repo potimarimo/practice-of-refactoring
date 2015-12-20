@@ -10,6 +10,14 @@ def delete(path)
   if File.exist?(path)
     File.unlink(path)
     puts `git rm \"#{path}\"`
+    puts 'delete ' + path
+  end
+end
+
+def copy(src, dest)
+  if(File.exist?(src))
+    FileUtils.cp(src, dest)
+    puts 'copy ' + dest + '/' + File.basename(src)
   end
 end
 
@@ -17,20 +25,19 @@ dirs.each.with_index do |dir, i|
   next unless dir
   diff = Dir.entries("Answer/#{dir}")
   diff.each do |file|
-    puts file.encode('sjis')
   	case file
   	when 'ExecuteSQL.c'
-      FileUtils.cp("Answer/#{dir}/#{file}", 'Solution/TinySQL')
-      delete 'Solution/TinySQL/ExecuteSQL.cpp'
+      copy "Answer/#{dir}/#{file}", 'Answer/Solution/TinySQL'
+      delete 'Answer/Solution/TinySQL/ExecuteSQL.cpp'
   	when 'ExecuteSQL.cpp'
-  	  FileUtils.cp("Answer/#{dir}/#{file}", 'Solution/TinySQL')
-  	  delete 'Solution/TinySQL/ExecuteSQL.c'
+  	  copy "Answer/#{dir}/#{file}", 'Answer/Solution/TinySQL'
+  	  delete 'Answer/Solution/TinySQL/ExecuteSQL.c'
   	when 'TestTinySQL.cpp'
-  	  FileUtils.cp("Answer/#{dir}/#{file}", 'Solution/TestTinySQL')
+  	  copy "Answer/#{dir}/#{file}", 'Answer/Solution/TestTinySQL'
   	when 'TinySQL.vcxproj'
-  	  FileUtils.cp("Answer/#{dir}/#{file}", 'Solution/TinySQL')
+  	  copy "Answer/#{dir}/#{file}", 'Answer/Solution/TinySQL'
   	end
   end  
-  puts `git add --all`.encode('sjis')
-  puts `git commit -m \"#{dir.encode('sjis')}\"`.encode('sjis')
+  puts `git add --all`
+  puts `git commit -m \"#{dir.encode('sjis')}\"`
 end
