@@ -1938,7 +1938,7 @@ const shared_ptr<const Token> KeywordReader::ReadCore(string::const_iterator &cu
 		[](const char keywordChar, const char sqlChar){return keywordChar == toupper(sqlChar); });
 
 	if (result.first == keyword.word.end() && // キーワードの最後の文字まで同じです。
-		CheckNextChar(result.second, end)){ 
+		CheckNextChar(result.second, end)){
 		cursol = result.second;
 		return make_shared<Token>(keyword);
 	}
@@ -2159,7 +2159,7 @@ ZeroOrMoreParser::ZeroOrMoreParser(const function<void(void)> action, const shar
 
 //! ZeroOrMoreParserクラスの新しいインスタンスを初期化します。
 //! @params [in] once 繰り返しの一回分となる規則です。
-ZeroOrMoreParser::ZeroOrMoreParser(const shared_ptr<const Parser> once): m_once(once){}
+ZeroOrMoreParser::ZeroOrMoreParser(const shared_ptr<const Parser> once) : m_once(once){}
 
 //! 読み取りが成功したら実行する処理を登録します。
 //! @param [in] 読み取りが成功したら実行する処理です。
@@ -2541,9 +2541,9 @@ const shared_ptr<const vector<const InputTable>> Csv::Read() const
 	auto tables = make_shared<vector<const InputTable>>();
 
 	for (auto &tableName : queryInfo->tableNames){
-		
+
 		auto inputFile = OpenInputFile(tableName + ".csv");
-		
+
 		auto header = ReadHeader(inputFile, tableName);
 		auto data = ReadData(inputFile);
 		tables->push_back(InputTable(InputTable(header, data)));
@@ -2562,7 +2562,7 @@ void Csv::Write(const string outputFileName, const vector<const InputTable> &inp
 	OutputData outputData(*queryInfo, inputTables); // 出力するデータです。
 
 	auto outputFile = OpenOutputFile(outputFileName); // 書き込むファイルのファイルストリームです。
-	
+
 	WriteHeader(outputFile, outputData.columns());
 
 	WriteData(outputFile, outputData);
@@ -2594,8 +2594,8 @@ const shared_ptr<const vector<const Token>> SqlQuery::GetTokens(const string sql
 			tokenReaders.begin(),
 			tokenReaders.end(),
 			[&](const shared_ptr<const TokenReader>& reader){
-				return token = reader->Read(cursol, end); 
-			})){
+			return token = reader->Read(cursol, end);
+		})){
 			tokens->push_back(*token);
 		}
 		else{
@@ -2693,10 +2693,12 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 					if (tokenCursol->kind == TokenKind::COMMA){
 						++tokenCursol;
 					}
-					if (tokenCursol->kind == TokenKind::IDENTIFIER){
+					Column orderColumn;
+					auto FIRST_ORDER_BY_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
 						// テーブル名が指定されていない場合と仮定して読み込みます。
-						Column orderColumn(tokenCursol->word);
-						++tokenCursol;
+						orderColumn = Column(tokenCursol->word);
+					});
+					if (FIRST_ORDER_BY_COLUMN_NAME->Parse(tokenCursol)){
 						if (tokenCursol->kind == TokenKind::DOT){
 							++tokenCursol;
 
@@ -2924,33 +2926,33 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 //! @param [in] sql 実行するSQLです。
 SqlQuery::SqlQuery(const string sql) :
 // 先頭から順に検索されるので、前方一致となる二つの項目は順番に気をつけて登録しなくてはいけません。
-	tokenReaders({
-		make_shared<IntLiteralReader>(),
-		make_shared<StringLiteralReader>(),
-		make_shared<KeywordReader>(TokenKind::AND, "AND"),
-		make_shared<KeywordReader>(TokenKind::ASC, "ASC"),
-		make_shared<KeywordReader>(TokenKind::BY, "BY"),
-		make_shared<KeywordReader>(TokenKind::DESC, "DESC"),
-		make_shared<KeywordReader>(TokenKind::FROM, "FROM"),
-		make_shared<KeywordReader>(TokenKind::ORDER, "ORDER"),
-		make_shared<KeywordReader>(TokenKind::OR, "OR"),
-		make_shared<KeywordReader>(TokenKind::SELECT, "SELECT"),
-		make_shared<KeywordReader>(TokenKind::WHERE, "WHERE"),
-		make_shared<SignReader>(TokenKind::GREATER_THAN_OR_EQUAL, ">="),
-		make_shared<SignReader>(TokenKind::LESS_THAN_OR_EQUAL, "<="),
-		make_shared<SignReader>(TokenKind::NOT_EQUAL, "<>"),
-		make_shared<SignReader>(TokenKind::ASTERISK, "*"),
-		make_shared<SignReader>(TokenKind::COMMA, ","),
-		make_shared<SignReader>(TokenKind::CLOSE_PAREN, ")"),
-		make_shared<SignReader>(TokenKind::DOT, "."),
-		make_shared<SignReader>(TokenKind::EQUAL, "="),
-		make_shared<SignReader>(TokenKind::GREATER_THAN, ">"),
-		make_shared<SignReader>(TokenKind::LESS_THAN, "<"),
-		make_shared<SignReader>(TokenKind::MINUS, "-"),
-		make_shared<SignReader>(TokenKind::OPEN_PAREN, "("),
-		make_shared<SignReader>(TokenKind::PLUS, "+"),
-		make_shared<SignReader>(TokenKind::SLASH, "/"),
-		make_shared<IdentifierReader>(),}),
+tokenReaders({
+	make_shared<IntLiteralReader>(),
+	make_shared<StringLiteralReader>(),
+	make_shared<KeywordReader>(TokenKind::AND, "AND"),
+	make_shared<KeywordReader>(TokenKind::ASC, "ASC"),
+	make_shared<KeywordReader>(TokenKind::BY, "BY"),
+	make_shared<KeywordReader>(TokenKind::DESC, "DESC"),
+	make_shared<KeywordReader>(TokenKind::FROM, "FROM"),
+	make_shared<KeywordReader>(TokenKind::ORDER, "ORDER"),
+	make_shared<KeywordReader>(TokenKind::OR, "OR"),
+	make_shared<KeywordReader>(TokenKind::SELECT, "SELECT"),
+	make_shared<KeywordReader>(TokenKind::WHERE, "WHERE"),
+	make_shared<SignReader>(TokenKind::GREATER_THAN_OR_EQUAL, ">="),
+	make_shared<SignReader>(TokenKind::LESS_THAN_OR_EQUAL, "<="),
+	make_shared<SignReader>(TokenKind::NOT_EQUAL, "<>"),
+	make_shared<SignReader>(TokenKind::ASTERISK, "*"),
+	make_shared<SignReader>(TokenKind::COMMA, ","),
+	make_shared<SignReader>(TokenKind::CLOSE_PAREN, ")"),
+	make_shared<SignReader>(TokenKind::DOT, "."),
+	make_shared<SignReader>(TokenKind::EQUAL, "="),
+	make_shared<SignReader>(TokenKind::GREATER_THAN, ">"),
+	make_shared<SignReader>(TokenKind::LESS_THAN, "<"),
+	make_shared<SignReader>(TokenKind::MINUS, "-"),
+	make_shared<SignReader>(TokenKind::OPEN_PAREN, "("),
+	make_shared<SignReader>(TokenKind::PLUS, "+"),
+	make_shared<SignReader>(TokenKind::SLASH, "/"),
+	make_shared<IdentifierReader>(), }),
 	operators({
 		{ TokenKind::ASTERISK, 1 },
 		{ TokenKind::SLASH, 1 },
@@ -2963,96 +2965,96 @@ SqlQuery::SqlQuery(const string sql) :
 		{ TokenKind::LESS_THAN_OR_EQUAL, 3 },
 		{ TokenKind::NOT_EQUAL, 3 },
 		{ TokenKind::AND, 4 },
-		{ TokenKind::OR, 5 }})
+		{ TokenKind::OR, 5 } })
 {
 	csv = make_shared<Csv>(AnalyzeTokens(*GetTokens(sql)));
 }
 
-//! カレントディレクトリにあるCSVに対し、簡易的なSQLを実行し、結果をファイルに出力します。
-//! @param[in] outputFileName SQLの実行結果をCSVとして出力するファイル名です。拡張子を含みます。
-void SqlQuery::Execute(const string outputFileName)
-{
-	csv->Write(outputFileName, *csv->Read());
-}
+		//! カレントディレクトリにあるCSVに対し、簡易的なSQLを実行し、結果をファイルに出力します。
+		//! @param[in] outputFileName SQLの実行結果をCSVとして出力するファイル名です。拡張子を含みます。
+		void SqlQuery::Execute(const string outputFileName)
+		{
+			csv->Write(outputFileName, *csv->Read());
+		}
 
-//! カレントディレクトリにあるCSVに対し、簡易的なSQLを実行し、結果をファイルに出力します。
-//! @param [in] sql 実行するSQLです。
-//! @param[in] outputFileName SQLの実行結果をCSVとして出力するファイル名です。拡張子を含みます。
-//! @return 実行した結果の状態です。
-//! @retval OK=0                      問題なく終了しました。
-//! @retval ERR_FILE_OPEN=1           ファイルを開くことに失敗しました。
-//! @retval ERR_FILE_WRITE=2          ファイルに書き込みを行うことに失敗しました。
-//! @retval ERR_FILE_CLOSE=3          ファイルを閉じることに失敗しました。
-//! @retval ERR_TOKEN_CANT_READ=4     トークン解析に失敗しました。
-//! @retval ERR_SQL_SYNTAX=5          SQLの構文解析が失敗しました。
-//! @retval ERR_BAD_COLUMN_NAME=6     テーブル指定を含む列名が適切ではありません。
-//! @retval ERR_WHERE_OPERAND_TYPE=7  演算の左右の型が適切ではありません。
-//! @retval ERR_CSV_SYNTAX=8          CSVの構文解析が失敗しました。
-//! @retval ERR_MEMORY_ALLOCATE=9     メモリの取得に失敗しました。
-//! @retval ERR_MEMORY_OVER=10        用意したメモリ領域の上限を超えました。
-//! @details 
-//! 参照するテーブルは、テーブル名.csvの形で作成します。                                                     @n
-//! 一行目はヘッダ行で、その行に列名を書きます。                                                             @n
-//! 前後のスペース読み飛ばしやダブルクォーテーションでくくるなどの機能はありません。                         @n
-//! 列の型の定義はできないので、列のすべてのデータの値が数値として解釈できる列のデータを整数として扱います。 @n
-//! 実行するSQLで使える機能を以下に例としてあげます。                                                        @n
-//! 例1:                                                                                                     @n
-//! SELECT *                                                                                                 @n
-//! FROM USERS                                                                                               @n
-//!                                                                                                          @n
-//! 例2: 大文字小文字は区別しません。                                                                        @n
-//! select *                                                                                                 @n
-//! from users                                                                                               @n
-//!                                                                                                          @n
-//! 例3: 列の指定ができます。                                                                                @n
-//! SELECT Id, Name                                                                                          @n
-//! FROM USERS                                                                                               @n
-//!                                                                                                          @n
-//! 例4: テーブル名を指定して列の指定ができます。                                                            @n
-//! SELECT USERS.Id                                                                                          @n
-//! FROM USERS                                                                                               @n
-//!                                                                                                          @n
-//! 例5: ORDER句が使えます。                                                                                 @n
-//! SELECT *                                                                                                 @n
-//! ORDER BY NAME                                                                                            @n
-//! FROM USERS                                                                                               @n
-//!                                                                                                          @n
-//! 例6: ORDER句に複数列や昇順、降順の指定ができます。                                                       @n
-//! SELECT *                                                                                                 @n
-//! ORDER BY AGE DESC, Name ASC                                                                              @n
-//!                                                                                                          @n
-//! 例7: WHERE句が使えます。                                                                                 @n
-//! SELECT *                                                                                                 @n
-//! WHERE AGE >= 20                                                                                          @n
-//! FROM USERS                                                                                               @n
-//!                                                                                                          @n
-//! 例8: WHERE句では文字列の比較も使えます。                                                                 @n
-//! SELECT *                                                                                                 @n
-//! WHERE NAME >= 'N'                                                                                        @n
-//! FROM USERS                                                                                               @n
-//!                                                                                                          @n
-//! 例9: WHERE句には四則演算、カッコ、AND、ORなどを含む複雑な式が利用できます。                              @n
-//! SELECT *                                                                                                 @n
-//! WHERE AGE >= 20 AND (AGE <= 40 || WEIGHT < 100)                                                          @n
-//! FROM USERS                                                                                               @n
-//!                                                                                                          @n
-//! 例10: FROM句に複数のテーブルが指定できます。その場合はクロスで結合します。                               @n
-//! SELECT *                                                                                                 @n
-//! FROM USERS, CHILDREN                                                                                     @n
-//!                                                                                                          @n
-//! 例11: WHEREで条件をつけることにより、テーブルの結合ができます。                                          @n
-//! SELECT USERS.NAME, CHILDREN.NAME                                                                         @n
-//! WHERE USERS.ID = CHILDREN.PARENTID                                                                       @n
-//! FROM USERS, CHILDREN                                                                                     @n
-int ExecuteSQL(const string sql, const string outputFileName)
-{
-	try
-	{
-		SqlQuery(sql).Execute(outputFileName);
-		return static_cast<int>(ResultValue::OK);
-	}
-	catch (ResultValue error) // 発生したエラーの種類です。
-	{
-		return static_cast<int>(error);
-	}
-}
+		//! カレントディレクトリにあるCSVに対し、簡易的なSQLを実行し、結果をファイルに出力します。
+		//! @param [in] sql 実行するSQLです。
+		//! @param[in] outputFileName SQLの実行結果をCSVとして出力するファイル名です。拡張子を含みます。
+		//! @return 実行した結果の状態です。
+		//! @retval OK=0                      問題なく終了しました。
+		//! @retval ERR_FILE_OPEN=1           ファイルを開くことに失敗しました。
+		//! @retval ERR_FILE_WRITE=2          ファイルに書き込みを行うことに失敗しました。
+		//! @retval ERR_FILE_CLOSE=3          ファイルを閉じることに失敗しました。
+		//! @retval ERR_TOKEN_CANT_READ=4     トークン解析に失敗しました。
+		//! @retval ERR_SQL_SYNTAX=5          SQLの構文解析が失敗しました。
+		//! @retval ERR_BAD_COLUMN_NAME=6     テーブル指定を含む列名が適切ではありません。
+		//! @retval ERR_WHERE_OPERAND_TYPE=7  演算の左右の型が適切ではありません。
+		//! @retval ERR_CSV_SYNTAX=8          CSVの構文解析が失敗しました。
+		//! @retval ERR_MEMORY_ALLOCATE=9     メモリの取得に失敗しました。
+		//! @retval ERR_MEMORY_OVER=10        用意したメモリ領域の上限を超えました。
+		//! @details 
+		//! 参照するテーブルは、テーブル名.csvの形で作成します。                                                     @n
+		//! 一行目はヘッダ行で、その行に列名を書きます。                                                             @n
+		//! 前後のスペース読み飛ばしやダブルクォーテーションでくくるなどの機能はありません。                         @n
+		//! 列の型の定義はできないので、列のすべてのデータの値が数値として解釈できる列のデータを整数として扱います。 @n
+		//! 実行するSQLで使える機能を以下に例としてあげます。                                                        @n
+		//! 例1:                                                                                                     @n
+		//! SELECT *                                                                                                 @n
+		//! FROM USERS                                                                                               @n
+		//!                                                                                                          @n
+		//! 例2: 大文字小文字は区別しません。                                                                        @n
+		//! select *                                                                                                 @n
+		//! from users                                                                                               @n
+		//!                                                                                                          @n
+		//! 例3: 列の指定ができます。                                                                                @n
+		//! SELECT Id, Name                                                                                          @n
+		//! FROM USERS                                                                                               @n
+		//!                                                                                                          @n
+		//! 例4: テーブル名を指定して列の指定ができます。                                                            @n
+		//! SELECT USERS.Id                                                                                          @n
+		//! FROM USERS                                                                                               @n
+		//!                                                                                                          @n
+		//! 例5: ORDER句が使えます。                                                                                 @n
+		//! SELECT *                                                                                                 @n
+		//! ORDER BY NAME                                                                                            @n
+		//! FROM USERS                                                                                               @n
+		//!                                                                                                          @n
+		//! 例6: ORDER句に複数列や昇順、降順の指定ができます。                                                       @n
+		//! SELECT *                                                                                                 @n
+		//! ORDER BY AGE DESC, Name ASC                                                                              @n
+		//!                                                                                                          @n
+		//! 例7: WHERE句が使えます。                                                                                 @n
+		//! SELECT *                                                                                                 @n
+		//! WHERE AGE >= 20                                                                                          @n
+		//! FROM USERS                                                                                               @n
+		//!                                                                                                          @n
+		//! 例8: WHERE句では文字列の比較も使えます。                                                                 @n
+		//! SELECT *                                                                                                 @n
+		//! WHERE NAME >= 'N'                                                                                        @n
+		//! FROM USERS                                                                                               @n
+		//!                                                                                                          @n
+		//! 例9: WHERE句には四則演算、カッコ、AND、ORなどを含む複雑な式が利用できます。                              @n
+		//! SELECT *                                                                                                 @n
+		//! WHERE AGE >= 20 AND (AGE <= 40 || WEIGHT < 100)                                                          @n
+		//! FROM USERS                                                                                               @n
+		//!                                                                                                          @n
+		//! 例10: FROM句に複数のテーブルが指定できます。その場合はクロスで結合します。                               @n
+		//! SELECT *                                                                                                 @n
+		//! FROM USERS, CHILDREN                                                                                     @n
+		//!                                                                                                          @n
+		//! 例11: WHEREで条件をつけることにより、テーブルの結合ができます。                                          @n
+		//! SELECT USERS.NAME, CHILDREN.NAME                                                                         @n
+		//! WHERE USERS.ID = CHILDREN.PARENTID                                                                       @n
+		//! FROM USERS, CHILDREN                                                                                     @n
+		int ExecuteSQL(const string sql, const string outputFileName)
+		{
+			try
+			{
+				SqlQuery(sql).Execute(outputFileName);
+				return static_cast<int>(ResultValue::OK);
+			}
+			catch (ResultValue error) // 発生したエラーの種類です。
+			{
+				return static_cast<int>(error);
+			}
+		}
