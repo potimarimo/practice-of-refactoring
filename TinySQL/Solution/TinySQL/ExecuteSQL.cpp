@@ -9,6 +9,7 @@
 #include <memory>
 #include <vector>
 #include <list>
+#include <map>
 #pragma warning(disable:4996)
 
 using namespace std;
@@ -567,7 +568,6 @@ public:
 	Column(const string &tableName, const string &columnName);
 
 	//! データの検索に利用するため、全てのテーブルの列の情報を登録します。
-	//! @param [in] queryInfo SQLに記述された情報です。
 	//! @param [in] inputTables ファイルから読み取ったデータです。
 	void Column::SetAllColumns(const vector<const InputTable> &inputTables);
 
@@ -587,6 +587,15 @@ public:
 //! WHERE句の条件の式木を表します。
 class ExtensionTreeNode : public enable_shared_from_this<ExtensionTreeNode>
 {
+	shared_ptr<ExtensionTreeNode> m_parent;//!< 親となるノードです。根の式木の場合はnullptrとなります。
+	shared_ptr<ExtensionTreeNode> m_left;  //!< 左の子となるノードです。自身が末端の葉となる式木の場合はnullptrとなります。
+	Operator m_middleOperator;             //!< 中置される演算子です。自身が末端のとなる式木の場合の種類はNOT_TOKENとなります。
+	shared_ptr<ExtensionTreeNode> m_right;   //!< 右の子となるノードです。自身が末端の葉となる式木の場合はnullptrとなります。
+	bool m_inParen = false;                //!< 自身がかっこにくるまれているかどうかです。
+	int m_signCoefficient = 1;             //!< 自身が葉にあり、マイナス単項演算子がついている場合は-1、それ以外は1となります。
+	Column m_column;                       //!< 列場指定されている場合に、その列を表します。列指定ではない場合はcolumnNameが空文字列となります。
+	shared_ptr<const Data> m_value;        //!< 指定された、もしくは計算された値です。
+
 	//! カラム名で指定されたデータを持つノードかどうかです。
 	//! @return カラム名で指定されたデータを持つノードかどうか。
 	bool ExtensionTreeNode::isDataNodeAsColumnName();
@@ -597,18 +606,10 @@ class ExtensionTreeNode : public enable_shared_from_this<ExtensionTreeNode>
 	//! @return thisから次のノードをたどっていき、ノードがnullptrになる前までのすべてのノードの列。
 	const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> ExtensionTreeNode::allNodesOf(function<const shared_ptr<ExtensionTreeNode>(const shared_ptr<const ExtensionTreeNode>)> nextNode, const bool includeSelf = false) const;
 public:
-	shared_ptr<ExtensionTreeNode> parent;//!< 親となるノードです。根の式木の場合はnullptrとなります。
-	shared_ptr<ExtensionTreeNode> left;  //!< 左の子となるノードです。自身が末端の葉となる式木の場合はnullptrとなります。
-	Operator middleOperator;             //!< 中置される演算子です。自身が末端のとなる式木の場合の種類はNOT_TOKENとなります。
-	shared_ptr<ExtensionTreeNode>right;   //!< 右の子となるノードです。自身が末端の葉となる式木の場合はnullptrとなります。
-	bool inParen = false;                //!< 自身がかっこにくるまれているかどうかです。
-	int parenOpenBeforeClose = 0;        //!< 木の構築中に0以外となり、自身の左にあり、まだ閉じてないカッコの開始の数となります。
-	int signCoefficient = 1;             //!< 自身が葉にあり、マイナス単項演算子がついている場合は-1、それ以外は1となります。
-	Column column;                       //!< 列場指定されている場合に、その列を表します。列指定ではない場合はcolumnNameが空文字列となります。
-	shared_ptr<const Data> value;                          //!< 指定された、もしくは計算された値です。
-
 	//! ExtensionTreeNodeクラスの新しいインスタンスを初期化します。
 	ExtensionTreeNode();
+
+	ExtensionTreeNode(const Operator& middleOperator) : m_middleOperator(middleOperator){}
 
 	// leftとrightをmiddleOperatorで演算します。
 	void Operate();
@@ -641,6 +642,56 @@ public:
 	//! 自身の右の子としてノードを挿入します。
 	//! @param [in] inserted 挿入するノードです。
 	void InsertRight(const shared_ptr<ExtensionTreeNode> inserted);
+
+	//! 親となるノードです。根の式木の場合はnullptrとなります。
+	//! @return 親となるノード。
+	const shared_ptr<ExtensionTreeNode> &parent() const;
+
+	//! 左の子となるノードです。自身が末端の葉となる式木の場合はnullptrとなります。
+	//! @return 左の子となるノード。
+	const shared_ptr<ExtensionTreeNode> &left() const;
+
+	//! 中置される演算子です。自身が末端のとなる式木の場合の種類はNOT_TOKENとなります。
+	//! @return 中置される演算子。
+	const Operator &middleOperator() const;
+
+	//! 右の子となるノードです。自身が末端の葉となる式木の場合はnullptrとなります。
+	//! @return 右の子となるノード。
+	const shared_ptr<ExtensionTreeNode> &right() const;
+
+	//! 自身がかっこにくるまれているかどうかです。
+	//! @return 自身がかっこにくるまれているかどうか。
+	const bool &inParen() const;
+	
+	// inParenがtrueであることを設定します。
+	void setInParen();
+
+	//!< 自身が葉にあり、マイナス単項演算子がついている場合は-1、それ以外は1となります。
+	//! @return 自身が葉にあり、マイナス単項演算子がついている場合は-1、それ以外は1。
+	const int &signCoefficient() const;
+
+	//! signCoefficientに-1を設定します。
+	void setSignMinus();
+
+	//! 列が指定されている場合に、その列を表します。列指定ではない場合はcolumnNameが空文字列となります。
+	//! @return 列が指定されている場合に、その列。
+	const Column &column() const;
+
+	//! columnを設定します。
+	//! @param [in] 設定されるcolumn。
+	void setColumn(const Column& column);
+
+	//! 自身のcolumnに対してSetAllColumnsを実行します。
+	//! @param[in] inputTables ファイルから読み取ったデータです。
+	void SetAllColumnsToColumn(const vector<const InputTable> &inputTables);
+
+	//! 指定された、もしくは計算された値です。
+	//! @return 値。
+	const shared_ptr<const Data> &value() const;
+
+	//! valueを設定します。
+	//! @param [in] 設定される値。
+	void setValue(const shared_ptr<Data> value);
 };
 
 //! 引数として渡したノード及びその子孫のノードを取得します。順序は帰りがけ順です。
@@ -1916,58 +1967,58 @@ const shared_ptr<const Data> OutputAllDataRow::operator[](const Column &column) 
 }
 
 //! ExtensionTreeNodeクラスの新しいインスタンスを初期化します。
-ExtensionTreeNode::ExtensionTreeNode() : middleOperator(TokenKind::NOT_TOKEN, 0)
+ExtensionTreeNode::ExtensionTreeNode() : m_middleOperator(TokenKind::NOT_TOKEN, 0)
 {
 }
 
-// leftとrightをmiddleOperatorで演算します。
+// m_leftとm_rightをmiddleOperatorで演算します。
 void ExtensionTreeNode::Operate()
 {
 	// 自ノードより前に子ノードを演算しておきます。
-	if (left){
-		left->Operate();
+	if (m_left){
+		m_left->Operate();
 	}
-	if (right){
-		right->Operate();
+	if (m_right){
+		m_right->Operate();
 	}
 
 	// 自ノードの値を計算します。
-	switch (middleOperator.kind()){
+	switch (m_middleOperator.kind()){
 	case TokenKind::PLUS:
-		value = left->value + right->value;
+		m_value = m_left->m_value + m_right->m_value;
 		break;
 	case TokenKind::MINUS:
-		value = left->value - right->value;
+		m_value = m_left->m_value - m_right->m_value;
 		break;
 	case TokenKind::ASTERISK:
-		value = left->value * right->value;
+		m_value = m_left->m_value * m_right->m_value;
 		break;
 	case TokenKind::SLASH:
-		value = left->value / right->value;
+		m_value = m_left->m_value / m_right->m_value;
 		break;
 	case TokenKind::EQUAL:
-		value = left->value == right->value;
+		m_value = m_left->m_value == m_right->m_value;
 		break;
 	case TokenKind::GREATER_THAN:
-		value = left->value > right->value;
+		m_value = m_left->m_value > m_right->m_value;
 		break;
 	case TokenKind::GREATER_THAN_OR_EQUAL:
-		value = left->value >= right->value;
+		m_value = m_left->m_value >= m_right->m_value;
 		break;
 	case TokenKind::LESS_THAN:
-		value = left->value < right->value;
+		m_value = m_left->m_value < m_right->m_value;
 		break;
 	case TokenKind::LESS_THAN_OR_EQUAL:
-		value = left->value <= right->value;
+		m_value = m_left->m_value <= m_right->m_value;
 		break;
 	case TokenKind::NOT_EQUAL:
-		value = left->value != right->value;
+		m_value = m_left->m_value != m_right->m_value;
 		break;
 	case TokenKind::AND:
-		value = left->value && right->value;
+		m_value = m_left->m_value && m_right->m_value;
 		break;
 	case TokenKind::OR:
-		value = left->value || right->value;
+		m_value = m_left->m_value || m_right->m_value;
 		break;
 	}
 }
@@ -1976,7 +2027,7 @@ void ExtensionTreeNode::Operate()
 //! @return カラム名で指定されたデータを持つノードかどうか。
 bool ExtensionTreeNode::isDataNodeAsColumnName()
 {
-	return middleOperator.kind() == TokenKind::NOT_TOKEN && !column.columnName().empty();
+	return m_middleOperator.kind() == TokenKind::NOT_TOKEN && !m_column.columnName().empty();
 }
 
 //! 実際に出力する行に合わせて列にデータを設定します。
@@ -1984,11 +2035,11 @@ bool ExtensionTreeNode::isDataNodeAsColumnName()
 void ExtensionTreeNode::SetColumnData(const OutputAllDataRow &outputRow)
 {
 	if (isDataNodeAsColumnName()){
-		value = outputRow[column];
+		m_value = outputRow[m_column];
 
 		// 符号を考慮して値を計算します。
-		if (value->type() == DataType::INTEGER){
-			value = Data::New(value->integer() * signCoefficient);
+		if (m_value->type() == DataType::INTEGER){
+			m_value = Data::New(m_value->integer() * m_signCoefficient);
 		}
 	}
 }
@@ -2012,48 +2063,136 @@ const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> ExtensionTreeNode:
 //! @return 祖先ノードの一覧。
 const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> ExtensionTreeNode::ancestors() const
 {
-	return allNodesOf([](const shared_ptr<const ExtensionTreeNode> thisNode){return thisNode->parent; });
+	return allNodesOf([](const shared_ptr<const ExtensionTreeNode> thisNode){return thisNode->parent(); });
 }
 
 //! 自身の子孫ノードをずっと左に辿っていき自身に近いほうから順に列挙します。
 //! @return 左に辿った子孫ノードの一覧。
 const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> ExtensionTreeNode::allLeftList() const
 {
-	return allNodesOf([](const shared_ptr<const ExtensionTreeNode> thisNode){return thisNode->left; });
+	return allNodesOf([](const shared_ptr<const ExtensionTreeNode> thisNode){return thisNode->left(); });
 }
 
 //! 自身及び自身の祖先ノードを自身に近いほうから順に列挙します。
 //! @return 祖先ノードの一覧。
 const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> ExtensionTreeNode::selfAndAncestors() const
 {
-	return allNodesOf([](const shared_ptr<const ExtensionTreeNode> thisNode){return thisNode->parent; }, true);
+	return allNodesOf([](const shared_ptr<const ExtensionTreeNode> thisNode){return thisNode->parent(); }, true);
 }
 
 //! 自身及び自身の子孫ノードをずっと左に辿っていき自身に近いほうから順に列挙します。
 //! @return 左に辿った子孫ノードの一覧。
 const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> ExtensionTreeNode::selfAndAllLeftList() const
 {
-	return allNodesOf([](const shared_ptr<const ExtensionTreeNode> thisNode){return thisNode->left; }, true);
+	return allNodesOf([](const shared_ptr<const ExtensionTreeNode> thisNode){return thisNode->left(); }, true);
 }
 
 //! 自身の位置にノードを挿入し、自身は挿入したノードの左の子となります。
 //! @param [in] inserted 挿入するノードです。
 void ExtensionTreeNode::InsertAndMoveLeft(const shared_ptr<ExtensionTreeNode> inserted)
 {
-	inserted->parent = parent;
-	if (inserted->parent){
-		inserted->parent->right = inserted;
+	inserted->m_parent = m_parent;
+	if (inserted->parent()){
+		inserted->parent()->m_right = inserted;
 	}
-	inserted->left = shared_from_this();
-	parent = inserted;
+	inserted->m_left = shared_from_this();
+	m_parent = inserted;
 }
 
 //! 自身の右の子としてノードを挿入します。
 //! @param [in] inserted 挿入するノードです。
 void ExtensionTreeNode::InsertRight(const shared_ptr<ExtensionTreeNode> inserted)
 {
-	right = inserted;
-	right->parent = shared_from_this();
+	m_right = inserted;
+	m_right->m_parent = shared_from_this();
+}
+
+//! 親となるノードです。根の式木の場合はnullptrとなります。
+//! @return 親となるノード。
+const shared_ptr<ExtensionTreeNode>& ExtensionTreeNode::parent() const
+{
+	return m_parent;
+}
+//! 左の子となるノードです。自身が末端の葉となる式木の場合はnullptrとなります。
+//! @return 左の子となるノード。
+const shared_ptr<ExtensionTreeNode>& ExtensionTreeNode::left() const
+{
+	return m_left;
+}
+
+//! 中置される演算子です。自身が末端のとなる式木の場合の種類はNOT_TOKENとなります。
+//! @return 中置される演算子。
+const Operator& ExtensionTreeNode::middleOperator() const
+{
+	return m_middleOperator;
+}
+
+//! 右の子となるノードです。自身が末端の葉となる式木の場合はnullptrとなります。
+//! @return 右の子となるノード。
+const shared_ptr<ExtensionTreeNode>& ExtensionTreeNode::right() const
+{
+	return m_right;
+}
+
+//! 自身がかっこにくるまれているかどうかです。
+//! @return 自身がかっこにくるまれているかどうか。
+const bool& ExtensionTreeNode::inParen() const
+{
+	return m_inParen;
+}
+
+// inParenがtrueであることを設定します。
+void ExtensionTreeNode::setInParen()
+{
+	m_inParen = true;
+}
+
+//!< 自身が葉にあり、マイナス単項演算子がついている場合は-1、それ以外は1となります。
+//! @return 自身が葉にあり、マイナス単項演算子がついている場合は-1、それ以外は1。
+const int& ExtensionTreeNode::signCoefficient() const
+{
+	return m_signCoefficient;
+}
+
+//! signCoefficientに-1を設定します。
+void ExtensionTreeNode::setSignMinus()
+{
+	m_signCoefficient = -1;
+}
+
+//! 列が指定されている場合に、その列を表します。列指定ではない場合はcolumnNameが空文字列となります。
+//! @return 列が指定されている場合に、その列。
+const Column& ExtensionTreeNode::column() const
+{
+	return m_column;
+}
+
+//! columnを設定します。
+//! @param [in] 設定されるcolumn。
+void ExtensionTreeNode::setColumn(const Column& column)
+{
+	m_column = column;
+}
+
+//! 自身のcolumnに対してSetAllColumnsを実行します。
+//! @param[in] inputTables ファイルから読み取ったデータです。
+void ExtensionTreeNode::SetAllColumnsToColumn(const vector<const InputTable> &inputTables)
+{
+	m_column.SetAllColumns(inputTables);
+}
+
+//! 指定された、もしくは計算された値です。
+//! @return 値。
+const shared_ptr<const Data>& ExtensionTreeNode::value() const
+{
+	return m_value;
+}
+
+//! valueを設定します。
+//! @param [in] 設定される値。
+void ExtensionTreeNode::setValue(const shared_ptr<Data> value)
+{
+	m_value = value;
 }
 
 //! 引数として渡したノード及びその子孫のノードを取得します。
@@ -2062,15 +2201,15 @@ void ExtensionTreeNode::InsertRight(const shared_ptr<ExtensionTreeNode> inserted
 const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> SelfAndDescendants(shared_ptr<ExtensionTreeNode> self)
 {
 	auto selfAndDescendants = make_shared<vector<const shared_ptr<ExtensionTreeNode>>>();
-	if (self->left){
-		auto descendants = SelfAndDescendants(self->left);
+	if (self->left()){
+		auto descendants = SelfAndDescendants(self->left());
 		copy(
 			descendants->begin(),
 			descendants->end(),
 			back_inserter(*selfAndDescendants));
 	}
-	if (self->right){
-		auto descendants = SelfAndDescendants(self->right);
+	if (self->right()){
+		auto descendants = SelfAndDescendants(self->right());
 		copy(
 			descendants->begin(),
 			descendants->end(),
@@ -2640,7 +2779,7 @@ void OutputData::ApplyWhere(vector<const OutputAllDataRow> &outputRows) const
 				node->SetColumnData(row);
 			}
 			queryInfo.whereTopNode->Operate();
-			return queryInfo.whereTopNode->value->boolean();
+			return queryInfo.whereTopNode->value()->boolean();
 		});
 		outputRows.erase(newEnd, outputRows.end());
 	}
@@ -2701,8 +2840,8 @@ void OutputData::SetAllColumns()
 	if (queryInfo.whereTopNode){
 		auto allWhereNode = SelfAndDescendants(queryInfo.whereTopNode);
 		for (auto& node : *allWhereNode){
-			if (!node->column.columnName().empty()){
-				node->column.SetAllColumns(inputTables);
+			if (!node->column().columnName().empty()){
+				node->SetAllColumnsToColumn(inputTables);
 			}
 		}
 	}
@@ -3051,24 +3190,25 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 	});
 
 	shared_ptr<ExtensionTreeNode> currentNode; // 現在読み込んでいるノードです。
+	map<const shared_ptr<const ExtensionTreeNode>, int> parenOpenBeforeClose; // 木の構築中に0以外となり、自身の左にあり、まだ閉じてないカッコの開始の数となります。
 	auto WHERE_OPEN_PAREN = OPEN_PAREN->Action([&](const Token token){
-		++currentNode->parenOpenBeforeClose;
+		++parenOpenBeforeClose[currentNode];
 	});
 
 	auto WHERE_UNIARY_MINUS = MINUS->Action([&](const Token token){
-		currentNode->signCoefficient = -1;
+		currentNode->setSignMinus();
 	});
 
 	auto WHERE_COLUMN = COLUMN->Action([&]{
-		currentNode->column = column;
+		currentNode->setColumn(column);
 	});
 
 	auto WHERE_INT_LITERAL = INT_LITERAL->Action([&](const Token token){
-		currentNode->value = Data::New(stoi(token.word()));
+		currentNode->setValue(Data::New(stoi(token.word())));
 	});
 
 	auto WHERE_STRING_LITERAL = STRING_LITERAL->Action([&](const Token token){
-		currentNode->value = Data::New(token.word().substr(1, token.word().size() - 2));
+		currentNode->setValue(Data::New(token.word().substr(1, token.word().size() - 2)));
 	});
 
 	// 記号の意味
@@ -3114,15 +3254,15 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 
 	auto WHERE_CLOSE_PAREN = CLOSE_PAREN->Action([&](const Token token){
 		auto ancestors = currentNode->ancestors();
-		any_of(ancestors->begin(), ancestors->end(), [](shared_ptr<ExtensionTreeNode> ancestor){
+		any_of(ancestors->begin(), ancestors->end(), [&](shared_ptr<ExtensionTreeNode> ancestor){
 			auto leftNodes = ancestor->allLeftList();
 			auto node = find_if(leftNodes->begin(), leftNodes->end(),
-				[](const shared_ptr<ExtensionTreeNode> node){return node->parenOpenBeforeClose; });
+				[&](const shared_ptr<ExtensionTreeNode> node){return parenOpenBeforeClose[node]; });
 
 			if (node != leftNodes->end()){
 				// 対応付けられていないカッコ開くを一つ削除し、ノードがカッコに囲まれていることを記録します。
-				--(*node)->parenOpenBeforeClose;
-				ancestor->inParen = true;
+				--parenOpenBeforeClose[*node];
+				ancestor->setInParen();
 				return true;
 			}
 			return false;
@@ -3151,14 +3291,13 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 			auto allLefts = ancestor->selfAndAllLeftList();
 			return 
 				any_of(allLefts->begin(), allLefts->end(),
-					[](shared_ptr<ExtensionTreeNode> node){return node->parenOpenBeforeClose; }) 
-				|| !ancestor->parent 
-				|| !(ancestor->parent->middleOperator.order() <= foundOperator->order() || ancestor->parent->inParen);
+				[&](shared_ptr<ExtensionTreeNode> node){return parenOpenBeforeClose[node]; })
+					|| !ancestor->parent()
+					|| !(ancestor->parent()->middleOperator().order() <= foundOperator->order() || ancestor->parent()->inParen());
 		});
 
 		// 演算子のノードを新しく生成します。
-		currentNode = make_shared<ExtensionTreeNode>();
-		currentNode->middleOperator = *foundOperator;
+		currentNode = make_shared<ExtensionTreeNode>(*foundOperator);
 
 		(*found)->InsertAndMoveLeft(currentNode);
 	});
@@ -3186,8 +3325,8 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 	WHERE_CLAUSE = WHERE_CLAUSE->Action([&]{
 		queryInfo->whereTopNode = currentNode;
 		// 木を根に向かってさかのぼり、根のノードを設定します。
-		while (queryInfo->whereTopNode->parent){
-			queryInfo->whereTopNode = queryInfo->whereTopNode->parent;
+		while (queryInfo->whereTopNode->parent()){
+			queryInfo->whereTopNode = queryInfo->whereTopNode->parent();
 		}
 	});
 
@@ -3211,10 +3350,10 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 			// 既存数値の符号を計算します。
 			auto whereNodes = SelfAndDescendants(queryInfo->whereTopNode);
 			for (auto &whereNode : *whereNodes){
-				if (whereNode->middleOperator.kind() == TokenKind::NOT_TOKEN &&
-					whereNode->column.columnName().empty() &&
-					whereNode->value->type() == DataType::INTEGER){
-					whereNode->value = Data::New(whereNode->value->integer() * whereNode->signCoefficient);
+				if (whereNode->middleOperator().kind() == TokenKind::NOT_TOKEN &&
+					whereNode->column().columnName().empty() &&
+					whereNode->value()->type() == DataType::INTEGER){
+					whereNode->setValue(Data::New(whereNode->value()->integer() * whereNode->signCoefficient()));
 				}
 			}
 		}
