@@ -219,6 +219,14 @@ public:
 	shared_ptr<ExtensionTreeNode> whereTopNode; //!< 式木の根となるノードです。
 };
 
+//! CSVとして入力されたファイルの内容を表します。
+class InputTable
+{
+public:
+	vector<Column> columns; //!< 列の情報です。
+	vector<vector<Data>> data; //! データです。
+};
+
 //! ファイルに対して実行するSQLを表すクラスです。
 class SqlQuery
 {
@@ -248,7 +256,7 @@ class SqlQuery
 	//! CSVファイルから入力データを読み取ります。
 	//! @param [in] queryInfo SQLの情報です。
 	//! @return ファイルから読み取ったデータです。
-	const shared_ptr<vector<vector<vector<Data>>>> ReadCsv(const SqlQueryInfo& queryInfo);
+	const shared_ptr<const vector<InputTable>> ReadCsv(const SqlQueryInfo& queryInfo);
 
 	//! CSVファイルに出力データを書き込みます。
 	//! @param [in] outputFileName 結果を出力するファイルのファイル名です。
@@ -802,13 +810,15 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 //! CSVファイルから入力データを読み取ります。
 //! @param [in] queryInfo SQLの情報です。
 //! @return ファイルから読み取ったデータです。
-const shared_ptr<vector<vector<vector<Data>>>> SqlQuery::ReadCsv(const SqlQueryInfo& queryInfo)
+const shared_ptr<const vector<InputTable>> SqlQuery::ReadCsv(const SqlQueryInfo& queryInfo)
 {
-	auto ret = make_shared<vector<vector<vector<Data>>>>();
-	auto &inputData = *ret;
+	auto ret = make_shared<vector<InputTable>>();
+	auto &tables = *ret;
 
 	vector<ifstream> inputTableFiles; // 読み込む入力ファイルの全てのファイルポインタです。
 	for (size_t i = 0; i < queryInfo.tableNames.size(); ++i){
+		tables.push_back(InputTable());
+		auto &table = tables.back();
 		// 入力ファイルを開きます。
 		inputTableFiles.push_back(ifstream(queryInfo.tableNames[i] + ".csv"));
 		if (!inputTableFiles.back()){
@@ -816,7 +826,6 @@ const shared_ptr<vector<vector<vector<Data>>>> SqlQuery::ReadCsv(const SqlQueryI
 		}
 
 		// 入力CSVのヘッダ行を読み込みます。
-		inputColumns.push_back(vector<Column>());
 		string inputLine; // ファイルから読み込んだ行文字列です。
 		if (getline(inputTableFiles.back(), inputLine)){
 			auto charactorCursol = inputLine.begin(); // ヘッダ入力行を検索するカーソルです。
@@ -828,7 +837,7 @@ const shared_ptr<vector<vector<vector<Data>>>> SqlQuery::ReadCsv(const SqlQueryI
 				// 列名を一つ読みます。
 				auto columnStart = charactorCursol; // 現在の列の最初を記録しておきます。
 				charactorCursol = find(charactorCursol, lineEnd, ',');
-				inputColumns[i].push_back(Column(queryInfo.tableNames[i], string(columnStart, charactorCursol)));
+				table.columns.push_back(Column(queryInfo.tableNames[i], string(columnStart, charactorCursol)));
 
 				// 入力行のカンマの分を読み進めます。
 				if (charactorCursol != lineEnd){
@@ -842,11 +851,10 @@ const shared_ptr<vector<vector<vector<Data>>>> SqlQuery::ReadCsv(const SqlQueryI
 
 		// 入力CSVのデータ行を読み込みます。
 
-		inputData.push_back(vector<vector<Data>>());
 
 		while (getline(inputTableFiles.back(), inputLine)){
-			inputData[i].push_back(vector<Data>()); // 入力されている一行分のデータです。
-			vector<Data> &row = inputData[i].back();
+			table.data.push_back(vector<Data>()); // 入力されている一行分のデータです。
+			vector<Data> &row = table.data.back();
 
 			auto charactorCursol = inputLine.begin(); // データ入力行を検索するカーソルです。
 			auto lineEnd = inputLine.end(); // データ入力行のendを指します。
@@ -868,12 +876,12 @@ const shared_ptr<vector<vector<vector<Data>>>> SqlQuery::ReadCsv(const SqlQueryI
 		}
 
 		// 全てが数値となる列は数値列に変換します。
-		for (size_t j = 0; j < inputColumns[i].size(); ++j){
+		for (size_t j = 0; j < table.columns.size(); ++j){
 
 			// 全ての行のある列について、データ文字列から符号と数値以外の文字を探します。
 			if (none_of(
-				inputData[i].begin(),
-				inputData[i].end(),
+				table.data.begin(),
+				table.data.end(),
 				[&](const vector<Data> &inputRow){
 				return any_of(
 					inputRow[j].string().begin(),
@@ -881,7 +889,7 @@ const shared_ptr<vector<vector<vector<Data>>>> SqlQuery::ReadCsv(const SqlQueryI
 					[&](const char& c){return signNum.find(c) == string::npos; }); })){
 
 				// 符号と数字以外が見つからない列については、数値列に変換します。
-				for (auto& inputRow : inputData[i]){
+				for (auto& inputRow : table.data){
 					inputRow[j] = Data(stoi(inputRow[j].string()));
 				}
 			}
@@ -1363,8 +1371,13 @@ int SqlQuery::Execute(const string sql, const string outputFileName)
 	{
 		auto tokens = GetTokens(sql);
 		auto queryInfo = AnalyzeTokens(*tokens);
-		auto inputData = ReadCsv(*queryInfo);
-		WriteCsv(outputFileName, *queryInfo, *inputData);
+		auto inputTables = ReadCsv(*queryInfo);
+		vector<vector<vector<Data>>> inputData;
+		for (auto &table : *inputTables){
+			inputData.push_back(table.data);
+			inputColumns.push_back(table.columns);
+		}
+		WriteCsv(outputFileName, *queryInfo, inputData);
 
 		return static_cast<int>(ResultValue::OK);
 	}
