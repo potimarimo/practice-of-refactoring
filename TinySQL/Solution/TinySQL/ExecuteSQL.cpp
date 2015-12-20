@@ -929,13 +929,8 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 		if (tokenCursol <= &tokens.back()){
 			throw ResultValue::ERR_SQL_SYNTAX;
 		}
-		vector<Column> inputColumns[MAX_TABLE_COUNT]; // 入力されたCSVの行の情報です。
-		// inputColumnsを初期化します。
-		for (size_t i = 0; i < sizeof(inputColumns) / sizeof(inputColumns[0]); i++)
-		{
-			inputColumns[i] = vector<Column>();
-		}
-
+		vector<vector<Column>> inputColumns; // 入力されたCSVの行の情報です。
+		
 		for (size_t i = 0; i < tableNames.size(); ++i){
 
 			// 入力ファイル名を生成します。
@@ -951,6 +946,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 			}
 
 			// 入力CSVのヘッダ行を読み込みます。
+			inputColumns.push_back(vector<Column>());
 			char inputLine[MAX_FILE_LINE_LENGTH] = ""; // ファイルから読み込んだ行文字列です。
 			if (fgets(inputLine, MAX_FILE_LINE_LENGTH, inputTableFiles.back())){
 				charactorCursol = inputLine;
@@ -1188,7 +1184,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 			// allColumnsRowの列を設定します。
 			int allColumnsNum = 0; // allColumnsRowの現在の列数です。
 			for (size_t i = 0; i < tableNames.size(); ++i){
-				for (int j = 0; j < inputColumns[i].size(); ++j){
+				for (size_t j = 0; j < inputColumns[i].size(); ++j){
 					allColumnsRow[allColumnsNum] = (Data*)malloc(sizeof(Data));
 					if (!allColumnsRow[allColumnsNum]){
 						throw ResultValue::ERR_MEMORY_ALLOCATE;
