@@ -226,6 +226,9 @@ class InputTable
 
 	const shared_ptr<const vector<const Column>> m_columns; //!< 列の情報です。
 	const shared_ptr<vector<vector<Data>>> m_data; //! データです。
+
+	//! 全てが数値となる列は数値列に変換します。
+	void InputTable::InitializeIntegerColumn();
 public:
 	//! InputTableクラスの新しいインスタンスを初期化します。
 	//! @param [in] columns 読み込んだヘッダ情報です。
@@ -519,32 +522,37 @@ ColumnIndex::ColumnIndex(const int table, const int column) : table(table), colu
 {
 }
 
+//! 全てが数値となる列は数値列に変換します。
+void InputTable::InitializeIntegerColumn()
+{
+	for (size_t i = 0; i < columns()->size(); ++i){
+
+		// 全ての行のある列について、データ文字列から符号と数値以外の文字を探します。
+		if (none_of(
+			data()->begin(),
+			data()->end(),
+			[&](const vector<Data> &inputRow){
+			return
+				inputRow[i].type == DataType::STRING &&
+				any_of(
+				inputRow[i].string().begin(),
+				inputRow[i].string().end(),
+				[&](const char& c){return signNum.find(c) == string::npos; }); })){
+
+			// 符号と数字以外が見つからない列については、数値列に変換します。
+			for (auto& inputRow : *data()){
+				inputRow[i] = Data(stoi(inputRow[i].string()));
+			}
+		}
+	}
+}
+
 //! InputTableクラスの新しいインスタンスを初期化します。
 //! @param [in] columns 読み込んだヘッダ情報です。
 //! @param [in] data 読み込んだデータです。
 InputTable::InputTable(const shared_ptr<const vector<const Column>> columns, const shared_ptr<vector<vector<Data>>> data) : m_columns(columns), m_data(data)
 {
-	// 全てが数値となる列は数値列に変換します。
-	for (size_t j = 0; j < columns->size(); ++j){
-
-		// 全ての行のある列について、データ文字列から符号と数値以外の文字を探します。
-		if (none_of(
-			data->begin(),
-			data->end(),
-			[&](const vector<Data> &inputRow){
-			return 
-				inputRow[j].type == DataType::STRING &&
-				any_of(
-					inputRow[j].string().begin(),
-					inputRow[j].string().end(),
-					[&](const char& c){return signNum.find(c) == string::npos; }); })){
-
-			// 符号と数字以外が見つからない列については、数値列に変換します。
-			for (auto& inputRow : *data){
-				inputRow[j] = Data(stoi(inputRow[j].string()));
-			}
-		}
-	}
+	InitializeIntegerColumn();
 }
 
 //! 列の情報を取得します。
