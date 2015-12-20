@@ -948,21 +948,22 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			inputColumns.push_back(vector<Column>());
 			string inputLine; // ファイルから読み込んだ行文字列です。
 			if (getline(inputTableFiles.back(), inputLine)){
-				const char* charactorCursol = inputLine.c_str(); // ヘッダ入力行を検索するカーソルです。
+				auto charactorCursol = inputLine.begin(); // ヘッダ入力行を検索するカーソルです。
+				auto lineEnd = inputLine.end(); // ヘッダ入力行のendを指します。
 
 				// 読み込んだ行を最後まで読みます。
-				while (*charactorCursol){
+				while (charactorCursol != lineEnd){
 									
 					string columnName;
 
 					// 列名を一つ読みます。
-					while (*charactorCursol && *charactorCursol != ','){
+					while (charactorCursol != lineEnd && *charactorCursol != ','){
 						columnName.push_back(*charactorCursol++);
 					}
 					inputColumns[i].push_back(Column(tableNames[i], columnName));
 
 					// 入力行のカンマの分を読み進めます。
-					if (*charactorCursol){
+					if (charactorCursol != lineEnd){
 						++charactorCursol;
 					}
 				}
