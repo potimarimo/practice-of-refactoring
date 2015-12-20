@@ -80,7 +80,7 @@ enum class TokenKind
 //! 一つの値を持つデータです。
 class Data
 {
-	char m_string[MAX_DATA_LENGTH]; //!< データが文字列型の場合の値です。
+	string m_string; //!< データが文字列型の場合の値です。
 
 	//! 実際のデータを格納する共用体です。
 	union
@@ -96,7 +96,7 @@ public:
 
 	//! Dataクラスの新しいインスタンスを初期化します。
 	//! @param [in] value データの値です。
-	Data(const char* value);
+	Data(const string value);
 
 	//! Dataクラスの新しいインスタンスを初期化します。
 	//! @param [in] value データの値です。
@@ -108,15 +108,15 @@ public:
 
 	//! データが文字列型の場合の値を取得します。
 	//! @return データが文字列型の場合の値です。
-	const char* string() const;
+	const string& string() const;
 
 	//! データが整数型の場合の値を取得します。
 	//! @return データが整数型の場合の値です。
-	const int integer() const;
+	const int& integer() const;
 
 	//! データが真偽値型の場合の値を取得します。
 	//! @return データが真偽値型の場合の値です。
-	const int boolean() const;
+	const bool& boolean() const;
 };
 
 //! WHERE句に指定する演算子の情報を表します。
@@ -219,9 +219,9 @@ Data::Data() :m_value({ 0 })
 
 //! Dataクラスの新しいインスタンスを初期化します。
 //! @param [in] value データの値です。
-Data::Data(const char* value) : m_value({ 0 })
+Data::Data(const std::string value) : m_value({ 0 })
 {
-	strncpy(m_string, value, max(MAX_DATA_LENGTH, MAX_WORD_LENGTH));
+	m_string = value;
 }
 
 //! Dataクラスの新しいインスタンスを初期化します。
@@ -241,21 +241,21 @@ Data::Data(const bool value) : type(DataType::BOOLEAN)
 
 //! データが文字列型の場合の値を取得します。
 //! @return データが文字列型の場合の値です。
-const char* Data::string() const
+const string& Data::string() const
 {
 	return m_string;
 }
 
 //! データが整数型の場合の値を取得します。
 //! @return データが整数型の場合の値です。
-const int Data::integer() const
+const int& Data::integer() const
 {
 	return m_value.integer;
 }
 
 //! データが真偽値型の場合の値を取得します。
 //! @return データが真偽値型の場合の値です。
-const int Data::boolean() const
+const bool& Data::boolean() const
 {
 	return m_value.boolean;
 }
@@ -814,7 +814,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 						strncpy(str, tokenCursol->word.c_str() + 1, std::min(MAX_WORD_LENGTH, MAX_DATA_LENGTH));
 						str[MAX_DATA_LENGTH - 1] = '\0';
 						str[strlen(str) - 1] = '\0';
-						currentNode->value = Data(str);
+						currentNode->value = Data(string(str));
 						++tokenCursol;
 					}
 					else{
@@ -1011,7 +1011,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					// 書き込んでいる列名の文字列に終端文字を書き込みます。
 					writeCursol[1] = '\0';
 
-					*row[columnNum++] = Data(str);
+					*row[columnNum++] = Data(string(str));
 
 					// 入力行のカンマの分を読み進めます。
 					++charactorCursol;
@@ -1027,7 +1027,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 				currentRow = &inputData[i][0];
 				found = false;
 				while (*currentRow){
-					const char *currentChar = (*currentRow)[j]->string();
+					const char *currentChar = (*currentRow)[j]->string().c_str();
 					while (*currentChar){
 						bool isNum = false;
 						const char *currentNum = signNum.c_str();
@@ -1054,7 +1054,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 				if (!found){
 					currentRow = &inputData[i][0];
 					while (*currentRow){
-						*(*currentRow)[j] = Data(atoi((*currentRow)[j]->string()));
+						*(*currentRow)[j] = Data(atoi((*currentRow)[j]->string().c_str()));
 						++currentRow;
 					}
 				}
@@ -1280,22 +1280,22 @@ int ExecuteSQL(const string sql, const string outputFileName)
 						case DataType::STRING:
 							switch (currentNode->middleOperator.kind){
 							case TokenKind::EQUAL:
-								currentNode->value = Data(strcmp(currentNode->left->value.string(), currentNode->right->value.string()) == 0);
+								currentNode->value = Data(strcmp(currentNode->left->value.string().c_str(), currentNode->right->value.string().c_str()) == 0);
 								break;
 							case TokenKind::GREATER_THAN:
-								currentNode->value = Data(strcmp(currentNode->left->value.string(), currentNode->right->value.string()) > 0);
+								currentNode->value = Data(strcmp(currentNode->left->value.string().c_str(), currentNode->right->value.string().c_str()) > 0);
 								break;
 							case TokenKind::GREATER_THAN_OR_EQUAL:
-								currentNode->value = Data(strcmp(currentNode->left->value.string(), currentNode->right->value.string()) >= 0);
+								currentNode->value = Data(strcmp(currentNode->left->value.string().c_str(), currentNode->right->value.string().c_str()) >= 0);
 								break;
 							case TokenKind::LESS_THAN:
-								currentNode->value = Data(strcmp(currentNode->left->value.string(), currentNode->right->value.string()) < 0);
+								currentNode->value = Data(strcmp(currentNode->left->value.string().c_str(), currentNode->right->value.string().c_str()) < 0);
 								break;
 							case TokenKind::LESS_THAN_OR_EQUAL:
-								currentNode->value = Data(strcmp(currentNode->left->value.string(), currentNode->right->value.string()) <= 0);
+								currentNode->value = Data(strcmp(currentNode->left->value.string().c_str(), currentNode->right->value.string().c_str()) <= 0);
 								break;
 							case TokenKind::NOT_EQUAL:
-								currentNode->value = Data(strcmp(currentNode->left->value.string(), currentNode->right->value.string()) != 0);
+								currentNode->value = Data(strcmp(currentNode->left->value.string().c_str(), currentNode->right->value.string().c_str()) != 0);
 								break;
 							}
 							break;
@@ -1441,7 +1441,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 							cmp = jData->integer() - mData->integer();
 							break;
 						case DataType::STRING:
-							cmp = strcmp(jData->string(), mData->string());
+							cmp = strcmp(jData->string().c_str(), mData->string().c_str());
 							break;
 						}
 
@@ -1508,7 +1508,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					itoa((*column)->integer(), outputString, 10);
 					break;
 				case DataType::STRING:
-					strcpy(outputString, (*column)->string());
+					strcpy(outputString, (*column)->string().c_str());
 					break;
 				}
 				result = fputs(outputString, outputFile);
