@@ -206,7 +206,7 @@ public:
 	//! 実際に出力する行に合わせて列にデータを設定します。
 	//! @param [in] inputTables ファイルから読み取ったデータです。
 	//! @param [in] 実際に出力する行です。
-	void SetColumnData(const vector<const InputTable> &inputTables, const vector<const Data> &outputRow);
+	void SetColumnData(const vector<const Data> &outputRow);
 };
 
 //! 引数として渡したノード及びその子孫のノードを取得します。順序は帰りがけ順です。
@@ -754,12 +754,10 @@ bool ExtensionTreeNode::isDataNodeAsColumnName()
 }
 
 //! 実際に出力する行に合わせて列にデータを設定します。
-//! @param [in] inputTables ファイルから読み取ったデータです。
 //! @param [in] 実際に出力する行です。
-void ExtensionTreeNode::SetColumnData(const vector<const InputTable> &inputTables, const vector<const Data> &outputRow)
+void ExtensionTreeNode::SetColumnData(const vector<const Data> &outputRow)
 {
 	if (isDataNodeAsColumnName()){
-		column.SetAllColumns(inputTables);
 		value = outputRow[column.allColumnsIndex];
 
 		// 符号を考慮して値を計算します。
@@ -978,11 +976,19 @@ void OutputData::OpenSelectAsterisk()
 	}
 }
 
-//! SELECT句で指定された列名が、何個目の入力ファイルの何列目に相当するかを判別します。
+//! 利用する列名が、何個目の入力ファイルの何列目に相当するかを判別します。
 void OutputData::SetAllColumns()
 {
 	for (auto &selectColumn : queryInfo.selectColumns){
 		selectColumn.SetAllColumns(inputTables);
+	}
+	if (queryInfo.whereTopNode){
+		auto allWhereNode = SelfAndDescendants(queryInfo.whereTopNode);
+		for (auto& node : *allWhereNode){
+			if (!node->column.columnName.empty()){
+				node->column.SetAllColumns(inputTables);
+			}
+		}
 	}
 }
 
@@ -1042,7 +1048,7 @@ const shared_ptr<const vector<const vector<const Data>>> OutputData::outputRows(
 		if (queryInfo.whereTopNode){
 			auto allNodes = SelfAndDescendants(queryInfo.whereTopNode);
 			for (auto& node : *allNodes){
-				node->SetColumnData(inputTables, outputRow);
+				node->SetColumnData(outputRow);
 			}
 			queryInfo.whereTopNode->Operate();
 
