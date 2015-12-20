@@ -150,6 +150,18 @@ class Column
 public:
 	char tableName[MAX_WORD_LENGTH]; //!< 列が所属するテーブル名です。指定されていない場合は空文字列となります。
 	char columnName[MAX_WORD_LENGTH]; //!< 指定された列の列名です。
+
+	//! Columnクラスの新しいインスタンスを初期化します。
+	Column();
+
+	//! Columnクラスの新しいインスタンスを初期化します。
+	//! @param [in] columnName 指定された列の列名です。
+	Column(const char* columnName);
+
+	//! Columnクラスの新しいインスタンスを初期化します。
+	//! @param [in] tableName 列が所属するテーブル名です。指定されていない場合は空文字列となります。
+	//! @param [in] columnName 指定された列の列名です。
+	Column(const char* tableName, const char* columnName);
 };
 
 //! WHERE句の条件の式木を表します。
@@ -233,6 +245,27 @@ Token::Token(const TokenKind kind) : Token(kind, "")
 Token::Token(const TokenKind kind, const char *word) :kind(kind)
 {
 	strncpy(this->word, word, max(MAX_DATA_LENGTH, MAX_WORD_LENGTH));
+}
+
+//! Columnクラスの新しいインスタンスを初期化します。
+Column::Column() : Column("", "")
+{
+
+}
+
+//! Columnクラスの新しいインスタンスを初期化します。
+//! @param [in] columnName 指定された列の列名です。
+Column::Column(const char* columnName) : Column("", columnName)
+{
+}
+
+//! Columnクラスの新しいインスタンスを初期化します。
+//! @param [in] tableName 列が所属するテーブル名です。指定されていない場合は空文字列となります。
+//! @param [in] columnName 指定された列の列名です。
+Column::Column(const char* tableName, const char* columnName)
+{
+	strncpy(this->tableName, tableName, max(MAX_DATA_LENGTH, MAX_WORD_LENGTH));
+	strncpy(this->columnName, columnName, max(MAX_DATA_LENGTH, MAX_WORD_LENGTH));
 }
 
 //! カレントディレクトリにあるCSVに対し、簡易的なSQLを実行し、結果をファイルに出力します。
@@ -531,7 +564,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 					if (MAX_TOKEN_COUNT <= tokensNum){
 						throw ResultValue::ERR_MEMORY_OVER;
 					}
-					tokens[tokensNum++] = { condition.kind, "" };
+					tokens[tokensNum++] = Token(condition.kind);
 					found = true;
 				}
 				else{
@@ -586,7 +619,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 		// selectColumnsを初期化します。
 		for (size_t i = 0; i < sizeof(selectColumns) / sizeof(selectColumns[0]); i++)
 		{
-			selectColumns[i] = { "", "" };
+			selectColumns[i] = Column();
 		}
 		int selectColumnsNum = 0; // SELECT句から現在読み込まれた列名の数です。
 
@@ -594,7 +627,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 		// orderByColumnsを初期化します。
 		for (size_t i = 0; i < sizeof(orderByColumns) / sizeof(orderByColumns[0]); i++)
 		{
-			orderByColumns[i] = { "", "" };
+			orderByColumns[i] = Column();
 		}
 		int orderByColumnsNum = 0; // ORDER句から現在読み込まれた列名の数です。
 
@@ -612,7 +645,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 				false,
 				0,
 				1,
-				{ "", "" },
+				Column(),
 				false,
 				Data(),
 			};
@@ -646,16 +679,14 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 						throw ResultValue::ERR_MEMORY_OVER;
 					}
 					// テーブル名が指定されていない場合と仮定して読み込みます。
-					strncpy(selectColumns[selectColumnsNum].tableName, "", MAX_WORD_LENGTH);
-					strncpy(selectColumns[selectColumnsNum].columnName, tokenCursol->word, MAX_WORD_LENGTH);
+					selectColumns[selectColumnsNum] = Column(tokenCursol->word);
 					++tokenCursol;
 					if (tokenCursol->kind == TokenKind::DOT){
 						++tokenCursol;
 						if (tokenCursol->kind == TokenKind::IDENTIFIER){
 
 							// テーブル名が指定されていることがわかったので読み替えます。
-							strncpy(selectColumns[selectColumnsNum].tableName, selectColumns[selectColumnsNum].columnName, MAX_WORD_LENGTH);
-							strncpy(selectColumns[selectColumnsNum].columnName, tokenCursol->word, MAX_WORD_LENGTH);
+							selectColumns[selectColumnsNum] = Column(selectColumns[selectColumnsNum].columnName, tokenCursol->word);
 							++tokenCursol;
 						}
 						else{
@@ -701,16 +732,14 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 								throw ResultValue::ERR_MEMORY_OVER;
 							}
 							// テーブル名が指定されていない場合と仮定して読み込みます。
-							strncpy(orderByColumns[orderByColumnsNum].tableName, "", MAX_WORD_LENGTH);
-							strncpy(orderByColumns[orderByColumnsNum].columnName, tokenCursol->word, MAX_WORD_LENGTH);
+							orderByColumns[orderByColumnsNum] = Column(tokenCursol->word);
 							++tokenCursol;
 							if (tokenCursol->kind == TokenKind::DOT){
 								++tokenCursol;
 								if (tokenCursol->kind == TokenKind::IDENTIFIER){
 
 									// テーブル名が指定されていることがわかったので読み替えます。
-									strncpy(orderByColumns[orderByColumnsNum].tableName, orderByColumns[orderByColumnsNum].columnName, MAX_WORD_LENGTH);
-									strncpy(orderByColumns[orderByColumnsNum].columnName, tokenCursol->word, MAX_WORD_LENGTH);
+									orderByColumns[orderByColumnsNum] = Column(orderByColumns[orderByColumnsNum].columnName, tokenCursol->word);
 									++tokenCursol;
 								}
 								else{
@@ -790,16 +819,14 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 					if (tokenCursol->kind == TokenKind::IDENTIFIER){
 
 						// テーブル名が指定されていない場合と仮定して読み込みます。
-						strncpy(currentNode->column.tableName, "", MAX_WORD_LENGTH);
-						strncpy(currentNode->column.columnName, tokenCursol->word, MAX_WORD_LENGTH);
+						currentNode->column = Column(tokenCursol->word);
 						++tokenCursol;
 						if (tokenCursol->kind == TokenKind::DOT){
 							++tokenCursol;
 							if (tokenCursol->kind == TokenKind::IDENTIFIER){
 
 								// テーブル名が指定されていることがわかったので読み替えます。
-								strncpy(currentNode->column.tableName, currentNode->column.columnName, MAX_WORD_LENGTH);
-								strncpy(currentNode->column.columnName, tokenCursol->word, MAX_WORD_LENGTH);
+								currentNode->column = Column(currentNode->column.columnName, tokenCursol->word);
 								++tokenCursol;
 							}
 							else{
@@ -947,7 +974,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 		{
 			for (size_t j = 0; j < sizeof(inputColumns[0]) / sizeof(inputColumns[0][0]); j++)
 			{
-				inputColumns[i][j] = { "", "" };
+				inputColumns[i][j] = Column();
 			}
 		}
 		int inputColumnNums[MAX_TABLE_COUNT] = { 0 }; // 各テーブルごとの列の数です。
@@ -1083,23 +1110,21 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 		// allInputColumnsを初期化します。
 		for (size_t i = 0; i < sizeof(allInputColumns) / sizeof(allInputColumns[0]); i++)
 		{
-			allInputColumns[i] = { "", "" };
+			allInputColumns[i] = Column();
 		}
 		int allInputColumnsNum = 0; // 入力に含まれるすべての列の数です。
 
 		// 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
-		for (int i = 0; i < tableNamesNum; ++i){
+		for (size_t i = 0; i < tableNames.size(); ++i){
 			for (int j = 0; j < inputColumnNums[i]; ++j){
-				strncpy(allInputColumns[allInputColumnsNum].tableName, tableNames[i], MAX_WORD_LENGTH);
-				strncpy(allInputColumns[allInputColumnsNum++].columnName, inputColumns[i][j].columnName, MAX_WORD_LENGTH);
+				allInputColumns[allInputColumnsNum++] = Column(tableNames[i], inputColumns[i][j].columnName);
 			}
 		}
 
 		// SELECT句の列名指定が*だった場合は、入力CSVの列名がすべて選択されます。
 		if (!selectColumnsNum){
 			for (int i = 0; i < allInputColumnsNum; ++i){
-				strncpy(selectColumns[selectColumnsNum].tableName, allInputColumns[i].tableName, MAX_WORD_LENGTH);
-				strncpy(selectColumns[selectColumnsNum++].columnName, allInputColumns[i].columnName, MAX_WORD_LENGTH);
+				selectColumns[selectColumnsNum++] = allInputColumns[i];
 			}
 		}
 
@@ -1148,8 +1173,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 
 		// 出力する列名を設定します。
 		for (int i = 0; i < selectColumnsNum; ++i){
-			strncpy(outputColumns[outputColumnNum].tableName, inputColumns[selectColumnIndexes[i].table][selectColumnIndexes[i].column].tableName, MAX_WORD_LENGTH);
-			strncpy(outputColumns[outputColumnNum].columnName, inputColumns[selectColumnIndexes[i].table][selectColumnIndexes[i].column].columnName, MAX_WORD_LENGTH);
+			outputColumns[outputColumnNum] = inputColumns[selectColumnIndexes[i].table][selectColumnIndexes[i].column];
 			++outputColumnNum;
 		}
 
