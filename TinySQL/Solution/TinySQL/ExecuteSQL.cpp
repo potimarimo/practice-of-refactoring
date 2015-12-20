@@ -2688,39 +2688,37 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 			++tokenCursol;
 			if (tokenCursol->kind == TokenKind::BY){
 				++tokenCursol;
-				bool first = true; // ORDER句の最初の列名の読み込みかどうかです。
-				while (tokenCursol->kind == TokenKind::COMMA || first){
-					if (tokenCursol->kind == TokenKind::COMMA){
-						++tokenCursol;
-					}
-					Column orderColumn;
-					bool isAsc = true;
 
-					auto FIRST_ORDER_BY_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
-						// テーブル名が指定されていない場合と仮定して読み込みます。
-						orderColumn = Column(tokenCursol->word);
-					});
+				Column orderColumn;
+				bool isAsc = true;
 
-					auto SECOND_ORDER_BY_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
-						// テーブル名が指定されていることがわかったので読み替えます。
-						orderColumn = Column(orderColumn.columnName, tokenCursol->word);
-					});
+				auto FIRST_ORDER_BY_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
+					// テーブル名が指定されていない場合と仮定して読み込みます。
+					orderColumn = Column(tokenCursol->word);
+				});
 
-					auto SET_DESC = DESC->Action([&](const Token token){
-						isAsc = false;
-					});
+				auto SECOND_ORDER_BY_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
+					// テーブル名が指定されていることがわかったので読み替えます。
+					orderColumn = Column(orderColumn.columnName, tokenCursol->word);
+				});
 
-					auto ORDER_BY_COLUMN = FIRST_ORDER_BY_COLUMN_NAME >> -(DOT >> SECOND_ORDER_BY_COLUMN_NAME) >> -(ASC | SET_DESC);
+				auto SET_DESC = DESC->Action([&](const Token token){
+					isAsc = false;
+				});
 
-					ORDER_BY_COLUMN = ORDER_BY_COLUMN->Action([&](){
-						queryInfo->orders.push_back(Order(orderColumn, isAsc));
-					});
+				auto ORDER_BY_COLUMN = FIRST_ORDER_BY_COLUMN_NAME >> -(DOT >> SECOND_ORDER_BY_COLUMN_NAME) >> -(ASC | SET_DESC);
 
+				ORDER_BY_COLUMN = ORDER_BY_COLUMN->Action([&](){
+					queryInfo->orders.push_back(Order(orderColumn, isAsc));
 
-					if (!ORDER_BY_COLUMN->Parse(tokenCursol)){
-						throw ResultValue::ERR_SQL_SYNTAX;
-					}
-					first = false;
+					// この変数はまたつかわれるので初期化します。
+					isAsc = true;
+				});
+
+				auto ORDER_BY_COLUMNS = ORDER_BY_COLUMN >> ~(COMMA >> ORDER_BY_COLUMN);
+
+				if (!ORDER_BY_COLUMNS->Parse(tokenCursol)){
+					throw ResultValue::ERR_SQL_SYNTAX;
 				}
 			}
 			else{
