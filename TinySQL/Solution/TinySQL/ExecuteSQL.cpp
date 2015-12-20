@@ -742,11 +742,11 @@ public:
 	//! TokenParserクラスの新しいインスタンスを初期化します。
 	//! @param [in] 読み取りが成功したら実行する処理です。
 	//! @params [in] kind 読み取るトークンの種類です。
-	TokenParser(function<void(const Token)> action, TokenKind kind);
+	TokenParser(const function<void(const Token)> action, const TokenKind kind);
 
 	//! TokenParserクラスの新しいインスタンスを初期化します。
 	//! @params [in] kind 読み取るトークンの種類です。
-	TokenParser(TokenKind kind);
+	TokenParser(const TokenKind kind);
 
 	//! トークンに対するパースを行います。
 	//! @params [in] cursol 現在の読み取り位置を表すカーソルです。
@@ -755,7 +755,7 @@ public:
 
 	//! 読み取りが成功したら実行する処理を登録します。
 	//! @param [in] 読み取りが成功したら実行する処理です。
-	shared_ptr<TokenParser> Action(function<void(const Token)> action);
+	const shared_ptr<const TokenParser> Action(const function<void(const Token)> action) const;
 };
 
 //! トークンのパーサーを生成します。
@@ -765,24 +765,24 @@ const shared_ptr<TokenParser> token(TokenKind kind);
 //! 二つの規則を順番に組み合わせた規則を順に読み取るパーサーです。
 class SequenceParser : public Parser
 {
-	shared_ptr<Parser> m_parser1; //!< 一つ目のパーサーです。
-	shared_ptr<Parser> m_parser2; //!< 二つ目のパーサーです。
-	function<void(void)> m_action; //!< 読み取りが成功したら実行する処理です。
+	const shared_ptr<const Parser> m_parser1; //!< 一つ目のパーサーです。
+	const shared_ptr<const Parser> m_parser2; //!< 二つ目のパーサーです。
+	const function<void(void)> m_action; //!< 読み取りが成功したら実行する処理です。
 public:
 	//! SequenceParserクラスの新しいインスタンスを初期化します。
 	//! @param [in] 読み取りが成功したら実行する処理です。
 	//! @params [in] parser1 一つ目のParserです。
 	//! @params [in] parser2 二つ目目のParserです。
-	SequenceParser(function<void(void)> action, shared_ptr<Parser> parser1, shared_ptr<Parser> parser2);
+	SequenceParser(const function<void(void)> action, const shared_ptr<const Parser> parser1, const shared_ptr<const Parser> parser2);
 
 	//! SequenceParserクラスの新しいインスタンスを初期化します。
 	//! @params [in] parser1 一つ目のParserです。
 	//! @params [in] parser2 二つ目のParserです。
-	SequenceParser(shared_ptr<Parser> parser1, shared_ptr<Parser> parser2);
+	SequenceParser(const shared_ptr<const Parser> parser1, const shared_ptr<const Parser> parser2);
 
 	//! 読み取りが成功したら実行する処理を登録します。
 	//! @param [in] 読み取りが成功したら実行する処理です。
-	shared_ptr<SequenceParser> Action(function<void(void)> action);
+	const shared_ptr<const SequenceParser> Action(const function<void(void)> action) const;
 
 	//! 二つの規則に対するパースを行います。
 	//! @params [in] cursol 現在の読み取り位置を表すカーソルです。
@@ -793,7 +793,7 @@ public:
 //! SequenceParserクラスの新しいインスタンスを生成します。
 //! @params [in] parser1 一つ目のParserです。
 //! @params [in] parser2 二つ目のParserです。
-shared_ptr<SequenceParser> operator>>(shared_ptr<Parser> parser1, shared_ptr<Parser> parser2);
+const shared_ptr<const SequenceParser> operator>>(const shared_ptr<const Parser> parser1, const shared_ptr<const Parser> parser2);
 
 //! 出力するデータを管理します。
 class OutputData
@@ -1927,7 +1927,7 @@ const bool TokenParser::Parse(vector<const Token>::const_iterator& cursol) const
 }
 //! 読み取りが成功したら実行する処理を登録します。
 //! @param [in] 読み取りが成功したら実行する処理です。
-shared_ptr<TokenParser> TokenParser::Action(function<void(const Token)> action)
+const shared_ptr<const TokenParser> TokenParser::Action(const function<void(const Token)> action) const
 {
 	return make_shared<TokenParser>(action, m_kind);
 }
@@ -1943,12 +1943,12 @@ const shared_ptr<TokenParser> token(TokenKind kind)
 //! @param [in] 読み取りが成功したら実行する処理です。
 //! @params [in] parser1 一つ目のParserです。
 //! @params [in] parser1 一つ目のParserです。
-SequenceParser::SequenceParser(function<void(void)> action, shared_ptr<Parser> parser1, shared_ptr<Parser> parser2) : m_action(action), m_parser1(parser1), m_parser2(parser2){}
+SequenceParser::SequenceParser(const function<void(void)> action, const shared_ptr<const Parser> parser1, const shared_ptr<const Parser> parser2) : m_action(action), m_parser1(parser1), m_parser2(parser2){}
 
 //! SequenceParserクラスの新しいインスタンスを初期化します。
 //! @params [in] parser1 一つ目のParserです。
 //! @params [in] parser1 一つ目のParserです。
-SequenceParser::SequenceParser(shared_ptr<Parser> parser1, shared_ptr<Parser> parser2) : m_parser1(parser1), m_parser2(parser2){}
+SequenceParser::SequenceParser(const shared_ptr<const Parser> parser1, const shared_ptr<const Parser> parser2) : m_parser1(parser1), m_parser2(parser2){}
 
 //! トークンに対するパースを行います。
 //! @params [in] cursol 現在の読み取り位置を表すカーソルです。
@@ -1969,7 +1969,7 @@ const bool SequenceParser::Parse(vector<const Token>::const_iterator& cursol) co
 
 //! 読み取りが成功したら実行する処理を登録します。
 //! @param [in] 読み取りが成功したら実行する処理です。
-shared_ptr<SequenceParser> SequenceParser::Action(function<void(void)> action)
+const shared_ptr<const SequenceParser> SequenceParser::Action(const function<void(void)> action) const
 {
 	return make_shared<SequenceParser>(action, m_parser1, m_parser2);
 }
@@ -1977,7 +1977,7 @@ shared_ptr<SequenceParser> SequenceParser::Action(function<void(void)> action)
 //! SequenceParserクラスの新しいインスタンスを生成します。
 //! @params [in] parser1 一つ目のParserです。
 //! @params [in] parser2 二つ目のParserです。
-shared_ptr<SequenceParser> operator>>(shared_ptr<Parser> parser1, shared_ptr<Parser> parser2)
+const shared_ptr<const SequenceParser> operator>>(const shared_ptr<const Parser> parser1, const shared_ptr<const Parser> parser2)
 {
 	return make_shared<SequenceParser>(parser1, parser2);
 }
