@@ -271,6 +271,20 @@ protected:
 	const shared_ptr<const Token> ReadCore(string::const_iterator &cursol, const string::const_iterator& end) const override;
 };
 
+//! キーワードトークンを読み込む機能を提供します。
+class KeywordReader : public TokenReader
+{
+	Token keyword;
+protected:
+	//! 実際にトークンを読み込みます。
+	//! @param [in] cursol 読み込み開始位置です。
+	//! @param [in] end SQL全体の終了位置です。
+	//! @return 切り出されたトークンです。読み込みが失敗した場合はnullptrを返します。
+	const shared_ptr<const Token> ReadCore(string::const_iterator &cursol, const string::const_iterator& end) const override;
+public:
+	KeywordReader(const TokenKind kind, const string word);
+};
+
 //! ファイルに対して実行するSQLを表すクラスです。
 class SqlQuery
 {
@@ -489,6 +503,28 @@ const shared_ptr<const Token> StringLiteralReader::ReadCore(string::const_iterat
 	}
 }
 
+//! 実際にトークンを読み込みます。
+//! @param [in] cursol 読み込み開始位置です。
+//! @param [in] end SQL全体の終了位置です。
+//! @return 切り出されたトークンです。読み込みが失敗した場合はnullptrを返します。
+const shared_ptr<const Token> KeywordReader::ReadCore(string::const_iterator &cursol, const string::const_iterator &end) const
+{
+	auto result =
+		mismatch(keyword.word.begin(), keyword.word.end(), cursol,
+		[](const char keywordChar, const char sqlChar){return keywordChar == toupper(sqlChar); });
+
+	if (result.first == keyword.word.end() && // キーワードの最後の文字まで同じです。
+		result.second != end && alpahNumUnder.find(*result.second) == string::npos){ //キーワードに識別子が区切りなしに続いていないかを確認します。 
+		cursol = result.second;
+		return make_shared<Token>(keyword);
+	}
+	else{
+		return nullptr;
+	}
+}
+
+KeywordReader::KeywordReader(const TokenKind kind, const string word) : keyword(Token(kind, word)){}
+
 //! 二つの文字列を、大文字小文字を区別せずに比較し、等しいかどうかです。
 //! @param [in] str1 比較される一つ目の文字列です。
 //! @param [in] str2 比較される二つ目の文字列です。
@@ -510,6 +546,7 @@ const shared_ptr<const vector<const Token>> SqlQuery::GetTokens(const string sql
 	{
 		make_shared<IntLiteralReader>(),
 		make_shared<StringLiteralReader>(),
+		make_shared<KeywordReader>(TokenKind::AND, "AND"),
 	};
 
 	auto backPoint = sql.begin(); // SQLをトークンに分割して読み込む時に戻るポイントを記録しておきます。
@@ -1410,7 +1447,7 @@ void SqlQuery::WriteCsv(const string outputFileName, const vector<const InputTab
 //! @param [in] sql 実行するSQLです。
 SqlQuery::SqlQuery(const string sql) :
 	keywordConditions({
-		{ TokenKind::AND, "AND" },
+		//{ TokenKind::AND, "AND" },
 		{ TokenKind::ASC, "ASC" },
 		{ TokenKind::BY, "BY" },
 		{ TokenKind::DESC, "DESC" },
