@@ -519,30 +519,23 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			}
 
 			// キーワードを読み込みます。
-			found = false;
-			for (auto & keywordCondition : keywordConditions){
-				sqlBackPoint = sqlCursol;
-				const char *wordCursol = keywordCondition.word.c_str(); // 確認するキーワードの文字列のうち、現在確認している一文字を指します。
+			auto keyword = find_if(keywordConditions.begin(), keywordConditions.end(), 
+				[&](Token keyword){
+				auto result =
+					mismatch(keyword.word.begin(), keyword.word.end(), sqlCursol,
+					[](const char keywordChar, const char sqlChar){return keywordChar == toupper(sqlChar); });
 
-				// キーワードが指定した文字列となっているか確認します。
-				while (*wordCursol && toupper(*sqlCursol++) == *wordCursol){
-					++wordCursol;
-				}
-
-				// キーワードに識別子が区切りなしに続いていないかを確認するため、キーワードの終わった一文字あとを調べます。
-				for (search = alpahNumUnder.c_str(); *search && sqlCursol != sqlEnd && *sqlCursol != *search; ++search){};
-
-				if (!*wordCursol && !*search && sqlCursol != sqlEnd){
-
-					// 見つかったキーワードを生成します。
-					tokens.push_back(Token(keywordCondition.kind));
-					found = true;
+				if (result.first == keyword.word.end() && // キーワードの最後の文字まで同じです。
+					result.second != sqlEnd && alpahNumUnder.find(*result.second) == string::npos){ //キーワードに識別子が区切りなしに続いていないかを確認します。 
+					sqlCursol = result.second;
+					return true;
 				}
 				else{
-					sqlCursol = sqlBackPoint;
+					return false;
 				}
-			}
-			if (found){
+			});
+			if (keyword != keywordConditions.end()){
+				tokens.push_back(Token(keyword->kind));
 				continue;
 			}
 
