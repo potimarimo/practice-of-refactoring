@@ -336,11 +336,12 @@ protected:
 class OutputData
 {
 	SqlQueryInfo queryInfo; //!< SQLに記述された内容です。
+	vector<Column> allInputColumns; // 入力に含まれるすべての列の一覧です。
 public:
 
 	//! OutputDataクラスの新しいインスタンスを初期化します。
 	//! @param [in] queryInfo SQLの情報です。
-	OutputData(const SqlQueryInfo queryInfo);
+	OutputData(const SqlQueryInfo queryInfo, const vector<const InputTable> &inputTables);
 
 	//! CSVファイルに出力データを書き込みます。
 	//! @param [in] outputFileName 結果を出力するファイルのファイル名です。
@@ -763,19 +764,8 @@ const shared_ptr<const Token> IdentifierReader::ReadCore(string::const_iterator 
 
 //! OutputDataクラスの新しいインスタンスを初期化します。
 //! @param [in] queryInfo SQLの情報です。
-OutputData::OutputData(const SqlQueryInfo queryInfo) : queryInfo(queryInfo)
+OutputData::OutputData(const SqlQueryInfo queryInfo, const vector<const InputTable> &inputTables) : queryInfo(queryInfo)
 {
-}
-
-//! CSVファイルに出力データを書き込みます。
-//! @param [in] outputFileName 結果を出力するファイルのファイル名です。
-//! @param [in] inputTables ファイルから読み取ったデータです。
-void OutputData::WriteCsv(const string outputFileName, const vector<const InputTable> &inputTables)
-{
-	ofstream outputFile; // 書き込むファイルのファイルポインタです。
-
-	vector<Column> allInputColumns; // 入力に含まれるすべての列の一覧です。
-
 	// 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
 	for (auto &inputTable : inputTables){
 		copy(
@@ -786,13 +776,22 @@ void OutputData::WriteCsv(const string outputFileName, const vector<const InputT
 
 	// SELECT句の列名指定が*だった場合は、入力CSVの列名がすべて選択されます。
 	if (queryInfo.selectColumns.empty()){
-		copy(allInputColumns.begin(), allInputColumns.end(), back_inserter(queryInfo.selectColumns));
+		copy(allInputColumns.begin(), allInputColumns.end(), back_inserter(this->queryInfo.selectColumns));
 	}
 
 	// SELECT句で指定された列名が、何個目の入力ファイルの何列目に相当するかを判別します。
-	for (auto &selectColumn : queryInfo.selectColumns){
+	for (auto &selectColumn : this->queryInfo.selectColumns){
 		selectColumn.SetAllColumns(inputTables);
 	}
+
+}
+
+//! CSVファイルに出力データを書き込みます。
+//! @param [in] outputFileName 結果を出力するファイルのファイル名です。
+//! @param [in] inputTables ファイルから読み取ったデータです。
+void OutputData::WriteCsv(const string outputFileName, const vector<const InputTable> &inputTables)
+{
+	ofstream outputFile; // 書き込むファイルのファイルポインタです。
 
 	if (queryInfo.whereTopNode){
 		// 既存数値の符号を計算します。
@@ -1139,7 +1138,7 @@ void OutputData::WriteCsv(const string outputFileName, const vector<const InputT
 //! @param [in] inputTables ファイルから読み取ったデータです。
 void Csv::WriteCsv(const string outputFileName, const vector<const InputTable> &inputTables) const
 {
-	OutputData output(*queryInfo);
+	OutputData output(*queryInfo, inputTables);
 	output.WriteCsv(outputFileName, inputTables);
 }
 
