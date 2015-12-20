@@ -749,8 +749,7 @@ Csv::Csv(const shared_ptr<const SqlQueryInfo> queryInfo) : queryInfo(queryInfo){
 //! @return ファイルから読み取ったデータです。
 const shared_ptr<const vector<const InputTable>> Csv::ReadCsv() const
 {
-	auto ret = make_shared<vector<const InputTable>>();
-	auto &tables = *ret;
+	auto tables = make_shared<vector<const InputTable>>();
 
 	for (auto &tableName : queryInfo->tableNames){
 		
@@ -760,15 +759,16 @@ const shared_ptr<const vector<const InputTable>> Csv::ReadCsv() const
 			throw ResultValue::ERR_FILE_OPEN;
 		}
 
-		auto table = InputTable(header, data);
-		tables.push_back(table);
+		auto header = ReadHeader(inputFile, tableName);
+		auto data = ReadData(inputFile);
+		tables->push_back(InputTable(InputTable(header, data)));
 
 		inputFile.close();
 		if (inputFile.bad()){
 			throw ResultValue::ERR_FILE_CLOSE;
 		}
 	}
-	return ret;
+	return tables;
 }
 
 //! CSVファイルに出力データを書き込みます。
