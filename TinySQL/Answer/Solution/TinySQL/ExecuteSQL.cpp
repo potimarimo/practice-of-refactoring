@@ -621,13 +621,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 
 		vector<Column> selectColumns; // SELECT句に指定された列名です。
 
-		Column orderByColumns[MAX_COLUMN_COUNT]; // ORDER句に指定された列名です。
-		// orderByColumnsを初期化します。
-		for (size_t i = 0; i < sizeof(orderByColumns) / sizeof(orderByColumns[0]); i++)
-		{
-			orderByColumns[i] = Column();
-		}
-		int orderByColumnsNum = 0; // ORDER句から現在読み込まれた列名の数です。
+		vector<Column> orderByColumns; // ORDER句に指定された列名です。
 
 		TokenKind orders[MAX_COLUMN_COUNT] = { TokenKind::NOT_TOKEN }; // 同じインデックスのorderByColumnsに対応している、昇順、降順の指定です。
 
@@ -711,18 +705,15 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 							++tokenCursol;
 						}
 						if (tokenCursol->kind == TokenKind::IDENTIFIER){
-							if (MAX_COLUMN_COUNT <= orderByColumnsNum){
-								throw ResultValue::ERR_MEMORY_OVER;
-							}
 							// テーブル名が指定されていない場合と仮定して読み込みます。
-							orderByColumns[orderByColumnsNum] = Column(tokenCursol->word);
+							orderByColumns.push_back(Column(tokenCursol->word));
 							++tokenCursol;
 							if (tokenCursol->kind == TokenKind::DOT){
 								++tokenCursol;
 								if (tokenCursol->kind == TokenKind::IDENTIFIER){
 
 									// テーブル名が指定されていることがわかったので読み替えます。
-									orderByColumns[orderByColumnsNum] = Column(orderByColumns[orderByColumnsNum].columnName, tokenCursol->word);
+									orderByColumns.back() = Column(orderByColumns.back().columnName, tokenCursol->word);
 									++tokenCursol;
 								}
 								else{
@@ -732,18 +723,17 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 
 							// 並び替えの昇順、降順を指定します。
 							if (tokenCursol->kind == TokenKind::ASC){
-								orders[orderByColumnsNum] = TokenKind::ASC;
+								orders[orderByColumns.size() - 1] = TokenKind::ASC;
 								++tokenCursol;
 							}
 							else if (tokenCursol->kind == TokenKind::DESC){
-								orders[orderByColumnsNum] = TokenKind::DESC;
+								orders[orderByColumns.size() - 1] = TokenKind::DESC;
 								++tokenCursol;
 							}
 							else{
 								// 指定がない場合は昇順となります。
-								orders[orderByColumnsNum] = TokenKind::ASC;
+								orders[orderByColumns.size() - 1] = TokenKind::ASC;
 							}
-							++orderByColumnsNum;
 						}
 						else{
 							throw ResultValue::ERR_SQL_SYNTAX;
@@ -1423,27 +1413,27 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 		}
 
 		// ORDER句による並び替えの処理を行います。
-		if (orderByColumnsNum){
+		if (!orderByColumns.empty()){
 			// ORDER句で指定されている列が、全ての入力行の中のどの行なのかを計算します。
 			int orderByColumnIndexes[MAX_COLUMN_COUNT]; // ORDER句で指定された列の、すべての行の中でのインデックスです。
 			int orderByColumnIndexesNum = 0; // 現在のorderByColumnIndexesの数です。
-			for (int i = 0; i < orderByColumnsNum; ++i){
+			for (auto &orderByColumn : orderByColumns){
 				found = false;
-				for (int j = 0; j < allInputColumnsNum; ++j){
-					char* orderByTableNameCursol = orderByColumns[i].tableName;
-					char* allInputTableNameCursol = allInputColumns[j].tableName;
+				for (int i = 0; i < allInputColumnsNum; ++i){
+					char* orderByTableNameCursol = orderByColumn.tableName;
+					char* allInputTableNameCursol = allInputColumns[i].tableName;
 					while (*orderByTableNameCursol && toupper(*orderByTableNameCursol) == toupper(*allInputTableNameCursol)){
 						++orderByTableNameCursol;
 						++allInputTableNameCursol;
 					}
-					char* orderByColumnNameCursol = orderByColumns[i].columnName;
-					char* allInputColumnNameCursol = allInputColumns[j].columnName;
+					char* orderByColumnNameCursol = orderByColumn.columnName;
+					char* allInputColumnNameCursol = allInputColumns[i].columnName;
 					while (*orderByColumnNameCursol && toupper(*orderByColumnNameCursol) == toupper(*allInputColumnNameCursol)){
 						++orderByColumnNameCursol;
 						++allInputColumnNameCursol;
 					}
 					if (!*orderByColumnNameCursol && !*allInputColumnNameCursol &&
-						(!*orderByColumns[i].tableName || // テーブル名が設定されている場合のみテーブル名の比較を行います。
+						(!*orderByColumn.tableName || // テーブル名が設定されている場合のみテーブル名の比較を行います。
 						!*orderByTableNameCursol && !*allInputTableNameCursol)){
 						// 既に見つかっているのにもう一つ見つかったらエラーです。
 						if (found){
@@ -1453,7 +1443,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 						if (MAX_COLUMN_COUNT <= orderByColumnIndexesNum){
 							throw ResultValue::ERR_MEMORY_OVER;
 						}
-						orderByColumnIndexes[orderByColumnIndexesNum++] = j;
+						orderByColumnIndexes[orderByColumnIndexesNum++] = i;
 					}
 				}
 				// 一つも見つからなくてもエラーです。
