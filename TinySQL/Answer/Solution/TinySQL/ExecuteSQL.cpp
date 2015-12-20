@@ -222,13 +222,6 @@ public:
 //! ファイルに対して実行するSQLを表すクラスです。
 class SqlQuery
 {
-	vector<ifstream> inputTableFiles;                       //!< 読み込む入力ファイルの全てのファイルポインタです。
-	ofstream outputFile;                                    //!< 書き込むファイルのファイルポインタです。
-	bool found = false;                                     //!< 検索時に見つかったかどうかの結果を一時的に保存します。
-	vector<vector<vector<Data>>> inputData;                 //!< 入力データです。
-	vector<vector<Data>> outputData;                        //!< 出力データです。
-	vector<vector<Data>> allColumnOutputData;               //!< 出力するデータに対応するインデックスを持ち、すべての入力データを保管します。
-
 	const string alpahUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ"; //!< 全てのアルファベットの大文字小文字とアンダーバーです。
 	const string alpahNumUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; //!< 全ての数字とアルファベットの大文字小文字とアンダーバーです。
 	const string signNum = "+-0123456789"; //!< 全ての符号と数字です。
@@ -240,11 +233,7 @@ class SqlQuery
 	const vector<const Token> signConditions;//!< 記号をトークンとして認識するための記号一覧情報です。
 	const vector<const Operator> operators; //!< 演算子の情報です。
 
-	SqlQueryInfo queryInfo; //! SQLを解析した結果の情報です。
-
 	vector<vector<Column>> inputColumns; //!< 入力されたCSVの行の情報です。
-
-	string m_outputFileName; //!< outputFileName SQLの実行結果をCSVとして出力するファイル名です。拡張子を含みます。
 
 	//! SQLの文字列からトークンを切り出します。
 	//! @param [in] sql トークンに分解する元となるSQLです。
@@ -262,9 +251,10 @@ class SqlQuery
 	const shared_ptr<vector<vector<vector<Data>>>> ReadCsv(const SqlQueryInfo& queryInfo);
 
 	//! CSVファイルに出力データを書き込みます。
+	//! @param [in] outputFileName 結果を出力するファイルのファイル名です。
 	//! @param [in] queryInfo SQLの情報です。
 	//! @param [in] inputData ファイルから読み取ったデータです。
-	void WriteCsv(const SqlQueryInfo& queryInfo, vector<vector<vector<Data>>> &inputData);
+	void WriteCsv(const string outputFileName, const SqlQueryInfo& queryInfo, vector<vector<vector<Data>>> &inputData);
 public:
 	//! SqlQueryクラスの新しいインスタンスを初期化します。
 	SqlQuery();
@@ -817,6 +807,7 @@ const shared_ptr<vector<vector<vector<Data>>>> SqlQuery::ReadCsv(const SqlQueryI
 	auto ret = make_shared<vector<vector<vector<Data>>>>();
 	auto &inputData = *ret;
 
+	vector<ifstream> inputTableFiles; // 読み込む入力ファイルの全てのファイルポインタです。
 	for (size_t i = 0; i < queryInfo.tableNames.size(); ++i){
 		// 入力ファイルを開きます。
 		inputTableFiles.push_back(ifstream(queryInfo.tableNames[i] + ".csv"));
@@ -908,12 +899,18 @@ const shared_ptr<vector<vector<vector<Data>>>> SqlQuery::ReadCsv(const SqlQueryI
 }
 
 //! CSVファイルに出力データを書き込みます。
+//! @param [in] outputFileName 結果を出力するファイルのファイル名です。
 //! @param [in] queryInfo SQLの情報です。
 //! @param [in] inputData ファイルから読み取ったデータです。
-void SqlQuery::WriteCsv(const SqlQueryInfo& queryInfo, vector<vector<vector<Data>>> &inputData)
+void SqlQuery::WriteCsv(const string outputFileName, const SqlQueryInfo& queryInfo, vector<vector<vector<Data>>> &inputData)
 {
 	SqlQueryInfo info = queryInfo;
+
+	ofstream outputFile; // 書き込むファイルのファイルポインタです。
 	vector<Column> allInputColumns; // 入力に含まれるすべての列の一覧です。
+
+	vector<vector<Data>> outputData; // 出力データです。
+	vector<vector<Data>> allColumnOutputData; // 出力するデータに対応するインデックスを持ち、すべての入力データを保管します。
 
 	// 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
 	for (size_t i = 0; i < info.tableNames.size(); ++i){
@@ -935,7 +932,7 @@ void SqlQuery::WriteCsv(const SqlQueryInfo& queryInfo, vector<vector<vector<Data
 	vector<ColumnIndex> selectColumnIndexes; // SELECT句で指定された列の、入力ファイルとしてのインデックスです。
 
 	for (auto &selectColumn : info.selectColumns){
-		found = false;
+		bool found = false;
 		for (size_t i = 0; i < info.tableNames.size(); ++i){
 			int j = 0;
 			for (auto &inputColumn : inputColumns[i]){
@@ -1028,7 +1025,7 @@ void SqlQuery::WriteCsv(const SqlQueryInfo& queryInfo, vector<vector<vector<Data
 
 					// データが列名で指定されている場合、今扱っている行のデータを設定します。
 					if (!currentNode->column.columnName.empty()){
-						found = false;
+						bool found = false;
 						for (size_t i = 0; i < allInputColumns.size(); ++i){
 							if (Equali(currentNode->column.columnName, allInputColumns[i].columnName) &&
 								(currentNode->column.tableName.empty() || // テーブル名が設定されている場合のみテーブル名の比較を行います。
@@ -1203,7 +1200,7 @@ void SqlQuery::WriteCsv(const SqlQueryInfo& queryInfo, vector<vector<vector<Data
 		vector<int> orderByColumnIndexes; // ORDER句で指定された列の、すべての行の中でのインデックスです。
 
 		for (auto &orderByColumn : info.orderByColumns){
-			found = false;
+			bool found = false;
 			for (size_t i = 0; i < allInputColumns.size(); ++i){
 				if (Equali(orderByColumn.columnName, allInputColumns[i].columnName) &&
 					(orderByColumn.tableName.empty() || // テーブル名が設定されている場合のみテーブル名の比較を行います。
@@ -1268,7 +1265,7 @@ void SqlQuery::WriteCsv(const SqlQueryInfo& queryInfo, vector<vector<vector<Data
 	}
 
 	// 出力ファイルを開きます。
-	outputFile = ofstream(m_outputFileName);
+	outputFile = ofstream(outputFileName);
 	if (outputFile.bad()){
 		throw ResultValue::ERR_FILE_OPEN;
 	}
@@ -1362,13 +1359,12 @@ SqlQuery::SqlQuery() :
 //! @return 実行した結果の状態です。 
 int SqlQuery::Execute(const string sql, const string outputFileName)
 {
-	m_outputFileName = outputFileName;
 	try
 	{
 		auto tokens = GetTokens(sql);
 		auto queryInfo = AnalyzeTokens(*tokens);
 		auto inputData = ReadCsv(*queryInfo);
-		WriteCsv(*queryInfo, *inputData);
+		WriteCsv(outputFileName, *queryInfo, *inputData);
 
 		return static_cast<int>(ResultValue::OK);
 	}
