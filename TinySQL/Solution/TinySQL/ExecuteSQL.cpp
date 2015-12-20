@@ -105,6 +105,10 @@ public:
 	//! Dataクラスの新しいインスタンスを初期化します。
 	//! @param [in] value データの値です。
 	Data(const bool value);
+
+	//! データが文字列型の場合の値を取得します。
+	//! @return データが文字列型の場合の値です。
+	const char* string() const;
 };
 
 //! WHERE句に指定する演算子の情報を表します。
@@ -224,6 +228,14 @@ Data::Data(const int value) : type(DataType::INTEGER)
 Data::Data(const bool value) : type(DataType::BOOLEAN)
 {
 	this->value.boolean = value;
+}
+
+
+//! データが文字列型の場合の値を取得します。
+//! @return データが文字列型の場合の値です。
+const char* Data::string() const
+{
+	return value.string;
 }
 
 //! Operatorクラスの新しいインスタンスを初期化します。
@@ -780,7 +792,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 						// 前後のシングルクォートを取り去った文字列をデータとして読み込みます。
 						strncpy(currentNode->value.value.string, tokenCursol->word.c_str() + 1, std::min(MAX_WORD_LENGTH, MAX_DATA_LENGTH));
 						currentNode->value.value.string[MAX_DATA_LENGTH - 1] = '\0';
-						currentNode->value.value.string[strlen(currentNode->value.value.string) - 1] = '\0';
+						currentNode->value.value.string[strlen(currentNode->value.string()) - 1] = '\0';
 						++tokenCursol;
 					}
 					else{
@@ -990,7 +1002,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 				currentRow = &inputData[i][0];
 				found = false;
 				while (*currentRow){
-					char *currentChar = (*currentRow)[j]->value.string;
+					const char *currentChar = (*currentRow)[j]->string();
 					while (*currentChar){
 						bool isNum = false;
 						const char *currentNum = signNum.c_str();
@@ -1017,7 +1029,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 				if (!found){
 					currentRow = &inputData[i][0];
 					while (*currentRow){
-						*(*currentRow)[j] = Data(atoi((*currentRow)[j]->value.string));
+						*(*currentRow)[j] = Data(atoi((*currentRow)[j]->string()));
 						++currentRow;
 					}
 				}
@@ -1243,22 +1255,22 @@ int ExecuteSQL(const string sql, const string outputFileName)
 						case DataType::STRING:
 							switch (currentNode->middleOperator.kind){
 							case TokenKind::EQUAL:
-								currentNode->value.value.boolean = strcmp(currentNode->left->value.value.string, currentNode->right->value.value.string) == 0;
+								currentNode->value.value.boolean = strcmp(currentNode->left->value.string(), currentNode->right->value.string()) == 0;
 								break;
 							case TokenKind::GREATER_THAN:
-								currentNode->value.value.boolean = strcmp(currentNode->left->value.value.string, currentNode->right->value.value.string) > 0;
+								currentNode->value.value.boolean = strcmp(currentNode->left->value.string(), currentNode->right->value.string()) > 0;
 								break;
 							case TokenKind::GREATER_THAN_OR_EQUAL:
-								currentNode->value.value.boolean = strcmp(currentNode->left->value.value.string, currentNode->right->value.value.string) >= 0;
+								currentNode->value.value.boolean = strcmp(currentNode->left->value.string(), currentNode->right->value.string()) >= 0;
 								break;
 							case TokenKind::LESS_THAN:
-								currentNode->value.value.boolean = strcmp(currentNode->left->value.value.string, currentNode->right->value.value.string) < 0;
+								currentNode->value.value.boolean = strcmp(currentNode->left->value.string(), currentNode->right->value.string()) < 0;
 								break;
 							case TokenKind::LESS_THAN_OR_EQUAL:
-								currentNode->value.value.boolean = strcmp(currentNode->left->value.value.string, currentNode->right->value.value.string) <= 0;
+								currentNode->value.value.boolean = strcmp(currentNode->left->value.string(), currentNode->right->value.string()) <= 0;
 								break;
 							case TokenKind::NOT_EQUAL:
-								currentNode->value.value.boolean = strcmp(currentNode->left->value.value.string, currentNode->right->value.value.string) != 0;
+								currentNode->value.value.boolean = strcmp(currentNode->left->value.string(), currentNode->right->value.string()) != 0;
 								break;
 							}
 							break;
@@ -1404,7 +1416,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 							cmp = jData->value.integer - mData->value.integer;
 							break;
 						case DataType::STRING:
-							cmp = strcmp(jData->value.string, mData->value.string);
+							cmp = strcmp(jData->string(), mData->string());
 							break;
 						}
 
@@ -1471,7 +1483,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					itoa((*column)->value.integer, outputString, 10);
 					break;
 				case DataType::STRING:
-					strcpy(outputString, (*column)->value.string);
+					strcpy(outputString, (*column)->string());
 					break;
 				}
 				result = fputs(outputString, outputFile);
