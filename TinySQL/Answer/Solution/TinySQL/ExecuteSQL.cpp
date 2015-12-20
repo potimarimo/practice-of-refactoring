@@ -402,6 +402,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 {
 	vector<ifstream> inputTableFiles;                       // 読み込む入力ファイルの全てのファイルポインタです。
 	ofstream outputFile;                                   // 書き込むファイルのファイルポインタです。
+	int result = 0;                                         // 関数の戻り値を一時的に保存します。
 	bool found = false;                                     // 検索時に見つかったかどうかの結果を一時的に保存します。
 	const char *search = nullptr;                           // 文字列検索に利用するポインタです。
 	Data ***currentRow = nullptr;                           // データ検索時に現在見ている行を表します。
@@ -1500,6 +1501,9 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					break;
 				}
 				outputFile << outputString;
+				if (result == EOF){
+					throw ResultValue::ERR_FILE_WRITE;
+				}
 				if (i < selectColumns.size() - 1){
 					outputFile << ",";
 				}
