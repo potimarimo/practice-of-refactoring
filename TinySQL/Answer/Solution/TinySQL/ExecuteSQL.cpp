@@ -2694,6 +2694,8 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 						++tokenCursol;
 					}
 					Column orderColumn;
+					bool isAsc = true;
+
 					auto FIRST_ORDER_BY_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
 						// テーブル名が指定されていない場合と仮定して読み込みます。
 						orderColumn = Column(tokenCursol->word);
@@ -2704,24 +2706,18 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 						orderColumn = Column(orderColumn.columnName, tokenCursol->word);
 					});
 
-					auto ORDER_BY_COLUMN = FIRST_ORDER_BY_COLUMN_NAME >> -(DOT >> SECOND_ORDER_BY_COLUMN_NAME);
+					auto SET_DESC = DESC->Action([&](const Token token){
+						isAsc = false;
+					});
 
-					if (ORDER_BY_COLUMN->Parse(tokenCursol)){
+					auto ORDER_BY_COLUMN = FIRST_ORDER_BY_COLUMN_NAME >> -(DOT >> SECOND_ORDER_BY_COLUMN_NAME) >> -(ASC | SET_DESC);
 
-						// 並び替えの昇順、降順を指定します。
-						bool isAsc = true;
-
-						auto SET_DESC = DESC->Action([&](const Token token){
-							isAsc = false;
-						});
-
-						auto SET_ORDER = ASC | SET_DESC;
-
-						SET_ORDER->Parse(tokenCursol);
-
+					ORDER_BY_COLUMN = ORDER_BY_COLUMN->Action([&](){
 						queryInfo->orders.push_back(Order(orderColumn, isAsc));
-					}
-					else{
+					});
+
+
+					if (!ORDER_BY_COLUMN->Parse(tokenCursol)){
 						throw ResultValue::ERR_SQL_SYNTAX;
 					}
 					first = false;
