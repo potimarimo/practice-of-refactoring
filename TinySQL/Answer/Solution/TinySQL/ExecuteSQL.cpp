@@ -2968,26 +2968,19 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 
 	auto WHERE_CLOSE_PAREN = CLOSE_PAREN->Action([&](const Token token){
 		auto ancestors = currentNode->ancestors();
-		for (auto &ancestor : *ancestors){
+		any_of(ancestors->begin(), ancestors->end(), [](shared_ptr<ExtensionTreeNode> ancestor){
 			auto leftNodes = ancestor->allLeftList();
-			auto node = find_if(leftNodes->begin(), leftNodes->end(), 
+			auto node = find_if(leftNodes->begin(), leftNodes->end(),
 				[](const shared_ptr<ExtensionTreeNode> node){return node->parenOpenBeforeClose; });
-			
+
 			if (node != leftNodes->end()){
 				// 対応付けられていないカッコ開くを一つ削除し、ノードがカッコに囲まれていることを記録します。
 				--(*node)->parenOpenBeforeClose;
 				ancestor->inParen = true;
-				break;
+				return true;
 			}
-			//auto searched = ancestor;
-			//for (; searched && !searched->parenOpenBeforeClose; searched = searched->left){}
-			//if (searched){
-			//	// 対応付けられていないカッコ開くを一つ削除し、ノードがカッコに囲まれていることを記録します。
-			//	--searched->parenOpenBeforeClose;
-			//	ancestor->inParen = true;
-			//	break;
-			//}
-		}
+			return false;
+		});
 	});
 
 	auto OPERAND = WHERE_COLUMN | WHERE_INT_LITERAL | WHERE_STRING_LITERAL;
