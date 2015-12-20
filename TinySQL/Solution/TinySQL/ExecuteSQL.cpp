@@ -742,6 +742,9 @@ public:
 	void Action(function<void(const Token)> action);
 };
 
+//! トークンのパーサーを生成します。
+//! @params [in] kind 読み取るトークンの種類です。
+const shared_ptr<TokenParser> token(TokenKind kind);
 
 //! 出力するデータを管理します。
 class OutputData
@@ -1876,6 +1879,13 @@ void TokenParser::Action(function<void(const Token)> action)
 	m_action = action;
 }
 
+//! トークンのパーサーを生成します。
+//! @params [in] kind 読み取るトークンの種類です。
+const shared_ptr<TokenParser> token(TokenKind kind)
+{
+	return make_shared<TokenParser>(kind);
+}
+
 //! 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
 void OutputData::InitializeAllInputColumns()
 {
@@ -2302,10 +2312,10 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 	auto queryInfo = make_shared<SqlQueryInfo>();
 	auto tokenCursol = tokens.begin(); // 現在見ているトークンを指します。
 
-	TokenParser SELECT(TokenKind::SELECT);
-	TokenParser IDENTIFIER(TokenKind::IDENTIFIER);
+	auto SELECT = token(TokenKind::SELECT);
+	auto IDENTIFIER = token(TokenKind::IDENTIFIER);
 
-	if (!SELECT.Parse(tokenCursol)){
+	if (!SELECT->Parse(tokenCursol)){
 		throw ResultValue::ERR_SQL_SYNTAX;
 	}
 
@@ -2325,11 +2335,11 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 				++tokenCursol;
 				if (tokenCursol->kind == TokenKind::DOT){
 					++tokenCursol;
-					IDENTIFIER.Action([&](const Token token){
+					IDENTIFIER->Action([&](const Token token){
 						// テーブル名が指定されていることがわかったので読み替えます。
 						queryInfo->selectColumns.back() = Column(queryInfo->selectColumns.back().columnName, token.word);
 					});
-					if (!IDENTIFIER.Parse(tokenCursol)){
+					if (!IDENTIFIER->Parse(tokenCursol)){
 						throw ResultValue::ERR_SQL_SYNTAX;
 					}
 				}
