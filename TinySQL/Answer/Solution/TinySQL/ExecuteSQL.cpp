@@ -823,6 +823,10 @@ public:
 	const bool Parse(vector<const Token>::const_iterator& cursol) const override;
 };
 
+//! OrderedChoiceParserクラスの新しいインスタンスを生成します。
+//! @params [in] parser1 一つ目のParserです。
+//! @params [in] parser2 二つ目のParserです。
+const shared_ptr<const OrderedChoiceParser> operator|(const shared_ptr<const Parser> parser1, const shared_ptr<const Parser> parser2);
 
 //! 存在しなくても失敗とならない規則を読み取るパーサーです。
 class OptionalParser : public Parser
@@ -2104,6 +2108,14 @@ const bool OrderedChoiceParser::Parse(vector<const Token>::const_iterator& curso
 	return false;
 }
 
+//! OrderedChoiceParserクラスの新しいインスタンスを生成します。
+//! @params [in] parser1 一つ目のParserです。
+//! @params [in] parser2 二つ目のParserです。
+const shared_ptr<const OrderedChoiceParser> operator|(const shared_ptr<const Parser> parser1, const shared_ptr<const Parser> parser2)
+{
+	return make_shared<OrderedChoiceParser>(parser1, parser2);
+}
+
 //! OptionalParserクラスの新しいインスタンスを初期化します。
 //! @param [in] 読み取りが成功したら実行する処理です。
 //! @params [in] optional 存在してもしなくてもよい規則です。
@@ -2627,7 +2639,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 
 	auto SELECT_COLUMN = FIRST_SELECT_COLUMN_NAME >> -(DOT >> SECOND_SELECT_COLUMN_NAME);
 
-	auto SELECT_COLUMNS = make_shared<OrderedChoiceParser>(token(TokenKind::ASTERISK), SELECT_COLUMN >> ~(COMMA >> SELECT_COLUMN));
+	auto SELECT_COLUMNS = token(TokenKind::ASTERISK) | SELECT_COLUMN >> ~(COMMA >> SELECT_COLUMN);
 
 	auto tokenCursol = tokens.begin(); // 現在見ているトークンを指します。
 
