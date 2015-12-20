@@ -131,6 +131,11 @@ public:
 	//! @param [in] right 右辺です。
 	//! @return 除算した結果です。
 	virtual const shared_ptr<const Data> operator/(const shared_ptr<const Data>& right) const = 0;
+
+	//! 等値比較を行います。
+	//! @param [in] right 右辺です。
+	//! @return 比較した結果です。
+	virtual const shared_ptr<const Data> operator==(const shared_ptr<const Data>& right) const = 0;
 };
 
 //! 文字列の値を持つDataです。
@@ -170,6 +175,11 @@ public:
 	//! @param [in] right 右辺です。
 	//! @return 除算した結果です。
 	const shared_ptr<const Data> operator/(const shared_ptr<const Data>& right) const override;
+
+	//! 等値比較を行います。
+	//! @param [in] right 右辺です。
+	//! @return 比較した結果です。
+	const shared_ptr<const Data> operator==(const shared_ptr<const Data>& right) const override;
 };
 
 //! 整数の値を持つDataです。
@@ -209,6 +219,11 @@ public:
 	//! @param [in] right 右辺です。
 	//! @return 除算した結果です。
 	const shared_ptr<const Data> operator/(const shared_ptr<const Data>& right) const override;
+
+	//! 等値比較を行います。
+	//! @param [in] right 右辺です。
+	//! @return 比較した結果です。
+	const shared_ptr<const Data> operator==(const shared_ptr<const Data>& right) const override;
 };
 
 //! 真偽値の値を持つDataです。
@@ -248,6 +263,11 @@ public:
 	//! @param [in] right 右辺です。
 	//! @return 除算した結果です。
 	const shared_ptr<const Data> operator/(const shared_ptr<const Data>& right) const override;
+
+	//! 等値比較を行います。
+	//! @param [in] right 右辺です。
+	//! @return 比較した結果です。
+	const shared_ptr<const Data> operator==(const shared_ptr<const Data>& right) const override;
 };
 
 //! WHERE句に指定する演算子の情報を表します。
@@ -744,6 +764,19 @@ const shared_ptr<const Data> StringData::operator/(const shared_ptr<const Data>&
 	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 }
 
+//! 等値比較を行います。
+//! @param [in] right 右辺です。
+//! @return 比較した結果です。
+const shared_ptr<const Data> StringData::operator==(const shared_ptr<const Data>& right) const
+{
+	if (right->type() == DataType::STRING){
+		return Data::New(string() == right->string());
+	}
+	else{
+		throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+	}
+}
+
 //! Dataクラスの新しいインスタンスを初期化します。
 //! @param [in] value データの値です。
 IntegerData::IntegerData(const int value) : m_integer(value){}
@@ -814,6 +847,19 @@ const shared_ptr<const Data> IntegerData::operator/(const shared_ptr<const Data>
 	}
 }
 
+//! 等値比較を行います。
+//! @param [in] right 右辺です。
+//! @return 比較した結果です。
+const shared_ptr<const Data> IntegerData::operator==(const shared_ptr<const Data>& right) const
+{
+	if (right->type() == DataType::INTEGER){
+		return Data::New(integer() == right->integer());
+	}
+	else{
+		throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+	}
+}
+
 
 //! Dataクラスの新しいインスタンスを初期化します。
 //! @param [in] value データの値です。
@@ -861,6 +907,14 @@ const shared_ptr<const Data> BooleanData::operator*(const shared_ptr<const Data>
 //! @param [in] right 右辺です。
 //! @return 除算した結果です。
 const shared_ptr<const Data> BooleanData::operator/(const shared_ptr<const Data>& right) const
+{
+	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
+}
+
+//! 等値比較を行います。
+//! @param [in] right 右辺です。
+//! @return 比較した結果です。
+const shared_ptr<const Data> BooleanData::operator==(const shared_ptr<const Data>& right) const
 {
 	throw ResultValue::ERR_WHERE_OPERAND_TYPE;
 }
@@ -981,6 +1035,8 @@ void ExtensionTreeNode::Operate()
 		value = *left->value / right->value;
 		break;
 	case TokenKind::EQUAL:
+		value = *left->value == right->value;
+		break;
 	case TokenKind::GREATER_THAN:
 	case TokenKind::GREATER_THAN_OR_EQUAL:
 	case TokenKind::LESS_THAN:
@@ -998,9 +1054,6 @@ void ExtensionTreeNode::Operate()
 		switch (left->value->type()){
 		case DataType::INTEGER:
 			switch (middleOperator.kind){
-			case TokenKind::EQUAL:
-				value = Data::New(left->value->integer() == right->value->integer());
-				break;
 			case TokenKind::GREATER_THAN:
 				value = Data::New(left->value->integer() > right->value->integer());
 				break;
@@ -1020,9 +1073,6 @@ void ExtensionTreeNode::Operate()
 			break;
 		case DataType::STRING:
 			switch (middleOperator.kind){
-			case TokenKind::EQUAL:
-				value = Data::New(left->value->string() == right->value->string());
-				break;
 			case TokenKind::GREATER_THAN:
 				value = Data::New(left->value->string() > right->value->string());
 				break;
