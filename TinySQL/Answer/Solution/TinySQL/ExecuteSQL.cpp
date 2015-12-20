@@ -232,9 +232,7 @@ class TokenReader
 protected:
 	const string alpahUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ"; //!< 全てのアルファベットの大文字小文字とアンダーバーです。
 	const string alpahNumUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; //!< 全ての数字とアルファベットの大文字小文字とアンダーバーです。
-	const string signNum = "+-0123456789"; //!< 全ての符号と数字です。
 	const string num = "0123456789"; //!< 全ての数字です。
-	const string space = " \t\r\n"; //!< 全ての空白文字です。
 
 	//! 実際にトークンを読み込ます。
 	//! @param [in] cursol 読み込み開始位置です。
@@ -324,10 +322,7 @@ protected:
 //! ファイルに対して実行するSQLを表すクラスです。
 class SqlQuery
 {
-	const string alpahUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ"; //!< 全てのアルファベットの大文字小文字とアンダーバーです。
-	const string alpahNumUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; //!< 全ての数字とアルファベットの大文字小文字とアンダーバーです。
 	const string signNum = "+-0123456789"; //!< 全ての符号と数字です。
-	const string num = "0123456789"; //!< 全ての数字です。
 	const string space = " \t\r\n"; //!< 全ての空白文字です。
 
 	const vector<const shared_ptr<const TokenReader>> tokenReaders; //!< トークンの読み込みロジックの集合です。
