@@ -1056,11 +1056,6 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					currentRow->end(),
 					back_inserter(allColumnsRow));
 			}
-			//for (size_t i = 0; i < currentRows.size(); ++i){
-			//	for (size_t j = 0; j < (*currentRows[i]).size(); ++j){
-			//		allColumnsRow.push_back((*currentRows[i])[j]);
-			//	}
-			//}
 			// WHEREの条件となる値を再帰的に計算します。
 			if (whereTopNode){
 				shared_ptr<ExtensionTreeNode> currentNode = whereTopNode; // 現在見ているノードです。
@@ -1339,26 +1334,23 @@ int ExecuteSQL(const string sql, const string outputFileName)
 		}
 
 		// 出力ファイルにデータを出力します。
-
 		for (auto& outputRow : outputData){
-			Data* column = &outputRow[0];
-			for (size_t i = 0; i < selectColumns.size(); ++i){
-				
-				switch (column->type){
+			size_t i = 0;
+			for (const auto &column : outputRow){
+				switch (column.type){
 				case DataType::INTEGER:
-					outputFile << column->integer();
+					outputFile << column.integer();
 					break;
 				case DataType::STRING:
-					outputFile << column->string();
+					outputFile << column.string();
 					break;
 				}
-				if (i < selectColumns.size() - 1){
+				if (i++ < selectColumns.size() - 1){
 					outputFile << ",";
 				}
 				else{
 					outputFile << "\n";
 				}
-				++column;
 			}
 		}
 		if (outputFile.bad()){
