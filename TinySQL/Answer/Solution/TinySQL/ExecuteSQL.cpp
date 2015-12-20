@@ -503,28 +503,19 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			}
 
 			// 文字列リテラルを読み込みます。
+			sqlBackPoint = sqlCursol;
 
 			// 文字列リテラルを開始するシングルクォートを判別し、読み込みます。
-			// メトリクス測定ツールのccccはシングルクォートの文字リテラル中のエスケープを認識しないため、文字リテラルを使わないことで回避しています。
 			if (*sqlCursol == "\'"[0]){
 				++sqlCursol;
-				Token literal{TokenKind::STRING_LITERAL, "\'"}; // 読み込んだ文字列リテラルの情報です。
-
-				// 次のシングルクォートがくるまで文字を読み込み続けます。
-				while (*sqlCursol && *sqlCursol != "\'"[0]){
-					literal.word.push_back(*sqlCursol++);
-				}
-				if (*sqlCursol == "\'"[0]){
-					// 最後のシングルクォートを読み込みます。
-					literal.word.push_back(*sqlCursol++);
-
-					// 文字列の終端文字をつけます。
-					tokens.push_back(literal);
-					continue;
-				}
-				else{
+				// メトリクス測定ツールのccccはシングルクォートの文字リテラル中のエスケープを認識しないため、文字リテラルを使わないことで回避しています。
+				sqlCursol = find_if_not(sqlCursol, sqlEnd, [](char c){return c != "\'"[0]; });
+				if(sqlCursol == sqlEnd){
 					throw ResultValue::ERR_TOKEN_CANT_READ;
 				}
+				++sqlCursol;
+				tokens.push_back(Token(TokenKind::STRING_LITERAL, string(sqlBackPoint, sqlCursol)));
+				continue;
 			}
 
 			// キーワードを読み込みます。
