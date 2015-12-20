@@ -352,20 +352,19 @@ class OutputData
 	//! 入力された各テーブルの、現在出力している行を指すカーソルを、初期化された状態で取得します。
 	//! @return 初期化されたカーソルです。
 	const shared_ptr<vector<vector<const vector<const Data>>::const_iterator>> OutputData::GetInitializedCurrentRows() const;
-
-	//! 出力するすべてのデータ行を取得します。
-	//! @return 出力するすべてのデータ行。入力されたすべての入力データを保管します。
-	const shared_ptr<vector<vector<Data>>> GetOutputRows();
 public:
 
 	//! OutputDataクラスの新しいインスタンスを初期化します。
 	//! @param [in] queryInfo SQLの情報です。
 	OutputData(const SqlQueryInfo queryInfo, const vector<const InputTable> &inputTables);
 
-	//! CSVファイルに出力データを書き込みます。
-	//! @param [in] outputFileName 結果を出力するファイルのファイル名です。
-	//! @param [in] inputTables ファイルから読み取ったデータです。
-	void WriteCsv(const string outputFileName, const vector<const InputTable> &inputTables);
+	//! 出力するカラムを取得します。
+	//! @return 出力するカラムです。
+	const vector<Column> columns() const;
+
+	//! 出力するすべてのデータ行を取得します。
+	//! @return 出力するすべてのデータ行。入力されたすべての入力データを保管します。
+	const shared_ptr<vector<vector<Data>>> GetOutputRows();
 };
 
 //! SqlQueryのCsvに対する入出力を扱います。
@@ -831,6 +830,13 @@ const shared_ptr<vector<vector<const vector<const Data>>::const_iterator>> Outpu
 	return currentRows;
 }
 
+//! 出力するカラム名を取得します。
+//! @return 出力するカラム名です。
+const vector<Column> OutputData::columns() const
+{
+	return queryInfo.selectColumns;
+}
+
 //! 出力するすべてのデータ行を取得します。
 //! @return 出力するすべてのデータ行。入力されたすべての入力データを保管します。
 const shared_ptr<vector<vector<Data>>> OutputData::GetOutputRows()
@@ -1114,13 +1120,13 @@ const shared_ptr<vector<vector<Data>>> OutputData::GetOutputRows()
 
 //! CSVファイルに出力データを書き込みます。
 //! @param [in] outputFileName 結果を出力するファイルのファイル名です。
+//! @param [in] queryInfo SQLの情報です。
 //! @param [in] inputTables ファイルから読み取ったデータです。
-void OutputData::WriteCsv(const string outputFileName, const vector<const InputTable> &inputTables)
+void Csv::WriteCsv(const string outputFileName, const vector<const InputTable> &inputTables) const
 {
+	OutputData outputData(*queryInfo, inputTables);
+	auto outputRows = outputData.GetOutputRows();
 	ofstream outputFile; // 書き込むファイルのファイルポインタです。
-
-	auto outputRows = GetOutputRows();
-
 	// 出力ファイルを開きます。
 	outputFile = ofstream(outputFileName);
 	if (outputFile.bad()){
@@ -1128,9 +1134,9 @@ void OutputData::WriteCsv(const string outputFileName, const vector<const InputT
 	}
 
 	// 出力ファイルに列名を出力します。
-	for (size_t i = 0; i < queryInfo.selectColumns.size(); ++i){
-		outputFile << queryInfo.selectColumns[i].outputName;
-		if (i < queryInfo.selectColumns.size() - 1){
+	for (size_t i = 0; i < outputData.columns().size(); ++i){
+		outputFile << outputData.columns()[i].outputName;
+		if (i < outputData.columns().size() - 1){
 			outputFile << ",";
 		}
 		else{
@@ -1141,7 +1147,7 @@ void OutputData::WriteCsv(const string outputFileName, const vector<const InputT
 	// 出力ファイルにデータを出力します。
 	for (auto& outputRow : *outputRows){
 		size_t i = 0;
-		for (const auto &column : queryInfo.selectColumns){
+		for (const auto &column : outputData.columns()){
 			switch (outputRow[column.allColumnsIndex].type){
 			case DataType::INTEGER:
 				outputFile << outputRow[column.allColumnsIndex].integer();
@@ -1150,7 +1156,7 @@ void OutputData::WriteCsv(const string outputFileName, const vector<const InputT
 				outputFile << outputRow[column.allColumnsIndex].string();
 				break;
 			}
-			if (i++ < queryInfo.selectColumns.size() - 1){
+			if (i++ < outputData.columns().size() - 1){
 				outputFile << ",";
 			}
 			else{
@@ -1167,16 +1173,6 @@ void OutputData::WriteCsv(const string outputFileName, const vector<const InputT
 			throw ResultValue::ERR_FILE_CLOSE;
 		}
 	}
-}
-
-//! CSVファイルに出力データを書き込みます。
-//! @param [in] outputFileName 結果を出力するファイルのファイル名です。
-//! @param [in] queryInfo SQLの情報です。
-//! @param [in] inputTables ファイルから読み取ったデータです。
-void Csv::WriteCsv(const string outputFileName, const vector<const InputTable> &inputTables) const
-{
-	OutputData output(*queryInfo, inputTables);
-	output.WriteCsv(outputFileName, inputTables);
 }
 
 //! ファイルストリームからカンマ区切りの一行を読み込みます。
