@@ -990,6 +990,9 @@ void OutputData::SetAllColumns()
 			}
 		}
 	}
+	for (auto &column : queryInfo.orderByColumns){
+		column.SetAllColumns(inputTables);
+	}
 }
 
 //! OutputDataクラスの新しいインスタンスを初期化します。
@@ -1061,55 +1064,34 @@ const shared_ptr<const vector<const vector<const Data>>> OutputData::outputRows(
 		}
 	}
 
+	// WHERE条件を適用します。
 	if (queryInfo.whereTopNode){
 		auto & newEnd = copy_if(
 			outputRows->begin(),
 			outputRows->end(),
 			outputRows->begin(),
 			[&](vector<const Data> row){
-			auto allNodes = SelfAndDescendants(queryInfo.whereTopNode);
-			for (auto& node : *allNodes){
-				node->SetColumnData(row);
-			}
-			queryInfo.whereTopNode->Operate();
-			return queryInfo.whereTopNode->value.boolean();
+				auto allNodes = SelfAndDescendants(queryInfo.whereTopNode);
+				for (auto& node : *allNodes){
+					node->SetColumnData(row);
+				}
+				queryInfo.whereTopNode->Operate();
+				return queryInfo.whereTopNode->value.boolean();
 		});
 		outputRows->erase(newEnd, outputRows->end());
 	}
 
 	// ORDER句による並び替えの処理を行います。
 	if (!queryInfo.orderByColumns.empty()){
-		// ORDER句で指定されている列が、全ての入力行の中のどの行なのかを計算します。
-		vector<int> orderByColumnIndexes; // ORDER句で指定された列の、すべての行の中でのインデックスです。
-
-		for (auto &orderByColumn : queryInfo.orderByColumns){
-			bool found = false;
-			for (size_t i = 0; i < allInputColumns.size(); ++i){
-				if (Equali(orderByColumn.columnName, allInputColumns[i].columnName) &&
-					(orderByColumn.tableName.empty() || // テーブル名が設定されている場合のみテーブル名の比較を行います。
-					Equali(orderByColumn.tableName, allInputColumns[i].tableName))){
-					// 既に見つかっているのにもう一つ見つかったらエラーです。
-					if (found){
-						throw ResultValue::ERR_BAD_COLUMN_NAME;
-					}
-					found = true;
-					orderByColumnIndexes.push_back(i);
-				}
-			}
-			// 一つも見つからなくてもエラーです。
-			if (!found){
-				throw ResultValue::ERR_BAD_COLUMN_NAME;
-			}
-		}
 
 		// allColumnOutputDataのソートを行います。簡便のため凝ったソートは使わず、選択ソートを利用します。
 		for (size_t i = 0; i < outputRows->size(); ++i){
 			int minIndex = i; // 現在までで最小の行のインデックスです。
 			for (size_t j = i + 1; j < outputRows->size(); ++j){
 				bool jLessThanMin = false; // インデックスがjの値が、minIndexの値より小さいかどうかです。
-				for (size_t k = 0; k < orderByColumnIndexes.size(); ++k){
-					const Data &mData = (*outputRows)[minIndex][orderByColumnIndexes[k]]; // インデックスがminIndexのデータです。
-					const Data &jData = (*outputRows)[j][orderByColumnIndexes[k]]; // インデックスがjのデータです。
+				for (size_t k = 0; k < queryInfo.orderByColumns.size(); ++k){
+					const Data &mData = (*outputRows)[minIndex][queryInfo.orderByColumns[k].allColumnsIndex]; // インデックスがminIndexのデータです。
+					const Data &jData = (*outputRows)[j][queryInfo.orderByColumns[k].allColumnsIndex]; // インデックスがjのデータです。
 					int cmp = 0; // 比較結果です。等しければ0、インデックスjの行が大きければプラス、インデックスminIndexの行が大きければマイナスとなります。
 					switch (mData.type)
 					{
