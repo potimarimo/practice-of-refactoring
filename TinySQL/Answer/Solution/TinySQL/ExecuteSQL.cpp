@@ -376,7 +376,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 	vector<Data**> outputData;                              // 出力データです。
 	vector<Data**> allColumnOutputData;                     // 出力するデータに対応するインデックスを持ち、すべての入力データを保管します。
 
-	const char *alpahUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ"; // 全てのアルファベットの大文字小文字とアンダーバーです。
+	const string alpahUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ"; // 全てのアルファベットの大文字小文字とアンダーバーです。
 	const char *alpahNumUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; // 全ての数字とアルファベットの大文字小文字とアンダーバーです。
 	const char *signNum = "+-0123456789"; // 全ての符号と数字です。
 	const char *num = "0123456789"; // 全ての数字です。
@@ -477,7 +477,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 				} while (*search);
 
 				// 数字の後にすぐに識別子が続くのは紛らわしいので数値リテラルとは扱いません。
-				for (search = alpahUnder; *search && *charactorCursol != *search; ++search){}
+				for (search = alpahUnder.c_str(); *search && *charactorCursol != *search; ++search){}
 				if (!*search){
 					literal.word[wordLength] = '\0';
 					tokens.push_back(literal);
@@ -576,7 +576,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			// 識別子を読み込みます。
 
 			// 識別子の最初の文字を確認します。
-			for (search = alpahUnder; *search && *charactorCursol != *search; ++search){};
+			for (search = alpahUnder.c_str(); *search && *charactorCursol != *search; ++search){};
 			if (*search){
 				Token identifier{ TokenKind::IDENTIFIER }; // 読み込んだ識別子の情報です。
 				int wordLength = 0; // 識別子に現在読み込んでいる文字の数です。
