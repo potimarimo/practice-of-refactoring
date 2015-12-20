@@ -2963,9 +2963,8 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 		if (tokenCursol->kind == TokenKind::WHERE){
 			readWhere = true;
 			++tokenCursol;
-			while (true){
-				// オペランドを読み込みます。
 
+			auto PRE_WHERE_OPERAND = action([&]{
 				// オペランドのノードを新しく生成します。
 				auto newNode = make_shared<ExtensionTreeNode>();
 				if (currentNode){
@@ -2978,6 +2977,12 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 					// 最初はカレントノードに新しいノードを入れます。
 					currentNode = newNode;
 				}
+			});
+
+			WHERE_OPERAND = PRE_WHERE_OPERAND >> WHERE_OPERAND;
+
+			while (true){
+				// オペランドを読み込みます。
 
 				if (!WHERE_OPERAND->Parse(tokenCursol)){
 					throw ResultValue::ERR_SQL_SYNTAX;
