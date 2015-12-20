@@ -2662,6 +2662,11 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 		isAsc = false;
 	});
 
+	shared_ptr<ExtensionTreeNode> currentNode; // 現在読み込んでいるノードです。
+	auto WHERE_OPEN_PAREN = OPEN_PAREN->Action([&](const Token token){
+		++currentNode->parenOpenBeforeClose;
+	});
+
 	// 記号の意味
 	// A >> B		:Aの後にBが続く
 	// -A			:Aが任意
@@ -2720,7 +2725,6 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 		if (tokenCursol->kind == TokenKind::WHERE){
 			readWhere = true;
 			++tokenCursol;
-			shared_ptr<ExtensionTreeNode> currentNode; // 現在読み込んでいるノードです。
 			while (true){
 				// オペランドを読み込みます。
 
@@ -2737,11 +2741,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 					currentNode = newNode;
 				}
 
-				// カッコ開くを読み込みます。
-				while (tokenCursol->kind == TokenKind::OPEN_PAREN){
-					++currentNode->parenOpenBeforeClose;
-					++tokenCursol;
-				}
+				(~WHERE_OPEN_PAREN)->Parse(tokenCursol);
 
 				// オペランドに前置される+か-を読み込みます。
 				if (tokenCursol->kind == TokenKind::PLUS || tokenCursol->kind == TokenKind::MINUS){
