@@ -402,7 +402,6 @@ int ExecuteSQL(const string sql, const string outputFileName)
 {
 	vector<ifstream> inputTableFiles;                       // 読み込む入力ファイルの全てのファイルポインタです。
 	ofstream outputFile;                                   // 書き込むファイルのファイルポインタです。
-	int result = 0;                                         // 関数の戻り値を一時的に保存します。
 	bool found = false;                                     // 検索時に見つかったかどうかの結果を一時的に保存します。
 	const char *search = nullptr;                           // 文字列検索に利用するポインタです。
 	Data ***currentRow = nullptr;                           // データ検索時に現在見ている行を表します。
@@ -472,48 +471,50 @@ int ExecuteSQL(const string sql, const string outputFileName)
 		{ TokenKind::OR, 5 },
 	};
 
-	const char* charactorBackPoint = nullptr; // SQLをトークンに分割して読み込む時に戻るポイントを記録しておきます。
-
-	const char* charactorCursol = sql.c_str(); // SQLをトークンに分割して読み込む時に現在読んでいる文字の場所を表します。
-
 	vector<const string> tableNames; // FROM句で指定しているテーブル名です。
 	try
 	{
+		auto sqlBackPoint = sql.begin(); // SQLをトークンに分割して読み込む時に戻るポイントを記録しておきます。
+
+		auto sqlCursol = sql.begin(); // SQLをトークンに分割して読み込む時に現在読んでいる文字の場所を表します。
+
+		auto sqlEnd = sql.end(); // sqlのendを指します。
+
 		// SQLをトークンに分割て読み込みます。
-		while (*charactorCursol){
+		while (sqlCursol != sqlEnd){
 
 			// 空白を読み飛ばします。
-			for (search = space.c_str(); *search && *charactorCursol != *search; ++search){}
+			for (search = space.c_str(); *search && *sqlCursol != *search; ++search){}
 			if (*search){
-				charactorCursol++;
+				sqlCursol++;
 				continue;
 			}
 
 			// 数値リテラルを読み込みます。
 
 			// 先頭文字が数字であるかどうかを確認します。
-			charactorBackPoint = charactorCursol;
-			for (search = num.c_str(); *search && *charactorCursol != *search; ++search){}
+			sqlBackPoint = sqlCursol;
+			for (search = num.c_str(); *search && *sqlCursol != *search; ++search){}
 			if (*search){
 				Token literal{TokenKind::INT_LITERAL}; // 読み込んだ数値リテラルの情報です。
 
 				// 数字が続く間、文字を読み込み続けます。
 				do {
-					for (search = num.c_str(); *search && *charactorCursol != *search; ++search){}
+					for (search = num.c_str(); *search && *sqlCursol != *search; ++search){}
 					if (*search){
 						literal.word.push_back(*search);
-						++charactorCursol;
+						++sqlCursol;
 					}
 				} while (*search);
 
 				// 数字の後にすぐに識別子が続くのは紛らわしいので数値リテラルとは扱いません。
-				for (search = alpahUnder.c_str(); *search && *charactorCursol != *search; ++search){}
+				for (search = alpahUnder.c_str(); *search && sqlCursol != sqlEnd && *sqlCursol != *search; ++search){}
 				if (!*search){
 					tokens.push_back(literal);
 					continue;
 				}
 				else{
-					charactorCursol = charactorBackPoint;
+					sqlCursol = sqlBackPoint;
 				}
 			}
 
@@ -521,17 +522,17 @@ int ExecuteSQL(const string sql, const string outputFileName)
 
 			// 文字列リテラルを開始するシングルクォートを判別し、読み込みます。
 			// メトリクス測定ツールのccccはシングルクォートの文字リテラル中のエスケープを認識しないため、文字リテラルを使わないことで回避しています。
-			if (*charactorCursol == "\'"[0]){
-				++charactorCursol;
+			if (*sqlCursol == "\'"[0]){
+				++sqlCursol;
 				Token literal{TokenKind::STRING_LITERAL, "\'"}; // 読み込んだ文字列リテラルの情報です。
 
 				// 次のシングルクォートがくるまで文字を読み込み続けます。
-				while (*charactorCursol && *charactorCursol != "\'"[0]){
-					literal.word.push_back(*charactorCursol++);
+				while (*sqlCursol && *sqlCursol != "\'"[0]){
+					literal.word.push_back(*sqlCursol++);
 				}
-				if (*charactorCursol == "\'"[0]){
+				if (*sqlCursol == "\'"[0]){
 					// 最後のシングルクォートを読み込みます。
-					literal.word.push_back(*charactorCursol++);
+					literal.word.push_back(*sqlCursol++);
 
 					// 文字列の終端文字をつけます。
 					tokens.push_back(literal);
@@ -545,25 +546,25 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			// キーワードを読み込みます。
 			found = false;
 			for (auto & keywordCondition : keywordConditions){
-				charactorBackPoint = charactorCursol;
+				sqlBackPoint = sqlCursol;
 				const char *wordCursol = keywordCondition.word.c_str(); // 確認するキーワードの文字列のうち、現在確認している一文字を指します。
 
 				// キーワードが指定した文字列となっているか確認します。
-				while (*wordCursol && toupper(*charactorCursol++) == *wordCursol){
+				while (*wordCursol && toupper(*sqlCursol++) == *wordCursol){
 					++wordCursol;
 				}
 
 				// キーワードに識別子が区切りなしに続いていないかを確認するため、キーワードの終わった一文字あとを調べます。
-				for (search = alpahNumUnder.c_str(); *search && *charactorCursol != *search; ++search){};
+				for (search = alpahNumUnder.c_str(); *search && sqlCursol != sqlEnd && *sqlCursol != *search; ++search){};
 
-				if (!*wordCursol && !*search){
+				if (!*wordCursol && !*search && sqlCursol != sqlEnd){
 
 					// 見つかったキーワードを生成します。
 					tokens.push_back(Token(keywordCondition.kind));
 					found = true;
 				}
 				else{
-					charactorCursol = charactorBackPoint;
+					sqlCursol = sqlBackPoint;
 				}
 			}
 			if (found){
@@ -573,11 +574,11 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			// 記号を読み込みます。
 			found = false;
 			for (auto &signCondition : signConditions){
-				charactorBackPoint = charactorCursol;
+				sqlBackPoint = sqlCursol;
 				const char *wordCursol = signCondition.word.c_str(); // 確認する記号の文字列のうち、現在確認している一文字を指します。
 
 				// 記号が指定した文字列となっているか確認します。
-				while (*wordCursol && toupper(*charactorCursol++) == *wordCursol){
+				while (*wordCursol && sqlCursol != sqlEnd && toupper(*sqlCursol++) == *wordCursol){
 					++wordCursol;
 				}
 				if (!*wordCursol){
@@ -587,7 +588,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					found = true;
 				}
 				else{
-					charactorCursol = charactorBackPoint;
+					sqlCursol = sqlBackPoint;
 				}
 			}
 			if (found){
@@ -597,24 +598,24 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			// 識別子を読み込みます。
 
 			// 識別子の最初の文字を確認します。
-			for (search = alpahUnder.c_str(); *search && *charactorCursol != *search; ++search){};
+			for (search = alpahUnder.c_str(); *search && *sqlCursol != *search; ++search){};
 			if (*search){
 				Token identifier{ TokenKind::IDENTIFIER }; // 読み込んだ識別子の情報です。
 				do {
 					// 二文字目以降は数字も許可して文字の種類を確認します。
-					for (search = alpahNumUnder.c_str(); *search && *charactorCursol != *search; ++search){};
-					if (*search){
+					for (search = alpahNumUnder.c_str(); *search && sqlCursol != sqlEnd && *sqlCursol != *search; ++search){};
+					if (*search && sqlCursol != sqlEnd){
 						identifier.word.push_back(*search);
-						charactorCursol++;
+						sqlCursol++;
 					}
-				} while (*search);
+				} while (*search && sqlCursol != sqlEnd);
 
 				// 読み込んだ識別子を登録します。
 				tokens.push_back(identifier);
 				continue;
 			}
 			else{
-				charactorCursol = charactorBackPoint;
+				sqlCursol = sqlBackPoint;
 			}
 
 			throw ResultValue::ERR_TOKEN_CANT_READ;
@@ -947,7 +948,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			inputColumns.push_back(vector<Column>());
 			string inputLine; // ファイルから読み込んだ行文字列です。
 			if (getline(inputTableFiles.back(), inputLine)){
-				charactorCursol = inputLine.c_str();
+				const char* charactorCursol = inputLine.c_str(); // ヘッダ入力行を検索するカーソルです。
 
 				// 読み込んだ行を最後まで読みます。
 				while (*charactorCursol){
@@ -982,7 +983,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					row[j] = nullptr;
 				}
 
-				charactorCursol = inputLine.c_str();
+				const char* charactorCursol = inputLine.c_str();
 				int columnNum = 0; // いま何列目を読み込んでいるか。0基底の数字となります。
 
 				// 読み込んだ行を最後まで読みます。
@@ -1501,9 +1502,6 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					break;
 				}
 				outputFile << outputString;
-				if (result == EOF){
-					throw ResultValue::ERR_FILE_WRITE;
-				}
 				if (i < selectColumns.size() - 1){
 					outputFile << ",";
 				}
