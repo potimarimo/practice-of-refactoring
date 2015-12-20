@@ -597,6 +597,10 @@ public:
 	//! 自身及び自身の子孫ノードをずっと左に辿っていき自身に近いほうから順に列挙します。
 	//! @return 左に辿った子孫ノードの一覧。
 	const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> selfAndAllLeftList() const;
+
+	//! 自身の位置にノードを挿入し、自身は挿入したノードの左の子となります。
+	//! @param [in] inserted 挿入するノードです。
+	void InsertAndMoveLeft(const shared_ptr<ExtensionTreeNode> inserted);
 };
 
 //! 引数として渡したノード及びその子孫のノードを取得します。順序は帰りがけ順です。
@@ -1945,6 +1949,18 @@ const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> ExtensionTreeNode:
 	return allNodesOf([](const shared_ptr<const ExtensionTreeNode> thisNode){return thisNode->left; }, true);
 }
 
+//! 自身の位置にノードを挿入し、自身は挿入したノードの左の子となります。
+//! @param [in] inserted 挿入するノードです。
+void ExtensionTreeNode::InsertAndMoveLeft(const shared_ptr<ExtensionTreeNode> inserted)
+{
+	inserted->parent = parent;
+	if (inserted->parent){
+		inserted->parent->right = inserted;
+	}
+	inserted->left = shared_from_this();
+	parent = inserted;
+}
+
 //! 引数として渡したノード及びその子孫のノードを取得します。
 //! @param [in] 戻り値のルートとなるノードです。順序は帰りがけ順です。
 //! @return 自身及び子孫のノードです。
@@ -3036,7 +3052,6 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 			[&](const shared_ptr<ExtensionTreeNode> ancestor)
 		{
 			auto allLefts = ancestor->selfAndAllLeftList();
-
 			return 
 				any_of(allLefts->begin(), allLefts->end(),
 					[](shared_ptr<ExtensionTreeNode> node){return node->parenOpenBeforeClose; }) 
@@ -3048,13 +3063,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 		currentNode = make_shared<ExtensionTreeNode>();
 		currentNode->middleOperator = *foundOperator;
 
-		// 見つかった場所に新しいノードを配置します。これまでその位置にあったノードは左の子となるよう、親ノードと子ノードのポインタをつけかえます。
-		currentNode->parent = (*found)->parent;
-		if (currentNode->parent){
-			currentNode->parent->right = currentNode;
-		}
-		currentNode->left = *found;
-		(*found)->parent = currentNode;
+		(*found)->InsertAndMoveLeft(currentNode);
 	});
 
 	auto PRE_WHERE_OPERAND = action([&]{
