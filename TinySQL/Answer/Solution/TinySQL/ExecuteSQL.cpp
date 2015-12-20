@@ -2287,6 +2287,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 	auto tokenCursol = tokens.begin(); // 現在見ているトークンを指します。
 
 	TokenParser SELECT(TokenKind::SELECT);
+	TokenParser IDENTIFIER(TokenKind::IDENTIFIER);
 
 	if (!SELECT.Parse(tokenCursol)){
 		throw ResultValue::ERR_SQL_SYNTAX;
@@ -2308,11 +2309,9 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 				++tokenCursol;
 				if (tokenCursol->kind == TokenKind::DOT){
 					++tokenCursol;
-					if (tokenCursol->kind == TokenKind::IDENTIFIER){
-
+					if (IDENTIFIER.Parse(tokenCursol)){
 						// テーブル名が指定されていることがわかったので読み替えます。
-						queryInfo->selectColumns.back() = Column(queryInfo->selectColumns.back().columnName, tokenCursol->word);
-						++tokenCursol;
+						queryInfo->selectColumns.back() = Column(queryInfo->selectColumns.back().columnName, (tokenCursol-1)->word);
 					}
 					else{
 						throw ResultValue::ERR_SQL_SYNTAX;
