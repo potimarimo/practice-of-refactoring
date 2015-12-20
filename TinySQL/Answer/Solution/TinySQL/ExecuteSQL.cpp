@@ -702,14 +702,25 @@ const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> SelfAndDescendants
 //! Order句の列と順序の指定を表します。
 class Order
 {
+	Column m_column; //<! ORDER句に指定された列名です。
+	const bool m_isAsc = true; //<! ORDER句に指定された順序が昇順かどうかです。
 public:
-	Column column; //<! ORDER句に指定された列名です。
-	const bool isAsc = true; //<! ORDER国指定された順序が昇順かどうかです。
-
 	//! Orderクラスの新しいインスタンスを初期化します。
 	//! @param [in] column ORDER句に指定された列名です。
 	//! @param [in] isAsc ORDER国指定された順序が昇順かどうかです。
 	Order(Column column, const bool isAsc);
+
+	//! ORDER句に指定された列名です。
+	//! @return ORDER句に指定された列名。
+	const Column &column() const;
+
+	//! ORDER句に指定された順序が昇順かどうかです。
+	//! @return ORDER句に指定された順序が昇順かどうか｡
+	const bool &isAsc() const;
+
+	//! 自身のcolumnに対してSetAllColumnsを実行します。
+	//! @param[in] inputTables ファイルから読み取ったデータです。
+	void SetAllColumnsToColumn(const vector<const InputTable> &inputTables);
 };
 
 //! SqlQueryの構文情報を扱うクラスです。
@@ -2222,7 +2233,28 @@ const shared_ptr<vector<const shared_ptr<ExtensionTreeNode>>> SelfAndDescendants
 //! Orderクラスの新しいインスタンスを初期化します。
 //! @param [in] column ORDER句に指定された列名です。
 //! @param [in] isAsc ORDER国指定された順序が昇順かどうかです。
-Order::Order(Column column, const bool isAsc) : column(column), isAsc(isAsc){}
+Order::Order(Column column, const bool isAsc) : m_column(column), m_isAsc(isAsc){}
+
+//! ORDER句に指定された列名です。
+//! @return ORDER句に指定された列名。
+const Column& Order::column() const
+{
+	return m_column;
+}
+
+//! ORDER句に指定された順序が昇順かどうかです。
+//! @return ORDER句に指定された順序が昇順かどうか｡
+const bool& Order::isAsc() const
+{
+	return m_isAsc;
+}
+
+//! 自身のcolumnに対してSetAllColumnsを実行します。
+//! @param[in] inputTables ファイルから読み取ったデータです。
+void Order::SetAllColumnsToColumn(const vector<const InputTable> &inputTables)
+{
+	m_column.SetAllColumns(inputTables);
+}
 
 //! 全てが数値となる列は数値列に変換します。
 void InputTable::InitializeIntegerColumn()
@@ -2796,8 +2828,8 @@ void OutputData::ApplyOrderBy(vector<const OutputAllDataRow> &outputRows) const
 			outputRows.end(),
 			[&](const OutputAllDataRow& lRow, const OutputAllDataRow& rRow){
 			for (auto &order : queryInfo.orders){
-				auto &lData = lRow[order.column]; // インデックスがminIndexのデータです。
-				auto &rData = rRow[order.column]; // インデックスがjのデータです。
+				auto &lData = lRow[order.column()]; // インデックスがminIndexのデータです。
+				auto &rData = rRow[order.column()]; // インデックスがjのデータです。
 				int cmp = 0; // 比較結果です。等しければ0、インデックスjの行が大きければプラス、インデックスminIndexの行が大きければマイナスとなります。
 				switch (lData->type())
 				{
@@ -2810,7 +2842,7 @@ void OutputData::ApplyOrderBy(vector<const OutputAllDataRow> &outputRows) const
 				}
 
 				// 降順ならcmpの大小を入れ替えます。
-				if (!order.isAsc){
+				if (!order.isAsc()){
 					cmp *= -1;
 				}
 				if (cmp != 0){
@@ -2846,7 +2878,7 @@ void OutputData::SetAllColumns()
 		}
 	}
 	for (auto &order : queryInfo.orders){
-		order.column.SetAllColumns(inputTables);
+		order.SetAllColumnsToColumn(inputTables);
 	}
 }
 
