@@ -348,6 +348,10 @@ class OutputData
 
 	//! SELECT句で指定された列名が、何個目の入力ファイルの何列目に相当するかを判別します。
 	void SetAllColumns();
+
+	//! 入力された各テーブルの、現在出力している行を指すカーソルを、初期化された状態で取得します。
+	//! @return 初期化されたカーソルです。
+	const shared_ptr<vector<vector<const vector<const Data>>::const_iterator>> OutputData::GetInitializedCurrentRows() const;
 public:
 
 	//! OutputDataクラスの新しいインスタンスを初期化します。
@@ -809,6 +813,20 @@ OutputData::OutputData(const SqlQueryInfo queryInfo, const vector<const InputTab
 	SetAllColumns();
 }
 
+//! 入力された各テーブルの、現在出力している行を指すカーソルを、初期化された状態で取得します。
+//! @return 初期化されたカーソルです。
+const shared_ptr<vector<vector<const vector<const Data>>::const_iterator>> OutputData::GetInitializedCurrentRows() const
+{
+	auto currentRows = make_shared<vector<vector<const vector<const Data>>::const_iterator>>();
+	transform(
+		inputTables.begin(),
+		inputTables.end(),
+		back_inserter(*currentRows),
+		[](const InputTable& table){return table.data()->begin(); });
+
+	return currentRows;
+}
+
 //! CSVファイルに出力データを書き込みます。
 //! @param [in] outputFileName 結果を出力するファイルのファイル名です。
 //! @param [in] inputTables ファイルから読み取ったデータです。
@@ -816,24 +834,8 @@ void OutputData::WriteCsv(const string outputFileName, const vector<const InputT
 {
 	ofstream outputFile; // 書き込むファイルのファイルポインタです。
 
-	if (queryInfo.whereTopNode){
-		// 既存数値の符号を計算します。
-		auto whereNodes = SelfAndDescendants(queryInfo.whereTopNode);
-		for (auto &whereNode : *whereNodes){
-			if (whereNode->middleOperator.kind == TokenKind::NOT_TOKEN &&
-				whereNode->column.columnName.empty() &&
-				whereNode->value.type == DataType::INTEGER){
-				whereNode->value = Data(whereNode->value.integer() * whereNode->signCoefficient);
-			}
-		}
-	}
-
-	vector<vector<const vector<const Data>>::const_iterator> currentRows; // 入力された各テーブルの、現在出力している行を指すカーソルです。
-	transform(
-		inputTables.begin(),
-		inputTables.end(),
-		back_inserter(currentRows),
-		[](const InputTable& table){return table.data()->begin(); });
+	auto currentRowsPtr = GetInitializedCurrentRows();
+	auto &currentRows = *currentRowsPtr;
 
 	// 出力するデータを設定します。
 	vector<vector<Data>> allColumnOutputData; // 出力するデータに対応するインデックスを持ち、すべての入力データを保管します。
@@ -1576,6 +1578,15 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 			queryInfo->whereTopNode = currentNode;
 			while (queryInfo->whereTopNode->parent){
 				queryInfo->whereTopNode = queryInfo->whereTopNode->parent;
+			}
+			// 既存数値の符号を計算します。
+			auto whereNodes = SelfAndDescendants(queryInfo->whereTopNode);
+			for (auto &whereNode : *whereNodes){
+				if (whereNode->middleOperator.kind == TokenKind::NOT_TOKEN &&
+					whereNode->column.columnName.empty() &&
+					whereNode->value.type == DataType::INTEGER){
+					whereNode->value = Data(whereNode->value.integer() * whereNode->signCoefficient);
+				}
 			}
 		}
 	}
