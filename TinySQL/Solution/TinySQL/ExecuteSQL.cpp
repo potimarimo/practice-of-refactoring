@@ -189,6 +189,14 @@ class ColumnIndex
 public:
 	int table;  //!< 列が入力の何テーブル目の列かです。
 	int column; //!< 列が入力のテーブルの何列目かです。
+
+	//! Columnクラスの新しいインスタンスを初期化します。
+	ColumnIndex();
+
+	//! Columnクラスの新しいインスタンスを初期化します。
+	//! @param [in] table 列が入力の何テーブル目の列かです。
+	//! @param [in] column 列が入力のテーブルの何列目かです。
+	ColumnIndex(const int table, const int column);
 };
 
 // 以上ヘッダに相当する部分。
@@ -273,6 +281,18 @@ Column::Column(const char* tableName, const char* columnName)
 
 //! ExtensionTreeNodeクラスの新しいインスタンスを初期化します。
 ExtensionTreeNode::ExtensionTreeNode()
+{
+}
+
+//! Columnクラスの新しいインスタンスを初期化します。
+ColumnIndex::ColumnIndex() : ColumnIndex(0, 0)
+{
+}
+
+//! Columnクラスの新しいインスタンスを初期化します。
+//! @param [in] table 列が入力の何テーブル目の列かです。
+//! @param [in] column 列が入力のテーブルの何列目かです。
+ColumnIndex::ColumnIndex(const int table, const int column) : table(table), column(column)
 {
 }
 
@@ -1158,7 +1178,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 						if (MAX_COLUMN_COUNT <= selectColumnIndexesNum){
 							throw ResultValue::ERR_MEMORY_OVER;
 						}
-						selectColumnIndexes[selectColumnIndexesNum++] = { j, k };
+						selectColumnIndexes[selectColumnIndexesNum++] = ColumnIndex(j, k);
 					}
 				}
 			}
