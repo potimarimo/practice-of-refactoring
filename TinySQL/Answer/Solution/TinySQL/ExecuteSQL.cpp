@@ -1295,9 +1295,6 @@ int ExecuteSQL(const string sql, const string outputFileName)
 			}
 		}
 
-		// 番兵となるnullptrを登録します。
-		allColumnOutputData.push_back(nullptr);
-
 		// ORDER句による並び替えの処理を行います。
 		if (!orderByColumns.empty()){
 			// ORDER句で指定されている列が、全ての入力行の中のどの行なのかを計算します。
@@ -1450,9 +1447,6 @@ int ExecuteSQL(const string sql, const string outputFileName)
 		}
 
 		for (auto& allDataRow : allColumnOutputData){
-			if (!allDataRow){
-				break;
-			}
 			Data **dataCursol = allDataRow;
 			while (*dataCursol){
 				delete *dataCursol++;
@@ -1485,9 +1479,6 @@ int ExecuteSQL(const string sql, const string outputFileName)
 		}
 
 		for (auto& allDataRow : allColumnOutputData){
-			if (!allDataRow){
-				break;
-			}
 			Data **dataCursol = allDataRow;
 			while (*dataCursol){
 				delete *dataCursol++;
