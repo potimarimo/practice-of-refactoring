@@ -2966,35 +2966,38 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 		throw ResultValue::ERR_SQL_SYNTAX;
 	}
 
+	auto WHERE_ORDER = (ORDER_BY_CLAUSE >> -WHERE_CLAUSE) | (WHERE_CLAUSE >> -ORDER_BY_CLAUSE);
+
+	WHERE_ORDER->Parse(tokenCursol);
 
 	// ORDER句とWHERE句を読み込みます。最大各一回ずつ書くことができます。
-	bool readOrder = false; // すでにORDER句が読み込み済みかどうかです。
-	bool readWhere = false; // すでにWHERE句が読み込み済みかどうかです。
-	while (true){
+	//bool readOrder = false; // すでにORDER句が読み込み済みかどうかです。
+	//bool readWhere = false; // すでにWHERE句が読み込み済みかどうかです。
+	//while (true){
 
-		// 二度目のORDER句はエラーです。
-		if (readOrder && tokenCursol->kind == TokenKind::ORDER){
-			throw ResultValue::ERR_SQL_SYNTAX;
-		}
+	//	// 二度目のORDER句はエラーです。
+	//	if (readOrder && tokenCursol->kind == TokenKind::ORDER){
+	//		throw ResultValue::ERR_SQL_SYNTAX;
+	//	}
 
-		// 二度目のWHERE句はエラーです。
-		if (readWhere && tokenCursol->kind == TokenKind::WHERE){
-			throw ResultValue::ERR_SQL_SYNTAX;
-		}
+	//	// 二度目のWHERE句はエラーです。
+	//	if (readWhere && tokenCursol->kind == TokenKind::WHERE){
+	//		throw ResultValue::ERR_SQL_SYNTAX;
+	//	}
 
-		// ORDER句を読み込みます。
-		if (ORDER_BY_CLAUSE->Parse(tokenCursol)){
-			readOrder = true;
-			continue;
-		}
+	//	// ORDER句を読み込みます。
+	//	if (ORDER_BY_CLAUSE->Parse(tokenCursol)){
+	//		readOrder = true;
+	//		continue;
+	//	}
 
-		// WHERE句を読み込みます。
-		if (WHERE_CLAUSE->Parse(tokenCursol)){
-			readWhere = true;
-			continue;
-		}
-		break;
-	}
+	//	// WHERE句を読み込みます。
+	//	if (WHERE_CLAUSE->Parse(tokenCursol)){
+	//		readWhere = true;
+	//		continue;
+	//	}
+	//	break;
+	//}
 
 	// FROM句を読み込みます。
 	if (tokenCursol->kind == TokenKind::FROM){
