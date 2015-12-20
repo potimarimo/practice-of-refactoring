@@ -380,7 +380,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 	const string alpahNumUnder = "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; // 全ての数字とアルファベットの大文字小文字とアンダーバーです。
 	const string signNum = "+-0123456789"; // 全ての符号と数字です。
 	const string num = "0123456789"; // 全ての数字です。
-	const char* space = " \t\r\n"; // 全ての空白文字です。
+	const string space = " \t\r\n"; // 全ての空白文字です。
 
 	// SQLからトークンを読み込みます。
 
@@ -449,7 +449,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 		while (*charactorCursol){
 
 			// 空白を読み飛ばします。
-			for (search = space; *search && *charactorCursol != *search; ++search){}
+			for (search = space.c_str(); *search && *charactorCursol != *search; ++search){}
 			if (*search){
 				charactorCursol++;
 				continue;
