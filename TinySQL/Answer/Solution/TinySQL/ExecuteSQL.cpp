@@ -729,6 +729,11 @@ class TokenParser
 	function<void(const Token)> m_action; //!< 読み取りが成功したら実行する処理です。
 public:
 	//! TokenParserクラスの新しいインスタンスを初期化します。
+	//! @param [in] 読み取りが成功したら実行する処理です。
+	//! @params [in] kind 読み取るトークンの種類です。
+	TokenParser(function<void(const Token)> action, TokenKind kind);
+
+	//! TokenParserクラスの新しいインスタンスを初期化します。
 	//! @params [in] kind 読み取るトークンの種類です。
 	TokenParser(TokenKind kind);
 
@@ -739,7 +744,7 @@ public:
 
 	//! 読み取りが成功したら実行する処理を登録します。
 	//! @param [in] 読み取りが成功したら実行する処理です。
-	void Action(function<void(const Token)> action);
+	shared_ptr<TokenParser> Action(function<void(const Token)> action);
 };
 
 //! トークンのパーサーを生成します。
@@ -1852,6 +1857,11 @@ const shared_ptr<const Token> IdentifierReader::ReadCore(string::const_iterator 
 }
 
 //! TokenParserクラスの新しいインスタンスを初期化します。
+//! @param [in] 読み取りが成功したら実行する処理です。
+//! @params [in] kind 読み取るトークンの種類です。
+TokenParser::TokenParser(function<void(const Token)> action, TokenKind kind) : m_action(action), m_kind(kind){}
+
+//! TokenParserクラスの新しいインスタンスを初期化します。
 //! @params [in] kind 読み取るトークンの種類です。
 TokenParser::TokenParser(TokenKind kind) : m_kind(kind){}
 
@@ -1871,12 +1881,11 @@ const bool TokenParser::Parse(vector<const Token>::const_iterator& cursol) const
 		return false;
 	}
 }
-
 //! 読み取りが成功したら実行する処理を登録します。
 //! @param [in] 読み取りが成功したら実行する処理です。
-void TokenParser::Action(function<void(const Token)> action)
+shared_ptr<TokenParser> TokenParser::Action(function<void(const Token)> action)
 {
-	m_action = action;
+	return make_shared<TokenParser>(action, m_kind);
 }
 
 //! トークンのパーサーを生成します。
@@ -2335,11 +2344,11 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 				++tokenCursol;
 				if (tokenCursol->kind == TokenKind::DOT){
 					++tokenCursol;
-					IDENTIFIER->Action([&](const Token token){
+					auto SECOND_COLUMN_NAME = IDENTIFIER->Action([&](const Token token){
 						// テーブル名が指定されていることがわかったので読み替えます。
 						queryInfo->selectColumns.back() = Column(queryInfo->selectColumns.back().columnName, token.word);
 					});
-					if (!IDENTIFIER->Parse(tokenCursol)){
+					if (!SECOND_COLUMN_NAME->Parse(tokenCursol)){
 						throw ResultValue::ERR_SQL_SYNTAX;
 					}
 				}
