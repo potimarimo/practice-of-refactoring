@@ -2852,8 +2852,7 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 					throw ResultValue::ERR_SQL_SYNTAX;
 				}
 
-				// オペランドの右のカッコ閉じるを読み込みます。
-				while (tokenCursol->kind == TokenKind::CLOSE_PAREN){
+				auto WHERE_CLOSE_PAREN = CLOSE_PAREN->Action([&](const Token token){
 					shared_ptr<ExtensionTreeNode> searchedAncestor = currentNode->parent; // カッコ閉じると対応するカッコ開くを両方含む祖先ノードを探すためのカーソルです。
 					while (searchedAncestor){
 
@@ -2872,8 +2871,9 @@ const shared_ptr<const SqlQueryInfo> SqlQuery::AnalyzeTokens(const vector<const 
 							searchedAncestor = searchedAncestor->parent;
 						}
 					}
-					++tokenCursol;
-				}
+				});
+
+				(~WHERE_CLOSE_PAREN)->Parse(tokenCursol);
 
 
 				// 演算子(オペレーターを読み込みます。
