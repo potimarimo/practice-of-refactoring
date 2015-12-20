@@ -5,6 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <memory>
 #include <vector>
 #include <list>
 #pragma warning(disable:4996)
@@ -582,7 +583,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 
 		vector<TokenKind> orders; // 同じインデックスのorderByColumnsに対応している、昇順、降順の指定です。
 
-		list<ExtensionTreeNode> whereExtensionNodes; // WHEREに指定された木のノードを、木構造とは無関係に格納します。
+		vector<shared_ptr<ExtensionTreeNode>> whereExtensionNodes; // WHEREに指定された木のノードを、木構造とは無関係に格納します。
 
 		ExtensionTreeNode *whereTopNode = nullptr; // 式木の根となるノードです。
 
@@ -706,16 +707,16 @@ int ExecuteSQL(const string sql, const string outputFileName)
 					// オペランドを読み込みます。
 
 					// オペランドのノードを新しく生成します。
-					whereExtensionNodes.push_back(ExtensionTreeNode());
+					whereExtensionNodes.push_back(make_shared<ExtensionTreeNode>());
 					if (currentNode){
 						// 現在のノードを右の子にずらし、元の位置に新しいノードを挿入します。
-						currentNode->right = &whereExtensionNodes.back();
+						currentNode->right = whereExtensionNodes.back().get();
 						currentNode->right->parent = currentNode;
 						currentNode = currentNode->right;
 					}
 					else{
 						// 最初はカレントノードに新しいノードを入れます。
-						currentNode = &whereExtensionNodes.back();
+						currentNode = whereExtensionNodes.back().get();
 					}
 
 					// カッコ開くを読み込みます。
@@ -827,8 +828,8 @@ int ExecuteSQL(const string sql, const string outputFileName)
 						} while (!searched && tmp->parent && (tmp->parent->middleOperator.order <= middleOperator.order || tmp->parent->inParen));
 
 						// 演算子のノードを新しく生成します。
-						whereExtensionNodes.push_back(ExtensionTreeNode());
-						currentNode = &whereExtensionNodes.back();
+						whereExtensionNodes.push_back(make_shared<ExtensionTreeNode>());
+						currentNode = whereExtensionNodes.back().get();
 						currentNode->middleOperator = middleOperator;
 
 						// 見つかった場所に新しいノードを配置します。これまでその位置にあったノードは左の子となるよう、親ノードと子ノードのポインタをつけかえます。
@@ -1078,10 +1079,10 @@ int ExecuteSQL(const string sql, const string outputFileName)
 		if (whereTopNode){
 			// 既存数値の符号を計算します。
 			for (auto &whereExtensionNode : whereExtensionNodes){
-				if (whereExtensionNode.middleOperator.kind == TokenKind::NOT_TOKEN &&
-					whereExtensionNode.column.columnName.empty() &&
-					whereExtensionNode.value.type == DataType::INTEGER){
-					whereExtensionNode.value = Data(whereExtensionNode.value.integer() * whereExtensionNode.signCoefficient);
+				if (whereExtensionNode->middleOperator.kind == TokenKind::NOT_TOKEN &&
+					whereExtensionNode->column.columnName.empty() &&
+					whereExtensionNode->value.type == DataType::INTEGER){
+					whereExtensionNode->value = Data(whereExtensionNode->value.integer() * whereExtensionNode->signCoefficient);
 				}
 			}
 		}
@@ -1316,7 +1317,7 @@ int ExecuteSQL(const string sql, const string outputFileName)
 				}
 				// WHERE条件の計算結果をリセットします。
 				for (auto &whereExtensionNode : whereExtensionNodes){
-					whereExtensionNode.calculated = false;
+					whereExtensionNode->calculated = false;
 				}
 			}
 
