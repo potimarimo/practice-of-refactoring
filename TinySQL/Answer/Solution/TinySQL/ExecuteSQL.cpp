@@ -397,7 +397,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 	// keywordConditionsとsignConditionsは先頭から順に検索されるので、前方一致となる二つの項目は順番に気をつけて登録しなくてはいけません。
 
 	// キーワードをトークンとして認識するためのキーワード一覧情報です。
-	const Token keywordConditions[] =
+	const vector<const Token> keywordConditions =
 	{
 		{ TokenKind::AND, "AND" },
 		{ TokenKind::ASC, "ASC" },
@@ -546,10 +546,9 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 
 			// キーワードを読み込みます。
 			found = false;
-			for (size_t i = 0; i < sizeof(keywordConditions) / sizeof(keywordConditions[0]); ++i){
+			for (auto & keywordCondition : keywordConditions){
 				charactorBackPoint = charactorCursol;
-				Token condition = keywordConditions[i]; // 確認するキーワードの条件です。
-				char *wordCursol = condition.word; // 確認するキーワードの文字列のうち、現在確認している一文字を指します。
+				const char *wordCursol = keywordCondition.word; // 確認するキーワードの文字列のうち、現在確認している一文字を指します。
 
 				// キーワードが指定した文字列となっているか確認します。
 				while (*wordCursol && toupper(*charactorCursol++) == *wordCursol){
@@ -565,7 +564,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 					if (MAX_TOKEN_COUNT <= tokensNum){
 						throw ResultValue::ERR_MEMORY_OVER;
 					}
-					tokens[tokensNum++] = Token(condition.kind);
+					tokens[tokensNum++] = Token(keywordCondition.kind);
 					found = true;
 				}
 				else{
@@ -593,7 +592,7 @@ int ExecuteSQL(const char* sql, const char* outputFileName)
 					if (MAX_TOKEN_COUNT <= tokensNum){
 						throw ResultValue::ERR_MEMORY_OVER;
 					}
-					tokens[tokensNum++] = Token(condition.kind;
+					tokens[tokensNum++] = Token(condition.kind);
 					found = true;
 				}
 				else{
