@@ -139,6 +139,19 @@ typedef struct {
   int column; //!< 列が入力のテーブルの何列目かです。
 } ColumnIndex;
 
+@interface TynySQLException : NSException
+    -(TynySQLException*) initWithErrorCode:(enum RESULT_VALUE)code;
+@property enum RESULT_VALUE errorCode;
+@end
+
+@implementation TynySQLException
+-(TynySQLException*) initWithErrorCode:(enum RESULT_VALUE)code{
+    self.errorCode = code;
+    return self;
+}
+
+@end
+
 // 以上ヘッダに相当する部分。
 
 //! カレントディレクトリにあるCSVに対し、簡易的なSQLを実行し、結果をファイルに出力します。
@@ -344,8 +357,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           }
           if (*search) {
             if (MAX_WORD_LENGTH - 1 <= wordLength) {
-              error = ERR_MEMORY_OVER;
-              goto ERROR;
+                @throw [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_OVER];
             }
             literal.word[wordLength++] = *search;
             ++charactorCursol;
