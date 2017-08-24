@@ -1,0 +1,375 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 45;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		C80791531F4556C400C5C31A /* ExecuteSQL.m in Sources */ = {isa = PBXBuildFile; fileRef = C80791521F4556C400C5C31A /* ExecuteSQL.m */; };
+		C86ED3991F458A16009244FF /* Tests.m in Sources */ = {isa = PBXBuildFile; fileRef = C86ED3971F458A08009244FF /* Tests.m */; };
+		C8F039781F45684800DB87AE /* libTinySQLOnOC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C80791451F45561A00C5C31A /* libTinySQLOnOC.a */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		C8F039791F45684800DB87AE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C807913D1F45561A00C5C31A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C80791441F45561A00C5C31A;
+			remoteInfo = TinySQLOnOC;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		C80791431F45561A00C5C31A /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "include/$(PRODUCT_NAME)";
+			dstSubfolderSpec = 16;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		C80791451F45561A00C5C31A /* libTinySQLOnOC.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libTinySQLOnOC.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		C80791511F4556C400C5C31A /* ExecuteSQL.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ExecuteSQL.h; sourceTree = "<group>"; };
+		C80791521F4556C400C5C31A /* ExecuteSQL.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ExecuteSQL.m; sourceTree = "<group>"; };
+		C86ED3971F458A08009244FF /* Tests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Tests.m; sourceTree = SOURCE_ROOT; };
+		C8F039731F45684800DB87AE /* Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C8F039771F45684800DB87AE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		C80791421F45561A00C5C31A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C8F039701F45684800DB87AE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C8F039781F45684800DB87AE /* libTinySQLOnOC.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		C807913C1F45561A00C5C31A = {
+			isa = PBXGroup;
+			children = (
+				C80791471F45561A00C5C31A /* TinySQLOnOC */,
+				C8F039741F45684800DB87AE /* Tests */,
+				C80791461F45561A00C5C31A /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		C80791461F45561A00C5C31A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				C80791451F45561A00C5C31A /* libTinySQLOnOC.a */,
+				C8F039731F45684800DB87AE /* Tests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		C80791471F45561A00C5C31A /* TinySQLOnOC */ = {
+			isa = PBXGroup;
+			children = (
+				C80791511F4556C400C5C31A /* ExecuteSQL.h */,
+				C80791521F4556C400C5C31A /* ExecuteSQL.m */,
+			);
+			path = TinySQLOnOC;
+			sourceTree = "<group>";
+		};
+		C8F039741F45684800DB87AE /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				C86ED3971F458A08009244FF /* Tests.m */,
+				C8F039771F45684800DB87AE /* Info.plist */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		C80791441F45561A00C5C31A /* TinySQLOnOC */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C807914E1F45561A00C5C31A /* Build configuration list for PBXNativeTarget "TinySQLOnOC" */;
+			buildPhases = (
+				C80791411F45561A00C5C31A /* Sources */,
+				C80791421F45561A00C5C31A /* Frameworks */,
+				C80791431F45561A00C5C31A /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TinySQLOnOC;
+			productName = TinySQLOnOC;
+			productReference = C80791451F45561A00C5C31A /* libTinySQLOnOC.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+		C8F039721F45684800DB87AE /* Tests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C8F0397B1F45684800DB87AE /* Build configuration list for PBXNativeTarget "Tests" */;
+			buildPhases = (
+				C8F0396F1F45684800DB87AE /* Sources */,
+				C8F039701F45684800DB87AE /* Frameworks */,
+				C8F039711F45684800DB87AE /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				C8F0397A1F45684800DB87AE /* PBXTargetDependency */,
+			);
+			name = Tests;
+			productName = Tests;
+			productReference = C8F039731F45684800DB87AE /* Tests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		C807913D1F45561A00C5C31A /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0830;
+				ORGANIZATIONNAME = " 新田光宏";
+				TargetAttributes = {
+					C80791441F45561A00C5C31A = {
+						CreatedOnToolsVersion = 8.3.3;
+						ProvisioningStyle = Automatic;
+					};
+					C8F039721F45684800DB87AE = {
+						CreatedOnToolsVersion = 8.3.3;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = C80791401F45561A00C5C31A /* Build configuration list for PBXProject "TinySQLOnOC" */;
+			compatibilityVersion = "Xcode 3.1";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = C807913C1F45561A00C5C31A;
+			productRefGroup = C80791461F45561A00C5C31A /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				C80791441F45561A00C5C31A /* TinySQLOnOC */,
+				C8F039721F45684800DB87AE /* Tests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		C8F039711F45684800DB87AE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		C80791411F45561A00C5C31A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C80791531F4556C400C5C31A /* ExecuteSQL.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C8F0396F1F45684800DB87AE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C86ED3991F458A16009244FF /* Tests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		C8F0397A1F45684800DB87AE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C80791441F45561A00C5C31A /* TinySQLOnOC */;
+			targetProxy = C8F039791F45684800DB87AE /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		C807914C1F45561A00C5C31A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.3;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+			};
+			name = Debug;
+		};
+		C807914D1F45561A00C5C31A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.3;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		C807914F1F45561A00C5C31A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		C80791501F45561A00C5C31A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+		C8F0397C1F45684800DB87AE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INFOPLIST_FILE = Tests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "m-nitta.Tests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		C8F0397D1F45684800DB87AE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INFOPLIST_FILE = Tests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "m-nitta.Tests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		C80791401F45561A00C5C31A /* Build configuration list for PBXProject "TinySQLOnOC" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C807914C1F45561A00C5C31A /* Debug */,
+				C807914D1F45561A00C5C31A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C807914E1F45561A00C5C31A /* Build configuration list for PBXNativeTarget "TinySQLOnOC" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C807914F1F45561A00C5C31A /* Debug */,
+				C80791501F45561A00C5C31A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C8F0397B1F45684800DB87AE /* Build configuration list for PBXNativeTarget "Tests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C8F0397C1F45684800DB87AE /* Debug */,
+				C8F0397D1F45684800DB87AE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = C807913D1F45561A00C5C31A /* Project object */;
+}
