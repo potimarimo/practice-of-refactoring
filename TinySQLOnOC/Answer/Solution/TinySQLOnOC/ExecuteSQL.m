@@ -140,14 +140,14 @@ typedef struct {
 } ColumnIndex;
 
 @interface TynySQLException : NSException
-    -(TynySQLException*) initWithErrorCode:(enum RESULT_VALUE)code;
+- (TynySQLException *)initWithErrorCode:(enum RESULT_VALUE)code;
 @property enum RESULT_VALUE errorCode;
 @end
 
 @implementation TynySQLException
--(TynySQLException*) initWithErrorCode:(enum RESULT_VALUE)code{
-    self.errorCode = code;
-    return self;
+- (TynySQLException *)initWithErrorCode:(enum RESULT_VALUE)code {
+  self.errorCode = code;
+  return self;
 }
 
 @end
@@ -357,7 +357,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           }
           if (*search) {
             if (MAX_WORD_LENGTH - 1 <= wordLength) {
-                @throw [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_OVER];
+              @throw
+                  [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_OVER];
             }
             literal.word[wordLength++] = *search;
             ++charactorCursol;
@@ -396,15 +397,13 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         // 次のシングルクォートがくるまで文字を読み込み続けます。
         while (*charactorCursol && *charactorCursol != "\'"[0]) {
           if (MAX_WORD_LENGTH - 1 <= wordLength) {
-            error = ERR_MEMORY_OVER;
-            goto ERROR;
+            @throw [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_OVER];
           }
           literal.word[wordLength++] = *charactorCursol++;
         }
         if (*charactorCursol == "\'"[0]) {
           if (MAX_WORD_LENGTH - 1 <= wordLength) {
-            error = ERR_MEMORY_OVER;
-            goto ERROR;
+            @throw [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_OVER];
           }
           // 最後のシングルクォートを読み込みます。
           literal.word[wordLength++] = *charactorCursol++;
@@ -412,14 +411,13 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           // 文字列の終端文字をつけます。
           literal.word[wordLength] = '\0';
           if (MAX_TOKEN_COUNT <= tokensNum) {
-            error = ERR_MEMORY_OVER;
-            goto ERROR;
+            @throw [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_OVER];
           }
           tokens[tokensNum++] = literal;
           continue;
         } else {
-          error = ERR_TOKEN_CANT_READ;
-          goto ERROR;
+          @throw
+              [[TynySQLException alloc] initWithErrorCode:ERR_TOKEN_CANT_READ];
         }
       }
 
@@ -448,8 +446,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
           // 見つかったキーワードを生成します。
           if (MAX_TOKEN_COUNT <= tokensNum) {
-            error = ERR_MEMORY_OVER;
-            goto ERROR;
+            @throw [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_OVER];
           }
           tokens[tokensNum++] = (Token){.kind = condition.kind, .word = ""};
           found = true;
@@ -478,8 +475,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
           // 見つかった記号を生成します。
           if (MAX_TOKEN_COUNT <= tokensNum) {
-            error = ERR_MEMORY_OVER;
-            goto ERROR;
+            @throw [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_OVER];
           }
           tokens[tokensNum++] = (Token){.kind = condition.kind, .word = ""};
           found = true;
@@ -508,8 +504,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           };
           if (*search) {
             if (MAX_WORD_LENGTH - 1 <= wordLength) {
-              error = ERR_MEMORY_OVER;
-              goto ERROR;
+              @throw
+                  [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_OVER];
             }
             identifier.word[wordLength++] = *search;
             charactorCursol++;
@@ -521,15 +517,13 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
         // 読み込んだ識別子を登録します。
         if (MAX_TOKEN_COUNT <= tokensNum) {
-          error = ERR_MEMORY_OVER;
-          goto ERROR;
+          @throw [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_OVER];
         }
         tokens[tokensNum++] = identifier;
         continue;
       }
 
-      error = ERR_TOKEN_CANT_READ;
-      goto ERROR;
+      @throw [[TynySQLException alloc] initWithErrorCode:ERR_TOKEN_CANT_READ];
     }
 
     // トークン列を解析し、構文を読み取ります。
@@ -585,8 +579,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     if (tokenCursol->kind == SELECT) {
       ++tokenCursol;
     } else {
-      error = ERR_SQL_SYNTAX;
-      goto ERROR;
+      @throw [[TynySQLException alloc] initWithErrorCode:ERR_SQL_SYNTAX];
     }
 
     if (tokenCursol->kind == ASTERISK) {
@@ -600,8 +593,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         }
         if (tokenCursol->kind == IDENTIFIER) {
           if (MAX_COLUMN_COUNT <= selectColumnsNum) {
-            error = ERR_MEMORY_OVER;
-            goto ERROR;
+
+            @throw [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_OVER];
           }
           // テーブル名が指定されていない場合と仮定して読み込みます。
           strncpy(selectColumns[selectColumnsNum].tableName, "",
@@ -1762,49 +1755,50 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     }
 
     return OK;
-  } @catch (NSException *ex) {
-      // エラー時の処理です。
-      
-      // ファイルリソースを解放します。
-      for (int i = 0; i < MAX_TABLE_COUNT; ++i) {
-          if (inputTableFiles[i]) {
-              fclose(inputTableFiles[i]);
-          }
+  } @catch (TynySQLException *ex) {
+    // エラー時の処理です。
+
+    // ファイルリソースを解放します。
+    for (int i = 0; i < MAX_TABLE_COUNT; ++i) {
+      if (inputTableFiles[i]) {
+        fclose(inputTableFiles[i]);
       }
-      if (outputFile) {
-          fclose(outputFile);
-      }
-      
-      // メモリリソースを解放します。
-      for (int i = 0; i < tableNamesNum; ++i) {
-          currentRow = inputData[i];
-          while (*currentRow) {
-              Data **dataCursol = *currentRow;
-              while (*dataCursol) {
-                  free(*dataCursol++);
-              }
-              free(*currentRow);
-              currentRow++;
-          }
-      }
-      currentRow = outputData;
+    }
+    if (outputFile) {
+      fclose(outputFile);
+    }
+
+    // メモリリソースを解放します。
+    for (int i = 0; i < tableNamesNum; ++i) {
+      currentRow = inputData[i];
       while (*currentRow) {
-          Data **dataCursol = *currentRow;
-          while (*dataCursol) {
-              free(*dataCursol++);
-          }
-          free(*currentRow);
-          currentRow++;
+        Data **dataCursol = *currentRow;
+        while (*dataCursol) {
+          free(*dataCursol++);
+        }
+        free(*currentRow);
+        currentRow++;
       }
-      currentRow = allColumnOutputData;
-      while (*currentRow) {
-          Data **dataCursol = *currentRow;
-          while (*dataCursol) {
-              free(*dataCursol++);
-          }
-          free(*currentRow);
-          currentRow++;
+    }
+    currentRow = outputData;
+    while (*currentRow) {
+      Data **dataCursol = *currentRow;
+      while (*dataCursol) {
+        free(*dataCursol++);
       }
+      free(*currentRow);
+      currentRow++;
+    }
+    currentRow = allColumnOutputData;
+    while (*currentRow) {
+      Data **dataCursol = *currentRow;
+      while (*dataCursol) {
+        free(*dataCursol++);
+      }
+      free(*currentRow);
+      currentRow++;
+    }
+    return ex.errorCode;
   }
 ERROR:
   // エラー時の処理です。
