@@ -134,15 +134,26 @@ typedef struct _extension_tree_node {
 } ExtensionTreeNode;
 
 //! 行の情報を入力のテーブルインデックス、列インデックスの形で持ちます。
-typedef struct {
-  int table;  //!< 列が入力の何テーブル目の列かです。
-  int column; //!< 列が入力のテーブルの何列目かです。
-} ColumnIndex;
+@interface ColumnIndex : NSObject
+- (ColumnIndex *)initWithTable:(int)table Column:(int)column;
+@property int table;  //!< 列が入力の何テーブル目の列かです。
+@property int column; //!< 列が入力のテーブルの何列目かです。
+@end
 
 @interface TynySQLException : NSException
 - (TynySQLException *)initWithErrorCode:(enum RESULT_VALUE)code;
 @property enum RESULT_VALUE errorCode;
 @end
+
+@implementation ColumnIndex
+- (ColumnIndex *)initWithTable:(int)table Column:(int)column {
+  self.table = table;
+  self.column = column;
+  return self;
+}
+@end
+
+// 以上ヘッダに相当する部分。
 
 @implementation TynySQLException
 - (TynySQLException *)initWithErrorCode:(enum RESULT_VALUE)code {
@@ -151,8 +162,6 @@ typedef struct {
 }
 
 @end
-
-// 以上ヘッダに相当する部分。
 
 //! カレントディレクトリにあるCSVに対し、簡易的なSQLを実行し、結果をファイルに出力します。
 //! @param [in] sql 実行するSQLです。
@@ -1103,7 +1112,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     int outputColumnNum = 0; // 出力するすべての行の現在の数です。
 
     // SELECT句で指定された列名が、何個目の入力ファイルの何列目に相当するかを判別します。
-    ColumnIndex selectColumnIndexes
+    ColumnIndex *selectColumnIndexes
         [MAX_TABLE_COUNT *
          MAX_COLUMN_COUNT];         // SELECT句で指定された列の、入力ファイルとしてのインデックスです。
     int selectColumnIndexesNum = 0; // selectColumnIndexesの現在の数。
@@ -1142,7 +1151,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                   [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_OVER];
             }
             selectColumnIndexes[selectColumnIndexesNum++] =
-                (ColumnIndex){.table = j, .column = k};
+                [[ColumnIndex alloc] initWithTable:j Column:k];
           }
         }
       }
