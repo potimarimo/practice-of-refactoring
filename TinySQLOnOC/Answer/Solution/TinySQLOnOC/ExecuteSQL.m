@@ -92,11 +92,13 @@ typedef struct {
 } Data;
 
 //! WHERE句に指定する演算子の情報を表します。
-typedef struct {
-  enum TOKEN_KIND
-      kind;  //!< 演算子の種類を、演算子を記述するトークンの種類で表します。
-  int order; //!< 演算子の優先順位です。
-} Operator;
+@interface Operator : NSObject
+@property enum TOKEN_KIND
+    kind;            //!< 演算子の種類を、演算子を記述するトークンの種類で表します。
+@property int order; //!< 演算子の優先順位です。
+- (Operator *)init;
+- (Operator *)initWithKind:(enum TOKEN_KIND)kind Order:(int)order;
+@end
 
 //! トークンを表します。
 @interface Token : NSObject {
@@ -130,7 +132,7 @@ typedef struct {
     *parent;                        //!< 親となるノードです。根の式木の場合はNULLとなります。
 @property ExtensionTreeNode *left;  //!<
                                     //!左の子となるノードです。自身が末端の葉となる式木の場合はNULLとなります。
-@property Operator operator;        //!<
+@property Operator *operator;       //!<
                                     //!中置される演算子です。自身が末端のとなる式木の場合の種類はNOT_TOKENとなります。
 @property ExtensionTreeNode *right; //!<
                                     //!右の子となるノードです。自身が末端の葉となる式木の場合はNULLとなります。
@@ -160,6 +162,18 @@ typedef struct {
 
 // 以上ヘッダに相当する部分。
 
+@implementation Operator
+- (Operator *)init {
+  _kind = NOT_TOKEN;
+  _order = 0;
+  return self;
+}
+- (Operator *)initWithKind:(enum TOKEN_KIND)kind Order:(int)order {
+  _kind = kind;
+  _order = order;
+  return self;
+}
+@end
 @implementation Token
 
 - (Token *)init {
@@ -194,7 +208,7 @@ typedef struct {
 - (ExtensionTreeNode *)init {
   _parent = nil;
   _left = nil;
-  _operator = (Operator){NOT_TOKEN, 0};
+  _operator = [[Operator alloc] init];
   _right = nil;
   _inParen = false;
   _parenOpenBeforeClose = 0;
@@ -376,20 +390,19 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     int tokensNum = 0; // tokensの有効な数です。
 
     // 演算子の情報です。
-    const Operator operators[] = {
-        {ASTERISK, 1},
-        {SLASH, 1},
-        {PLUS, 2},
-        {MINUS, 2},
-        {EQUAL, 3},
-        {GREATER_THAN, 3},
-        {GREATER_THAN_OR_EQUAL, 3},
-        {LESS_THAN, 3},
-        {LESS_THAN_OR_EQUAL, 3},
-        {NOT_EQUAL, 3},
-        {AND, 4},
-        {OR, 5},
-    };
+    Operator *operators[] = {
+        [[Operator alloc] initWithKind:ASTERISK Order:1],
+        [[Operator alloc] initWithKind:SLASH Order:1],
+        [[Operator alloc] initWithKind:PLUS Order:2],
+        [[Operator alloc] initWithKind:MINUS Order:2],
+        [[Operator alloc] initWithKind:EQUAL Order:3],
+        [[Operator alloc] initWithKind:GREATER_THAN Order:3],
+        [[Operator alloc] initWithKind:GREATER_THAN_OR_EQUAL Order:3],
+        [[Operator alloc] initWithKind:LESS_THAN Order:3],
+        [[Operator alloc] initWithKind:LESS_THAN_OR_EQUAL Order:3],
+        [[Operator alloc] initWithKind:NOT_EQUAL Order:3],
+        [[Operator alloc] initWithKind:AND Order:4],
+        [[Operator alloc] initWithKind:OR Order:5]};
 
     const char *charactorBackPoint =
         NULL; // SQLをトークンに分割して読み込む時に戻るポイントを記録しておきます。
@@ -884,9 +897,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           }
 
           // 演算子(オペレーターを読み込みます。
-          Operator operator=(Operator){
-              .kind = NOT_TOKEN,
-              .order = 0}; // 現在読み込んでいる演算子の情報です。
+          Operator *operator=
+              [[Operator alloc] init]; // 現在読み込んでいる演算子の情報です。
 
           // 現在見ている演算子の情報を探します。
           found = false;
