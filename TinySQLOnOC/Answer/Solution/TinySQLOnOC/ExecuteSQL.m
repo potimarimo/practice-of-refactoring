@@ -106,16 +106,19 @@ typedef struct {
 } Token;
 
 //! 指定された列の情報です。どのテーブルに所属するかの情報も含みます。
-typedef struct {
-  char tableName[MAX_WORD_LENGTH];  //!<
-                                    //!列が所属するテーブル名です。指定されていない場合は空文字列となります。
-  char columnName[MAX_WORD_LENGTH]; //!< 指定された列の列名です。
-} Column;
+@interface Column : NSObject {
+  char __tableName[MAX_WORD_LENGTH];
+  char __columnName[MAX_WORD_LENGTH];
+}
+@property char *tableName; //!<
+//!列が所属するテーブル名です。指定されていない場合は空文字列となります。
+@property char *columnName; //!< 指定された列の列名です。
+- (Column *)init;
+@end
 
 //! WHERE句の条件の式木を表します。
 @interface ExtensionTreeNode : NSObject {
   Data __value;
-  Column __column;
 }
 - (ExtensionTreeNode *)init;
 @property ExtensionTreeNode
@@ -127,12 +130,12 @@ typedef struct {
 @property ExtensionTreeNode *right; //!<
                                     //!右の子となるノードです。自身が末端の葉となる式木の場合はNULLとなります。
 @property bool inParen; //!< 自身がかっこにくるまれているかどうかです。
-@property int parenOpenBeforeClose;  //!<
-                                     //!木の構築中に0以外となり、自身の左にあり、まだ閉じてないカッコの開始の数となります。
-@property int signCoefficient;       //!<
-                                     //!自身が葉にあり、マイナス単項演算子がついている場合は-1、それ以外は1となります。
-@property(nonatomic) Column *column; //!<
-                                     //!列場指定されている場合に、その列を表します。列指定ではない場合はcolumnNameが空文字列となります。
+@property int parenOpenBeforeClose; //!<
+                                    //!木の構築中に0以外となり、自身の左にあり、まだ閉じてないカッコの開始の数となります。
+@property int signCoefficient;      //!<
+                                    //!自身が葉にあり、マイナス単項演算子がついている場合は-1、それ以外は1となります。
+@property Column *column;           //!<
+                                    //!列場指定されている場合に、その列を表します。列指定ではない場合はcolumnNameが空文字列となります。
 @property bool calculated; //!< 式の値を計算中に、計算済みかどうかです。
 @property(nonatomic) Data *value; //!< 指定された、もしくは計算された値です。
 
@@ -152,6 +155,18 @@ typedef struct {
 
 // 以上ヘッダに相当する部分。
 
+@implementation Column
+
+- (Column *)init {
+  strcpy(__tableName, "");
+  _tableName = __tableName;
+  strcpy(__columnName, "");
+  _columnName = __columnName;
+  return self;
+}
+
+@end
+
 @implementation ExtensionTreeNode
 
 - (ExtensionTreeNode *)init {
@@ -162,8 +177,7 @@ typedef struct {
   self.inParen = false;
   self.parenOpenBeforeClose = 0;
   self.signCoefficient = 1;
-  __column = (Column){.tableName = "", .columnName = ""};
-  _column = &__column;
+  self.column = [[Column alloc] init];
   self.calculated = false;
   __value = (Data){.type = STRING, .value = {.string = ""}};
   _value = &__value;
@@ -171,9 +185,6 @@ typedef struct {
 }
 - (void)setValue:(Data *)value {
   __value = *value;
-}
-- (void)setColumn:(Column *)column {
-  __column = *column;
 }
 @end
 
@@ -568,20 +579,20 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
     Token *tokenCursol = tokens; // 現在見ているトークンを指します。
 
-    Column selectColumns[MAX_TABLE_COUNT *
-                         MAX_COLUMN_COUNT]; // SELECT句に指定された列名です。
+    Column *selectColumns[MAX_TABLE_COUNT *
+                          MAX_COLUMN_COUNT]; // SELECT句に指定された列名です。
     // selectColumnsを初期化します。
     for (size_t i = 0; i < sizeof(selectColumns) / sizeof(selectColumns[0]);
          i++) {
-      selectColumns[i] = (Column){.tableName = "", .columnName = ""};
+      selectColumns[i] = [[Column alloc] init];
     }
     int selectColumnsNum = 0; // SELECT句から現在読み込まれた列名の数です。
 
-    Column orderByColumns[MAX_COLUMN_COUNT]; // ORDER句に指定された列名です。
+    Column *orderByColumns[MAX_COLUMN_COUNT]; // ORDER句に指定された列名です。
     // orderByColumnsを初期化します。
     for (size_t i = 0; i < sizeof(orderByColumns) / sizeof(orderByColumns[0]);
          i++) {
-      orderByColumns[i] = (Column){.tableName = "", .columnName = ""};
+      orderByColumns[i] = [[Column alloc] init];
     }
     int orderByColumnsNum = 0; // ORDER句から現在読み込まれた列名の数です。
 
@@ -777,8 +788,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           if (tokenCursol->kind == IDENTIFIER) {
 
             // テーブル名が指定されていない場合と仮定して読み込みます。
-            strncpy(currentNode.column->tableName, "", MAX_WORD_LENGTH);
-            strncpy(currentNode.column->columnName, tokenCursol->word,
+            strncpy(currentNode.column.tableName, "", MAX_WORD_LENGTH);
+            strncpy(currentNode.column.columnName, tokenCursol->word,
                     MAX_WORD_LENGTH);
             ++tokenCursol;
             if (tokenCursol->kind == DOT) {
@@ -786,9 +797,9 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               if (tokenCursol->kind == IDENTIFIER) {
 
                 // テーブル名が指定されていることがわかったので読み替えます。
-                strncpy(currentNode.column->tableName,
-                        currentNode.column->columnName, MAX_WORD_LENGTH);
-                strncpy(currentNode.column->columnName, tokenCursol->word,
+                strncpy(currentNode.column.tableName,
+                        currentNode.column.columnName, MAX_WORD_LENGTH);
+                strncpy(currentNode.column.columnName, tokenCursol->word,
                         MAX_WORD_LENGTH);
                 ++tokenCursol;
               } else {
@@ -938,14 +949,14 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     if (tokenCursol < &tokens[tokensNum]) {
       @throw [[TynySQLException alloc] initWithErrorCode:ERR_SQL_SYNTAX];
     }
-    Column inputColumns[MAX_TABLE_COUNT]
-                       [MAX_COLUMN_COUNT]; // 入力されたCSVの行の情報です。
+    Column *inputColumns[MAX_TABLE_COUNT]
+                        [MAX_COLUMN_COUNT]; // 入力されたCSVの行の情報です。
     // inputColumnsを初期化します。
     for (size_t i = 0; i < sizeof(inputColumns) / sizeof(inputColumns[0]);
          i++) {
       for (size_t j = 0;
            j < sizeof(inputColumns[0]) / sizeof(inputColumns[0][0]); j++) {
-        inputColumns[i][j] = (Column){.tableName = "", .columnName = ""};
+        inputColumns[i][j] = [[Column alloc] init];
       }
     }
     int inputColumnNums[MAX_TABLE_COUNT] = {0}; // 各テーブルごとの列の数です。
@@ -1097,13 +1108,13 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       }
     }
 
-    Column allInputColumns
+    Column *allInputColumns
         [MAX_TABLE_COUNT *
          MAX_COLUMN_COUNT]; // 入力に含まれるすべての列の一覧です。
     // allInputColumnsを初期化します。
     for (size_t i = 0; i < sizeof(allInputColumns) / sizeof(allInputColumns[0]);
          i++) {
-      allInputColumns[i] = (Column){.tableName = "", .columnName = ""};
+      allInputColumns[i] = [[Column alloc] init];
     }
     int allInputColumnsNum = 0; // 入力に含まれるすべての列の数です。
 
@@ -1127,8 +1138,13 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       }
     }
 
-    Column outputColumns[MAX_TABLE_COUNT *
-                         MAX_COLUMN_COUNT]; // 出力するすべての行の情報です。
+    Column *outputColumns[MAX_TABLE_COUNT *
+                          MAX_COLUMN_COUNT]; // 出力するすべての行の情報です。
+    // outputColumnsを初期化します。
+    for (size_t i = 0; i < sizeof(outputColumns) / sizeof(outputColumns[0]);
+         i++) {
+      outputColumns[i] = [[Column alloc] init];
+    }
     int outputColumnNum = 0; // 出力するすべての行の現在の数です。
 
     // SELECT句で指定された列名が、何個目の入力ファイルの何列目に相当するかを判別します。
@@ -1202,7 +1218,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         if (whereExtensionNodes[i]
                 .
                 operator.kind == NOT_TOKEN && !*whereExtensionNodes[i]
-                .column->columnName && whereExtensionNodes[i]
+                .column.columnName && whereExtensionNodes[i]
                 .value->type == INTEGER) {
           whereExtensionNodes[i].value->value.integer *=
               whereExtensionNodes[i].signCoefficient;
@@ -1292,17 +1308,17 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             // ノードにデータが設定されている場合です。
 
             // データが列名で指定されている場合、今扱っている行のデータを設定します。
-            if (*currentNode.column->columnName) {
+            if (*currentNode.column.columnName) {
               found = false;
               for (int i = 0; i < allInputColumnsNum; ++i) {
-                char *whereTableNameCursol = currentNode.column->tableName;
+                char *whereTableNameCursol = currentNode.column.tableName;
                 char *allInputTableNameCursol = allInputColumns[i].tableName;
                 while (*whereTableNameCursol &&
                        toupper(*whereTableNameCursol) ==
                            toupper(*allInputTableNameCursol++)) {
                   ++whereTableNameCursol;
                 }
-                char *whereColumnNameCursol = currentNode.column->columnName;
+                char *whereColumnNameCursol = currentNode.column.columnName;
                 char *allInputColumnNameCursol = allInputColumns[i].columnName;
                 while (*whereColumnNameCursol &&
                        toupper(*whereColumnNameCursol) ==
@@ -1311,7 +1327,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                 }
                 if (!*whereColumnNameCursol && !*allInputColumnNameCursol &&
                     (!*currentNode.column
-                           ->tableName || // テーブル名が設定されている場合のみテーブル名の比較を行います。
+                           .tableName || // テーブル名が設定されている場合のみテーブル名の比較を行います。
                      (!*whereTableNameCursol && !*allInputTableNameCursol))) {
                   // 既に見つかっているのにもう一つ見つかったらエラーです。
                   if (found) {
