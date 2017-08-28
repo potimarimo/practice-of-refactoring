@@ -113,25 +113,30 @@ typedef struct {
 } Column;
 
 //! WHERE句の条件の式木を表します。
-typedef struct _extension_tree_node {
-  struct _extension_tree_node
-      *parent;                        //!< 親となるノードです。根の式木の場合はNULLとなります。
-  struct _extension_tree_node *left;  //!<
-                                      //!左の子となるノードです。自身が末端の葉となる式木の場合はNULLとなります。
-  Operator operator;                  //!<
-                                      //!中置される演算子です。自身が末端のとなる式木の場合の種類はNOT_TOKENとなります。
-  struct _extension_tree_node *right; //!<
-                                      //!右の子となるノードです。自身が末端の葉となる式木の場合はNULLとなります。
-  bool inParen; //!< 自身がかっこにくるまれているかどうかです。
-  int parenOpenBeforeClose; //!<
-                            //!木の構築中に0以外となり、自身の左にあり、まだ閉じてないカッコの開始の数となります。
-  int signCoefficient;      //!<
-                            //!自身が葉にあり、マイナス単項演算子がついている場合は-1、それ以外は1となります。
-  Column column;            //!<
-                            //!列場指定されている場合に、その列を表します。列指定ではない場合はcolumnNameが空文字列となります。
-  bool calculated; //!< 式の値を計算中に、計算済みかどうかです。
-  Data value; //!< 指定された、もしくは計算された値です。
-} ExtensionTreeNode;
+@interface ExtensionTreeNode : NSObject {
+  Data __value;
+  Column __column;
+}
+- (ExtensionTreeNode *)init;
+@property ExtensionTreeNode
+    *parent;                        //!< 親となるノードです。根の式木の場合はNULLとなります。
+@property ExtensionTreeNode *left;  //!<
+                                    //!左の子となるノードです。自身が末端の葉となる式木の場合はNULLとなります。
+@property Operator operator;        //!<
+                                    //!中置される演算子です。自身が末端のとなる式木の場合の種類はNOT_TOKENとなります。
+@property ExtensionTreeNode *right; //!<
+                                    //!右の子となるノードです。自身が末端の葉となる式木の場合はNULLとなります。
+@property bool inParen; //!< 自身がかっこにくるまれているかどうかです。
+@property int parenOpenBeforeClose;  //!<
+                                     //!木の構築中に0以外となり、自身の左にあり、まだ閉じてないカッコの開始の数となります。
+@property int signCoefficient;       //!<
+                                     //!自身が葉にあり、マイナス単項演算子がついている場合は-1、それ以外は1となります。
+@property(nonatomic) Column *column; //!<
+                                     //!列場指定されている場合に、その列を表します。列指定ではない場合はcolumnNameが空文字列となります。
+@property bool calculated; //!< 式の値を計算中に、計算済みかどうかです。
+@property(nonatomic) Data *value; //!< 指定された、もしくは計算された値です。
+
+@end
 
 //! 行の情報を入力のテーブルインデックス、列インデックスの形で持ちます。
 @interface ColumnIndex : NSObject
@@ -145,6 +150,33 @@ typedef struct _extension_tree_node {
 @property enum RESULT_VALUE errorCode;
 @end
 
+// 以上ヘッダに相当する部分。
+
+@implementation ExtensionTreeNode
+
+- (ExtensionTreeNode *)init {
+  self.parent = nil;
+  self.left = nil;
+  self.operator=(Operator){NOT_TOKEN, 0};
+  self.right = nil;
+  self.inParen = false;
+  self.parenOpenBeforeClose = 0;
+  self.signCoefficient = 1;
+  __column = (Column){.tableName = "", .columnName = ""};
+  _column = &__column;
+  self.calculated = false;
+  __value = (Data){.type = STRING, .value = {.string = ""}};
+  _value = &__value;
+  return self;
+}
+- (void)setValue:(Data *)value {
+  __value = *value;
+}
+- (void)setColumn:(Column *)column {
+  __column = *column;
+}
+@end
+
 @implementation ColumnIndex
 - (ColumnIndex *)initWithTable:(int)table Column:(int)column {
   self.table = table;
@@ -152,8 +184,6 @@ typedef struct _extension_tree_node {
   return self;
 }
 @end
-
-// 以上ヘッダに相当する部分。
 
 @implementation TynySQLException
 - (TynySQLException *)initWithErrorCode:(enum RESULT_VALUE)code {
@@ -558,23 +588,13 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     enum TOKEN_KIND orders[MAX_COLUMN_COUNT] = {
         0}; // 同じインデックスのorderByColumnsに対応している、昇順、降順の指定です。
 
-    ExtensionTreeNode whereExtensionNodes
+    ExtensionTreeNode *whereExtensionNodes
         [MAX_EXTENSION_TREE_NODE_COUNT]; // WHEREに指定された木のノードを、木構造とは無関係に格納します。
     // whereExtensionNodesを初期化します。
     for (size_t i = 0;
          i < sizeof(whereExtensionNodes) / sizeof(whereExtensionNodes[0]);
          i++) {
-      whereExtensionNodes[i] = (ExtensionTreeNode){
-          .parent = NULL,
-          .left = NULL,
-          .operator= {NOT_TOKEN, 0},
-          .right = NULL,
-          .inParen = false,
-          .parenOpenBeforeClose = 0,
-          .signCoefficient = 1,
-          .column = {.tableName = "", .columnName = ""},
-          .calculated = false,
-          .value = {.type = STRING, .value = {.string = ""}}, };
+      whereExtensionNodes[i] = [[ExtensionTreeNode alloc] init];
     }
     int whereExtensionNodesNum =
         0; // 現在読み込まれているのwhereExtensionNodesの数です。
@@ -724,17 +744,17 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           }
           if (currentNode) {
             // 現在のノードを右の子にずらし、元の位置に新しいノードを挿入します。
-            currentNode->right = &whereExtensionNodes[whereExtensionNodesNum++];
-            currentNode->right->parent = currentNode;
-            currentNode = currentNode->right;
+            currentNode.right = whereExtensionNodes[whereExtensionNodesNum++];
+            currentNode.right.parent = currentNode;
+            currentNode = currentNode.right;
           } else {
             // 最初はカレントノードに新しいノードを入れます。
-            currentNode = &whereExtensionNodes[whereExtensionNodesNum++];
+            currentNode = whereExtensionNodes[whereExtensionNodesNum++];
           }
 
           // カッコ開くを読み込みます。
           while (tokenCursol->kind == OPEN_PAREN) {
-            ++currentNode->parenOpenBeforeClose;
+            ++currentNode.parenOpenBeforeClose;
             ++tokenCursol;
           }
 
@@ -748,7 +768,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                   initWithErrorCode:ERR_WHERE_OPERAND_TYPE];
             }
             if (tokenCursol->kind == MINUS) {
-              currentNode->signCoefficient = -1;
+              currentNode.signCoefficient = -1;
             }
             ++tokenCursol;
           }
@@ -757,8 +777,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           if (tokenCursol->kind == IDENTIFIER) {
 
             // テーブル名が指定されていない場合と仮定して読み込みます。
-            strncpy(currentNode->column.tableName, "", MAX_WORD_LENGTH);
-            strncpy(currentNode->column.columnName, tokenCursol->word,
+            strncpy(currentNode.column->tableName, "", MAX_WORD_LENGTH);
+            strncpy(currentNode.column->columnName, tokenCursol->word,
                     MAX_WORD_LENGTH);
             ++tokenCursol;
             if (tokenCursol->kind == DOT) {
@@ -766,9 +786,9 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               if (tokenCursol->kind == IDENTIFIER) {
 
                 // テーブル名が指定されていることがわかったので読み替えます。
-                strncpy(currentNode->column.tableName,
-                        currentNode->column.columnName, MAX_WORD_LENGTH);
-                strncpy(currentNode->column.columnName, tokenCursol->word,
+                strncpy(currentNode.column->tableName,
+                        currentNode.column->columnName, MAX_WORD_LENGTH);
+                strncpy(currentNode.column->columnName, tokenCursol->word,
                         MAX_WORD_LENGTH);
                 ++tokenCursol;
               } else {
@@ -777,20 +797,20 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               }
             }
           } else if (tokenCursol->kind == INT_LITERAL) {
-            currentNode->value = (Data){
+            currentNode.value = &(Data){
                 .type = INTEGER, .value = {.integer = atoi(tokenCursol->word)}};
             ++tokenCursol;
           } else if (tokenCursol->kind == STRING_LITERAL) {
-            currentNode->value =
-                (Data){.type = STRING, .value = {.string = ""}};
+            currentNode.value =
+                &(Data){.type = STRING, .value = {.string = ""}};
 
             // 前後のシングルクォートを取り去った文字列をデータとして読み込みます。
-            strncpy(currentNode->value.value.string, tokenCursol->word + 1,
+            strncpy(currentNode.value->value.string, tokenCursol->word + 1,
                     MAX_WORD_LENGTH < MAX_DATA_LENGTH ? MAX_WORD_LENGTH
                                                       : MAX_DATA_LENGTH);
-            currentNode->value.value.string[MAX_DATA_LENGTH - 1] = '\0';
-            currentNode->value.value
-                .string[strlen(currentNode->value.value.string) - 1] = '\0';
+            currentNode.value->value.string[MAX_DATA_LENGTH - 1] = '\0';
+            currentNode.value->value
+                .string[strlen(currentNode.value->value.string) - 1] = '\0';
             ++tokenCursol;
           } else {
             @throw [[TynySQLException alloc] initWithErrorCode:ERR_SQL_SYNTAX];
@@ -800,22 +820,22 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           while (tokenCursol->kind == CLOSE_PAREN) {
             ExtensionTreeNode *searchedAncestor =
                 currentNode
-                    ->parent; // カッコ閉じると対応するカッコ開くを両方含む祖先ノードを探すためのカーソルです。
+                    .parent; // カッコ閉じると対応するカッコ開くを両方含む祖先ノードを探すためのカーソルです。
             while (searchedAncestor) {
 
               // searchedAncestorの左の子に対応するカッコ開くがないかを検索します。
               ExtensionTreeNode *searched =
                   searchedAncestor; // searchedAncestorの内部からカッコ開くを検索するためのカーソルです。
-              while (searched && !searched->parenOpenBeforeClose) {
-                searched = searched->left;
+              while (searched && !searched.parenOpenBeforeClose) {
+                searched = searched.left;
               }
               if (searched) {
                 // 対応付けられていないカッコ開くを一つ削除し、ノードがカッコに囲まれていることを記録します。
-                --searched->parenOpenBeforeClose;
-                searchedAncestor->inParen = true;
+                --searched.parenOpenBeforeClose;
+                searchedAncestor.inParen = true;
                 break;
               } else {
-                searchedAncestor = searchedAncestor->parent;
+                searchedAncestor = searchedAncestor.parent;
               }
             }
             ++tokenCursol;
@@ -847,33 +867,33 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             bool first = true; // 演算子の優先順位を検索する最初のループです。
             do {
               if (!first) {
-                tmp = tmp->parent;
+                tmp = tmp.parent;
                 searched = tmp;
               }
               // 現在の読み込み場所をくくるカッコが開く場所を探します。
-              while (searched && !searched->parenOpenBeforeClose) {
-                searched = searched->left;
+              while (searched && !searched.parenOpenBeforeClose) {
+                searched = searched.left;
               }
               first = false;
-            } while (!searched && tmp->parent &&
-                     (tmp->parent->operator.order <= operator.order ||
-                      tmp->parent->inParen));
+            } while (!searched && tmp.parent &&
+                     (tmp.parent.operator.order <= operator.order ||
+                      tmp.parent.inParen));
 
             // 演算子のノードを新しく生成します。
             if (MAX_EXTENSION_TREE_NODE_COUNT <= whereExtensionNodesNum) {
               @throw
                   [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_OVER];
             }
-            currentNode = &whereExtensionNodes[whereExtensionNodesNum++];
-            currentNode->operator= operator;
+            currentNode = whereExtensionNodes[whereExtensionNodesNum++];
+            currentNode.operator= operator;
 
             // 見つかった場所に新しいノードを配置します。これまでその位置にあったノードは左の子となるよう、親ノードと子ノードのポインタをつけかえます。
-            currentNode->parent = tmp->parent;
-            if (currentNode->parent) {
-              currentNode->parent->right = currentNode;
+            currentNode.parent = tmp.parent;
+            if (currentNode.parent) {
+              currentNode.parent.right = currentNode;
             }
-            currentNode->left = tmp;
-            tmp->parent = currentNode;
+            currentNode.left = tmp;
+            tmp.parent = currentNode;
 
             ++tokenCursol;
           } else {
@@ -884,8 +904,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
         // 木を根に向かってさかのぼり、根のノードを設定します。
         whereTopNode = currentNode;
-        while (whereTopNode->parent) {
-          whereTopNode = whereTopNode->parent;
+        while (whereTopNode.parent) {
+          whereTopNode = whereTopNode.parent;
         }
       }
     }
@@ -1182,9 +1202,9 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         if (whereExtensionNodes[i]
                 .
                 operator.kind == NOT_TOKEN && !*whereExtensionNodes[i]
-                .column.columnName && whereExtensionNodes[i]
-                .value.type == INTEGER) {
-          whereExtensionNodes[i].value.value.integer *=
+                .column->columnName && whereExtensionNodes[i]
+                .value->type == INTEGER) {
+          whereExtensionNodes[i].value->value.integer *=
               whereExtensionNodes[i].signCoefficient;
         }
       }
@@ -1258,31 +1278,31 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             whereTopNode; // 現在見ているノードです。
         while (currentNode) {
           // 子ノードの計算が終わってない場合は、まずそちらの計算を行います。
-          if (currentNode->left && !currentNode->left->calculated) {
-            currentNode = currentNode->left;
+          if (currentNode.left && !currentNode.left.calculated) {
+            currentNode = currentNode.left;
             continue;
-          } else if (currentNode->right && !currentNode->right->calculated) {
-            currentNode = currentNode->right;
+          } else if (currentNode.right && !currentNode.right.calculated) {
+            currentNode = currentNode.right;
             continue;
           }
 
           // 自ノードの値を計算します。
-          switch (currentNode->operator.kind) {
+          switch (currentNode.operator.kind) {
           case NOT_TOKEN:
             // ノードにデータが設定されている場合です。
 
             // データが列名で指定されている場合、今扱っている行のデータを設定します。
-            if (*currentNode->column.columnName) {
+            if (*currentNode.column->columnName) {
               found = false;
               for (int i = 0; i < allInputColumnsNum; ++i) {
-                char *whereTableNameCursol = currentNode->column.tableName;
+                char *whereTableNameCursol = currentNode.column->tableName;
                 char *allInputTableNameCursol = allInputColumns[i].tableName;
                 while (*whereTableNameCursol &&
                        toupper(*whereTableNameCursol) ==
                            toupper(*allInputTableNameCursol++)) {
                   ++whereTableNameCursol;
                 }
-                char *whereColumnNameCursol = currentNode->column.columnName;
+                char *whereColumnNameCursol = currentNode.column->columnName;
                 char *allInputColumnNameCursol = allInputColumns[i].columnName;
                 while (*whereColumnNameCursol &&
                        toupper(*whereColumnNameCursol) ==
@@ -1290,8 +1310,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                   ++whereColumnNameCursol;
                 }
                 if (!*whereColumnNameCursol && !*allInputColumnNameCursol &&
-                    (!*currentNode->column
-                           .tableName || // テーブル名が設定されている場合のみテーブル名の比較を行います。
+                    (!*currentNode.column
+                           ->tableName || // テーブル名が設定されている場合のみテーブル名の比較を行います。
                      (!*whereTableNameCursol && !*allInputTableNameCursol))) {
                   // 既に見つかっているのにもう一つ見つかったらエラーです。
                   if (found) {
@@ -1299,7 +1319,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                         initWithErrorCode:ERR_BAD_COLUMN_NAME];
                   }
                   found = true;
-                  currentNode->value = *allColumnsRow[i];
+                  currentNode.value = allColumnsRow[i];
                 }
               }
               // 一つも見つからなくてもエラーです。
@@ -1308,9 +1328,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                     initWithErrorCode:ERR_BAD_COLUMN_NAME];
               };
               // 符号を考慮して値を計算します。
-              if (currentNode->value.type == INTEGER) {
-                currentNode->value.value.integer *=
-                    currentNode->signCoefficient;
+              if (currentNode.value->type == INTEGER) {
+                currentNode.value->value.integer *= currentNode.signCoefficient;
               }
             }
             break;
@@ -1323,48 +1342,47 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             // 比較演算子の場合です。
 
             // 比較できるのは文字列型か整数型で、かつ左右の型が同じ場合です。
-            if ((currentNode->left->value.type != INTEGER &&
-                 currentNode->left->value.type != STRING) ||
-                currentNode->left->value.type !=
-                    currentNode->right->value.type) {
+            if ((currentNode.left.value->type != INTEGER &&
+                 currentNode.left.value->type != STRING) ||
+                currentNode.left.value->type != currentNode.right.value->type) {
               @throw [[TynySQLException alloc]
                   initWithErrorCode:ERR_WHERE_OPERAND_TYPE];
             }
-            currentNode->value.type = BOOLEAN;
+            currentNode.value->type = BOOLEAN;
 
             // 比較結果を型と演算子によって計算方法を変えて、計算します。
-            switch (currentNode->left->value.type) {
+            switch (currentNode.left.value->type) {
             case INTEGER:
-              switch (currentNode->operator.kind) {
+              switch (currentNode.operator.kind) {
               case EQUAL:
-                currentNode->value.value.boolean =
-                    currentNode->left->value.value.integer ==
-                    currentNode->right->value.value.integer;
+                currentNode.value->value.boolean =
+                    currentNode.left.value->value.integer ==
+                    currentNode.right.value->value.integer;
                 break;
               case GREATER_THAN:
-                currentNode->value.value.boolean =
-                    currentNode->left->value.value.integer >
-                    currentNode->right->value.value.integer;
+                currentNode.value->value.boolean =
+                    currentNode.left.value->value.integer >
+                    currentNode.right.value->value.integer;
                 break;
               case GREATER_THAN_OR_EQUAL:
-                currentNode->value.value.boolean =
-                    currentNode->left->value.value.integer >=
-                    currentNode->right->value.value.integer;
+                currentNode.value->value.boolean =
+                    currentNode.left.value->value.integer >=
+                    currentNode.right.value->value.integer;
                 break;
               case LESS_THAN:
-                currentNode->value.value.boolean =
-                    currentNode->left->value.value.integer <
-                    currentNode->right->value.value.integer;
+                currentNode.value->value.boolean =
+                    currentNode.left.value->value.integer <
+                    currentNode.right.value->value.integer;
                 break;
               case LESS_THAN_OR_EQUAL:
-                currentNode->value.value.boolean =
-                    currentNode->left->value.value.integer <=
-                    currentNode->right->value.value.integer;
+                currentNode.value->value.boolean =
+                    currentNode.left.value->value.integer <=
+                    currentNode.right.value->value.integer;
                 break;
               case NOT_EQUAL:
-                currentNode->value.value.boolean =
-                    currentNode->left->value.value.integer !=
-                    currentNode->right->value.value.integer;
+                currentNode.value->value.boolean =
+                    currentNode.left.value->value.integer !=
+                    currentNode.right.value->value.integer;
                 break;
               default:
                 @throw
@@ -1372,36 +1390,36 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               }
               break;
             case STRING:
-              switch (currentNode->operator.kind) {
+              switch (currentNode.operator.kind) {
               case EQUAL:
-                currentNode->value.value.boolean =
-                    strcmp(currentNode->left->value.value.string,
-                           currentNode->right->value.value.string) == 0;
+                currentNode.value->value.boolean =
+                    strcmp(currentNode.left.value->value.string,
+                           currentNode.right.value->value.string) == 0;
                 break;
               case GREATER_THAN:
-                currentNode->value.value.boolean =
-                    strcmp(currentNode->left->value.value.string,
-                           currentNode->right->value.value.string) > 0;
+                currentNode.value->value.boolean =
+                    strcmp(currentNode.left.value->value.string,
+                           currentNode.right.value->value.string) > 0;
                 break;
               case GREATER_THAN_OR_EQUAL:
-                currentNode->value.value.boolean =
-                    strcmp(currentNode->left->value.value.string,
-                           currentNode->right->value.value.string) >= 0;
+                currentNode.value->value.boolean =
+                    strcmp(currentNode.left.value->value.string,
+                           currentNode.right.value->value.string) >= 0;
                 break;
               case LESS_THAN:
-                currentNode->value.value.boolean =
-                    strcmp(currentNode->left->value.value.string,
-                           currentNode->right->value.value.string) < 0;
+                currentNode.value->value.boolean =
+                    strcmp(currentNode.left.value->value.string,
+                           currentNode.right.value->value.string) < 0;
                 break;
               case LESS_THAN_OR_EQUAL:
-                currentNode->value.value.boolean =
-                    strcmp(currentNode->left->value.value.string,
-                           currentNode->right->value.value.string) <= 0;
+                currentNode.value->value.boolean =
+                    strcmp(currentNode.left.value->value.string,
+                           currentNode.right.value->value.string) <= 0;
                 break;
               case NOT_EQUAL:
-                currentNode->value.value.boolean =
-                    strcmp(currentNode->left->value.value.string,
-                           currentNode->right->value.value.string) != 0;
+                currentNode.value->value.boolean =
+                    strcmp(currentNode.left.value->value.string,
+                           currentNode.right.value->value.string) != 0;
                 break;
               default:
                 @throw
@@ -1420,34 +1438,34 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             // 四則演算の場合です。
 
             // 演算できるのは整数型同士の場合のみです。
-            if (currentNode->left->value.type != INTEGER ||
-                currentNode->right->value.type != INTEGER) {
+            if (currentNode.left.value->type != INTEGER ||
+                currentNode.right.value->type != INTEGER) {
               @throw [[TynySQLException alloc]
                   initWithErrorCode:ERR_WHERE_OPERAND_TYPE];
             }
-            currentNode->value.type = INTEGER;
+            currentNode.value->type = INTEGER;
 
             // 比較結果を演算子によって計算方法を変えて、計算します。
-            switch (currentNode->operator.kind) {
+            switch (currentNode.operator.kind) {
             case PLUS:
-              currentNode->value.value.integer =
-                  currentNode->left->value.value.integer +
-                  currentNode->right->value.value.integer;
+              currentNode.value->value.integer =
+                  currentNode.left.value->value.integer +
+                  currentNode.right.value->value.integer;
               break;
             case MINUS:
-              currentNode->value.value.integer =
-                  currentNode->left->value.value.integer -
-                  currentNode->right->value.value.integer;
+              currentNode.value->value.integer =
+                  currentNode.left.value->value.integer -
+                  currentNode.right.value->value.integer;
               break;
             case ASTERISK:
-              currentNode->value.value.integer =
-                  currentNode->left->value.value.integer *
-                  currentNode->right->value.value.integer;
+              currentNode.value->value.integer =
+                  currentNode.left.value->value.integer *
+                  currentNode.right.value->value.integer;
               break;
             case SLASH:
-              currentNode->value.value.integer =
-                  currentNode->left->value.value.integer /
-                  currentNode->right->value.value.integer;
+              currentNode.value->value.integer =
+                  currentNode.left.value->value.integer /
+                  currentNode.right.value->value.integer;
               break;
             default:
               @throw
@@ -1459,24 +1477,24 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             // 論理演算の場合です。
 
             // 演算できるのは真偽値型同士の場合のみです。
-            if (currentNode->left->value.type != BOOLEAN ||
-                currentNode->right->value.type != BOOLEAN) {
+            if (currentNode.left.value->type != BOOLEAN ||
+                currentNode.right.value->type != BOOLEAN) {
               @throw [[TynySQLException alloc]
                   initWithErrorCode:ERR_WHERE_OPERAND_TYPE];
             }
-            currentNode->value.type = BOOLEAN;
+            currentNode.value->type = BOOLEAN;
 
             // 比較結果を演算子によって計算方法を変えて、計算します。
-            switch (currentNode->operator.kind) {
+            switch (currentNode.operator.kind) {
             case AND:
-              currentNode->value.value.boolean =
-                  currentNode->left->value.value.boolean &&
-                  currentNode->right->value.value.boolean;
+              currentNode.value->value.boolean =
+                  currentNode.left.value->value.boolean &&
+                  currentNode.right.value->value.boolean;
               break;
             case OR:
-              currentNode->value.value.boolean =
-                  currentNode->left->value.value.boolean ||
-                  currentNode->right->value.value.boolean;
+              currentNode.value->value.boolean =
+                  currentNode.left.value->value.boolean ||
+                  currentNode.right.value->value.boolean;
               break;
             default:
               @throw
@@ -1486,14 +1504,14 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           default:
             @throw [[TynySQLException alloc] initWithErrorCode:ERR_SQL_SYNTAX];
           }
-          currentNode->calculated = true;
+          currentNode.calculated = true;
 
           // 自身の計算が終わった後は親の計算に戻ります。
-          currentNode = currentNode->parent;
+          currentNode = currentNode.parent;
         }
 
         // 条件に合わない行は出力から削除します。
-        if (!whereTopNode->value.value.boolean) {
+        if (!whereTopNode.value->value.boolean) {
           free(row);
           free(allColumnsRow);
           allColumnOutputData[--outputRowsNum] = NULL;
