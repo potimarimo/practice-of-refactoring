@@ -126,7 +126,7 @@ typedef struct {
   Data __value;
 }
 - (ExtensionTreeNode *)init;
-@property ExtensionTreeNode
+@property __weak ExtensionTreeNode
     *parent;                        //!< 親となるノードです。根の式木の場合はNULLとなります。
 @property ExtensionTreeNode *left;  //!<
                                     //!左の子となるノードです。自身が末端の葉となる式木の場合はNULLとなります。
@@ -192,15 +192,15 @@ typedef struct {
 @implementation ExtensionTreeNode
 
 - (ExtensionTreeNode *)init {
-  self.parent = nil;
-  self.left = nil;
-  self.operator=(Operator){NOT_TOKEN, 0};
-  self.right = nil;
-  self.inParen = false;
-  self.parenOpenBeforeClose = 0;
-  self.signCoefficient = 1;
-  self.column = [[Column alloc] init];
-  self.calculated = false;
+  _parent = nil;
+  _left = nil;
+  _operator = (Operator){NOT_TOKEN, 0};
+  _right = nil;
+  _inParen = false;
+  _parenOpenBeforeClose = 0;
+  _signCoefficient = 1;
+  _column = [[Column alloc] init];
+  _calculated = false;
   __value = (Data){.type = STRING, .value = {.string = ""}};
   _value = &__value;
   return self;
@@ -212,15 +212,15 @@ typedef struct {
 
 @implementation ColumnIndex
 - (ColumnIndex *)initWithTable:(int)table Column:(int)column {
-  self.table = table;
-  self.column = column;
+  _table = table;
+  _column = column;
   return self;
 }
 @end
 
 @implementation TynySQLException
 - (TynySQLException *)initWithErrorCode:(enum RESULT_VALUE)code {
-  self.errorCode = code;
+  _errorCode = code;
   return self;
 }
 
