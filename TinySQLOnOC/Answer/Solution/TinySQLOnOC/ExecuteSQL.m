@@ -2,6 +2,7 @@
 #include "ExecuteSQL.h"
 #import <Foundation/NSArray.h>
 #import <Foundation/NSException.h>
+#import <Foundation/NSRange.h>
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -86,7 +87,7 @@ typedef struct {
   //! 実際のデータを格納する共用体です。
   union {
     char string[MAX_DATA_LENGTH]; //!< データが文字列型の場合の値です。
-    int integer;  //!< データが整数型の場合の値です。
+    long integer; //!< データが整数型の場合の値です。
     bool boolean; //!< データが真偽値型の場合の値です。
   } value;
 } Data;
@@ -101,14 +102,12 @@ typedef struct {
 @end
 
 //! トークンを表します。
-@interface Token : NSObject {
-  char __word[MAX_WORD_LENGTH];
-}
+@interface Token : NSObject
 @property enum TokenKind kind; //!< トークンの種類です。
-@property char *word;          //!<
+@property NSString *word;      //!<
 //!記録されているトークンの文字列です。記録の必要がなければ空白です。
 - (Token *)init;
-- (Token *)initWithKind:(enum TokenKind)kind Word:(char *)word;
+- (Token *)initWithKind:(TokenKind)kind Word:(NSString *)word;
 
 @end
 
@@ -178,14 +177,12 @@ typedef struct {
 
 - (Token *)init {
   _kind = NoToken;
-  strcpy(__word, "");
-  _word = __word;
+  _word = [NSString init];
   return self;
 }
-- (Token *)initWithKind:(enum TokenKind)kind Word:(char *)word {
+- (Token *)initWithKind:(enum TokenKind)kind Word:(NSString *)word {
   _kind = kind;
-  strncpy(__word, word, MAX_WORD_LENGTH);
-  _word = __word;
+  _word = word;
   return self;
 }
 
@@ -356,33 +353,33 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
     // キーワードをトークンとして認識するためのキーワード一覧情報です。
     NSArray *keywordConditions = @[
-      [[Token alloc] initWithKind:AndToken Word:"AND"],
-      [[Token alloc] initWithKind:AscToken Word:"ASC"],
-      [[Token alloc] initWithKind:ByToken Word:"BY"],
-      [[Token alloc] initWithKind:DescToken Word:"DESC"],
-      [[Token alloc] initWithKind:FromToken Word:"FROM"],
-      [[Token alloc] initWithKind:OrderToken Word:"ORDER"],
-      [[Token alloc] initWithKind:OrToken Word:"OR"],
-      [[Token alloc] initWithKind:SelectToken Word:"SELECT"],
-      [[Token alloc] initWithKind:WhereToken Word:"WHERE"]
+      [[Token alloc] initWithKind:AndToken Word:@"AND"],
+      [[Token alloc] initWithKind:AscToken Word:@"ASC"],
+      [[Token alloc] initWithKind:ByToken Word:@"BY"],
+      [[Token alloc] initWithKind:DescToken Word:@"DESC"],
+      [[Token alloc] initWithKind:FromToken Word:@"FROM"],
+      [[Token alloc] initWithKind:OrderToken Word:@"ORDER"],
+      [[Token alloc] initWithKind:OrToken Word:@"OR"],
+      [[Token alloc] initWithKind:SelectToken Word:@"SELECT"],
+      [[Token alloc] initWithKind:WhereToken Word:@"WHERE"]
     ];
 
     // 記号をトークンとして認識するための記号一覧情報です。
     NSArray *signConditions = @[
-      [[Token alloc] initWithKind:GreaterThanOrEqualToken Word:">="],
-      [[Token alloc] initWithKind:LessThanOrEqualToken Word:"<="],
-      [[Token alloc] initWithKind:NotEqualToken Word:"<>"],
-      [[Token alloc] initWithKind:AsteriskToken Word:"*"],
-      [[Token alloc] initWithKind:CommaToken Word:","],
-      [[Token alloc] initWithKind:CloseParenToken Word:")"],
-      [[Token alloc] initWithKind:DotToken Word:"."],
-      [[Token alloc] initWithKind:EqualToken Word:"="],
-      [[Token alloc] initWithKind:GreaterThanToken Word:">"],
-      [[Token alloc] initWithKind:LessThanToken Word:"<"],
-      [[Token alloc] initWithKind:MinusToken Word:"-"],
-      [[Token alloc] initWithKind:OpenParenToken Word:"("],
-      [[Token alloc] initWithKind:PlusToken Word:"+"],
-      [[Token alloc] initWithKind:SlashToken Word:"/"]
+      [[Token alloc] initWithKind:GreaterThanOrEqualToken Word:@">="],
+      [[Token alloc] initWithKind:LessThanOrEqualToken Word:@"<="],
+      [[Token alloc] initWithKind:NotEqualToken Word:@"<>"],
+      [[Token alloc] initWithKind:AsteriskToken Word:@"*"],
+      [[Token alloc] initWithKind:CommaToken Word:@","],
+      [[Token alloc] initWithKind:CloseParenToken Word:@")"],
+      [[Token alloc] initWithKind:DotToken Word:@"."],
+      [[Token alloc] initWithKind:EqualToken Word:@"="],
+      [[Token alloc] initWithKind:GreaterThanToken Word:@">"],
+      [[Token alloc] initWithKind:LessThanToken Word:@"<"],
+      [[Token alloc] initWithKind:MinusToken Word:@"-"],
+      [[Token alloc] initWithKind:OpenParenToken Word:@"("],
+      [[Token alloc] initWithKind:PlusToken Word:@"+"],
+      [[Token alloc] initWithKind:SlashToken Word:@"/"]
     ];
 
     NSMutableArray *tokens =
@@ -434,21 +431,15 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       for (search = num; *search && *charactorCursol != *search; ++search) {
       }
       if (*search) {
-        Token *literal = [[Token alloc]
-            initWithKind:IntLiteralToken
-                    Word:""]; // 読み込んだ数値リテラルの情報です。
-        int wordLength = 0; // 数値リテラルに現在読み込んでいる文字の数です。
+
+        NSMutableString *word = [NSMutableString string];
 
         // 数字が続く間、文字を読み込み続けます。
         do {
           for (search = num; *search && *charactorCursol != *search; ++search) {
           }
           if (*search) {
-            if (MAX_WORD_LENGTH - 1 <= wordLength) {
-              @throw
-                  [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
-            }
-            literal.word[wordLength++] = *search;
+            [word appendString:[NSString stringWithFormat:@"%c", *search]];
             ++charactorCursol;
           }
         } while (*search);
@@ -458,8 +449,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
              ++search) {
         }
         if (!*search) {
-          literal.word[wordLength] = '\0';
-          [tokens addObject:literal];
+          [tokens
+              addObject:[[Token alloc] initWithKind:IntLiteralToken Word:word]];
           continue;
         } else {
           charactorCursol = charactorBackPoint;
@@ -472,29 +463,25 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       // メトリクス測定ツールのccccはシングルクォートの文字リテラル中のエスケープを認識しないため、文字リテラルを使わないことで回避しています。
       if (*charactorCursol == "\'"[0]) {
         ++charactorCursol;
-        Token *literal = [[Token alloc]
-            initWithKind:StringLiteralToken
-                    Word:"\'"]; // 読み込んだ文字列リテラルの情報です。
-        int wordLength =
-            1; // 文字列リテラルに現在読み込んでいる文字の数です。初期値の段階で最初のシングルクォートは読み込んでいます。
+
+        // 読み込んだ文字列リテラルの情報です。初期値の段階で最初のシングルクォートは読み込んでいます。
+
+        NSMutableString *word = [NSMutableString stringWithString:@"\'"];
 
         // 次のシングルクォートがくるまで文字を読み込み続けます。
         while (*charactorCursol && *charactorCursol != "\'"[0]) {
-          if (MAX_WORD_LENGTH - 1 <= wordLength) {
-            @throw [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
-          }
-          literal.word[wordLength++] = *charactorCursol++;
+
+          [word appendString:[NSString
+                                 stringWithFormat:@"%c", *charactorCursol++]];
         }
         if (*charactorCursol == "\'"[0]) {
-          if (MAX_WORD_LENGTH - 1 <= wordLength) {
-            @throw [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
-          }
           // 最後のシングルクォートを読み込みます。
-          literal.word[wordLength++] = *charactorCursol++;
+          [word appendString:[NSString
+                                 stringWithFormat:@"%c", *charactorCursol++]];
 
           // 文字列の終端文字をつけます。
-          literal.word[wordLength] = '\0';
-          [tokens addObject:literal];
+          [tokens addObject:[[Token alloc] initWithKind:StringLiteralToken
+                                                   Word:word]];
           continue;
         } else {
           @throw
@@ -506,9 +493,14 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       found = false;
       for (Token *condition in keywordConditions) {
         charactorBackPoint = charactorCursol;
-        char *wordCursol =
-            condition
-                .word; // 確認するキーワードの文字列のうち、現在確認している一文字を指します。
+        char word[MAX_WORD_LENGTH];
+        char *wordCursol = word;
+
+        [condition.word
+            getCString:wordCursol
+             maxLength:MAX_WORD_LENGTH
+              encoding:
+                  NSUTF8StringEncoding]; // 確認するキーワードの文字列のうち、現在確認している一文字を指します。
 
         // キーワードが指定した文字列となっているか確認します。
         while (*wordCursol && toupper(*charactorCursol++) == *wordCursol) {
@@ -524,7 +516,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
           // 見つかったキーワードを生成します。
           [tokens
-              addObject:[[Token alloc] initWithKind:condition.kind Word:""]];
+              addObject:[[Token alloc] initWithKind:condition.kind Word:@""]];
           found = true;
         } else {
           charactorCursol = charactorBackPoint;
@@ -538,9 +530,12 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       found = false;
       for (Token *condition in signConditions) {
         charactorBackPoint = charactorCursol;
+        char word[MAX_WORD_LENGTH];
         char *wordCursol =
-            condition
-                .word; // 確認する記号の文字列のうち、現在確認している一文字を指します。
+            word; // 確認する記号の文字列のうち、現在確認している一文字を指します。
+        [condition.word getCString:wordCursol
+                         maxLength:MAX_WORD_LENGTH
+                          encoding:NSUTF8StringEncoding];
 
         // 記号が指定した文字列となっているか確認します。
         while (*wordCursol && toupper(*charactorCursol++) == *wordCursol) {
@@ -550,7 +545,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
           // 見つかった記号を生成します。
           [tokens
-              addObject:[[Token alloc] initWithKind:condition.kind Word:""]];
+              addObject:[[Token alloc] initWithKind:condition.kind Word:@""]];
           found = true;
         } else {
           charactorCursol = charactorBackPoint;
@@ -567,30 +562,22 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
            ++search) {
       };
       if (*search) {
-        Token *identifier =
-            [[Token alloc] initWithKind:IdentifierToken
-                                   Word:""]; // 読み込んだ識別子の情報です。
-        int wordLength = 0; // 識別子に現在読み込んでいる文字の数です。
+        NSMutableString *word = [NSMutableString string];
         do {
           // 二文字目以降は数字も許可して文字の種類を確認します。
           for (search = alpahNumUnder; *search && *charactorCursol != *search;
                ++search) {
           };
           if (*search) {
-            if (MAX_WORD_LENGTH - 1 <= wordLength) {
-              @throw
-                  [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
-            }
-            identifier.word[wordLength++] = *search;
+            [word appendString:[NSString stringWithFormat:@"%c", *search]];
+
             charactorCursol++;
           }
         } while (*search);
 
-        // 識別子の文字列の終端文字を設定します。
-        identifier.word[wordLength] = '\0';
-
         // 読み込んだ識別子を登録します。
-        [tokens addObject:identifier];
+        [tokens
+            addObject:[[Token alloc] initWithKind:IdentifierToken Word:word]];
         continue;
       }
 
@@ -663,8 +650,10 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           // テーブル名が指定されていない場合と仮定して読み込みます。
           strncpy(selectColumns[selectColumnsNum].tableName, "",
                   MAX_WORD_LENGTH);
-          strncpy(selectColumns[selectColumnsNum].columnName, nextToken.word,
-                  MAX_WORD_LENGTH);
+          [nextToken.word getCString:selectColumns[selectColumnsNum].columnName
+                           maxLength:MAX_WORD_LENGTH
+                            encoding:NSUTF8StringEncoding];
+
           nextToken = [tokenCursol nextObject];
           ;
           if (nextToken.kind == DotToken) {
@@ -676,8 +665,10 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               strncpy(selectColumns[selectColumnsNum].tableName,
                       selectColumns[selectColumnsNum].columnName,
                       MAX_WORD_LENGTH);
-              strncpy(selectColumns[selectColumnsNum].columnName,
-                      nextToken.word, MAX_WORD_LENGTH);
+              [nextToken.word
+                  getCString:selectColumns[selectColumnsNum].columnName
+                   maxLength:MAX_WORD_LENGTH
+                    encoding:NSUTF8StringEncoding];
               nextToken = [tokenCursol nextObject];
               ;
             } else {
@@ -729,8 +720,10 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               // テーブル名が指定されていない場合と仮定して読み込みます。
               strncpy(orderByColumns[orderByColumnsNum].tableName, "",
                       MAX_WORD_LENGTH);
-              strncpy(orderByColumns[orderByColumnsNum].columnName,
-                      nextToken.word, MAX_WORD_LENGTH);
+              [nextToken.word
+                  getCString:orderByColumns[orderByColumnsNum].columnName
+                   maxLength:MAX_WORD_LENGTH
+                    encoding:NSUTF8StringEncoding];
               nextToken = [tokenCursol nextObject];
               ;
               if (nextToken.kind == DotToken) {
@@ -742,8 +735,10 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                   strncpy(orderByColumns[orderByColumnsNum].tableName,
                           orderByColumns[orderByColumnsNum].columnName,
                           MAX_WORD_LENGTH);
-                  strncpy(orderByColumns[orderByColumnsNum].columnName,
-                          nextToken.word, MAX_WORD_LENGTH);
+                  [nextToken.word
+                      getCString:orderByColumns[orderByColumnsNum].columnName
+                       maxLength:MAX_WORD_LENGTH
+                        encoding:NSUTF8StringEncoding];
                   nextToken = [tokenCursol nextObject];
                   ;
                 } else {
@@ -826,8 +821,10 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
             // テーブル名が指定されていない場合と仮定して読み込みます。
             strncpy(currentNode.column.tableName, "", MAX_WORD_LENGTH);
-            strncpy(currentNode.column.columnName, nextToken.word,
-                    MAX_WORD_LENGTH);
+
+            [nextToken.word getCString:currentNode.column.columnName
+                             maxLength:MAX_WORD_LENGTH
+                              encoding:NSUTF8StringEncoding];
             nextToken = [tokenCursol nextObject];
             ;
             if (nextToken.kind == DotToken) {
@@ -838,8 +835,9 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                 // テーブル名が指定されていることがわかったので読み替えます。
                 strncpy(currentNode.column.tableName,
                         currentNode.column.columnName, MAX_WORD_LENGTH);
-                strncpy(currentNode.column.columnName, nextToken.word,
-                        MAX_WORD_LENGTH);
+                [nextToken.word getCString:currentNode.column.columnName
+                                 maxLength:MAX_WORD_LENGTH
+                                  encoding:NSUTF8StringEncoding];
                 nextToken = [tokenCursol nextObject];
                 ;
               } else {
@@ -848,8 +846,9 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               }
             }
           } else if (nextToken.kind == IntLiteralToken) {
-            currentNode.value = &(Data){
-                .type = Integer, .value = {.integer = atoi(nextToken.word)}};
+            currentNode.value =
+                &(Data){.type = Integer,
+                        .value = {.integer = [nextToken.word integerValue]}};
             nextToken = [tokenCursol nextObject];
             ;
           } else if (nextToken.kind == StringLiteralToken) {
@@ -857,12 +856,12 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                 &(Data){.type = String, .value = {.string = ""}};
 
             // 前後のシングルクォートを取り去った文字列をデータとして読み込みます。
-            strncpy(currentNode.value->value.string, nextToken.word + 1,
-                    MAX_WORD_LENGTH < MAX_DATA_LENGTH ? MAX_WORD_LENGTH
-                                                      : MAX_DATA_LENGTH);
-            currentNode.value->value.string[MAX_DATA_LENGTH - 1] = '\0';
-            currentNode.value->value
-                .string[strlen(currentNode.value->value.string) - 1] = '\0';
+            [[nextToken.word
+                substringWithRange:NSMakeRange(1, [nextToken.word length] - 2)]
+                getCString:currentNode.value->value.string
+                 maxLength:MAX_WORD_LENGTH < MAX_DATA_LENGTH ? MAX_WORD_LENGTH
+                                                             : MAX_DATA_LENGTH
+                  encoding:NSUTF8StringEncoding];
             nextToken = [tokenCursol nextObject];
             ;
           } else {
@@ -981,7 +980,9 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         if (MAX_TABLE_COUNT <= tableNamesNum) {
           @throw [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
         }
-        strncpy(tableNames[tableNamesNum++], nextToken.word, MAX_WORD_LENGTH);
+        [nextToken.word getCString:tableNames[tableNamesNum++]
+                         maxLength:MAX_WORD_LENGTH
+                          encoding:NSUTF8StringEncoding];
         nextToken = [tokenCursol nextObject];
         ;
       } else {
@@ -1662,7 +1663,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                                [k]]; // インデックスがminIndexのデータです。
             Data *jData = allColumnOutputData
                 [j][orderByColumnIndexes[k]]; // インデックスがjのデータです。
-            int cmp =
+            long cmp =
                 0; // 比較結果です。等しければ0、インデックスjの行が大きければプラス、インデックスminIndexの行が大きければマイナスとなります。
             switch (mData->type) {
             case Integer:
@@ -1734,7 +1735,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         char outputString[MAX_DATA_LENGTH] = "";
         switch ((*column)->type) {
         case Integer:
-          sprintf(outputString, "%d", (*column)->value.integer);
+          sprintf(outputString, "%ld", (*column)->value.integer);
           break;
         case String:
           strcpy(outputString, (*column)->value.string);
