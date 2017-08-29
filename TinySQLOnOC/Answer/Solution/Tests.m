@@ -25,8 +25,7 @@ enum REAULT_VALUE {
 - (NSString *)readOutput {
   NSError *error = nil;
   return [NSString
-      stringWithContentsOfFile:[NSString stringWithCString:OUTPUT_PATH
-                                                  encoding:NSUTF8StringEncoding]
+      stringWithContentsOfFile:@(OUTPUT_PATH)
                       encoding:NSUTF8StringEncoding
                          error:&error];
 }
@@ -35,10 +34,9 @@ enum REAULT_VALUE {
 
   [super setUp];
 
-  NSArray *files = [NSArray
-      arrayWithObjects:@"output.csv", @"TABLE1.csv", @"TABLE2.csv",
+  NSArray *files = @[@"output.csv", @"TABLE1.csv", @"TABLE2.csv",
                        @"TABLE3.csv", @"UNORDERED.csv", @"UNORDERED2.csv",
-                       @"PARENTS.csv", @"CHILDREN.csv", @"MINUS.csv", nil];
+                       @"PARENTS.csv", @"CHILDREN.csv", @"MINUS.csv"];
   NSError *err = nil;
   NSFileManager *manager = [NSFileManager defaultManager];
   for (NSString *file in files) {
