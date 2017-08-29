@@ -369,21 +369,22 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     ];
 
     // 記号をトークンとして認識するための記号一覧情報です。
-    Token *signConditions[] = {
-        [[Token alloc] initWithKind:GREATER_THAN_OR_EQUAL Word:">="],
-        [[Token alloc] initWithKind:LESS_THAN_OR_EQUAL Word:"<="],
-        [[Token alloc] initWithKind:NOT_EQUAL Word:"<>"],
-        [[Token alloc] initWithKind:ASTERISK Word:"*"],
-        [[Token alloc] initWithKind:COMMA Word:","],
-        [[Token alloc] initWithKind:CLOSE_PAREN Word:")"],
-        [[Token alloc] initWithKind:DOT Word:"."],
-        [[Token alloc] initWithKind:EQUAL Word:"="],
-        [[Token alloc] initWithKind:GREATER_THAN Word:">"],
-        [[Token alloc] initWithKind:LESS_THAN Word:"<"],
-        [[Token alloc] initWithKind:MINUS Word:"-"],
-        [[Token alloc] initWithKind:OPEN_PAREN Word:"("],
-        [[Token alloc] initWithKind:PLUS Word:"+"],
-        [[Token alloc] initWithKind:SLASH Word:"/"]};
+    NSArray *signConditions = @[
+      [[Token alloc] initWithKind:GREATER_THAN_OR_EQUAL Word:">="],
+      [[Token alloc] initWithKind:LESS_THAN_OR_EQUAL Word:"<="],
+      [[Token alloc] initWithKind:NOT_EQUAL Word:"<>"],
+      [[Token alloc] initWithKind:ASTERISK Word:"*"],
+      [[Token alloc] initWithKind:COMMA Word:","],
+      [[Token alloc] initWithKind:CLOSE_PAREN Word:")"],
+      [[Token alloc] initWithKind:DOT Word:"."],
+      [[Token alloc] initWithKind:EQUAL Word:"="],
+      [[Token alloc] initWithKind:GREATER_THAN Word:">"],
+      [[Token alloc] initWithKind:LESS_THAN Word:"<"],
+      [[Token alloc] initWithKind:MINUS Word:"-"],
+      [[Token alloc] initWithKind:OPEN_PAREN Word:"("],
+      [[Token alloc] initWithKind:PLUS Word:"+"],
+      [[Token alloc] initWithKind:SLASH Word:"/"]
+    ];
 
     Token *tokens[MAX_TOKEN_COUNT]; // SQLを分割したトークンです。
     for (size_t i = 0; i < sizeof(tokens) / sizeof(tokens[0]); i++) {
@@ -548,10 +549,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
       // 記号を読み込みます。
       found = false;
-      for (size_t i = 0; i < sizeof(signConditions) / sizeof(signConditions[0]);
-           ++i) {
+      for (Token *condition in signConditions) {
         charactorBackPoint = charactorCursol;
-        Token *condition = signConditions[i]; // 確認する記号の条件です。
         char *wordCursol =
             condition
                 .word; // 確認する記号の文字列のうち、現在確認している一文字を指します。
