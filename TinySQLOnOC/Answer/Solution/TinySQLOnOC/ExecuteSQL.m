@@ -27,7 +27,7 @@
 int ExecuteSQL(const char *sql, const char *outputFileName);
 
 //! ExecuteSQLの戻り値の種類を表します。
-enum RESULT_VALUE {
+typedef NS_ENUM(NSUInteger, RESULT_VALUE) {
   OK = 0,            //!< 問題なく終了しました。
   ERR_FILE_OPEN = 1, //!< ファイルを開くことに失敗しました。
   ERR_FILE_WRITE = 2, //!< ファイルに書き込みを行うことに失敗しました。
