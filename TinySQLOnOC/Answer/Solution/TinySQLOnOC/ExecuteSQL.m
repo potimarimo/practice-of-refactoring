@@ -42,14 +42,14 @@ typedef NS_ENUM(NSUInteger, RESULT_VALUE) {
 };
 
 //! 入力や出力、経過の計算に利用するデータのデータ型の種類を表します。
-enum DATA_TYPE {
+typedef NS_ENUM(NSUInteger, DATA_TYPE) {
   STRING,  //!< 文字列型です。
   INTEGER, //!< 整数型です。
   BOOLEAN  //!< 真偽値型です。
 };
 
 //! トークンの種類を表します。
-enum TOKEN_KIND {
+typedef NS_ENUM(NSUInteger, TOKEN_KIND) {
   NOT_TOKEN,             //!< トークンを表しません。
   ASC,                   //!< ASCキーワードです。
   AND,                   //!< ANDキーワードです。
