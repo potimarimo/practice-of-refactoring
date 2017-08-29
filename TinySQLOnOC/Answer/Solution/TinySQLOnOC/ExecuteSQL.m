@@ -27,18 +27,18 @@
 int ExecuteSQL(const char *sql, const char *outputFileName);
 
 //! ExecuteSQLの戻り値の種類を表します。
-typedef NS_ENUM(NSUInteger, RESULT_VALUE) {
-  OK = 0,            //!< 問題なく終了しました。
-  ERR_FILE_OPEN = 1, //!< ファイルを開くことに失敗しました。
-  ERR_FILE_WRITE = 2, //!< ファイルに書き込みを行うことに失敗しました。
-  ERR_FILE_CLOSE = 3, //!< ファイルを閉じることに失敗しました。
-  ERR_TOKEN_CANT_READ = 4, //!< トークン解析に失敗しました。
-  ERR_SQL_SYNTAX = 5,      //!< SQLの構文解析が失敗しました。
-  ERR_BAD_COLUMN_NAME = 6, //!< テーブル指定を含む列名が適切ではありません。
-  ERR_WHERE_OPERAND_TYPE = 7, //!< 演算の左右の型が適切ではありません。
-  ERR_CSV_SYNTAX = 8,      //!< CSVの構文解析が失敗しました。
-  ERR_MEMORY_ALLOCATE = 9, //!< メモリの取得に失敗しました。
-  ERR_MEMORY_OVER = 10 //!< 用意したメモリ領域の上限を超えました。
+typedef NS_ENUM(NSUInteger, ResultValue) {
+  ResultOk = 0,            //!< 問題なく終了しました。
+  FileOpenError = 1, //!< ファイルを開くことに失敗しました。
+  FileWriteError = 2, //!< ファイルに書き込みを行うことに失敗しました。
+  FileCloseError = 3, //!< ファイルを閉じることに失敗しました。
+  TokenCantReadError = 4, //!< トークン解析に失敗しました。
+  SqlSyntaxError = 5,      //!< SQLの構文解析が失敗しました。
+  BadColumnNameError = 6, //!< テーブル指定を含む列名が適切ではありません。
+  WhereOperandTypeError = 7, //!< 演算の左右の型が適切ではありません。
+  CsvSyntaxError = 8,      //!< CSVの構文解析が失敗しました。
+  MemoryAllocateError = 9, //!< メモリの取得に失敗しました。
+  MemoryOverError = 10 //!< 用意したメモリ領域の上限を超えました。
 };
 
 //! 入力や出力、経過の計算に利用するデータのデータ型の種類を表します。
@@ -156,8 +156,8 @@ typedef struct {
 @end
 
 @interface TynySQLException : NSException
-- (TynySQLException *)initWithErrorCode:(enum RESULT_VALUE)code;
-@property enum RESULT_VALUE errorCode;
+- (TynySQLException *)initWithErrorCode:(enum ResultValue)code;
+@property enum ResultValue errorCode;
 @end
 
 // 以上ヘッダに相当する部分。
@@ -233,7 +233,7 @@ typedef struct {
 @end
 
 @implementation TynySQLException
-- (TynySQLException *)initWithErrorCode:(enum RESULT_VALUE)code {
+- (TynySQLException *)initWithErrorCode:(enum ResultValue)code {
   _errorCode = code;
   return self;
 }
@@ -245,17 +245,17 @@ typedef struct {
 //! @param[in] outputFileName
 //! SQLの実行結果をCSVとして出力するファイル名です。拡張子を含みます。
 //! @return 実行した結果の状態です。
-//! @retval OK=0                      問題なく終了しました。
-//! @retval ERR_FILE_OPEN=1           ファイルを開くことに失敗しました。
-//! @retval ERR_FILE_WRITE=2 ファイルに書き込みを行うことに失敗しました。
-//! @retval ERR_FILE_CLOSE=3          ファイルを閉じることに失敗しました。
-//! @retval ERR_TOKEN_CANT_READ=4     トークン解析に失敗しました。
-//! @retval ERR_SQL_SYNTAX=5          SQLの構文解析が失敗しました。
-//! @retval ERR_BAD_COLUMN_NAME=6 テーブル指定を含む列名が適切ではありません。
-//! @retval ERR_WHERE_OPERAND_TYPE=7  演算の左右の型が適切ではありません。
-//! @retval ERR_CSV_SYNTAX=8          CSVの構文解析が失敗しました。
-//! @retval ERR_MEMORY_ALLOCATE=9     メモリの取得に失敗しました。
-//! @retval ERR_MEMORY_OVER=10        用意したメモリ領域の上限を超えました。
+//! @retval ResultOk=0                      問題なく終了しました。
+//! @retval FileOpenError=1           ファイルを開くことに失敗しました。
+//! @retval FileWriteError=2 ファイルに書き込みを行うことに失敗しました。
+//! @retval FileCloseError=3          ファイルを閉じることに失敗しました。
+//! @retval TokenCantReadError=4     トークン解析に失敗しました。
+//! @retval SqlSyntaxError=5          SQLの構文解析が失敗しました。
+//! @retval BadColumnNameError=6 テーブル指定を含む列名が適切ではありません。
+//! @retval WhereOperandTypeError=7  演算の左右の型が適切ではありません。
+//! @retval CsvSyntaxError=8          CSVの構文解析が失敗しました。
+//! @retval MemoryAllocateError=9     メモリの取得に失敗しました。
+//! @retval MemoryOverError=10        用意したメモリ領域の上限を超えました。
 //! @details
 //! 参照するテーブルは、テーブル名.csvの形で作成します。 @n
 //! 一行目はヘッダ行で、その行に列名を書きます。 @n
@@ -315,7 +315,7 @@ typedef struct {
 //! WHERE USERS.ID = CHILDREN.PARENTID @n
 //! FROM USERS, CHILDREN @n
 int ExecuteSQL(const char *sql, const char *outputFileName) {
-  enum RESULT_VALUE error = OK; // 発生したエラーの種類です。
+  enum ResultValue error = ResultOk; // 発生したエラーの種類です。
   FILE *inputTableFiles[MAX_TABLE_COUNT] = {
       NULL}; // 読み込む入力ファイルの全てのファイルポインタです。
   FILE *outputFile = NULL; // 書き込むファイルのファイルポインタです。
@@ -446,7 +446,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           if (*search) {
             if (MAX_WORD_LENGTH - 1 <= wordLength) {
               @throw
-                  [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_OVER];
+                  [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
             }
             literal.word[wordLength++] = *search;
             ++charactorCursol;
@@ -481,13 +481,13 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         // 次のシングルクォートがくるまで文字を読み込み続けます。
         while (*charactorCursol && *charactorCursol != "\'"[0]) {
           if (MAX_WORD_LENGTH - 1 <= wordLength) {
-            @throw [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_OVER];
+            @throw [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
           }
           literal.word[wordLength++] = *charactorCursol++;
         }
         if (*charactorCursol == "\'"[0]) {
           if (MAX_WORD_LENGTH - 1 <= wordLength) {
-            @throw [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_OVER];
+            @throw [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
           }
           // 最後のシングルクォートを読み込みます。
           literal.word[wordLength++] = *charactorCursol++;
@@ -498,7 +498,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           continue;
         } else {
           @throw
-              [[TynySQLException alloc] initWithErrorCode:ERR_TOKEN_CANT_READ];
+              [[TynySQLException alloc] initWithErrorCode:TokenCantReadError];
         }
       }
 
@@ -579,7 +579,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           if (*search) {
             if (MAX_WORD_LENGTH - 1 <= wordLength) {
               @throw
-                  [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_OVER];
+                  [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
             }
             identifier.word[wordLength++] = *search;
             charactorCursol++;
@@ -594,7 +594,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         continue;
       }
 
-      @throw [[TynySQLException alloc] initWithErrorCode:ERR_TOKEN_CANT_READ];
+      @throw [[TynySQLException alloc] initWithErrorCode:TokenCantReadError];
     }
 
     // トークン列を解析し、構文を読み取ります。
@@ -642,7 +642,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     if (nextToken.kind == SELECT) {
       nextToken = [tokenCursol nextObject];
     } else {
-      @throw [[TynySQLException alloc] initWithErrorCode:ERR_SQL_SYNTAX];
+      @throw [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
     }
 
     if (nextToken.kind == ASTERISK) {
@@ -658,7 +658,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         if (nextToken.kind == IDENTIFIER) {
           if (MAX_COLUMN_COUNT <= selectColumnsNum) {
 
-            @throw [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_OVER];
+            @throw [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
           }
           // テーブル名が指定されていない場合と仮定して読み込みます。
           strncpy(selectColumns[selectColumnsNum].tableName, "",
@@ -682,12 +682,12 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               ;
             } else {
               @throw
-                  [[TynySQLException alloc] initWithErrorCode:ERR_SQL_SYNTAX];
+                  [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
             }
           }
           ++selectColumnsNum;
         } else {
-          @throw [[TynySQLException alloc] initWithErrorCode:ERR_SQL_SYNTAX];
+          @throw [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
         }
         first = false;
       }
@@ -700,12 +700,12 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
       // 二度目のORDER句はエラーです。
       if (readOrder && nextToken.kind == ORDER) {
-        @throw [[TynySQLException alloc] initWithErrorCode:ERR_SQL_SYNTAX];
+        @throw [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
       }
 
       // 二度目のWHERE句はエラーです。
       if (readWhere && nextToken.kind == WHERE) {
-        @throw [[TynySQLException alloc] initWithErrorCode:ERR_SQL_SYNTAX];
+        @throw [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
       }
       // ORDER句を読み込みます。
       if (nextToken.kind == ORDER) {
@@ -724,7 +724,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             if (nextToken.kind == IDENTIFIER) {
               if (MAX_COLUMN_COUNT <= orderByColumnsNum) {
                 @throw [[TynySQLException alloc]
-                    initWithErrorCode:ERR_MEMORY_OVER];
+                    initWithErrorCode:MemoryOverError];
               }
               // テーブル名が指定されていない場合と仮定して読み込みます。
               strncpy(orderByColumns[orderByColumnsNum].tableName, "",
@@ -748,7 +748,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                   ;
                 } else {
                   @throw [[TynySQLException alloc]
-                      initWithErrorCode:ERR_SQL_SYNTAX];
+                      initWithErrorCode:SqlSyntaxError];
                 }
               }
 
@@ -768,12 +768,12 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               ++orderByColumnsNum;
             } else {
               @throw
-                  [[TynySQLException alloc] initWithErrorCode:ERR_SQL_SYNTAX];
+                  [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
             }
             first = false;
           }
         } else {
-          @throw [[TynySQLException alloc] initWithErrorCode:ERR_SQL_SYNTAX];
+          @throw [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
         }
       }
 
@@ -788,7 +788,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
           // オペランドのノードを新しく生成します。
           if (MAX_EXTENSION_TREE_NODE_COUNT <= whereExtensionNodesNum) {
-            @throw [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_OVER];
+            @throw [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
           }
           if (currentNode) {
             // 現在のノードを右の子にずらし、元の位置に新しいノードを挿入します。
@@ -816,7 +816,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             // +-を前置するのは列名と数値リテラルのみです。
             if (nextToken.kind != IDENTIFIER && nextToken.kind != INT_LITERAL) {
               @throw [[TynySQLException alloc]
-                  initWithErrorCode:ERR_WHERE_OPERAND_TYPE];
+                  initWithErrorCode:WhereOperandTypeError];
             }
           }
 
@@ -843,7 +843,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                 ;
               } else {
                 @throw
-                    [[TynySQLException alloc] initWithErrorCode:ERR_SQL_SYNTAX];
+                    [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
               }
             }
           } else if (nextToken.kind == INT_LITERAL) {
@@ -865,7 +865,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             nextToken = [tokenCursol nextObject];
             ;
           } else {
-            @throw [[TynySQLException alloc] initWithErrorCode:ERR_SQL_SYNTAX];
+            @throw [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
           }
 
           // オペランドの右のカッコ閉じるを読み込みます。
@@ -934,7 +934,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             // 演算子のノードを新しく生成します。
             if (MAX_EXTENSION_TREE_NODE_COUNT <= whereExtensionNodesNum) {
               @throw
-                  [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_OVER];
+                  [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
             }
             currentNode = whereExtensionNodes[whereExtensionNodesNum++];
             currentNode.operator= operator;
@@ -968,7 +968,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       nextToken = [tokenCursol nextObject];
       ;
     } else {
-      @throw [[TynySQLException alloc] initWithErrorCode:ERR_SQL_SYNTAX];
+      @throw [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
     }
     bool first = true; // FROM句の最初のテーブル名を読み込み中かどうかです。
     while (nextToken.kind == COMMA || first) {
@@ -978,20 +978,20 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       }
       if (nextToken.kind == IDENTIFIER) {
         if (MAX_TABLE_COUNT <= tableNamesNum) {
-          @throw [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_OVER];
+          @throw [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
         }
         strncpy(tableNames[tableNamesNum++], nextToken.word, MAX_WORD_LENGTH);
         nextToken = [tokenCursol nextObject];
         ;
       } else {
-        @throw [[TynySQLException alloc] initWithErrorCode:ERR_SQL_SYNTAX];
+        @throw [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
       }
       first = false;
     }
 
     // 最後のトークンまで読み込みが進んでいなかったらエラーです。
     if (nextToken) {
-      @throw [[TynySQLException alloc] initWithErrorCode:ERR_SQL_SYNTAX];
+      @throw [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
     }
     Column *inputColumns[MAX_TABLE_COUNT]
                         [MAX_COLUMN_COUNT]; // 入力されたCSVの行の情報です。
@@ -1019,7 +1019,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       // 入力ファイルを開きます。
       inputTableFiles[i] = fopen(fileName, "r");
       if (!inputTableFiles[i]) {
-        @throw [[TynySQLException alloc] initWithErrorCode:ERR_FILE_OPEN];
+        @throw [[TynySQLException alloc] initWithErrorCode:FileOpenError];
       }
 
       // 入力CSVのヘッダ行を読み込みます。
@@ -1032,7 +1032,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         while (*charactorCursol && *charactorCursol != '\r' &&
                *charactorCursol != '\n') {
           if (MAX_COLUMN_COUNT <= inputColumnNums[i]) {
-            @throw [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_OVER];
+            @throw [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
           }
           strncpy(inputColumns[i][inputColumnNums[i]].tableName, tableNames[i],
                   MAX_WORD_LENGTH);
@@ -1052,21 +1052,21 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           ++charactorCursol;
         }
       } else {
-        @throw [[TynySQLException alloc] initWithErrorCode:ERR_CSV_SYNTAX];
+        @throw [[TynySQLException alloc] initWithErrorCode:CsvSyntaxError];
       }
 
       // 入力CSVのデータ行を読み込みます。
       int rowNum = 0;
       while (fgets(inputLine, MAX_FILE_LINE_LENGTH, inputTableFiles[i])) {
         if (MAX_ROW_COUNT <= rowNum) {
-          @throw [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_OVER];
+          @throw [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
         }
         Data **row = inputData[i][rowNum++] =
             malloc(MAX_COLUMN_COUNT *
                    sizeof(Data *)); // 入力されている一行分のデータです。
         if (!row) {
           @throw
-              [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_ALLOCATE];
+              [[TynySQLException alloc] initWithErrorCode:MemoryAllocateError];
         }
         // 生成した行を初期化します。
         for (int j = 0; j < MAX_COLUMN_COUNT; ++j) {
@@ -1083,12 +1083,12 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
           // 読み込んだデータを書き込む行のカラムを生成します。
           if (MAX_COLUMN_COUNT <= columnNum) {
-            @throw [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_OVER];
+            @throw [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
           }
           row[columnNum] = malloc(sizeof(Data));
           if (!row[columnNum]) {
             @throw [[TynySQLException alloc]
-                initWithErrorCode:ERR_MEMORY_ALLOCATE];
+                initWithErrorCode:MemoryAllocateError];
           }
           *row[columnNum] = (Data){.type = STRING, .value = {.string = ""}};
           char *writeCursol =
@@ -1222,13 +1222,13 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             // 既に見つかっているのにもう一つ見つかったらエラーです。
             if (found) {
               @throw [[TynySQLException alloc]
-                  initWithErrorCode:ERR_BAD_COLUMN_NAME];
+                  initWithErrorCode:BadColumnNameError];
             }
             found = true;
             // 見つかった値を持つ列のデータを生成します。
             if (MAX_COLUMN_COUNT <= selectColumnIndexesNum) {
               @throw
-                  [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_OVER];
+                  [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
             }
             selectColumnIndexes[selectColumnIndexesNum++] =
                 [[ColumnIndex alloc] initWithTable:j Column:k];
@@ -1237,7 +1237,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       }
       // 一つも見つからなくてもエラーです。
       if (!found) {
-        @throw [[TynySQLException alloc] initWithErrorCode:ERR_BAD_COLUMN_NAME];
+        @throw [[TynySQLException alloc] initWithErrorCode:BadColumnNameError];
       }
     }
 
@@ -1282,13 +1282,13 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     // 出力するデータを設定します。
     while (true) {
       if (MAX_ROW_COUNT <= outputRowsNum) {
-        @throw [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_OVER];
+        @throw [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
       }
       Data **row = outputData[outputRowsNum] =
           malloc(MAX_COLUMN_COUNT *
                  sizeof(Data *)); // 出力している一行分のデータです。
       if (!row) {
-        @throw [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_ALLOCATE];
+        @throw [[TynySQLException alloc] initWithErrorCode:MemoryAllocateError];
       }
 
       // 生成した行を初期化します。
@@ -1301,7 +1301,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         row[i] = malloc(sizeof(Data));
         if (!row[i]) {
           @throw
-              [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_ALLOCATE];
+              [[TynySQLException alloc] initWithErrorCode:MemoryAllocateError];
         }
         *row[i] = *(*currentRows[selectColumnIndexes[i]
                                      .table])[selectColumnIndexes[i].column];
@@ -1313,7 +1313,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               Data
                   *)); // WHEREやORDERのためにすべての情報を含む行。rowとインデックスを共有します。
       if (!allColumnsRow) {
-        @throw [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_ALLOCATE];
+        @throw [[TynySQLException alloc] initWithErrorCode:MemoryAllocateError];
       }
       // 生成した行を初期化します。
       for (int i = 0; i < MAX_TABLE_COUNT * MAX_COLUMN_COUNT; ++i) {
@@ -1327,7 +1327,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           allColumnsRow[allColumnsNum] = malloc(sizeof(Data));
           if (!allColumnsRow[allColumnsNum]) {
             @throw [[TynySQLException alloc]
-                initWithErrorCode:ERR_MEMORY_ALLOCATE];
+                initWithErrorCode:MemoryAllocateError];
           }
           *allColumnsRow[allColumnsNum++] = *(*currentRows[i])[j];
         }
@@ -1376,7 +1376,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                   // 既に見つかっているのにもう一つ見つかったらエラーです。
                   if (found) {
                     @throw [[TynySQLException alloc]
-                        initWithErrorCode:ERR_BAD_COLUMN_NAME];
+                        initWithErrorCode:BadColumnNameError];
                   }
                   found = true;
                   currentNode.value = allColumnsRow[i];
@@ -1385,7 +1385,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               // 一つも見つからなくてもエラーです。
               if (!found) {
                 @throw [[TynySQLException alloc]
-                    initWithErrorCode:ERR_BAD_COLUMN_NAME];
+                    initWithErrorCode:BadColumnNameError];
               };
               // 符号を考慮して値を計算します。
               if (currentNode.value->type == INTEGER) {
@@ -1406,7 +1406,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                  currentNode.left.value->type != STRING) ||
                 currentNode.left.value->type != currentNode.right.value->type) {
               @throw [[TynySQLException alloc]
-                  initWithErrorCode:ERR_WHERE_OPERAND_TYPE];
+                  initWithErrorCode:WhereOperandTypeError];
             }
             currentNode.value->type = BOOLEAN;
 
@@ -1446,7 +1446,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                 break;
               default:
                 @throw
-                    [[TynySQLException alloc] initWithErrorCode:ERR_SQL_SYNTAX];
+                    [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
               }
               break;
             case STRING:
@@ -1483,12 +1483,12 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                 break;
               default:
                 @throw
-                    [[TynySQLException alloc] initWithErrorCode:ERR_SQL_SYNTAX];
+                    [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
               }
               break;
             default:
               @throw
-                  [[TynySQLException alloc] initWithErrorCode:ERR_SQL_SYNTAX];
+                  [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
             }
             break;
           case PLUS:
@@ -1501,7 +1501,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             if (currentNode.left.value->type != INTEGER ||
                 currentNode.right.value->type != INTEGER) {
               @throw [[TynySQLException alloc]
-                  initWithErrorCode:ERR_WHERE_OPERAND_TYPE];
+                  initWithErrorCode:WhereOperandTypeError];
             }
             currentNode.value->type = INTEGER;
 
@@ -1529,7 +1529,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               break;
             default:
               @throw
-                  [[TynySQLException alloc] initWithErrorCode:ERR_SQL_SYNTAX];
+                  [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
             }
             break;
           case AND:
@@ -1540,7 +1540,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             if (currentNode.left.value->type != BOOLEAN ||
                 currentNode.right.value->type != BOOLEAN) {
               @throw [[TynySQLException alloc]
-                  initWithErrorCode:ERR_WHERE_OPERAND_TYPE];
+                  initWithErrorCode:WhereOperandTypeError];
             }
             currentNode.value->type = BOOLEAN;
 
@@ -1558,11 +1558,11 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               break;
             default:
               @throw
-                  [[TynySQLException alloc] initWithErrorCode:ERR_SQL_SYNTAX];
+                  [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
             }
             break;
           default:
-            @throw [[TynySQLException alloc] initWithErrorCode:ERR_SQL_SYNTAX];
+            @throw [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
           }
           currentNode.calculated = true;
 
@@ -1632,12 +1632,12 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             // 既に見つかっているのにもう一つ見つかったらエラーです。
             if (found) {
               @throw [[TynySQLException alloc]
-                  initWithErrorCode:ERR_BAD_COLUMN_NAME];
+                  initWithErrorCode:BadColumnNameError];
             }
             found = true;
             if (MAX_COLUMN_COUNT <= orderByColumnIndexesNum) {
               @throw
-                  [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_OVER];
+                  [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
             }
             orderByColumnIndexes[orderByColumnIndexesNum++] = j;
           }
@@ -1645,7 +1645,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         // 一つも見つからなくてもエラーです。
         if (!found) {
           @throw
-              [[TynySQLException alloc] initWithErrorCode:ERR_BAD_COLUMN_NAME];
+              [[TynySQLException alloc] initWithErrorCode:BadColumnNameError];
         }
       }
 
@@ -1672,7 +1672,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               break;
             default:
               @throw
-                  [[TynySQLException alloc] initWithErrorCode:ERR_SQL_SYNTAX];
+                  [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
             }
 
             // 降順ならcmpの大小を入れ替えます。
@@ -1703,24 +1703,24 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     // 出力ファイルを開きます。
     outputFile = fopen(outputFileName, "w");
     if (outputFile == NULL) {
-      @throw [[TynySQLException alloc] initWithErrorCode:ERR_FILE_OPEN];
+      @throw [[TynySQLException alloc] initWithErrorCode:FileOpenError];
     }
 
     // 出力ファイルに列名を出力します。
     for (int i = 0; i < selectColumnsNum; ++i) {
       result = fputs(outputColumns[i].columnName, outputFile);
       if (result == EOF) {
-        @throw [[TynySQLException alloc] initWithErrorCode:ERR_FILE_WRITE];
+        @throw [[TynySQLException alloc] initWithErrorCode:FileWriteError];
       }
       if (i < selectColumnsNum - 1) {
         result = fputs(",", outputFile);
         if (result == EOF) {
-          @throw [[TynySQLException alloc] initWithErrorCode:ERR_FILE_WRITE];
+          @throw [[TynySQLException alloc] initWithErrorCode:FileWriteError];
         }
       } else {
         result = fputs("\n", outputFile);
         if (result == EOF) {
-          @throw [[TynySQLException alloc] initWithErrorCode:ERR_FILE_WRITE];
+          @throw [[TynySQLException alloc] initWithErrorCode:FileWriteError];
         }
       }
     }
@@ -1739,21 +1739,21 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           strcpy(outputString, (*column)->value.string);
           break;
         default:
-          @throw [[TynySQLException alloc] initWithErrorCode:ERR_SQL_SYNTAX];
+          @throw [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
         }
         result = fputs(outputString, outputFile);
         if (result == EOF) {
-          @throw [[TynySQLException alloc] initWithErrorCode:ERR_FILE_WRITE];
+          @throw [[TynySQLException alloc] initWithErrorCode:FileWriteError];
         }
         if (i < selectColumnsNum - 1) {
           result = fputs(",", outputFile);
           if (result == EOF) {
-            @throw [[TynySQLException alloc] initWithErrorCode:ERR_FILE_WRITE];
+            @throw [[TynySQLException alloc] initWithErrorCode:FileWriteError];
           }
         } else {
           result = fputs("\n", outputFile);
           if (result == EOF) {
-            @throw [[TynySQLException alloc] initWithErrorCode:ERR_FILE_WRITE];
+            @throw [[TynySQLException alloc] initWithErrorCode:FileWriteError];
           }
         }
         ++column;
@@ -1768,14 +1768,14 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       if (inputTableFiles[i]) {
         fclose(inputTableFiles[i]);
         if (result == EOF) {
-          @throw [[TynySQLException alloc] initWithErrorCode:ERR_FILE_CLOSE];
+          @throw [[TynySQLException alloc] initWithErrorCode:FileCloseError];
         }
       }
     }
     if (outputFile) {
       fclose(outputFile);
       if (result == EOF) {
-        @throw [[TynySQLException alloc] initWithErrorCode:ERR_FILE_CLOSE];
+        @throw [[TynySQLException alloc] initWithErrorCode:FileCloseError];
       }
     }
 
@@ -1810,7 +1810,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       currentRow++;
     }
 
-    return OK;
+    return ResultOk;
   } @catch (TynySQLException *ex) {
     // エラー時の処理です。
 
