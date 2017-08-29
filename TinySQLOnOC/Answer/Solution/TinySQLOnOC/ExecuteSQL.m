@@ -28,12 +28,12 @@ int ExecuteSQL(const char *sql, const char *outputFileName);
 
 //! ExecuteSQLの戻り値の種類を表します。
 typedef NS_ENUM(NSUInteger, ResultValue) {
-  ResultOk = 0,            //!< 問題なく終了しました。
+  ResultOk = 0,      //!< 問題なく終了しました。
   FileOpenError = 1, //!< ファイルを開くことに失敗しました。
   FileWriteError = 2, //!< ファイルに書き込みを行うことに失敗しました。
   FileCloseError = 3, //!< ファイルを閉じることに失敗しました。
   TokenCantReadError = 4, //!< トークン解析に失敗しました。
-  SqlSyntaxError = 5,      //!< SQLの構文解析が失敗しました。
+  SqlSyntaxError = 5,     //!< SQLの構文解析が失敗しました。
   BadColumnNameError = 6, //!< テーブル指定を含む列名が適切ではありません。
   WhereOperandTypeError = 7, //!< 演算の左右の型が適切ではありません。
   CsvSyntaxError = 8,      //!< CSVの構文解析が失敗しました。
@@ -45,38 +45,38 @@ typedef NS_ENUM(NSUInteger, ResultValue) {
 typedef NS_ENUM(NSUInteger, DataType) {
   String,  //!< 文字列型です。
   Integer, //!< 整数型です。
-  Bool  //!< 真偽値型です。
+  Bool     //!< 真偽値型です。
 };
 
 //! トークンの種類を表します。
-typedef NS_ENUM(NSUInteger, TOKEN_KIND) {
-  NOT_TOKEN,             //!< トークンを表しません。
-  ASC,                   //!< ASCキーワードです。
-  AND,                   //!< ANDキーワードです。
-  BY,                    //!< BYキーワードです。
-  DESC,                  //!< DESCキーワードです。
-  FROM,                  //!< FROMキーワードです。
-  OR,                    //!< ORキーワードです。
-  ORDER,                 //!< ORDERキーワードです。
-  SELECT,                //!< SELECTキーワードです。
-  WHERE,                 //!< WHEREキーワードです。
-  ASTERISK,              //!< ＊ 記号です。
-  COMMA,                 //!< ， 記号です。
-  CLOSE_PAREN,           //!< ） 記号です。
-  DOT,                   //!< ． 記号です。
-  EQUAL,                 //!< ＝ 記号です。
-  GREATER_THAN,          //!< ＞ 記号です。
-  GREATER_THAN_OR_EQUAL, //!< ＞＝ 記号です。
-  LESS_THAN,             //!< ＜ 記号です。
-  LESS_THAN_OR_EQUAL,    //!< ＜＝ 記号です。
-  MINUS,                 //!< － 記号です。
-  NOT_EQUAL,             //!< ＜＞ 記号です。
-  OPEN_PAREN,            //!< （ 記号です。
-  PLUS,                  //!< ＋ 記号です。
-  SLASH,                 //!< ／ 記号です。
-  IDENTIFIER,            //!< 識別子です。
-  INT_LITERAL,           //!< 整数リテラルです。
-  STRING_LITERAL         //!< 文字列リテラルです。
+typedef NS_ENUM(NSUInteger, TokenKind) {
+  NoToken,                 //!< トークンを表しません。
+  AscToken,                //!< ASCキーワードです。
+  AndToken,                //!< ANDキーワードです。
+  ByToken,                 //!< BYキーワードです。
+  DescToken,               //!< DESCキーワードです。
+  FromToken,               //!< FROMキーワードです。
+  OrToken,                 //!< ORキーワードです。
+  OrderToken,              //!< ORDERキーワードです。
+  SelectToken,             //!< SELECTキーワードです。
+  WhereToken,              //!< WHEREキーワードです。
+  AsteriskToken,           //!< ＊ 記号です。
+  CommaToken,              //!< ， 記号です。
+  CloseParenToken,         //!< ） 記号です。
+  DotToken,                //!< ． 記号です。
+  EqualToken,              //!< ＝ 記号です。
+  GreaterThanToken,        //!< ＞ 記号です。
+  GreaterThanOrEqualToken, //!< ＞＝ 記号です。
+  LessThanToken,           //!< ＜ 記号です。
+  LessThanOrEqualToken,    //!< ＜＝ 記号です。
+  MinusToken,              //!< － 記号です。
+  NotEqualToken,           //!< ＜＞ 記号です。
+  OpenParenToken,          //!< （ 記号です。
+  PlusToken,               //!< ＋ 記号です。
+  SlashToken,              //!< ／ 記号です。
+  IdentifierToken,         //!< 識別子です。
+  IntLiteralToken,         //!< 整数リテラルです。
+  StringLiteralToken       //!< 文字列リテラルです。
 };
 
 //! 一つの値を持つデータです。
@@ -93,22 +93,22 @@ typedef struct {
 
 //! WHERE句に指定する演算子の情報を表します。
 @interface Operator : NSObject
-@property enum TOKEN_KIND
+@property enum TokenKind
     kind;            //!< 演算子の種類を、演算子を記述するトークンの種類で表します。
 @property int order; //!< 演算子の優先順位です。
 - (Operator *)init;
-- (Operator *)initWithKind:(enum TOKEN_KIND)kind Order:(int)order;
+- (Operator *)initWithKind:(enum TokenKind)kind Order:(int)order;
 @end
 
 //! トークンを表します。
 @interface Token : NSObject {
   char __word[MAX_WORD_LENGTH];
 }
-@property enum TOKEN_KIND kind; //!< トークンの種類です。
-@property char *word;           //!<
+@property enum TokenKind kind; //!< トークンの種類です。
+@property char *word;          //!<
 //!記録されているトークンの文字列です。記録の必要がなければ空白です。
 - (Token *)init;
-- (Token *)initWithKind:(enum TOKEN_KIND)kind Word:(char *)word;
+- (Token *)initWithKind:(enum TokenKind)kind Word:(char *)word;
 
 @end
 
@@ -164,11 +164,11 @@ typedef struct {
 
 @implementation Operator
 - (Operator *)init {
-  _kind = NOT_TOKEN;
+  _kind = NoToken;
   _order = 0;
   return self;
 }
-- (Operator *)initWithKind:(enum TOKEN_KIND)kind Order:(int)order {
+- (Operator *)initWithKind:(enum TokenKind)kind Order:(int)order {
   _kind = kind;
   _order = order;
   return self;
@@ -177,12 +177,12 @@ typedef struct {
 @implementation Token
 
 - (Token *)init {
-  _kind = NOT_TOKEN;
+  _kind = NoToken;
   strcpy(__word, "");
   _word = __word;
   return self;
 }
-- (Token *)initWithKind:(enum TOKEN_KIND)kind Word:(char *)word {
+- (Token *)initWithKind:(enum TokenKind)kind Word:(char *)word {
   _kind = kind;
   strncpy(__word, word, MAX_WORD_LENGTH);
   _word = __word;
@@ -356,33 +356,33 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
     // キーワードをトークンとして認識するためのキーワード一覧情報です。
     NSArray *keywordConditions = @[
-      [[Token alloc] initWithKind:AND Word:"AND"],
-      [[Token alloc] initWithKind:ASC Word:"ASC"],
-      [[Token alloc] initWithKind:BY Word:"BY"],
-      [[Token alloc] initWithKind:DESC Word:"DESC"],
-      [[Token alloc] initWithKind:FROM Word:"FROM"],
-      [[Token alloc] initWithKind:ORDER Word:"ORDER"],
-      [[Token alloc] initWithKind:OR Word:"OR"],
-      [[Token alloc] initWithKind:SELECT Word:"SELECT"],
-      [[Token alloc] initWithKind:WHERE Word:"WHERE"]
+      [[Token alloc] initWithKind:AndToken Word:"AND"],
+      [[Token alloc] initWithKind:AscToken Word:"ASC"],
+      [[Token alloc] initWithKind:ByToken Word:"BY"],
+      [[Token alloc] initWithKind:DescToken Word:"DESC"],
+      [[Token alloc] initWithKind:FromToken Word:"FROM"],
+      [[Token alloc] initWithKind:OrderToken Word:"ORDER"],
+      [[Token alloc] initWithKind:OrToken Word:"OR"],
+      [[Token alloc] initWithKind:SelectToken Word:"SELECT"],
+      [[Token alloc] initWithKind:WhereToken Word:"WHERE"]
     ];
 
     // 記号をトークンとして認識するための記号一覧情報です。
     NSArray *signConditions = @[
-      [[Token alloc] initWithKind:GREATER_THAN_OR_EQUAL Word:">="],
-      [[Token alloc] initWithKind:LESS_THAN_OR_EQUAL Word:"<="],
-      [[Token alloc] initWithKind:NOT_EQUAL Word:"<>"],
-      [[Token alloc] initWithKind:ASTERISK Word:"*"],
-      [[Token alloc] initWithKind:COMMA Word:","],
-      [[Token alloc] initWithKind:CLOSE_PAREN Word:")"],
-      [[Token alloc] initWithKind:DOT Word:"."],
-      [[Token alloc] initWithKind:EQUAL Word:"="],
-      [[Token alloc] initWithKind:GREATER_THAN Word:">"],
-      [[Token alloc] initWithKind:LESS_THAN Word:"<"],
-      [[Token alloc] initWithKind:MINUS Word:"-"],
-      [[Token alloc] initWithKind:OPEN_PAREN Word:"("],
-      [[Token alloc] initWithKind:PLUS Word:"+"],
-      [[Token alloc] initWithKind:SLASH Word:"/"]
+      [[Token alloc] initWithKind:GreaterThanOrEqualToken Word:">="],
+      [[Token alloc] initWithKind:LessThanOrEqualToken Word:"<="],
+      [[Token alloc] initWithKind:NotEqualToken Word:"<>"],
+      [[Token alloc] initWithKind:AsteriskToken Word:"*"],
+      [[Token alloc] initWithKind:CommaToken Word:","],
+      [[Token alloc] initWithKind:CloseParenToken Word:")"],
+      [[Token alloc] initWithKind:DotToken Word:"."],
+      [[Token alloc] initWithKind:EqualToken Word:"="],
+      [[Token alloc] initWithKind:GreaterThanToken Word:">"],
+      [[Token alloc] initWithKind:LessThanToken Word:"<"],
+      [[Token alloc] initWithKind:MinusToken Word:"-"],
+      [[Token alloc] initWithKind:OpenParenToken Word:"("],
+      [[Token alloc] initWithKind:PlusToken Word:"+"],
+      [[Token alloc] initWithKind:SlashToken Word:"/"]
     ];
 
     NSMutableArray *tokens =
@@ -390,18 +390,18 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
     // 演算子の情報です。
     Operator *operators[] = {
-        [[Operator alloc] initWithKind:ASTERISK Order:1],
-        [[Operator alloc] initWithKind:SLASH Order:1],
-        [[Operator alloc] initWithKind:PLUS Order:2],
-        [[Operator alloc] initWithKind:MINUS Order:2],
-        [[Operator alloc] initWithKind:EQUAL Order:3],
-        [[Operator alloc] initWithKind:GREATER_THAN Order:3],
-        [[Operator alloc] initWithKind:GREATER_THAN_OR_EQUAL Order:3],
-        [[Operator alloc] initWithKind:LESS_THAN Order:3],
-        [[Operator alloc] initWithKind:LESS_THAN_OR_EQUAL Order:3],
-        [[Operator alloc] initWithKind:NOT_EQUAL Order:3],
-        [[Operator alloc] initWithKind:AND Order:4],
-        [[Operator alloc] initWithKind:OR Order:5]};
+        [[Operator alloc] initWithKind:AsteriskToken Order:1],
+        [[Operator alloc] initWithKind:SlashToken Order:1],
+        [[Operator alloc] initWithKind:PlusToken Order:2],
+        [[Operator alloc] initWithKind:MinusToken Order:2],
+        [[Operator alloc] initWithKind:EqualToken Order:3],
+        [[Operator alloc] initWithKind:GreaterThanToken Order:3],
+        [[Operator alloc] initWithKind:GreaterThanOrEqualToken Order:3],
+        [[Operator alloc] initWithKind:LessThanToken Order:3],
+        [[Operator alloc] initWithKind:LessThanOrEqualToken Order:3],
+        [[Operator alloc] initWithKind:NotEqualToken Order:3],
+        [[Operator alloc] initWithKind:AndToken Order:4],
+        [[Operator alloc] initWithKind:OrToken Order:5]};
 
     const char *charactorBackPoint =
         NULL; // SQLをトークンに分割して読み込む時に戻るポイントを記録しておきます。
@@ -435,7 +435,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       }
       if (*search) {
         Token *literal = [[Token alloc]
-            initWithKind:INT_LITERAL
+            initWithKind:IntLiteralToken
                     Word:""]; // 読み込んだ数値リテラルの情報です。
         int wordLength = 0; // 数値リテラルに現在読み込んでいる文字の数です。
 
@@ -473,7 +473,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       if (*charactorCursol == "\'"[0]) {
         ++charactorCursol;
         Token *literal = [[Token alloc]
-            initWithKind:STRING_LITERAL
+            initWithKind:StringLiteralToken
                     Word:"\'"]; // 読み込んだ文字列リテラルの情報です。
         int wordLength =
             1; // 文字列リテラルに現在読み込んでいる文字の数です。初期値の段階で最初のシングルクォートは読み込んでいます。
@@ -568,7 +568,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       };
       if (*search) {
         Token *identifier =
-            [[Token alloc] initWithKind:IDENTIFIER
+            [[Token alloc] initWithKind:IdentifierToken
                                    Word:""]; // 読み込んだ識別子の情報です。
         int wordLength = 0; // 識別子に現在読み込んでいる文字の数です。
         do {
@@ -619,7 +619,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     }
     int orderByColumnsNum = 0; // ORDER句から現在読み込まれた列名の数です。
 
-    enum TOKEN_KIND orders[MAX_COLUMN_COUNT] = {
+    enum TokenKind orders[MAX_COLUMN_COUNT] = {
         0}; // 同じインデックスのorderByColumnsに対応している、昇順、降順の指定です。
 
     ExtensionTreeNode *whereExtensionNodes
@@ -639,23 +639,23 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
     // SELECT句を読み込みます。
     Token *nextToken = [tokenCursol nextObject];
-    if (nextToken.kind == SELECT) {
+    if (nextToken.kind == SelectToken) {
       nextToken = [tokenCursol nextObject];
     } else {
       @throw [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
     }
 
-    if (nextToken.kind == ASTERISK) {
+    if (nextToken.kind == AsteriskToken) {
       nextToken = [tokenCursol nextObject];
     } else {
       bool first =
           true; // SELECT句に最初に指定された列名の読み込みかどうかです。
-      while (nextToken.kind == COMMA || first) {
-        if (nextToken.kind == COMMA) {
+      while (nextToken.kind == CommaToken || first) {
+        if (nextToken.kind == CommaToken) {
           nextToken = [tokenCursol nextObject];
           ;
         }
-        if (nextToken.kind == IDENTIFIER) {
+        if (nextToken.kind == IdentifierToken) {
           if (MAX_COLUMN_COUNT <= selectColumnsNum) {
 
             @throw [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
@@ -667,10 +667,10 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                   MAX_WORD_LENGTH);
           nextToken = [tokenCursol nextObject];
           ;
-          if (nextToken.kind == DOT) {
+          if (nextToken.kind == DotToken) {
             nextToken = [tokenCursol nextObject];
             ;
-            if (nextToken.kind == IDENTIFIER) {
+            if (nextToken.kind == IdentifierToken) {
 
               // テーブル名が指定されていることがわかったので読み替えます。
               strncpy(selectColumns[selectColumnsNum].tableName,
@@ -696,32 +696,32 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     // ORDER句とWHERE句を読み込みます。最大各一回ずつ書くことができます。
     bool readOrder = false; // すでにORDER句が読み込み済みかどうかです。
     bool readWhere = false; // すでにWHERE句が読み込み済みかどうかです。
-    while (nextToken.kind == ORDER || nextToken.kind == WHERE) {
+    while (nextToken.kind == OrderToken || nextToken.kind == WhereToken) {
 
       // 二度目のORDER句はエラーです。
-      if (readOrder && nextToken.kind == ORDER) {
+      if (readOrder && nextToken.kind == OrderToken) {
         @throw [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
       }
 
       // 二度目のWHERE句はエラーです。
-      if (readWhere && nextToken.kind == WHERE) {
+      if (readWhere && nextToken.kind == WhereToken) {
         @throw [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
       }
       // ORDER句を読み込みます。
-      if (nextToken.kind == ORDER) {
+      if (nextToken.kind == OrderToken) {
         readOrder = true;
         nextToken = [tokenCursol nextObject];
         ;
-        if (nextToken.kind == BY) {
+        if (nextToken.kind == ByToken) {
           nextToken = [tokenCursol nextObject];
           ;
           bool first = true; // ORDER句の最初の列名の読み込みかどうかです。
-          while (nextToken.kind == COMMA || first) {
-            if (nextToken.kind == COMMA) {
+          while (nextToken.kind == CommaToken || first) {
+            if (nextToken.kind == CommaToken) {
               nextToken = [tokenCursol nextObject];
               ;
             }
-            if (nextToken.kind == IDENTIFIER) {
+            if (nextToken.kind == IdentifierToken) {
               if (MAX_COLUMN_COUNT <= orderByColumnsNum) {
                 @throw [[TynySQLException alloc]
                     initWithErrorCode:MemoryOverError];
@@ -733,10 +733,10 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                       nextToken.word, MAX_WORD_LENGTH);
               nextToken = [tokenCursol nextObject];
               ;
-              if (nextToken.kind == DOT) {
+              if (nextToken.kind == DotToken) {
                 nextToken = [tokenCursol nextObject];
                 ;
-                if (nextToken.kind == IDENTIFIER) {
+                if (nextToken.kind == IdentifierToken) {
 
                   // テーブル名が指定されていることがわかったので読み替えます。
                   strncpy(orderByColumns[orderByColumnsNum].tableName,
@@ -753,17 +753,17 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               }
 
               // 並び替えの昇順、降順を指定します。
-              if (nextToken.kind == ASC) {
-                orders[orderByColumnsNum] = ASC;
+              if (nextToken.kind == AscToken) {
+                orders[orderByColumnsNum] = AscToken;
                 nextToken = [tokenCursol nextObject];
                 ;
-              } else if (nextToken.kind == DESC) {
-                orders[orderByColumnsNum] = DESC;
+              } else if (nextToken.kind == DescToken) {
+                orders[orderByColumnsNum] = DescToken;
                 nextToken = [tokenCursol nextObject];
                 ;
               } else {
                 // 指定がない場合は昇順となります。
-                orders[orderByColumnsNum] = ASC;
+                orders[orderByColumnsNum] = AscToken;
               }
               ++orderByColumnsNum;
             } else {
@@ -778,7 +778,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       }
 
       // WHERE句を読み込みます。
-      if (nextToken.kind == WHERE) {
+      if (nextToken.kind == WhereToken) {
         readWhere = true;
         nextToken = [tokenCursol nextObject];
         ;
@@ -801,27 +801,28 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           }
 
           // カッコ開くを読み込みます。
-          while (nextToken.kind == OPEN_PAREN) {
+          while (nextToken.kind == OpenParenToken) {
             ++currentNode.parenOpenBeforeClose;
             nextToken = [tokenCursol nextObject];
             ;
           }
 
           // オペランドに前置される+か-を読み込みます。
-          if (nextToken.kind == PLUS || nextToken.kind == MINUS) {
-            if (nextToken.kind == MINUS) {
+          if (nextToken.kind == PlusToken || nextToken.kind == MinusToken) {
+            if (nextToken.kind == MinusToken) {
               currentNode.signCoefficient = -1;
             }
             nextToken = [tokenCursol nextObject];
             // +-を前置するのは列名と数値リテラルのみです。
-            if (nextToken.kind != IDENTIFIER && nextToken.kind != INT_LITERAL) {
+            if (nextToken.kind != IdentifierToken &&
+                nextToken.kind != IntLiteralToken) {
               @throw [[TynySQLException alloc]
                   initWithErrorCode:WhereOperandTypeError];
             }
           }
 
           // 列名、整数リテラル、文字列リテラルのいずれかをオペランドとして読み込みます。
-          if (nextToken.kind == IDENTIFIER) {
+          if (nextToken.kind == IdentifierToken) {
 
             // テーブル名が指定されていない場合と仮定して読み込みます。
             strncpy(currentNode.column.tableName, "", MAX_WORD_LENGTH);
@@ -829,10 +830,10 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                     MAX_WORD_LENGTH);
             nextToken = [tokenCursol nextObject];
             ;
-            if (nextToken.kind == DOT) {
+            if (nextToken.kind == DotToken) {
               nextToken = [tokenCursol nextObject];
               ;
-              if (nextToken.kind == IDENTIFIER) {
+              if (nextToken.kind == IdentifierToken) {
 
                 // テーブル名が指定されていることがわかったので読み替えます。
                 strncpy(currentNode.column.tableName,
@@ -846,12 +847,12 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                     [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
               }
             }
-          } else if (nextToken.kind == INT_LITERAL) {
+          } else if (nextToken.kind == IntLiteralToken) {
             currentNode.value = &(Data){
                 .type = Integer, .value = {.integer = atoi(nextToken.word)}};
             nextToken = [tokenCursol nextObject];
             ;
-          } else if (nextToken.kind == STRING_LITERAL) {
+          } else if (nextToken.kind == StringLiteralToken) {
             currentNode.value =
                 &(Data){.type = String, .value = {.string = ""}};
 
@@ -869,7 +870,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           }
 
           // オペランドの右のカッコ閉じるを読み込みます。
-          while (nextToken.kind == CLOSE_PAREN) {
+          while (nextToken.kind == CloseParenToken) {
             ExtensionTreeNode *searchedAncestor =
                 currentNode
                     .parent; // カッコ閉じると対応するカッコ開くを両方含む祖先ノードを探すためのカーソルです。
@@ -964,19 +965,19 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     }
 
     // FROM句を読み込みます。
-    if (nextToken.kind == FROM) {
+    if (nextToken.kind == FromToken) {
       nextToken = [tokenCursol nextObject];
       ;
     } else {
       @throw [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
     }
     bool first = true; // FROM句の最初のテーブル名を読み込み中かどうかです。
-    while (nextToken.kind == COMMA || first) {
-      if (nextToken.kind == COMMA) {
+    while (nextToken.kind == CommaToken || first) {
+      if (nextToken.kind == CommaToken) {
         nextToken = [tokenCursol nextObject];
         ;
       }
-      if (nextToken.kind == IDENTIFIER) {
+      if (nextToken.kind == IdentifierToken) {
         if (MAX_TABLE_COUNT <= tableNamesNum) {
           @throw [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
         }
@@ -1261,7 +1262,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       for (int i = 0; i < whereExtensionNodesNum; ++i) {
         if (whereExtensionNodes[i]
                 .
-                operator.kind == NOT_TOKEN && !*whereExtensionNodes[i]
+                operator.kind == NoToken && !*whereExtensionNodes[i]
                 .column.columnName && whereExtensionNodes[i]
                 .value->type == Integer) {
           whereExtensionNodes[i].value->value.integer *=
@@ -1348,7 +1349,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
           // 自ノードの値を計算します。
           switch (currentNode.operator.kind) {
-          case NOT_TOKEN:
+          case NoToken:
             // ノードにデータが設定されている場合です。
 
             // データが列名で指定されている場合、今扱っている行のデータを設定します。
@@ -1393,12 +1394,12 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               }
             }
             break;
-          case EQUAL:
-          case GREATER_THAN:
-          case GREATER_THAN_OR_EQUAL:
-          case LESS_THAN:
-          case LESS_THAN_OR_EQUAL:
-          case NOT_EQUAL:
+          case EqualToken:
+          case GreaterThanToken:
+          case GreaterThanOrEqualToken:
+          case LessThanToken:
+          case LessThanOrEqualToken:
+          case NotEqualToken:
             // 比較演算子の場合です。
 
             // 比較できるのは文字列型か整数型で、かつ左右の型が同じ場合です。
@@ -1414,32 +1415,32 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             switch (currentNode.left.value->type) {
             case Integer:
               switch (currentNode.operator.kind) {
-              case EQUAL:
+              case EqualToken:
                 currentNode.value->value.boolean =
                     currentNode.left.value->value.integer ==
                     currentNode.right.value->value.integer;
                 break;
-              case GREATER_THAN:
+              case GreaterThanToken:
                 currentNode.value->value.boolean =
                     currentNode.left.value->value.integer >
                     currentNode.right.value->value.integer;
                 break;
-              case GREATER_THAN_OR_EQUAL:
+              case GreaterThanOrEqualToken:
                 currentNode.value->value.boolean =
                     currentNode.left.value->value.integer >=
                     currentNode.right.value->value.integer;
                 break;
-              case LESS_THAN:
+              case LessThanToken:
                 currentNode.value->value.boolean =
                     currentNode.left.value->value.integer <
                     currentNode.right.value->value.integer;
                 break;
-              case LESS_THAN_OR_EQUAL:
+              case LessThanOrEqualToken:
                 currentNode.value->value.boolean =
                     currentNode.left.value->value.integer <=
                     currentNode.right.value->value.integer;
                 break;
-              case NOT_EQUAL:
+              case NotEqualToken:
                 currentNode.value->value.boolean =
                     currentNode.left.value->value.integer !=
                     currentNode.right.value->value.integer;
@@ -1451,32 +1452,32 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               break;
             case String:
               switch (currentNode.operator.kind) {
-              case EQUAL:
+              case EqualToken:
                 currentNode.value->value.boolean =
                     strcmp(currentNode.left.value->value.string,
                            currentNode.right.value->value.string) == 0;
                 break;
-              case GREATER_THAN:
+              case GreaterThanToken:
                 currentNode.value->value.boolean =
                     strcmp(currentNode.left.value->value.string,
                            currentNode.right.value->value.string) > 0;
                 break;
-              case GREATER_THAN_OR_EQUAL:
+              case GreaterThanOrEqualToken:
                 currentNode.value->value.boolean =
                     strcmp(currentNode.left.value->value.string,
                            currentNode.right.value->value.string) >= 0;
                 break;
-              case LESS_THAN:
+              case LessThanToken:
                 currentNode.value->value.boolean =
                     strcmp(currentNode.left.value->value.string,
                            currentNode.right.value->value.string) < 0;
                 break;
-              case LESS_THAN_OR_EQUAL:
+              case LessThanOrEqualToken:
                 currentNode.value->value.boolean =
                     strcmp(currentNode.left.value->value.string,
                            currentNode.right.value->value.string) <= 0;
                 break;
-              case NOT_EQUAL:
+              case NotEqualToken:
                 currentNode.value->value.boolean =
                     strcmp(currentNode.left.value->value.string,
                            currentNode.right.value->value.string) != 0;
@@ -1491,10 +1492,10 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                   [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
             }
             break;
-          case PLUS:
-          case MINUS:
-          case ASTERISK:
-          case SLASH:
+          case PlusToken:
+          case MinusToken:
+          case AsteriskToken:
+          case SlashToken:
             // 四則演算の場合です。
 
             // 演算できるのは整数型同士の場合のみです。
@@ -1507,22 +1508,22 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
             // 比較結果を演算子によって計算方法を変えて、計算します。
             switch (currentNode.operator.kind) {
-            case PLUS:
+            case PlusToken:
               currentNode.value->value.integer =
                   currentNode.left.value->value.integer +
                   currentNode.right.value->value.integer;
               break;
-            case MINUS:
+            case MinusToken:
               currentNode.value->value.integer =
                   currentNode.left.value->value.integer -
                   currentNode.right.value->value.integer;
               break;
-            case ASTERISK:
+            case AsteriskToken:
               currentNode.value->value.integer =
                   currentNode.left.value->value.integer *
                   currentNode.right.value->value.integer;
               break;
-            case SLASH:
+            case SlashToken:
               currentNode.value->value.integer =
                   currentNode.left.value->value.integer /
                   currentNode.right.value->value.integer;
@@ -1532,8 +1533,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                   [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
             }
             break;
-          case AND:
-          case OR:
+          case AndToken:
+          case OrToken:
             // 論理演算の場合です。
 
             // 演算できるのは真偽値型同士の場合のみです。
@@ -1546,12 +1547,12 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
             // 比較結果を演算子によって計算方法を変えて、計算します。
             switch (currentNode.operator.kind) {
-            case AND:
+            case AndToken:
               currentNode.value->value.boolean =
                   currentNode.left.value->value.boolean &&
                   currentNode.right.value->value.boolean;
               break;
-            case OR:
+            case OrToken:
               currentNode.value->value.boolean =
                   currentNode.left.value->value.boolean ||
                   currentNode.right.value->value.boolean;
@@ -1676,7 +1677,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             }
 
             // 降順ならcmpの大小を入れ替えます。
-            if (orders[k] == DESC) {
+            if (orders[k] == DescToken) {
               cmp *= -1;
             }
             if (cmp < 0) {
