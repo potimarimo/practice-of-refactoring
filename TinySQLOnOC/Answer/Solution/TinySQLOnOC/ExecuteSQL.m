@@ -386,11 +386,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       [[Token alloc] initWithKind:SLASH Word:"/"]
     ];
 
-    Token *tokens[MAX_TOKEN_COUNT]; // SQLを分割したトークンです。
-    for (size_t i = 0; i < sizeof(tokens) / sizeof(tokens[0]); i++) {
-      tokens[i] = [[Token alloc] init];
-    }
-    int tokensNum = 0; // tokensの有効な数です。
+    NSMutableArray *tokens =
+        [NSMutableArray array]; // SQLを分割したトークンです。
 
     // 演算子の情報です。
     Operator *operators[] = {
@@ -463,10 +460,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         }
         if (!*search) {
           literal.word[wordLength] = '\0';
-          if (MAX_TOKEN_COUNT <= tokensNum) {
-            @throw [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_OVER];
-          }
-          tokens[tokensNum++] = literal;
+          [tokens addObject:literal];
           continue;
         } else {
           charactorCursol = charactorBackPoint;
@@ -501,10 +495,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
           // 文字列の終端文字をつけます。
           literal.word[wordLength] = '\0';
-          if (MAX_TOKEN_COUNT <= tokensNum) {
-            @throw [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_OVER];
-          }
-          tokens[tokensNum++] = literal;
+          [tokens addObject:literal];
           continue;
         } else {
           @throw
@@ -533,11 +524,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         if (!*wordCursol && !*search) {
 
           // 見つかったキーワードを生成します。
-          if (MAX_TOKEN_COUNT <= tokensNum) {
-            @throw [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_OVER];
-          }
-          tokens[tokensNum++] =
-              [[Token alloc] initWithKind:condition.kind Word:""];
+          [tokens
+              addObject:[[Token alloc] initWithKind:condition.kind Word:""]];
           found = true;
         } else {
           charactorCursol = charactorBackPoint;
@@ -562,11 +550,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         if (!*wordCursol) {
 
           // 見つかった記号を生成します。
-          if (MAX_TOKEN_COUNT <= tokensNum) {
-            @throw [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_OVER];
-          }
-          tokens[tokensNum++] =
-              [[Token alloc] initWithKind:condition.kind Word:""];
+          [tokens
+              addObject:[[Token alloc] initWithKind:condition.kind Word:""]];
           found = true;
         } else {
           charactorCursol = charactorBackPoint;
@@ -606,10 +591,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         identifier.word[wordLength] = '\0';
 
         // 読み込んだ識別子を登録します。
-        if (MAX_TOKEN_COUNT <= tokensNum) {
-          @throw [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_OVER];
-        }
-        tokens[tokensNum++] = identifier;
+        [tokens addObject:identifier];
         continue;
       }
 
@@ -618,7 +600,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
     // トークン列を解析し、構文を読み取ります。
 
-    Token *const *tokenCursol = tokens; // 現在見ているトークンを指します。
+    NSEnumerator *tokenCursol =
+        [tokens objectEnumerator]; // 現在見ているトークンを指します。
 
     Column *selectColumns[MAX_TABLE_COUNT *
                           MAX_COLUMN_COUNT]; // SELECT句に指定された列名です。
@@ -656,22 +639,24 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     // SQLの構文を解析し、必要な情報を取得します。
 
     // SELECT句を読み込みます。
-    if ((*tokenCursol).kind == SELECT) {
-      ++tokenCursol;
+    Token *nextToken = [tokenCursol nextObject];
+    if (nextToken.kind == SELECT) {
+      nextToken = [tokenCursol nextObject];
     } else {
       @throw [[TynySQLException alloc] initWithErrorCode:ERR_SQL_SYNTAX];
     }
 
-    if ((*tokenCursol).kind == ASTERISK) {
-      ++tokenCursol;
+    if (nextToken.kind == ASTERISK) {
+      nextToken = [tokenCursol nextObject];
     } else {
       bool first =
           true; // SELECT句に最初に指定された列名の読み込みかどうかです。
-      while ((*tokenCursol).kind == COMMA || first) {
-        if ((*tokenCursol).kind == COMMA) {
-          ++tokenCursol;
+      while (nextToken.kind == COMMA || first) {
+        if (nextToken.kind == COMMA) {
+          nextToken = [tokenCursol nextObject];
+          ;
         }
-        if ((*tokenCursol).kind == IDENTIFIER) {
+        if (nextToken.kind == IDENTIFIER) {
           if (MAX_COLUMN_COUNT <= selectColumnsNum) {
 
             @throw [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_OVER];
@@ -679,20 +664,23 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           // テーブル名が指定されていない場合と仮定して読み込みます。
           strncpy(selectColumns[selectColumnsNum].tableName, "",
                   MAX_WORD_LENGTH);
-          strncpy(selectColumns[selectColumnsNum].columnName,
-                  (*tokenCursol).word, MAX_WORD_LENGTH);
-          ++tokenCursol;
-          if ((*tokenCursol).kind == DOT) {
-            ++tokenCursol;
-            if ((*tokenCursol).kind == IDENTIFIER) {
+          strncpy(selectColumns[selectColumnsNum].columnName, nextToken.word,
+                  MAX_WORD_LENGTH);
+          nextToken = [tokenCursol nextObject];
+          ;
+          if (nextToken.kind == DOT) {
+            nextToken = [tokenCursol nextObject];
+            ;
+            if (nextToken.kind == IDENTIFIER) {
 
               // テーブル名が指定されていることがわかったので読み替えます。
               strncpy(selectColumns[selectColumnsNum].tableName,
                       selectColumns[selectColumnsNum].columnName,
                       MAX_WORD_LENGTH);
               strncpy(selectColumns[selectColumnsNum].columnName,
-                      (*tokenCursol).word, MAX_WORD_LENGTH);
-              ++tokenCursol;
+                      nextToken.word, MAX_WORD_LENGTH);
+              nextToken = [tokenCursol nextObject];
+              ;
             } else {
               @throw
                   [[TynySQLException alloc] initWithErrorCode:ERR_SQL_SYNTAX];
@@ -709,29 +697,32 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     // ORDER句とWHERE句を読み込みます。最大各一回ずつ書くことができます。
     bool readOrder = false; // すでにORDER句が読み込み済みかどうかです。
     bool readWhere = false; // すでにWHERE句が読み込み済みかどうかです。
-    while ((*tokenCursol).kind == ORDER || (*tokenCursol).kind == WHERE) {
+    while (nextToken.kind == ORDER || nextToken.kind == WHERE) {
 
       // 二度目のORDER句はエラーです。
-      if (readOrder && (*tokenCursol).kind == ORDER) {
+      if (readOrder && nextToken.kind == ORDER) {
         @throw [[TynySQLException alloc] initWithErrorCode:ERR_SQL_SYNTAX];
       }
 
       // 二度目のWHERE句はエラーです。
-      if (readWhere && (*tokenCursol).kind == WHERE) {
+      if (readWhere && nextToken.kind == WHERE) {
         @throw [[TynySQLException alloc] initWithErrorCode:ERR_SQL_SYNTAX];
       }
       // ORDER句を読み込みます。
-      if ((*tokenCursol).kind == ORDER) {
+      if (nextToken.kind == ORDER) {
         readOrder = true;
-        ++tokenCursol;
-        if ((*tokenCursol).kind == BY) {
-          ++tokenCursol;
+        nextToken = [tokenCursol nextObject];
+        ;
+        if (nextToken.kind == BY) {
+          nextToken = [tokenCursol nextObject];
+          ;
           bool first = true; // ORDER句の最初の列名の読み込みかどうかです。
-          while ((*tokenCursol).kind == COMMA || first) {
-            if ((*tokenCursol).kind == COMMA) {
-              ++tokenCursol;
+          while (nextToken.kind == COMMA || first) {
+            if (nextToken.kind == COMMA) {
+              nextToken = [tokenCursol nextObject];
+              ;
             }
-            if ((*tokenCursol).kind == IDENTIFIER) {
+            if (nextToken.kind == IDENTIFIER) {
               if (MAX_COLUMN_COUNT <= orderByColumnsNum) {
                 @throw [[TynySQLException alloc]
                     initWithErrorCode:ERR_MEMORY_OVER];
@@ -740,19 +731,22 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               strncpy(orderByColumns[orderByColumnsNum].tableName, "",
                       MAX_WORD_LENGTH);
               strncpy(orderByColumns[orderByColumnsNum].columnName,
-                      (*tokenCursol).word, MAX_WORD_LENGTH);
-              ++tokenCursol;
-              if ((*tokenCursol).kind == DOT) {
-                ++tokenCursol;
-                if ((*tokenCursol).kind == IDENTIFIER) {
+                      nextToken.word, MAX_WORD_LENGTH);
+              nextToken = [tokenCursol nextObject];
+              ;
+              if (nextToken.kind == DOT) {
+                nextToken = [tokenCursol nextObject];
+                ;
+                if (nextToken.kind == IDENTIFIER) {
 
                   // テーブル名が指定されていることがわかったので読み替えます。
                   strncpy(orderByColumns[orderByColumnsNum].tableName,
                           orderByColumns[orderByColumnsNum].columnName,
                           MAX_WORD_LENGTH);
                   strncpy(orderByColumns[orderByColumnsNum].columnName,
-                          (*tokenCursol).word, MAX_WORD_LENGTH);
-                  ++tokenCursol;
+                          nextToken.word, MAX_WORD_LENGTH);
+                  nextToken = [tokenCursol nextObject];
+                  ;
                 } else {
                   @throw [[TynySQLException alloc]
                       initWithErrorCode:ERR_SQL_SYNTAX];
@@ -760,12 +754,14 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               }
 
               // 並び替えの昇順、降順を指定します。
-              if ((*tokenCursol).kind == ASC) {
+              if (nextToken.kind == ASC) {
                 orders[orderByColumnsNum] = ASC;
-                ++tokenCursol;
-              } else if ((*tokenCursol).kind == DESC) {
+                nextToken = [tokenCursol nextObject];
+                ;
+              } else if (nextToken.kind == DESC) {
                 orders[orderByColumnsNum] = DESC;
-                ++tokenCursol;
+                nextToken = [tokenCursol nextObject];
+                ;
               } else {
                 // 指定がない場合は昇順となります。
                 orders[orderByColumnsNum] = ASC;
@@ -783,9 +779,10 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       }
 
       // WHERE句を読み込みます。
-      if ((*tokenCursol).kind == WHERE) {
+      if (nextToken.kind == WHERE) {
         readWhere = true;
-        ++tokenCursol;
+        nextToken = [tokenCursol nextObject];
+        ;
         ExtensionTreeNode *currentNode = NULL; // 現在読み込んでいるノードです。
         while (true) {
           // オペランドを読み込みます。
@@ -805,72 +802,75 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           }
 
           // カッコ開くを読み込みます。
-          while ((*tokenCursol).kind == OPEN_PAREN) {
+          while (nextToken.kind == OPEN_PAREN) {
             ++currentNode.parenOpenBeforeClose;
-            ++tokenCursol;
+            nextToken = [tokenCursol nextObject];
+            ;
           }
 
           // オペランドに前置される+か-を読み込みます。
-          if ((*tokenCursol).kind == PLUS || (*tokenCursol).kind == MINUS) {
-
+          if (nextToken.kind == PLUS || nextToken.kind == MINUS) {
+            if (nextToken.kind == MINUS) {
+              currentNode.signCoefficient = -1;
+            }
+            nextToken = [tokenCursol nextObject];
             // +-を前置するのは列名と数値リテラルのみです。
-            if (tokenCursol[1].kind != IDENTIFIER &&
-                tokenCursol[1].kind != INT_LITERAL) {
+            if (nextToken.kind != IDENTIFIER && nextToken.kind != INT_LITERAL) {
               @throw [[TynySQLException alloc]
                   initWithErrorCode:ERR_WHERE_OPERAND_TYPE];
             }
-            if ((*tokenCursol).kind == MINUS) {
-              currentNode.signCoefficient = -1;
-            }
-            ++tokenCursol;
           }
 
           // 列名、整数リテラル、文字列リテラルのいずれかをオペランドとして読み込みます。
-          if ((*tokenCursol).kind == IDENTIFIER) {
+          if (nextToken.kind == IDENTIFIER) {
 
             // テーブル名が指定されていない場合と仮定して読み込みます。
             strncpy(currentNode.column.tableName, "", MAX_WORD_LENGTH);
-            strncpy(currentNode.column.columnName, (*tokenCursol).word,
+            strncpy(currentNode.column.columnName, nextToken.word,
                     MAX_WORD_LENGTH);
-            ++tokenCursol;
-            if ((*tokenCursol).kind == DOT) {
-              ++tokenCursol;
-              if ((*tokenCursol).kind == IDENTIFIER) {
+            nextToken = [tokenCursol nextObject];
+            ;
+            if (nextToken.kind == DOT) {
+              nextToken = [tokenCursol nextObject];
+              ;
+              if (nextToken.kind == IDENTIFIER) {
 
                 // テーブル名が指定されていることがわかったので読み替えます。
                 strncpy(currentNode.column.tableName,
                         currentNode.column.columnName, MAX_WORD_LENGTH);
-                strncpy(currentNode.column.columnName, (*tokenCursol).word,
+                strncpy(currentNode.column.columnName, nextToken.word,
                         MAX_WORD_LENGTH);
-                ++tokenCursol;
+                nextToken = [tokenCursol nextObject];
+                ;
               } else {
                 @throw
                     [[TynySQLException alloc] initWithErrorCode:ERR_SQL_SYNTAX];
               }
             }
-          } else if ((*tokenCursol).kind == INT_LITERAL) {
-            currentNode.value =
-                &(Data){.type = INTEGER,
-                        .value = {.integer = atoi((*tokenCursol).word)}};
-            ++tokenCursol;
-          } else if ((*tokenCursol).kind == STRING_LITERAL) {
+          } else if (nextToken.kind == INT_LITERAL) {
+            currentNode.value = &(Data){
+                .type = INTEGER, .value = {.integer = atoi(nextToken.word)}};
+            nextToken = [tokenCursol nextObject];
+            ;
+          } else if (nextToken.kind == STRING_LITERAL) {
             currentNode.value =
                 &(Data){.type = STRING, .value = {.string = ""}};
 
             // 前後のシングルクォートを取り去った文字列をデータとして読み込みます。
-            strncpy(currentNode.value->value.string, (*tokenCursol).word + 1,
+            strncpy(currentNode.value->value.string, nextToken.word + 1,
                     MAX_WORD_LENGTH < MAX_DATA_LENGTH ? MAX_WORD_LENGTH
                                                       : MAX_DATA_LENGTH);
             currentNode.value->value.string[MAX_DATA_LENGTH - 1] = '\0';
             currentNode.value->value
                 .string[strlen(currentNode.value->value.string) - 1] = '\0';
-            ++tokenCursol;
+            nextToken = [tokenCursol nextObject];
+            ;
           } else {
             @throw [[TynySQLException alloc] initWithErrorCode:ERR_SQL_SYNTAX];
           }
 
           // オペランドの右のカッコ閉じるを読み込みます。
-          while ((*tokenCursol).kind == CLOSE_PAREN) {
+          while (nextToken.kind == CLOSE_PAREN) {
             ExtensionTreeNode *searchedAncestor =
                 currentNode
                     .parent; // カッコ閉じると対応するカッコ開くを両方含む祖先ノードを探すためのカーソルです。
@@ -891,7 +891,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                 searchedAncestor = searchedAncestor.parent;
               }
             }
-            ++tokenCursol;
+            nextToken = [tokenCursol nextObject];
+            ;
           }
 
           // 演算子(オペレーターを読み込みます。
@@ -901,7 +902,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           // 現在見ている演算子の情報を探します。
           found = false;
           for (int j = 0; j < sizeof(operators) / sizeof(operators[0]); ++j) {
-            if (operators[j].kind == (*tokenCursol).kind) {
+            if (operators[j].kind == nextToken.kind) {
               operator= operators[j];
               found = true;
               break;
@@ -947,7 +948,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             currentNode.left = tmp;
             tmp.parent = currentNode;
 
-            ++tokenCursol;
+            nextToken = [tokenCursol nextObject];
+            ;
           } else {
             // 現在見ている種類が演算子の一覧から見つからなければ、WHERE句は終わります。
             break;
@@ -963,23 +965,25 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     }
 
     // FROM句を読み込みます。
-    if ((*tokenCursol).kind == FROM) {
-      ++tokenCursol;
+    if (nextToken.kind == FROM) {
+      nextToken = [tokenCursol nextObject];
+      ;
     } else {
       @throw [[TynySQLException alloc] initWithErrorCode:ERR_SQL_SYNTAX];
     }
     bool first = true; // FROM句の最初のテーブル名を読み込み中かどうかです。
-    while ((*tokenCursol).kind == COMMA || first) {
-      if ((*tokenCursol).kind == COMMA) {
-        ++tokenCursol;
+    while (nextToken.kind == COMMA || first) {
+      if (nextToken.kind == COMMA) {
+        nextToken = [tokenCursol nextObject];
+        ;
       }
-      if ((*tokenCursol).kind == IDENTIFIER) {
+      if (nextToken.kind == IDENTIFIER) {
         if (MAX_TABLE_COUNT <= tableNamesNum) {
           @throw [[TynySQLException alloc] initWithErrorCode:ERR_MEMORY_OVER];
         }
-        strncpy(tableNames[tableNamesNum++], (*tokenCursol).word,
-                MAX_WORD_LENGTH);
-        ++tokenCursol;
+        strncpy(tableNames[tableNamesNum++], nextToken.word, MAX_WORD_LENGTH);
+        nextToken = [tokenCursol nextObject];
+        ;
       } else {
         @throw [[TynySQLException alloc] initWithErrorCode:ERR_SQL_SYNTAX];
       }
@@ -987,7 +991,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     }
 
     // 最後のトークンまで読み込みが進んでいなかったらエラーです。
-    if (tokenCursol < &tokens[tokensNum]) {
+    if (nextToken) {
       @throw [[TynySQLException alloc] initWithErrorCode:ERR_SQL_SYNTAX];
     }
     Column *inputColumns[MAX_TABLE_COUNT]
