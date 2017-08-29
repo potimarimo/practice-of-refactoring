@@ -1,5 +1,6 @@
 //! @file
 #include "ExecuteSQL.h"
+#import <Foundation/NSArray.h>
 #import <Foundation/NSException.h>
 #include <ctype.h>
 #include <stdbool.h>
@@ -355,16 +356,17 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     // keywordConditionsとsignConditionsは先頭から順に検索されるので、前方一致となる二つの項目は順番に気をつけて登録しなくてはいけません。
 
     // キーワードをトークンとして認識するためのキーワード一覧情報です。
-    Token *keywordConditions[] = {
-        [[Token alloc] initWithKind:AND Word:"AND"],
-        [[Token alloc] initWithKind:ASC Word:"ASC"],
-        [[Token alloc] initWithKind:BY Word:"BY"],
-        [[Token alloc] initWithKind:DESC Word:"DESC"],
-        [[Token alloc] initWithKind:FROM Word:"FROM"],
-        [[Token alloc] initWithKind:ORDER Word:"ORDER"],
-        [[Token alloc] initWithKind:OR Word:"OR"],
-        [[Token alloc] initWithKind:SELECT Word:"SELECT"],
-        [[Token alloc] initWithKind:WHERE Word:"WHERE"]};
+    NSArray *keywordConditions = @[
+      [[Token alloc] initWithKind:AND Word:"AND"],
+      [[Token alloc] initWithKind:ASC Word:"ASC"],
+      [[Token alloc] initWithKind:BY Word:"BY"],
+      [[Token alloc] initWithKind:DESC Word:"DESC"],
+      [[Token alloc] initWithKind:FROM Word:"FROM"],
+      [[Token alloc] initWithKind:ORDER Word:"ORDER"],
+      [[Token alloc] initWithKind:OR Word:"OR"],
+      [[Token alloc] initWithKind:SELECT Word:"SELECT"],
+      [[Token alloc] initWithKind:WHERE Word:"WHERE"]
+    ];
 
     // 記号をトークンとして認識するための記号一覧情報です。
     Token *signConditions[] = {
@@ -511,11 +513,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
       // キーワードを読み込みます。
       found = false;
-      for (size_t i = 0;
-           i < sizeof(keywordConditions) / sizeof(keywordConditions[0]); ++i) {
+      for (Token *condition in keywordConditions) {
         charactorBackPoint = charactorCursol;
-        Token *condition =
-            keywordConditions[i]; // 確認するキーワードの条件です。
         char *wordCursol =
             condition
                 .word; // 確認するキーワードの文字列のうち、現在確認している一文字を指します。
