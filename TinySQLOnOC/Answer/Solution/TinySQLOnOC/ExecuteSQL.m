@@ -13,7 +13,6 @@
 #define MAX_FILE_LINE_LENGTH 4096 //!< 読み込むファイルの一行の最大長です。
 #define MAX_WORD_LENGTH 256 //!< SQLの一語の最大長です。
 #define MAX_DATA_LENGTH 256 //!< 入出力されるデータの、各列の最大長です。
-#define MAX_TOKEN_COUNT 255 //!< SQLに含まれるトークンの最大値です。
 #define MAX_COLUMN_COUNT 16 //!< 入出力されるデータに含まれる列の最大数です。
 #define MAX_ROW_COUNT 256 //!< 入出力されるデータに含まれる行の最大数です。
 #define MAX_TABLE_COUNT 8 //!< CSVとして入力されるテーブルの最大数です。
