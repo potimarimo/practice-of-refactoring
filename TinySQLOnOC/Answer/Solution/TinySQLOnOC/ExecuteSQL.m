@@ -42,10 +42,10 @@ typedef NS_ENUM(NSUInteger, ResultValue) {
 };
 
 //! 入力や出力、経過の計算に利用するデータのデータ型の種類を表します。
-typedef NS_ENUM(NSUInteger, DATA_TYPE) {
-  STRING,  //!< 文字列型です。
-  INTEGER, //!< 整数型です。
-  BOOLEAN  //!< 真偽値型です。
+typedef NS_ENUM(NSUInteger, DataType) {
+  String,  //!< 文字列型です。
+  Integer, //!< 整数型です。
+  Bool  //!< 真偽値型です。
 };
 
 //! トークンの種類を表します。
@@ -81,7 +81,7 @@ typedef NS_ENUM(NSUInteger, TOKEN_KIND) {
 
 //! 一つの値を持つデータです。
 typedef struct {
-  enum DATA_TYPE type; //!< データの型です。
+  enum DataType type; //!< データの型です。
 
   //! 実際のデータを格納する共用体です。
   union {
@@ -215,7 +215,7 @@ typedef struct {
   _signCoefficient = 1;
   _column = [[Column alloc] init];
   _calculated = false;
-  __value = (Data){.type = STRING, .value = {.string = ""}};
+  __value = (Data){.type = String, .value = {.string = ""}};
   _value = &__value;
   return self;
 }
@@ -848,12 +848,12 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             }
           } else if (nextToken.kind == INT_LITERAL) {
             currentNode.value = &(Data){
-                .type = INTEGER, .value = {.integer = atoi(nextToken.word)}};
+                .type = Integer, .value = {.integer = atoi(nextToken.word)}};
             nextToken = [tokenCursol nextObject];
             ;
           } else if (nextToken.kind == STRING_LITERAL) {
             currentNode.value =
-                &(Data){.type = STRING, .value = {.string = ""}};
+                &(Data){.type = String, .value = {.string = ""}};
 
             // 前後のシングルクォートを取り去った文字列をデータとして読み込みます。
             strncpy(currentNode.value->value.string, nextToken.word + 1,
@@ -1090,7 +1090,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             @throw [[TynySQLException alloc]
                 initWithErrorCode:MemoryAllocateError];
           }
-          *row[columnNum] = (Data){.type = STRING, .value = {.string = ""}};
+          *row[columnNum] = (Data){.type = String, .value = {.string = ""}};
           char *writeCursol =
               row[columnNum++]
                   ->value
@@ -1144,7 +1144,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           currentRow = inputData[i];
           while (*currentRow) {
             *(*currentRow)[j] = (Data){
-                .type = INTEGER,
+                .type = Integer,
                 .value = {.integer = atoi((*currentRow)[j]->value.string)}};
             ++currentRow;
           }
@@ -1263,7 +1263,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                 .
                 operator.kind == NOT_TOKEN && !*whereExtensionNodes[i]
                 .column.columnName && whereExtensionNodes[i]
-                .value->type == INTEGER) {
+                .value->type == Integer) {
           whereExtensionNodes[i].value->value.integer *=
               whereExtensionNodes[i].signCoefficient;
         }
@@ -1388,7 +1388,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                     initWithErrorCode:BadColumnNameError];
               };
               // 符号を考慮して値を計算します。
-              if (currentNode.value->type == INTEGER) {
+              if (currentNode.value->type == Integer) {
                 currentNode.value->value.integer *= currentNode.signCoefficient;
               }
             }
@@ -1402,17 +1402,17 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             // 比較演算子の場合です。
 
             // 比較できるのは文字列型か整数型で、かつ左右の型が同じ場合です。
-            if ((currentNode.left.value->type != INTEGER &&
-                 currentNode.left.value->type != STRING) ||
+            if ((currentNode.left.value->type != Integer &&
+                 currentNode.left.value->type != String) ||
                 currentNode.left.value->type != currentNode.right.value->type) {
               @throw [[TynySQLException alloc]
                   initWithErrorCode:WhereOperandTypeError];
             }
-            currentNode.value->type = BOOLEAN;
+            currentNode.value->type = Bool;
 
             // 比較結果を型と演算子によって計算方法を変えて、計算します。
             switch (currentNode.left.value->type) {
-            case INTEGER:
+            case Integer:
               switch (currentNode.operator.kind) {
               case EQUAL:
                 currentNode.value->value.boolean =
@@ -1449,7 +1449,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                     [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
               }
               break;
-            case STRING:
+            case String:
               switch (currentNode.operator.kind) {
               case EQUAL:
                 currentNode.value->value.boolean =
@@ -1498,12 +1498,12 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             // 四則演算の場合です。
 
             // 演算できるのは整数型同士の場合のみです。
-            if (currentNode.left.value->type != INTEGER ||
-                currentNode.right.value->type != INTEGER) {
+            if (currentNode.left.value->type != Integer ||
+                currentNode.right.value->type != Integer) {
               @throw [[TynySQLException alloc]
                   initWithErrorCode:WhereOperandTypeError];
             }
-            currentNode.value->type = INTEGER;
+            currentNode.value->type = Integer;
 
             // 比較結果を演算子によって計算方法を変えて、計算します。
             switch (currentNode.operator.kind) {
@@ -1537,12 +1537,12 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             // 論理演算の場合です。
 
             // 演算できるのは真偽値型同士の場合のみです。
-            if (currentNode.left.value->type != BOOLEAN ||
-                currentNode.right.value->type != BOOLEAN) {
+            if (currentNode.left.value->type != Bool ||
+                currentNode.right.value->type != Bool) {
               @throw [[TynySQLException alloc]
                   initWithErrorCode:WhereOperandTypeError];
             }
-            currentNode.value->type = BOOLEAN;
+            currentNode.value->type = Bool;
 
             // 比較結果を演算子によって計算方法を変えて、計算します。
             switch (currentNode.operator.kind) {
@@ -1664,10 +1664,10 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             int cmp =
                 0; // 比較結果です。等しければ0、インデックスjの行が大きければプラス、インデックスminIndexの行が大きければマイナスとなります。
             switch (mData->type) {
-            case INTEGER:
+            case Integer:
               cmp = jData->value.integer - mData->value.integer;
               break;
-            case STRING:
+            case String:
               cmp = strcmp(jData->value.string, mData->value.string);
               break;
             default:
@@ -1732,10 +1732,10 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       for (int i = 0; i < selectColumnsNum; ++i) {
         char outputString[MAX_DATA_LENGTH] = "";
         switch ((*column)->type) {
-        case INTEGER:
+        case Integer:
           sprintf(outputString, "%d", (*column)->value.integer);
           break;
-        case STRING:
+        case String:
           strcpy(outputString, (*column)->value.string);
           break;
         default:
