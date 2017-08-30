@@ -313,8 +313,9 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
   Data **inputData[MAX_TABLE_COUNT][MAX_ROW_COUNT]; // 入力データです。
   Data **outputData[MAX_ROW_COUNT] = {NULL};        // 出力データです。
   Data **allColumnOutputData[MAX_ROW_COUNT] = {
-      NULL};             // 出力するデータに対応するインデックスを持ち、すべての入力データを保管します。
-  int tableNamesNum = 0; // 現在読み込まれているテーブル名の数です。
+      NULL}; // 出力するデータに対応するインデックスを持ち、すべての入力データを保管します。
+  NSMutableArray *tableNames =
+      [NSMutableArray array]; // FROM句で指定しているテーブル名です。
   @try {
 
     int result = 0; // 関数の戻り値を一時的に保存します。
@@ -398,13 +399,6 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
     const char *charactorCursol =
         sql; // SQLをトークンに分割して読み込む時に現在読んでいる文字の場所を表します。
-
-    NSString
-        *tableNames[MAX_TABLE_COUNT]; // FROM句で指定しているテーブル名です。
-    // tableNamesを初期化します。
-    for (size_t i = 0; i < sizeof(tableNames) / sizeof(tableNames[0]); i++) {
-      tableNames[i] = @"";
-    }
 
     // SQLをトークンに分割て読み込みます。
     while (*charactorCursol) {
@@ -953,10 +947,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         ;
       }
       if (nextToken.kind == IdentifierToken) {
-        if (MAX_TABLE_COUNT <= tableNamesNum) {
-          @throw [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
-        }
-        tableNames[tableNamesNum++] = nextToken.word;
+        [tableNames addObject:nextToken.word];
         nextToken = [tokenCursol nextObject];
       } else {
         @throw [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
@@ -980,37 +971,40 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     }
     int inputColumnNums[MAX_TABLE_COUNT] = {0}; // 各テーブルごとの列の数です。
 
-    for (int i = 0; i < tableNamesNum; ++i) {
+    int tableNamesCount = 0;
+    for (NSString *tableName in tableNames) {
 
       // 入力ファイル名を生成します。
       const char csvExtension[] = ".csv"; // csvの拡張子です。
       char fileName[MAX_WORD_LENGTH + sizeof(csvExtension) -
                     1]; // 拡張子を含む、入力ファイルのファイル名です。
-      [tableNames[i] getCString:fileName
-                      maxLength:MAX_WORD_LENGTH + sizeof(csvExtension) - 1
-                       encoding:NSUTF8StringEncoding];
+      [tableName getCString:fileName
+                  maxLength:MAX_WORD_LENGTH + sizeof(csvExtension) - 1
+                   encoding:NSUTF8StringEncoding];
       strncat(fileName, csvExtension,
               MAX_WORD_LENGTH + sizeof(csvExtension) - 1);
 
       // 入力ファイルを開きます。
-      inputTableFiles[i] = fopen(fileName, "r");
-      if (!inputTableFiles[i]) {
+      inputTableFiles[tableNamesCount] = fopen(fileName, "r");
+      if (!inputTableFiles[tableNamesCount]) {
         @throw [[TynySQLException alloc] initWithErrorCode:FileOpenError];
       }
 
       // 入力CSVのヘッダ行を読み込みます。
       char inputLine[MAX_FILE_LINE_LENGTH] =
           ""; // ファイルから読み込んだ行文字列です。
-      if (fgets(inputLine, MAX_FILE_LINE_LENGTH, inputTableFiles[i])) {
+      if (fgets(inputLine, MAX_FILE_LINE_LENGTH,
+                inputTableFiles[tableNamesCount])) {
         charactorCursol = inputLine;
 
         // 読み込んだ行を最後まで読みます。
         while (*charactorCursol && *charactorCursol != '\r' &&
                *charactorCursol != '\n') {
-          if (MAX_COLUMN_COUNT <= inputColumnNums[i]) {
+          if (MAX_COLUMN_COUNT <= inputColumnNums[tableNamesCount]) {
             @throw [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
           }
-          inputColumns[i][inputColumnNums[i]].tableName = tableNames[i];
+          inputColumns[tableNamesCount][inputColumnNums[tableNamesCount]]
+              .tableName = tableName;
 
           char wrote[MAX_WORD_LENGTH] = "";
           char *writeCursol = wrote; // 列名の書き込みに利用するカーソルです。
@@ -1022,7 +1016,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           }
           // 書き込んでいる列名の文字列に終端文字を書き込みます。
           writeCursol[1] = '\0';
-          inputColumns[i][inputColumnNums[i]++].columnName =
+          inputColumns[tableNamesCount][inputColumnNums[tableNamesCount]++]
+              .columnName =
               [NSString stringWithCString:wrote encoding:NSUTF8StringEncoding];
 
           // 入力行のカンマの分を読み進めます。
@@ -1034,11 +1029,12 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
       // 入力CSVのデータ行を読み込みます。
       int rowNum = 0;
-      while (fgets(inputLine, MAX_FILE_LINE_LENGTH, inputTableFiles[i])) {
+      while (fgets(inputLine, MAX_FILE_LINE_LENGTH,
+                   inputTableFiles[tableNamesCount])) {
         if (MAX_ROW_COUNT <= rowNum) {
           @throw [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
         }
-        Data **row = inputData[i][rowNum++] =
+        Data **row = inputData[tableNamesCount][rowNum++] =
             malloc(MAX_COLUMN_COUNT *
                    sizeof(Data *)); // 入力されている一行分のデータです。
         if (!row) {
@@ -1087,10 +1083,10 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       }
 
       // 全てが数値となる列は数値列に変換します。
-      for (int j = 0; j < inputColumnNums[i]; ++j) {
+      for (int j = 0; j < inputColumnNums[tableNamesCount]; ++j) {
 
         // 全ての行のある列について、データ文字列から符号と数値以外の文字を探します。
-        currentRow = inputData[i];
+        currentRow = inputData[tableNamesCount];
         found = false;
         while (*currentRow) {
           char *currentChar = (*currentRow)[j]->value.string;
@@ -1118,7 +1114,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
         // 符号と数字以外が見つからない列については、数値列に変換します。
         if (!found) {
-          currentRow = inputData[i];
+          currentRow = inputData[tableNamesCount];
           while (*currentRow) {
             *(*currentRow)[j] = (Data){
                 .type = Integer,
@@ -1127,6 +1123,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           }
         }
       }
+      tableNamesCount++;
     }
 
     Column *allInputColumns
@@ -1140,12 +1137,11 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     int allInputColumnsNum = 0; // 入力に含まれるすべての列の数です。
 
     // 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
-    for (int i = 0; i < tableNamesNum; ++i) {
+    for (int i = 0; i < [tableNames count]; ++i) {
       for (int j = 0; j < inputColumnNums[i]; ++j) {
         allInputColumns[allInputColumnsNum].tableName = tableNames[i];
         allInputColumns[allInputColumnsNum++].columnName =
             inputColumns[i][j].columnName;
-        ;
       }
     }
 
@@ -1175,7 +1171,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     int selectColumnIndexesNum = 0; // selectColumnIndexesの現在の数。
     for (int i = 0; i < selectColumnsNum; ++i) {
       found = false;
-      for (int j = 0; j < tableNamesNum; ++j) {
+      for (int j = 0; j < [tableNames count]; ++j) {
         for (int k = 0; k < inputColumnNums[j]; ++k) {
           if ([selectColumns[i].columnName
                   caseInsensitiveCompare:inputColumns[j][k].columnName] ==
@@ -1239,7 +1235,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
     Data ***currentRows[MAX_TABLE_COUNT] = {
         NULL}; // 入力された各テーブルの、現在出力している行を指すカーソルです。
-    for (int i = 0; i < tableNamesNum; ++i) {
+    for (int i = 0; i < [tableNames count]; ++i) {
       // 各テーブルの先頭行を設定します。
       currentRows[i] = inputData[i];
     }
@@ -1287,7 +1283,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
       // allColumnsRowの列を設定します。
       int allColumnsNum = 0; // allColumnsRowの現在の列数です。
-      for (int i = 0; i < tableNamesNum; ++i) {
+      for (int i = 0; i < [tableNames count]; ++i) {
         for (int j = 0; j < inputColumnNums[i]; ++j) {
           allColumnsRow[allColumnsNum] = malloc(sizeof(Data));
           if (!allColumnsRow[allColumnsNum]) {
@@ -1544,10 +1540,11 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       // 各テーブルの行のすべての組み合わせを出力します。
 
       // 最後のテーブルのカレント行をインクリメントします。
-      ++currentRows[tableNamesNum - 1];
+      ++currentRows[[tableNames count] - 1];
 
       // 最後のテーブルが最終行になっていた場合は先頭に戻し、順に前のテーブルのカレント行をインクリメントします。
-      for (int i = tableNamesNum - 1; !*currentRows[i] && 0 < i; --i) {
+      for (unsigned long i = [tableNames count] - 1; !*currentRows[i] && 0 < i;
+           --i) {
         ++currentRows[i - 1];
         currentRows[i] = inputData[i];
       }
@@ -1732,7 +1729,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     }
 
     // メモリリソースを解放します。
-    for (int i = 0; i < tableNamesNum; ++i) {
+    for (int i = 0; i < [tableNames count]; ++i) {
       currentRow = inputData[i];
       while (*currentRow) {
         Data **dataCursol = *currentRow;
@@ -1777,7 +1774,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     }
 
     // メモリリソースを解放します。
-    for (int i = 0; i < tableNamesNum; ++i) {
+    for (int i = 0; i < [tableNames count]; ++i) {
       currentRow = inputData[i];
       while (*currentRow) {
         Data **dataCursol = *currentRow;
@@ -1822,7 +1819,7 @@ ERROR:
   }
 
   // メモリリソースを解放します。
-  for (int i = 0; i < tableNamesNum; ++i) {
+  for (int i = 0; i < [tableNames count]; ++i) {
     currentRow = inputData[i];
     while (*currentRow) {
       Data **dataCursol = *currentRow;
