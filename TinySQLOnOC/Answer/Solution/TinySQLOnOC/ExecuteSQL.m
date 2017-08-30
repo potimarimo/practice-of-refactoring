@@ -1,11 +1,6 @@
 //! @file
 #include "ExecuteSQL.h"
-#import <Foundation/NSArray.h>
-#import <Foundation/NSException.h>
-#include <ctype.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#import <Foundation/Foundation.h>
 
 #pragma warning(disable : 4996)
 
@@ -316,7 +311,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
   enum ResultValue error = ResultOk; // 発生したエラーの種類です。
   FILE *inputTableFiles[MAX_TABLE_COUNT] = {
       NULL}; // 読み込む入力ファイルの全てのファイルポインタです。
-  FILE *outputFile = NULL; // 書き込むファイルのファイルポインタです。
+  NSFileHandle *outputFile = nil; // 書き込むファイルのファイルポインタです。
   Data ***currentRow = NULL; // データ検索時に現在見ている行を表します。
   Data **inputData[MAX_TABLE_COUNT][MAX_ROW_COUNT]; // 入力データです。
   Data **outputData[MAX_ROW_COUNT] = {NULL};        // 出力データです。
@@ -1631,31 +1626,24 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     }
 
     // 出力ファイルを開きます。
-    outputFile = fopen(outputFileName, "w");
+    NSString *outputPath = [NSString stringWithCString:outputFileName
+                                              encoding:NSUTF8StringEncoding];
+    [[NSFileManager defaultManager] createFileAtPath:outputPath
+                                            contents:[NSData data]
+                                          attributes:nil];
+    outputFile = [NSFileHandle fileHandleForWritingAtPath:outputPath];
     if (outputFile == NULL) {
       @throw [[TynySQLException alloc] initWithErrorCode:FileOpenError];
     }
 
     // 出力ファイルに列名を出力します。
     for (int i = 0; i < [selectColumns count]; ++i) {
-      char columnName[MAX_WORD_LENGTH];
-      [outputColumns[i].columnName getCString:columnName
-                                    maxLength:MAX_WORD_LENGTH
-                                     encoding:NSUTF8StringEncoding];
-      result = fputs(columnName, outputFile);
-      if (result == EOF) {
-        @throw [[TynySQLException alloc] initWithErrorCode:FileWriteError];
-      }
+      [outputFile writeData:[outputColumns[i].columnName
+                                dataUsingEncoding:NSUTF8StringEncoding]];
       if (i < [selectColumns count] - 1) {
-        result = fputs(",", outputFile);
-        if (result == EOF) {
-          @throw [[TynySQLException alloc] initWithErrorCode:FileWriteError];
-        }
+        [outputFile writeData:[@"," dataUsingEncoding:NSUTF8StringEncoding]];
       } else {
-        result = fputs("\n", outputFile);
-        if (result == EOF) {
-          @throw [[TynySQLException alloc] initWithErrorCode:FileWriteError];
-        }
+        [outputFile writeData:[@"\n" dataUsingEncoding:NSUTF8StringEncoding]];
       }
     }
 
@@ -1664,31 +1652,25 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     while (*currentRow) {
       Data **column = *currentRow;
       for (int i = 0; i < [selectColumns count]; ++i) {
-        char outputString[MAX_DATA_LENGTH] = "";
+        NSString *outputString = nil;
         switch ((*column)->type) {
         case Integer:
-          sprintf(outputString, "%ld", (*column)->value.integer);
+          outputString =
+              [NSString stringWithFormat:@"%ld", (*column)->value.integer];
           break;
         case String:
-          strcpy(outputString, (*column)->value.string);
+          outputString =
+              [NSString stringWithFormat:@"%s", (*column)->value.string];
           break;
         default:
           @throw [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
         }
-        result = fputs(outputString, outputFile);
-        if (result == EOF) {
-          @throw [[TynySQLException alloc] initWithErrorCode:FileWriteError];
-        }
+        [outputFile
+            writeData:[outputString dataUsingEncoding:NSUTF8StringEncoding]];
         if (i < [selectColumns count] - 1) {
-          result = fputs(",", outputFile);
-          if (result == EOF) {
-            @throw [[TynySQLException alloc] initWithErrorCode:FileWriteError];
-          }
+          [outputFile writeData:[@"," dataUsingEncoding:NSUTF8StringEncoding]];
         } else {
-          result = fputs("\n", outputFile);
-          if (result == EOF) {
-            @throw [[TynySQLException alloc] initWithErrorCode:FileWriteError];
-          }
+          [outputFile writeData:[@"\n" dataUsingEncoding:NSUTF8StringEncoding]];
         }
         ++column;
       }
@@ -1707,7 +1689,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       }
     }
     if (outputFile) {
-      fclose(outputFile);
+      [outputFile closeFile];
       if (result == EOF) {
         @throw [[TynySQLException alloc] initWithErrorCode:FileCloseError];
       }
@@ -1755,7 +1737,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       }
     }
     if (outputFile) {
-      fclose(outputFile);
+      [outputFile closeFile];
     }
 
     // メモリリソースを解放します。
@@ -1800,7 +1782,7 @@ ERROR:
     }
   }
   if (outputFile) {
-    fclose(outputFile);
+    [outputFile closeFile];
   }
 
   // メモリリソースを解放します。
