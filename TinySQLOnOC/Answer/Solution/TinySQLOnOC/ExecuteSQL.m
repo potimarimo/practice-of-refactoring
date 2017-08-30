@@ -115,6 +115,8 @@ typedef struct {
 //!列が所属するテーブル名です。指定されていない場合は空文字列となります。
 @property NSString *columnName; //!< 指定された列の列名です。
 - (Column *)init;
+- (Column *)initWithTableName:(NSString *)tableName
+                   ColumnName:(NSString *)columnName;
 @end
 
 //! WHERE句の条件の式木を表します。
@@ -188,6 +190,12 @@ typedef struct {
 - (Column *)init {
   _tableName = @"";
   _columnName = @"";
+  return self;
+}
+- (Column *)initWithTableName:(NSString *)tableName
+                   ColumnName:(NSString *)columnName {
+  _tableName = tableName;
+  _columnName = columnName;
   return self;
 }
 
@@ -318,9 +326,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       [NSMutableArray array]; // FROM句で指定しているテーブル名です。
   @try {
 
-    int result = 0; // 関数の戻り値を一時的に保存します。
-    BOOL found =
-        NO;                 // 検索時に見つかったかどうかの結果を一時的に保存します。
+    int result = 0;  // 関数の戻り値を一時的に保存します。
+    BOOL found = NO; // 検索時に見つかったかどうかの結果を一時的に保存します。
     const char *search = NULL; // 文字列検索に利用するポインタです。
 
     const char *alpahUnder =
@@ -576,14 +583,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     NSEnumerator *tokenCursol =
         [tokens objectEnumerator]; // 現在見ているトークンを指します。
 
-    Column *selectColumns[MAX_TABLE_COUNT *
-                          MAX_COLUMN_COUNT]; // SELECT句に指定された列名です。
-    // selectColumnsを初期化します。
-    for (size_t i = 0; i < sizeof(selectColumns) / sizeof(selectColumns[0]);
-         i++) {
-      selectColumns[i] = [[Column alloc] init];
-    }
-    int selectColumnsNum = 0; // SELECT句から現在読み込まれた列名の数です。
+    NSMutableArray *selectColumns =
+        [NSMutableArray array]; // SELECT句に指定された列名です。
 
     Column *orderByColumns[MAX_COLUMN_COUNT]; // ORDER句に指定された列名です。
     // orderByColumnsを初期化します。
@@ -630,14 +631,10 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           ;
         }
         if (nextToken.kind == IdentifierToken) {
-          if (MAX_COLUMN_COUNT <= selectColumnsNum) {
-
-            @throw [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
-          }
           // テーブル名が指定されていない場合と仮定して読み込みます。
-          selectColumns[selectColumnsNum].tableName = @"";
-        getCString:
-          selectColumns[selectColumnsNum].columnName = nextToken.word;
+          Column *column =
+              [[Column alloc] initWithTableName:@"" ColumnName:nextToken.word];
+          [selectColumns addObject:column];
 
           nextToken = [tokenCursol nextObject];
           ;
@@ -647,9 +644,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             if (nextToken.kind == IdentifierToken) {
 
               // テーブル名が指定されていることがわかったので読み替えます。
-              selectColumns[selectColumnsNum].tableName =
-                  selectColumns[selectColumnsNum].columnName;
-              selectColumns[selectColumnsNum].columnName = nextToken.word;
+              column.tableName = column.columnName;
+              column.columnName = nextToken.word;
               nextToken = [tokenCursol nextObject];
               ;
             } else {
@@ -657,7 +653,6 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                   [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
             }
           }
-          ++selectColumnsNum;
         } else {
           @throw [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
         }
@@ -1146,12 +1141,12 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     }
 
     // SELECT句の列名指定が*だった場合は、入力CSVの列名がすべて選択されます。
-    if (!selectColumnsNum) {
+    if ([selectColumns count] == 0) {
       for (int i = 0; i < allInputColumnsNum; ++i) {
-        selectColumns[selectColumnsNum].tableName =
-            allInputColumns[i].tableName;
-        selectColumns[selectColumnsNum++].columnName =
-            allInputColumns[i].columnName;
+        [selectColumns
+            addObject:[[Column alloc]
+                          initWithTableName:allInputColumns[i].tableName
+                                 ColumnName:allInputColumns[i].columnName]];
       }
     }
 
@@ -1169,17 +1164,17 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         [MAX_TABLE_COUNT *
          MAX_COLUMN_COUNT];         // SELECT句で指定された列の、入力ファイルとしてのインデックスです。
     int selectColumnIndexesNum = 0; // selectColumnIndexesの現在の数。
-    for (int i = 0; i < selectColumnsNum; ++i) {
+    for (Column *selectedColumn in selectColumns) {
       found = NO;
       for (int j = 0; j < [tableNames count]; ++j) {
         for (int k = 0; k < inputColumnNums[j]; ++k) {
-          if ([selectColumns[i].columnName
+          if ([selectedColumn.columnName
                   caseInsensitiveCompare:inputColumns[j][k].columnName] ==
                   NSOrderedSame &&
-              ([selectColumns[i].tableName
+              ([selectedColumn.tableName
                    isEqualToString:
                        @""] || // テーブル名が設定されている場合のみテーブル名の比較を行います。
-               ([selectColumns[i].tableName
+               ([selectedColumn.tableName
                     caseInsensitiveCompare:inputColumns[j][k].tableName] ==
                 NSOrderedSame))) {
 
@@ -1206,7 +1201,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     }
 
     // 出力する列名を設定します。
-    for (int i = 0; i < selectColumnsNum; ++i) {
+    for (int i = 0; i < [selectColumns count]; ++i) {
       outputColumns[outputColumnNum].tableName =
           inputColumns[selectColumnIndexes[i].table]
                       [selectColumnIndexes[i].column]
@@ -1652,7 +1647,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     }
 
     // 出力ファイルに列名を出力します。
-    for (int i = 0; i < selectColumnsNum; ++i) {
+    for (int i = 0; i < [selectColumns count]; ++i) {
       char columnName[MAX_WORD_LENGTH];
       [outputColumns[i].columnName getCString:columnName
                                     maxLength:MAX_WORD_LENGTH
@@ -1661,7 +1656,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       if (result == EOF) {
         @throw [[TynySQLException alloc] initWithErrorCode:FileWriteError];
       }
-      if (i < selectColumnsNum - 1) {
+      if (i < [selectColumns count] - 1) {
         result = fputs(",", outputFile);
         if (result == EOF) {
           @throw [[TynySQLException alloc] initWithErrorCode:FileWriteError];
@@ -1678,7 +1673,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     currentRow = outputData;
     while (*currentRow) {
       Data **column = *currentRow;
-      for (int i = 0; i < selectColumnsNum; ++i) {
+      for (int i = 0; i < [selectColumns count]; ++i) {
         char outputString[MAX_DATA_LENGTH] = "";
         switch ((*column)->type) {
         case Integer:
@@ -1694,7 +1689,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         if (result == EOF) {
           @throw [[TynySQLException alloc] initWithErrorCode:FileWriteError];
         }
-        if (i < selectColumnsNum - 1) {
+        if (i < [selectColumns count] - 1) {
           result = fputs(",", outputFile);
           if (result == EOF) {
             @throw [[TynySQLException alloc] initWithErrorCode:FileWriteError];
