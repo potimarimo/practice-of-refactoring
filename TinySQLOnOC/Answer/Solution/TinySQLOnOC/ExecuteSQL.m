@@ -86,7 +86,7 @@ typedef struct {
   union {
     char string[MAX_DATA_LENGTH]; //!< データが文字列型の場合の値です。
     long integer; //!< データが整数型の場合の値です。
-    bool boolean; //!< データが真偽値型の場合の値です。
+    BOOL boolean; //!< データが真偽値型の場合の値です。
   } value;
 } Data;
 
@@ -130,14 +130,14 @@ typedef struct {
                                     //!中置される演算子です。自身が末端のとなる式木の場合の種類はNOT_TOKENとなります。
 @property ExtensionTreeNode *right; //!<
                                     //!右の子となるノードです。自身が末端の葉となる式木の場合はNULLとなります。
-@property bool inParen; //!< 自身がかっこにくるまれているかどうかです。
+@property BOOL inParen; //!< 自身がかっこにくるまれているかどうかです。
 @property int parenOpenBeforeClose; //!<
                                     //!木の構築中に0以外となり、自身の左にあり、まだ閉じてないカッコの開始の数となります。
 @property int signCoefficient;      //!<
                                     //!自身が葉にあり、マイナス単項演算子がついている場合は-1、それ以外は1となります。
 @property Column *column;           //!<
                                     //!列場指定されている場合に、その列を表します。列指定ではない場合はcolumnNameが空文字列となります。
-@property bool calculated; //!< 式の値を計算中に、計算済みかどうかです。
+@property BOOL calculated; //!< 式の値を計算中に、計算済みかどうかです。
 @property(nonatomic) Data *value; //!< 指定された、もしくは計算された値です。
 
 @end
@@ -200,11 +200,11 @@ typedef struct {
   _left = nil;
   _operator = [[Operator alloc] init];
   _right = nil;
-  _inParen = false;
+  _inParen = NO;
   _parenOpenBeforeClose = 0;
   _signCoefficient = 1;
   _column = [[Column alloc] init];
-  _calculated = false;
+  _calculated = NO;
   __value = (Data){.type = String, .value = {.string = ""}};
   _value = &__value;
   return self;
@@ -319,8 +319,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
   @try {
 
     int result = 0; // 関数の戻り値を一時的に保存します。
-    bool found =
-        false;                 // 検索時に見つかったかどうかの結果を一時的に保存します。
+    BOOL found =
+        NO;                 // 検索時に見つかったかどうかの結果を一時的に保存します。
     const char *search = NULL; // 文字列検索に利用するポインタです。
 
     const char *alpahUnder =
@@ -477,7 +477,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       }
 
       // キーワードを読み込みます。
-      found = false;
+      found = NO;
       for (Token *condition in keywordConditions) {
         charactorBackPoint = charactorCursol;
         char word[MAX_WORD_LENGTH];
@@ -504,7 +504,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           // 見つかったキーワードを生成します。
           [tokens
               addObject:[[Token alloc] initWithKind:condition.kind Word:@""]];
-          found = true;
+          found = YES;
         } else {
           charactorCursol = charactorBackPoint;
         }
@@ -514,7 +514,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       }
 
       // 記号を読み込みます。
-      found = false;
+      found = NO;
       for (Token *condition in signConditions) {
         charactorBackPoint = charactorCursol;
         char word[MAX_WORD_LENGTH];
@@ -533,7 +533,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           // 見つかった記号を生成します。
           [tokens
               addObject:[[Token alloc] initWithKind:condition.kind Word:@""]];
-          found = true;
+          found = YES;
         } else {
           charactorCursol = charactorBackPoint;
         }
@@ -622,8 +622,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     if (nextToken.kind == AsteriskToken) {
       nextToken = [tokenCursol nextObject];
     } else {
-      bool first =
-          true; // SELECT句に最初に指定された列名の読み込みかどうかです。
+      BOOL first =
+          YES; // SELECT句に最初に指定された列名の読み込みかどうかです。
       while (nextToken.kind == CommaToken || first) {
         if (nextToken.kind == CommaToken) {
           nextToken = [tokenCursol nextObject];
@@ -661,13 +661,13 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         } else {
           @throw [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
         }
-        first = false;
+        first = NO;
       }
     }
 
     // ORDER句とWHERE句を読み込みます。最大各一回ずつ書くことができます。
-    bool readOrder = false; // すでにORDER句が読み込み済みかどうかです。
-    bool readWhere = false; // すでにWHERE句が読み込み済みかどうかです。
+    BOOL readOrder = NO; // すでにORDER句が読み込み済みかどうかです。
+    BOOL readWhere = NO; // すでにWHERE句が読み込み済みかどうかです。
     while (nextToken.kind == OrderToken || nextToken.kind == WhereToken) {
 
       // 二度目のORDER句はエラーです。
@@ -681,13 +681,13 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       }
       // ORDER句を読み込みます。
       if (nextToken.kind == OrderToken) {
-        readOrder = true;
+        readOrder = YES;
         nextToken = [tokenCursol nextObject];
         ;
         if (nextToken.kind == ByToken) {
           nextToken = [tokenCursol nextObject];
           ;
-          bool first = true; // ORDER句の最初の列名の読み込みかどうかです。
+          BOOL first = YES; // ORDER句の最初の列名の読み込みかどうかです。
           while (nextToken.kind == CommaToken || first) {
             if (nextToken.kind == CommaToken) {
               nextToken = [tokenCursol nextObject];
@@ -739,7 +739,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               @throw
                   [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
             }
-            first = false;
+            first = NO;
           }
         } else {
           @throw [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
@@ -748,11 +748,11 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
       // WHERE句を読み込みます。
       if (nextToken.kind == WhereToken) {
-        readWhere = true;
+        readWhere = YES;
         nextToken = [tokenCursol nextObject];
         ;
         ExtensionTreeNode *currentNode = NULL; // 現在読み込んでいるノードです。
-        while (true) {
+        while (YES) {
           // オペランドを読み込みます。
 
           // オペランドのノードを新しく生成します。
@@ -854,7 +854,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               if (searched) {
                 // 対応付けられていないカッコ開くを一つ削除し、ノードがカッコに囲まれていることを記録します。
                 --searched.parenOpenBeforeClose;
-                searchedAncestor.inParen = true;
+                searchedAncestor.inParen = YES;
                 break;
               } else {
                 searchedAncestor = searchedAncestor.parent;
@@ -869,11 +869,11 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               [[Operator alloc] init]; // 現在読み込んでいる演算子の情報です。
 
           // 現在見ている演算子の情報を探します。
-          found = false;
+          found = NO;
           for (int j = 0; j < sizeof(operators) / sizeof(operators[0]); ++j) {
             if (operators[j].kind == nextToken.kind) {
               operator= operators[j];
-              found = true;
+              found = YES;
               break;
             }
           }
@@ -886,7 +886,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                 tmp; // 入れ替えるノードを探すためのカーソルです。
 
             //カッコにくくられていなかった場合に、演算子の優先順位を参考に結合するノードを探します。
-            bool first = true; // 演算子の優先順位を検索する最初のループです。
+            BOOL first = YES; // 演算子の優先順位を検索する最初のループです。
             do {
               if (!first) {
                 tmp = tmp.parent;
@@ -896,7 +896,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               while (searched && !searched.parenOpenBeforeClose) {
                 searched = searched.left;
               }
-              first = false;
+              first = NO;
             } while (!searched && tmp.parent &&
                      (tmp.parent.operator.order <= operator.order ||
                       tmp.parent.inParen));
@@ -940,7 +940,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     } else {
       @throw [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
     }
-    bool first = true; // FROM句の最初のテーブル名を読み込み中かどうかです。
+    BOOL first = YES; // FROM句の最初のテーブル名を読み込み中かどうかです。
     while (nextToken.kind == CommaToken || first) {
       if (nextToken.kind == CommaToken) {
         nextToken = [tokenCursol nextObject];
@@ -952,7 +952,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       } else {
         @throw [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
       }
-      first = false;
+      first = NO;
     }
 
     // 最後のトークンまで読み込みが進んでいなかったらエラーです。
@@ -1087,21 +1087,21 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
         // 全ての行のある列について、データ文字列から符号と数値以外の文字を探します。
         currentRow = inputData[tableNamesCount];
-        found = false;
+        found = NO;
         while (*currentRow) {
           char *currentChar = (*currentRow)[j]->value.string;
           while (*currentChar) {
-            bool isNum = false;
+            BOOL isNum = NO;
             const char *currentNum = signNum;
             while (*currentNum) {
               if (*currentChar == *currentNum) {
-                isNum = true;
+                isNum = YES;
                 break;
               }
               ++currentNum;
             }
             if (!isNum) {
-              found = true;
+              found = YES;
               break;
             }
             ++currentChar;
@@ -1170,7 +1170,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
          MAX_COLUMN_COUNT];         // SELECT句で指定された列の、入力ファイルとしてのインデックスです。
     int selectColumnIndexesNum = 0; // selectColumnIndexesの現在の数。
     for (int i = 0; i < selectColumnsNum; ++i) {
-      found = false;
+      found = NO;
       for (int j = 0; j < [tableNames count]; ++j) {
         for (int k = 0; k < inputColumnNums[j]; ++k) {
           if ([selectColumns[i].columnName
@@ -1188,7 +1188,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               @throw [[TynySQLException alloc]
                   initWithErrorCode:BadColumnNameError];
             }
-            found = true;
+            found = YES;
             // 見つかった値を持つ列のデータを生成します。
             if (MAX_COLUMN_COUNT <= selectColumnIndexesNum) {
               @throw
@@ -1241,7 +1241,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     }
 
     // 出力するデータを設定します。
-    while (true) {
+    while (YES) {
       if (MAX_ROW_COUNT <= outputRowsNum) {
         @throw [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
       }
@@ -1314,7 +1314,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
             // データが列名で指定されている場合、今扱っている行のデータを設定します。
             if (![currentNode.column.columnName isEqualToString:@""]) {
-              found = false;
+              found = NO;
               for (int i = 0; i < allInputColumnsNum; ++i) {
 
                 if ([currentNode.column.columnName
@@ -1332,7 +1332,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                     @throw [[TynySQLException alloc]
                         initWithErrorCode:BadColumnNameError];
                   }
-                  found = true;
+                  found = YES;
                   currentNode.value = allColumnsRow[i];
                 }
               }
@@ -1518,7 +1518,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           default:
             @throw [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
           }
-          currentNode.calculated = true;
+          currentNode.calculated = YES;
 
           // 自身の計算が終わった後は親の計算に戻ります。
           currentNode = currentNode.parent;
@@ -1533,7 +1533,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         }
         // WHERE条件の計算結果をリセットします。
         for (int i = 0; i < whereExtensionNodesNum; ++i) {
-          whereExtensionNodes[i].calculated = false;
+          whereExtensionNodes[i].calculated = NO;
         }
       }
 
@@ -1562,7 +1562,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           [MAX_COLUMN_COUNT];          // ORDER句で指定された列の、すべての行の中でのインデックスです。
       int orderByColumnIndexesNum = 0; // 現在のorderByColumnIndexesの数です。
       for (int i = 0; i < orderByColumnsNum; ++i) {
-        found = false;
+        found = NO;
         for (int j = 0; j < allInputColumnsNum; ++j) {
           if ([orderByColumns[i].columnName
                   caseInsensitiveCompare:allInputColumns[j].columnName] ==
@@ -1579,7 +1579,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               @throw [[TynySQLException alloc]
                   initWithErrorCode:BadColumnNameError];
             }
-            found = true;
+            found = YES;
             if (MAX_COLUMN_COUNT <= orderByColumnIndexesNum) {
               @throw
                   [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
@@ -1598,8 +1598,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       for (int i = 0; i < outputRowsNum; ++i) {
         int minIndex = i; // 現在までで最小の行のインデックスです。
         for (int j = i + 1; j < outputRowsNum; ++j) {
-          bool jLessThanMin =
-              false; // インデックスがjの値が、minIndexの値より小さいかどうかです。
+          BOOL jLessThanMin =
+              NO; // インデックスがjの値が、minIndexの値より小さいかどうかです。
           for (int k = 0; k < orderByColumnIndexesNum; ++k) {
             Data *mData = allColumnOutputData
                 [minIndex][orderByColumnIndexes
@@ -1625,7 +1625,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               cmp *= -1;
             }
             if (cmp < 0) {
-              jLessThanMin = true;
+              jLessThanMin = YES;
               break;
             } else if (0 < cmp) {
               break;
