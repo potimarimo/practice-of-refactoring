@@ -399,11 +399,11 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     const char *charactorCursol =
         sql; // SQLをトークンに分割して読み込む時に現在読んでいる文字の場所を表します。
 
-    char tableNames[MAX_TABLE_COUNT]
-                   [MAX_WORD_LENGTH]; // FROM句で指定しているテーブル名です。
+    NSString
+        *tableNames[MAX_TABLE_COUNT]; // FROM句で指定しているテーブル名です。
     // tableNamesを初期化します。
     for (size_t i = 0; i < sizeof(tableNames) / sizeof(tableNames[0]); i++) {
-      strncpy(tableNames[i], "", MAX_WORD_LENGTH);
+      tableNames[i] = @"";
     }
 
     // SQLをトークンに分割て読み込みます。
@@ -956,11 +956,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         if (MAX_TABLE_COUNT <= tableNamesNum) {
           @throw [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
         }
-        [nextToken.word getCString:tableNames[tableNamesNum++]
-                         maxLength:MAX_WORD_LENGTH
-                          encoding:NSUTF8StringEncoding];
+        tableNames[tableNamesNum++] = nextToken.word;
         nextToken = [tokenCursol nextObject];
-        ;
       } else {
         @throw [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
       }
@@ -987,10 +984,11 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
       // 入力ファイル名を生成します。
       const char csvExtension[] = ".csv"; // csvの拡張子です。
-      char fileName[MAX_WORD_LENGTH + sizeof(csvExtension) - 1] =
-          ""; // 拡張子を含む、入力ファイルのファイル名です。
-      strncat(fileName, tableNames[i],
-              MAX_WORD_LENGTH + sizeof(csvExtension) - 1);
+      char fileName[MAX_WORD_LENGTH + sizeof(csvExtension) -
+                    1]; // 拡張子を含む、入力ファイルのファイル名です。
+      [tableNames[i] getCString:fileName
+                      maxLength:MAX_WORD_LENGTH + sizeof(csvExtension) - 1
+                       encoding:NSUTF8StringEncoding];
       strncat(fileName, csvExtension,
               MAX_WORD_LENGTH + sizeof(csvExtension) - 1);
 
@@ -1012,9 +1010,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           if (MAX_COLUMN_COUNT <= inputColumnNums[i]) {
             @throw [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
           }
-          inputColumns[i][inputColumnNums[i]].tableName =
-              [NSString stringWithCString:tableNames[i]
-                                 encoding:NSUTF8StringEncoding];
+          inputColumns[i][inputColumnNums[i]].tableName = tableNames[i];
 
           char wrote[MAX_WORD_LENGTH] = "";
           char *writeCursol = wrote; // 列名の書き込みに利用するカーソルです。
@@ -1146,9 +1142,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     // 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
     for (int i = 0; i < tableNamesNum; ++i) {
       for (int j = 0; j < inputColumnNums[i]; ++j) {
-        allInputColumns[allInputColumnsNum].tableName =
-            [NSString stringWithCString:tableNames[i]
-                               encoding:NSUTF8StringEncoding];
+        allInputColumns[allInputColumnsNum].tableName = tableNames[i];
         allInputColumns[allInputColumnsNum++].columnName =
             inputColumns[i][j].columnName;
         ;
