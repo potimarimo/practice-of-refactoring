@@ -309,8 +309,8 @@ typedef struct {
 //! FROM USERS, CHILDREN @n
 int ExecuteSQL(const char *sql, const char *outputFileName) {
   enum ResultValue error = ResultOk; // 発生したエラーの種類です。
-  FILE *inputTableFiles[MAX_TABLE_COUNT] = {
-      NULL}; // 読み込む入力ファイルの全てのファイルポインタです。
+  NSMutableArray *inputTableFiles = [NSMutableArray
+      array]; // 読み込む入力ファイルの全てのファイルポインタです。
   NSFileHandle *outputFile = nil; // 書き込むファイルのファイルポインタです。
   Data ***currentRow = NULL; // データ検索時に現在見ている行を表します。
   Data **inputData[MAX_TABLE_COUNT][MAX_ROW_COUNT]; // 入力データです。
@@ -975,16 +975,31 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               MAX_WORD_LENGTH + sizeof(csvExtension) - 1);
 
       // 入力ファイルを開きます。
-      inputTableFiles[tableNamesCount] = fopen(fileName, "r");
-      if (!inputTableFiles[tableNamesCount]) {
+      NSFileHandle *inputFile =
+          [NSFileHandle fileHandleForReadingAtPath:
+                            [NSString stringWithCString:fileName
+                                               encoding:NSUTF8StringEncoding]];
+      if (!inputFile) {
         @throw [[TynySQLException alloc] initWithErrorCode:FileOpenError];
       }
+      [inputTableFiles addObject:inputFile];
 
       // 入力CSVのヘッダ行を読み込みます。
       char inputLine[MAX_FILE_LINE_LENGTH] =
           ""; // ファイルから読み込んだ行文字列です。
-      if (fgets(inputLine, MAX_FILE_LINE_LENGTH,
-                inputTableFiles[tableNamesCount])) {
+      NSData *allFile = nil;
+      allFile = [inputFile readDataToEndOfFile];
+      NSArray *allLines =
+          [[[NSString alloc] initWithData:allFile encoding:NSUTF8StringEncoding]
+              componentsSeparatedByString:@"\n"];
+      while ([[allLines lastObject] isEqualToString:@""]) {
+        allLines =
+            [allLines subarrayWithRange:NSMakeRange(0, [allLines count] - 1)];
+      }
+      [allLines[0] getCString:inputLine
+                    maxLength:MAX_FILE_LINE_LENGTH
+                     encoding:NSUTF8StringEncoding];
+      if (allFile) {
         charactorCursol = inputLine;
 
         // 読み込んだ行を最後まで読みます。
@@ -1019,12 +1034,11 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
       // 入力CSVのデータ行を読み込みます。
       int rowNum = 0;
-      while (fgets(inputLine, MAX_FILE_LINE_LENGTH,
-                   inputTableFiles[tableNamesCount])) {
+      while (rowNum < [allLines count] - 1) {
         if (MAX_ROW_COUNT <= rowNum) {
           @throw [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
         }
-        Data **row = inputData[tableNamesCount][rowNum++] =
+        Data **row = inputData[tableNamesCount][rowNum] =
             malloc(MAX_COLUMN_COUNT *
                    sizeof(Data *)); // 入力されている一行分のデータです。
         if (!row) {
@@ -1035,7 +1049,9 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         for (int j = 0; j < MAX_COLUMN_COUNT; ++j) {
           row[j] = NULL;
         }
-
+        [allLines[rowNum++ + 1] getCString:inputLine
+                                 maxLength:MAX_FILE_LINE_LENGTH
+                                  encoding:NSUTF8StringEncoding];
         charactorCursol = inputLine;
         int columnNum =
             0; // いま何列目を読み込んでいるか。0基底の数字となります。
@@ -1680,19 +1696,15 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     // 正常時の後処理です。
 
     // ファイルリソースを解放します。
-    for (int i = 0; i < MAX_TABLE_COUNT; ++i) {
-      if (inputTableFiles[i]) {
-        fclose(inputTableFiles[i]);
-        if (result == EOF) {
-          @throw [[TynySQLException alloc] initWithErrorCode:FileCloseError];
-        }
+    for (NSFileHandle *inputTableFile in inputTableFiles) {
+      if (inputTableFile) {
+        [inputTableFile synchronizeFile];
+        [inputTableFile closeFile];
       }
     }
     if (outputFile) {
+      [outputFile synchronizeFile];
       [outputFile closeFile];
-      if (result == EOF) {
-        @throw [[TynySQLException alloc] initWithErrorCode:FileCloseError];
-      }
     }
 
     // メモリリソースを解放します。
@@ -1731,9 +1743,10 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     // エラー時の処理です。
 
     // ファイルリソースを解放します。
-    for (int i = 0; i < MAX_TABLE_COUNT; ++i) {
-      if (inputTableFiles[i]) {
-        fclose(inputTableFiles[i]);
+    for (NSFileHandle *inputTableFile in inputTableFiles) {
+
+      if (inputTableFile) {
+        [inputTableFile closeFile];
       }
     }
     if (outputFile) {
@@ -1778,7 +1791,7 @@ ERROR:
   // ファイルリソースを解放します。
   for (int i = 0; i < MAX_TABLE_COUNT; ++i) {
     if (inputTableFiles[i]) {
-      fclose(inputTableFiles[i]);
+      [inputTableFiles[i] closeFile];
     }
   }
   if (outputFile) {
