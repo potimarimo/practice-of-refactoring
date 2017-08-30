@@ -112,13 +112,10 @@ typedef struct {
 @end
 
 //! 指定された列の情報です。どのテーブルに所属するかの情報も含みます。
-@interface Column : NSObject {
-  char __tableName[MAX_WORD_LENGTH];
-  char __columnName[MAX_WORD_LENGTH];
-}
-@property char *tableName; //!<
+@interface Column : NSObject
+@property NSString *tableName; //!<
 //!列が所属するテーブル名です。指定されていない場合は空文字列となります。
-@property char *columnName; //!< 指定された列の列名です。
+@property NSString *columnName; //!< 指定された列の列名です。
 - (Column *)init;
 @end
 
@@ -191,10 +188,8 @@ typedef struct {
 @implementation Column
 
 - (Column *)init {
-  strcpy(__tableName, "");
-  _tableName = __tableName;
-  strcpy(__columnName, "");
-  _columnName = __columnName;
+  _tableName = @"";
+  _columnName = @"";
   return self;
 }
 
@@ -648,11 +643,9 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             @throw [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
           }
           // テーブル名が指定されていない場合と仮定して読み込みます。
-          strncpy(selectColumns[selectColumnsNum].tableName, "",
-                  MAX_WORD_LENGTH);
-          [nextToken.word getCString:selectColumns[selectColumnsNum].columnName
-                           maxLength:MAX_WORD_LENGTH
-                            encoding:NSUTF8StringEncoding];
+          selectColumns[selectColumnsNum].tableName = @"";
+        getCString:
+          selectColumns[selectColumnsNum].columnName = nextToken.word;
 
           nextToken = [tokenCursol nextObject];
           ;
@@ -662,13 +655,9 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             if (nextToken.kind == IdentifierToken) {
 
               // テーブル名が指定されていることがわかったので読み替えます。
-              strncpy(selectColumns[selectColumnsNum].tableName,
-                      selectColumns[selectColumnsNum].columnName,
-                      MAX_WORD_LENGTH);
-              [nextToken.word
-                  getCString:selectColumns[selectColumnsNum].columnName
-                   maxLength:MAX_WORD_LENGTH
-                    encoding:NSUTF8StringEncoding];
+              selectColumns[selectColumnsNum].tableName =
+                  selectColumns[selectColumnsNum].columnName;
+              selectColumns[selectColumnsNum].columnName = nextToken.word;
               nextToken = [tokenCursol nextObject];
               ;
             } else {
@@ -718,12 +707,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                     initWithErrorCode:MemoryOverError];
               }
               // テーブル名が指定されていない場合と仮定して読み込みます。
-              strncpy(orderByColumns[orderByColumnsNum].tableName, "",
-                      MAX_WORD_LENGTH);
-              [nextToken.word
-                  getCString:orderByColumns[orderByColumnsNum].columnName
-                   maxLength:MAX_WORD_LENGTH
-                    encoding:NSUTF8StringEncoding];
+              orderByColumns[orderByColumnsNum].tableName = @"";
+              orderByColumns[orderByColumnsNum].columnName = nextToken.word;
               nextToken = [tokenCursol nextObject];
               ;
               if (nextToken.kind == DotToken) {
@@ -732,13 +717,10 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                 if (nextToken.kind == IdentifierToken) {
 
                   // テーブル名が指定されていることがわかったので読み替えます。
-                  strncpy(orderByColumns[orderByColumnsNum].tableName,
-                          orderByColumns[orderByColumnsNum].columnName,
-                          MAX_WORD_LENGTH);
-                  [nextToken.word
-                      getCString:orderByColumns[orderByColumnsNum].columnName
-                       maxLength:MAX_WORD_LENGTH
-                        encoding:NSUTF8StringEncoding];
+                  orderByColumns[orderByColumnsNum].tableName =
+                      orderByColumns[orderByColumnsNum].columnName;
+                  orderByColumns[orderByColumnsNum].columnName = nextToken.word;
+
                   nextToken = [tokenCursol nextObject];
                   ;
                 } else {
@@ -820,11 +802,9 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           if (nextToken.kind == IdentifierToken) {
 
             // テーブル名が指定されていない場合と仮定して読み込みます。
-            strncpy(currentNode.column.tableName, "", MAX_WORD_LENGTH);
+            currentNode.column.tableName = @"";
+            currentNode.column.columnName = nextToken.word;
 
-            [nextToken.word getCString:currentNode.column.columnName
-                             maxLength:MAX_WORD_LENGTH
-                              encoding:NSUTF8StringEncoding];
             nextToken = [tokenCursol nextObject];
             ;
             if (nextToken.kind == DotToken) {
@@ -833,11 +813,9 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               if (nextToken.kind == IdentifierToken) {
 
                 // テーブル名が指定されていることがわかったので読み替えます。
-                strncpy(currentNode.column.tableName,
-                        currentNode.column.columnName, MAX_WORD_LENGTH);
-                [nextToken.word getCString:currentNode.column.columnName
-                                 maxLength:MAX_WORD_LENGTH
-                                  encoding:NSUTF8StringEncoding];
+                currentNode.column.tableName = currentNode.column.columnName;
+
+                currentNode.column.columnName = nextToken.word;
                 nextToken = [tokenCursol nextObject];
                 ;
               } else {
@@ -1036,11 +1014,12 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           if (MAX_COLUMN_COUNT <= inputColumnNums[i]) {
             @throw [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
           }
-          strncpy(inputColumns[i][inputColumnNums[i]].tableName, tableNames[i],
-                  MAX_WORD_LENGTH);
-          char *writeCursol =
-              inputColumns[i][inputColumnNums[i]++]
-                  .columnName; // 列名の書き込みに利用するカーソルです。
+          inputColumns[i][inputColumnNums[i]].tableName =
+              [NSString stringWithCString:tableNames[i]
+                                 encoding:NSUTF8StringEncoding];
+
+          char wrote[MAX_WORD_LENGTH] = "";
+          char *writeCursol = wrote; // 列名の書き込みに利用するカーソルです。
 
           // 列名を一つ読みます。
           while (*charactorCursol && *charactorCursol != ',' &&
@@ -1049,6 +1028,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           }
           // 書き込んでいる列名の文字列に終端文字を書き込みます。
           writeCursol[1] = '\0';
+          inputColumns[i][inputColumnNums[i]++].columnName =
+              [NSString stringWithCString:wrote encoding:NSUTF8StringEncoding];
 
           // 入力行のカンマの分を読み進めます。
           ++charactorCursol;
@@ -1167,20 +1148,22 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     // 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
     for (int i = 0; i < tableNamesNum; ++i) {
       for (int j = 0; j < inputColumnNums[i]; ++j) {
-        strncpy(allInputColumns[allInputColumnsNum].tableName, tableNames[i],
-                MAX_WORD_LENGTH);
-        strncpy(allInputColumns[allInputColumnsNum++].columnName,
-                inputColumns[i][j].columnName, MAX_WORD_LENGTH);
+        allInputColumns[allInputColumnsNum].tableName =
+            [NSString stringWithCString:tableNames[i]
+                               encoding:NSUTF8StringEncoding];
+        allInputColumns[allInputColumnsNum++].columnName =
+            inputColumns[i][j].columnName;
+        ;
       }
     }
 
     // SELECT句の列名指定が*だった場合は、入力CSVの列名がすべて選択されます。
     if (!selectColumnsNum) {
       for (int i = 0; i < allInputColumnsNum; ++i) {
-        strncpy(selectColumns[selectColumnsNum].tableName,
-                allInputColumns[i].tableName, MAX_WORD_LENGTH);
-        strncpy(selectColumns[selectColumnsNum++].columnName,
-                allInputColumns[i].columnName, MAX_WORD_LENGTH);
+        selectColumns[selectColumnsNum].tableName =
+            allInputColumns[i].tableName;
+        selectColumns[selectColumnsNum++].columnName =
+            allInputColumns[i].columnName;
       }
     }
 
@@ -1202,24 +1185,15 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       found = false;
       for (int j = 0; j < tableNamesNum; ++j) {
         for (int k = 0; k < inputColumnNums[j]; ++k) {
-          char *selectTableNameCursol = selectColumns[i].tableName;
-          char *inputTableNameCursol = inputColumns[j][k].tableName;
-          while (*selectTableNameCursol &&
-                 toupper(*selectTableNameCursol) ==
-                     toupper(*inputTableNameCursol++)) {
-            ++selectTableNameCursol;
-          }
-          char *selectColumnNameCursol = selectColumns[i].columnName;
-          char *inputColumnNameCursol = inputColumns[j][k].columnName;
-          while (*selectColumnNameCursol &&
-                 toupper(*selectColumnNameCursol) ==
-                     toupper(*inputColumnNameCursol++)) {
-            ++selectColumnNameCursol;
-          }
-          if (!*selectColumnNameCursol && !*inputColumnNameCursol &&
-              (!*selectColumns[i]
-                     .tableName || // テーブル名が設定されている場合のみテーブル名の比較を行います。
-               (!*selectTableNameCursol && !*inputTableNameCursol))) {
+          if ([selectColumns[i].columnName
+                  caseInsensitiveCompare:inputColumns[j][k].columnName] ==
+                  NSOrderedSame &&
+              ([selectColumns[i].tableName
+                   isEqualToString:
+                       @""] || // テーブル名が設定されている場合のみテーブル名の比較を行います。
+               ([selectColumns[i].tableName
+                    caseInsensitiveCompare:inputColumns[j][k].tableName] ==
+                NSOrderedSame))) {
 
             // 既に見つかっているのにもう一つ見つかったらエラーです。
             if (found) {
@@ -1245,26 +1219,23 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
     // 出力する列名を設定します。
     for (int i = 0; i < selectColumnsNum; ++i) {
-      strncpy(outputColumns[outputColumnNum].tableName,
-              inputColumns[selectColumnIndexes[i].table]
-                          [selectColumnIndexes[i].column]
-                              .tableName,
-              MAX_WORD_LENGTH);
-      strncpy(outputColumns[outputColumnNum].columnName,
-              inputColumns[selectColumnIndexes[i].table]
-                          [selectColumnIndexes[i].column]
-                              .columnName,
-              MAX_WORD_LENGTH);
+      outputColumns[outputColumnNum].tableName =
+          inputColumns[selectColumnIndexes[i].table]
+                      [selectColumnIndexes[i].column]
+                          .tableName;
+      outputColumns[outputColumnNum].columnName =
+          inputColumns[selectColumnIndexes[i].table]
+                      [selectColumnIndexes[i].column]
+                          .columnName;
       ++outputColumnNum;
     }
 
     if (whereTopNode) {
       // 既存数値の符号を計算します。
       for (int i = 0; i < whereExtensionNodesNum; ++i) {
-        if (whereExtensionNodes[i]
-                .
-                operator.kind == NoToken && !*whereExtensionNodes[i]
-                .column.columnName && whereExtensionNodes[i]
+        if (whereExtensionNodes[i].operator.kind == NoToken &&
+            [whereExtensionNodes[i].column.columnName isEqualToString:@""] &&
+            whereExtensionNodes[i]
                 .value->type == Integer) {
           whereExtensionNodes[i].value->value.integer *=
               whereExtensionNodes[i].signCoefficient;
@@ -1354,27 +1325,20 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             // ノードにデータが設定されている場合です。
 
             // データが列名で指定されている場合、今扱っている行のデータを設定します。
-            if (*currentNode.column.columnName) {
+            if (![currentNode.column.columnName isEqualToString:@""]) {
               found = false;
               for (int i = 0; i < allInputColumnsNum; ++i) {
-                char *whereTableNameCursol = currentNode.column.tableName;
-                char *allInputTableNameCursol = allInputColumns[i].tableName;
-                while (*whereTableNameCursol &&
-                       toupper(*whereTableNameCursol) ==
-                           toupper(*allInputTableNameCursol++)) {
-                  ++whereTableNameCursol;
-                }
-                char *whereColumnNameCursol = currentNode.column.columnName;
-                char *allInputColumnNameCursol = allInputColumns[i].columnName;
-                while (*whereColumnNameCursol &&
-                       toupper(*whereColumnNameCursol) ==
-                           toupper(*allInputColumnNameCursol++)) {
-                  ++whereColumnNameCursol;
-                }
-                if (!*whereColumnNameCursol && !*allInputColumnNameCursol &&
-                    (!*currentNode.column
-                           .tableName || // テーブル名が設定されている場合のみテーブル名の比較を行います。
-                     (!*whereTableNameCursol && !*allInputTableNameCursol))) {
+
+                if ([currentNode.column.columnName
+                        caseInsensitiveCompare:allInputColumns[i].columnName] ==
+                        NSOrderedSame &&
+                    ([currentNode.column.tableName
+                         isEqualToString:
+                             @""] || // テーブル名が設定されている場合のみテーブル名の比較を行います。
+                     ([currentNode.column.tableName
+                          caseInsensitiveCompare:allInputColumns[i]
+                                                     .tableName] ==
+                      NSOrderedSame))) {
                   // 既に見つかっているのにもう一つ見つかったらエラーです。
                   if (found) {
                     @throw [[TynySQLException alloc]
@@ -1611,26 +1575,16 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       for (int i = 0; i < orderByColumnsNum; ++i) {
         found = false;
         for (int j = 0; j < allInputColumnsNum; ++j) {
-          char *orderByTableNameCursol = orderByColumns[i].tableName;
-          char *allInputTableNameCursol = allInputColumns[j].tableName;
-          while (*orderByTableNameCursol &&
-                 toupper(*orderByTableNameCursol) ==
-                     toupper(*allInputTableNameCursol)) {
-            ++orderByTableNameCursol;
-            ++allInputTableNameCursol;
-          }
-          char *orderByColumnNameCursol = orderByColumns[i].columnName;
-          char *allInputColumnNameCursol = allInputColumns[j].columnName;
-          while (*orderByColumnNameCursol &&
-                 toupper(*orderByColumnNameCursol) ==
-                     toupper(*allInputColumnNameCursol)) {
-            ++orderByColumnNameCursol;
-            ++allInputColumnNameCursol;
-          }
-          if (!*orderByColumnNameCursol && !*allInputColumnNameCursol &&
-              (!*orderByColumns[i]
-                     .tableName || // テーブル名が設定されている場合のみテーブル名の比較を行います。
-               (!*orderByTableNameCursol && !*allInputTableNameCursol))) {
+          if ([orderByColumns[i].columnName
+                  caseInsensitiveCompare:allInputColumns[j].columnName] ==
+                  NSOrderedSame &&
+              ([orderByColumns[i].tableName
+                   isEqualToString:
+                       @""] || // テーブル名が設定されている場合のみテーブル名の比較を行います。
+               ([orderByColumns[i].tableName
+                    caseInsensitiveCompare:allInputColumns[j].tableName] ==
+                NSOrderedSame))) {
+
             // 既に見つかっているのにもう一つ見つかったらエラーです。
             if (found) {
               @throw [[TynySQLException alloc]
@@ -1710,7 +1664,11 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
     // 出力ファイルに列名を出力します。
     for (int i = 0; i < selectColumnsNum; ++i) {
-      result = fputs(outputColumns[i].columnName, outputFile);
+      char columnName[MAX_WORD_LENGTH];
+      [outputColumns[i].columnName getCString:columnName
+                                    maxLength:MAX_WORD_LENGTH
+                                     encoding:NSUTF8StringEncoding];
+      result = fputs(columnName, outputFile);
       if (result == EOF) {
         @throw [[TynySQLException alloc] initWithErrorCode:FileWriteError];
       }
