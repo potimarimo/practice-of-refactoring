@@ -1160,10 +1160,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     int outputColumnNum = 0; // 出力するすべての行の現在の数です。
 
     // SELECT句で指定された列名が、何個目の入力ファイルの何列目に相当するかを判別します。
-    ColumnIndex *selectColumnIndexes
-        [MAX_TABLE_COUNT *
-         MAX_COLUMN_COUNT];         // SELECT句で指定された列の、入力ファイルとしてのインデックスです。
-    int selectColumnIndexesNum = 0; // selectColumnIndexesの現在の数。
+    NSMutableArray *selectColumnIndexes = [NSMutableArray
+        array]; // SELECT句で指定された列の、入力ファイルとしてのインデックスです。
     for (Column *selectedColumn in selectColumns) {
       found = NO;
       for (int j = 0; j < [tableNames count]; ++j) {
@@ -1185,12 +1183,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             }
             found = YES;
             // 見つかった値を持つ列のデータを生成します。
-            if (MAX_COLUMN_COUNT <= selectColumnIndexesNum) {
-              @throw
-                  [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
-            }
-            selectColumnIndexes[selectColumnIndexesNum++] =
-                [[ColumnIndex alloc] initWithTable:j Column:k];
+            [selectColumnIndexes
+                addObject:[[ColumnIndex alloc] initWithTable:j Column:k]];
           }
         }
       }
@@ -1201,15 +1195,11 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     }
 
     // 出力する列名を設定します。
-    for (int i = 0; i < [selectColumns count]; ++i) {
+    for (ColumnIndex *index in selectColumnIndexes) {
       outputColumns[outputColumnNum].tableName =
-          inputColumns[selectColumnIndexes[i].table]
-                      [selectColumnIndexes[i].column]
-                          .tableName;
+          inputColumns[index.table][index.column].tableName;
       outputColumns[outputColumnNum].columnName =
-          inputColumns[selectColumnIndexes[i].table]
-                      [selectColumnIndexes[i].column]
-                          .columnName;
+          inputColumns[index.table][index.column].columnName;
       ++outputColumnNum;
     }
 
@@ -1253,14 +1243,14 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       }
 
       // 行の各列のデータを入力から持ってきて設定します。
-      for (int i = 0; i < selectColumnIndexesNum; ++i) {
-        row[i] = malloc(sizeof(Data));
-        if (!row[i]) {
+      int rowsCount = 0;
+      for (ColumnIndex *index in selectColumnIndexes) {
+        row[rowsCount] = malloc(sizeof(Data));
+        if (!row[rowsCount]) {
           @throw
               [[TynySQLException alloc] initWithErrorCode:MemoryAllocateError];
         }
-        *row[i] = *(*currentRows[selectColumnIndexes[i]
-                                     .table])[selectColumnIndexes[i].column];
+        *row[rowsCount++] = *(*currentRows[index.table])[index.column];
       }
 
       Data **allColumnsRow = allColumnOutputData[outputRowsNum++] = malloc(
