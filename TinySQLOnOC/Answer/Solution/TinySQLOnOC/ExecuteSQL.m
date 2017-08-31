@@ -343,9 +343,9 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     BOOL found = NO;           // 検索時に見つかったかどうかの結果を一時的に保存します。
     const char *search = NULL; // 文字列検索に利用するポインタです。
 
-    const char *alpahUnder =
-        "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXY"
-        "Z"; // 全てのアルファベットの大文字小文字とアンダーバーです。
+    NSString *alpahUnder =
+        @"_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXY"
+        @"Z"; // 全てのアルファベットの大文字小文字とアンダーバーです。
     const char *alpahNumUnder =
         "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ0123"
         "456789";                         // 全ての数字とアルファベットの大文字小文字とアンダーバーです。
@@ -453,11 +453,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             [num containsString:getOneCharactor(sqlString, charactorCursol)]);
 
         // 数字の後にすぐに識別子が続くのは紛らわしいので数値リテラルとは扱いません。
-        for (search = alpahUnder;
-             *search && getChar(sqlString, charactorCursol) != *search;
-             ++search) {
-        }
-        if (!*search) {
+        if (![alpahUnder
+                containsString:getOneCharactor(sqlString, charactorCursol)]) {
           [tokens
               addObject:[[Token alloc] initWithKind:IntLiteralToken Word:word]];
           continue;
@@ -575,11 +572,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       // 識別子を読み込みます。
 
       // 識別子の最初の文字を確認します。
-      for (search = alpahUnder;
-           *search && getChar(sqlString, charactorCursol) != *search;
-           ++search) {
-      };
-      if (*search) {
+      if ([alpahUnder
+              containsString:getOneCharactor(sqlString, charactorCursol)]) {
         NSMutableString *word = [NSMutableString string];
         do {
           // 二文字目以降は数字も許可して文字の種類を確認します。
@@ -842,7 +836,6 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                                                              : MAX_DATA_LENGTH
                   encoding:NSUTF8StringEncoding];
             nextToken = [tokenCursol nextObject];
-            ;
           } else {
             @throw [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
           }
