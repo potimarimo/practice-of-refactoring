@@ -233,16 +233,23 @@ typedef struct {
 
 @end
 
-char getChar(NSString *sql, int cursol) {
-  if ([sql length] <= cursol) {
+char getChar(NSString *string, int cursol) {
+  if ([string length] <= cursol) {
     return 0;
   }
-  NSString *charactor = [sql substringWithRange:NSMakeRange(cursol, 1)];
+  NSString *charactor = [string substringWithRange:NSMakeRange(cursol, 1)];
 
   char buf[] = " ";
   char *ch = buf;
   [charactor getCString:ch maxLength:2 encoding:NSUTF8StringEncoding];
   return *ch;
+}
+
+NSString *getOneCharactor(NSString *string, int cursol) {
+  if ([string length] <= cursol) {
+    return 0;
+  }
+  return [string substringWithRange:NSMakeRange(cursol, 1)];
 }
 
 //! カレントディレクトリにあるCSVに対し、簡易的なSQLを実行し、結果をファイルに出力します。
@@ -343,7 +350,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ0123"
         "456789";                         // 全ての数字とアルファベットの大文字小文字とアンダーバーです。
     const char *signNum = "+-0123456789"; // 全ての符号と数字です。
-    const char *num = "0123456789";       // 全ての数字です。
+    NSString *num = @"0123456789";        // 全ての数字です。
     const char *space = " \t\r\n";        // 全ての空白文字です。
 
     // inputDataを初期化します。
@@ -431,25 +438,19 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
       // 先頭文字が数字であるかどうかを確認します。
       charactorBackPoint = charactorCursol;
-      for (search = num;
-           *search && getChar(sqlString, charactorCursol) != *search;
-           ++search) {
-      }
-      if (*search) {
+      if ([num containsString:getOneCharactor(sqlString, charactorCursol)]) {
 
         NSMutableString *word = [NSMutableString string];
 
         // 数字が続く間、文字を読み込み続けます。
         do {
-          for (search = num;
-               *search && getChar(sqlString, charactorCursol) != *search;
-               ++search) {
-          }
-          if (*search) {
-            [word appendString:[NSString stringWithFormat:@"%c", *search]];
+          if ([num
+                  containsString:getOneCharactor(sqlString, charactorCursol)]) {
+            [word appendString:getOneCharactor(sqlString, charactorCursol)];
             ++charactorCursol;
           }
-        } while (*search);
+        } while (
+            [num containsString:getOneCharactor(sqlString, charactorCursol)]);
 
         // 数字の後にすぐに識別子が続くのは紛らわしいので数値リテラルとは扱いません。
         for (search = alpahUnder;
