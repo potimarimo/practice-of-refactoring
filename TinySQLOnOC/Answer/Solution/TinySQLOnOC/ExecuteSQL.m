@@ -327,15 +327,15 @@ NSString *getOneCharactor(NSString *string, int cursol) {
 //! WHERE USERS.ID = CHILDREN.PARENTID @n
 //! FROM USERS, CHILDREN @n
 int ExecuteSQL(const char *sql, const char *outputFileName) {
-  enum ResultValue error = ResultOk; // 発生したエラーの種類です。
   NSMutableArray *inputTableFiles =
       NSMutableArray.new; // 読み込む入力ファイルの全てのファイルポインタです。
   NSFileHandle *outputFile = nil; // 書き込むファイルのファイルポインタです。
   Data ***currentRow = NULL; // データ検索時に現在見ている行を表します。
   Data **inputData[MAX_TABLE_COUNT][MAX_ROW_COUNT]; // 入力データです。
   NSMutableArray *outputData = NSMutableArray.new;  // 出力データです。
-  Data **allColumnOutputData[MAX_ROW_COUNT] = {
-      NULL}; // 出力するデータに対応するインデックスを持ち、すべての入力データを保管します。
+  NSMutableArray *allColumnOutputData =
+      NSMutableArray
+          .new; // 出力するデータに対応するインデックスを持ち、すべての入力データを保管します。
   NSMutableArray *tableNames =
       NSMutableArray.new; // FROM句で指定しているテーブル名です。
   @try {
@@ -1224,8 +1224,6 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       }
     }
 
-    int outputRowsNum = 0; // 出力データの現在の行数です。
-
     Data ***currentRows[MAX_TABLE_COUNT] = {
         NULL}; // 入力された各テーブルの、現在出力している行を指すカーソルです。
     for (int i = 0; i < [tableNames count]; ++i) {
@@ -1235,9 +1233,6 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
     // 出力するデータを設定します。
     while (YES) {
-      if (MAX_ROW_COUNT <= outputRowsNum) {
-        @throw [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
-      }
       NSMutableArray *row =
           NSMutableArray.new; // 出力している一行分のデータです。
       [outputData addObject:row];
@@ -1249,29 +1244,24 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         [row addObject:[NSValue valueWithPointer:data]];
       }
 
-      Data **allColumnsRow = allColumnOutputData[outputRowsNum++] = malloc(
-          MAX_TABLE_COUNT * MAX_COLUMN_COUNT *
-          sizeof(
-              Data
-                  *)); // WHEREやORDERのためにすべての情報を含む行。rowとインデックスを共有します。
-      if (!allColumnsRow) {
-        @throw [[TynySQLException alloc] initWithErrorCode:MemoryAllocateError];
-      }
-      // 生成した行を初期化します。
-      for (int i = 0; i < MAX_TABLE_COUNT * MAX_COLUMN_COUNT; ++i) {
-        allColumnsRow[i] = NULL;
-      }
+      NSMutableArray *allColumnsRow = NSMutableArray.new;
+      [allColumnOutputData
+          addObject:
+              allColumnsRow]; // WHEREやORDERのためにすべての情報を含む行。rowとインデックスを共有します。
 
       // allColumnsRowの列を設定します。
-      int allColumnsNum = 0; // allColumnsRowの現在の列数です。
       for (int i = 0; i < [tableNames count]; ++i) {
         for (int j = 0; j < inputColumnNums[i]; ++j) {
-          allColumnsRow[allColumnsNum] = malloc(sizeof(Data));
-          if (!allColumnsRow[allColumnsNum]) {
+          Data *data = malloc(sizeof(Data));
+          *data = *(*currentRows[i])[j];
+          NSValue *value = [NSValue valueWithPointer:data];
+
+          if (!value) {
             @throw [[TynySQLException alloc]
                 initWithErrorCode:MemoryAllocateError];
           }
-          *allColumnsRow[allColumnsNum++] = *(*currentRows[i])[j];
+
+          [allColumnsRow addObject:value];
         }
       }
       // WHEREの条件となる値を再帰的に計算します。
@@ -1314,7 +1304,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                         initWithErrorCode:BadColumnNameError];
                   }
                   found = YES;
-                  currentNode.value = allColumnsRow[i];
+                  currentNode.value =
+                      ((NSValue *)allColumnsRow[i]).pointerValue;
                 }
               }
               // 一つも見つからなくてもエラーです。
@@ -1507,8 +1498,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
         // 条件に合わない行は出力から削除します。
         if (!whereTopNode.value->value.boolean) {
-          free(allColumnsRow);
-          allColumnOutputData[--outputRowsNum] = NULL;
+          [allColumnOutputData removeLastObject];
           [outputData removeLastObject];
         }
         // WHERE条件の計算結果をリセットします。
@@ -1575,25 +1565,27 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       }
 
       // outputDataとallColumnOutputDataのソートを一緒に行います。簡便のため凝ったソートは使わず、選択ソートを利用します。
-      for (int i = 0; i < outputRowsNum; ++i) {
+      for (int i = 0; i < [outputData count]; ++i) {
         int minIndex = i; // 現在までで最小の行のインデックスです。
-        for (int j = i + 1; j < outputRowsNum; ++j) {
+        for (int j = i + 1; j < [outputData count]; ++j) {
           BOOL jLessThanMin =
               NO; // インデックスがjの値が、minIndexの値より小さいかどうかです。
           for (int k = 0; k < orderByColumnIndexesNum; ++k) {
-            Data *mData = allColumnOutputData
+            NSValue *mData = allColumnOutputData
                 [minIndex][orderByColumnIndexes
                                [k]]; // インデックスがminIndexのデータです。
-            Data *jData = allColumnOutputData
+            NSValue *jData = allColumnOutputData
                 [j][orderByColumnIndexes[k]]; // インデックスがjのデータです。
             long cmp =
                 0; // 比較結果です。等しければ0、インデックスjの行が大きければプラス、インデックスminIndexの行が大きければマイナスとなります。
-            switch (mData->type) {
+            switch (((Data *)mData.pointerValue)->type) {
             case Integer:
-              cmp = jData->value.integer - mData->value.integer;
+              cmp = ((Data *)jData.pointerValue)->value.integer -
+                    ((Data *)mData.pointerValue)->value.integer;
               break;
             case String:
-              cmp = strcmp(jData->value.string, mData->value.string);
+              cmp = strcmp(((Data *)jData.pointerValue)->value.string,
+                           ((Data *)mData.pointerValue)->value.string);
               break;
             default:
               @throw
@@ -1615,11 +1607,11 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             minIndex = j;
           }
         }
-        NSMutableArray *tmpArray = outputData[minIndex];
+        NSArray *tmp = outputData[minIndex];
         outputData[minIndex] = outputData[i];
-        outputData[i] = tmpArray;
+        outputData[i] = tmp;
 
-        Data **tmp = allColumnOutputData[minIndex];
+        tmp = allColumnOutputData[minIndex];
         allColumnOutputData[minIndex] = allColumnOutputData[i];
         allColumnOutputData[i] = tmp;
       }
@@ -1708,14 +1700,10 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         free(dataCursol.pointerValue);
       }
     }
-    currentRow = allColumnOutputData;
-    while (*currentRow) {
-      Data **dataCursol = *currentRow;
-      while (*dataCursol) {
-        free(*dataCursol++);
+    for (NSArray *currentRow in allColumnOutputData) {
+      for (NSValue *dataCursol in currentRow) {
+        free(dataCursol.pointerValue);
       }
-      free(*currentRow);
-      currentRow++;
     }
   }
 }
