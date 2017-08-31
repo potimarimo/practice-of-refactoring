@@ -247,7 +247,7 @@ char getChar(NSString *string, int cursol) {
 
 NSString *getOneCharactor(NSString *string, int cursol) {
   if ([string length] <= cursol) {
-    return 0;
+    return @"¥0";
   }
   return [string substringWithRange:NSMakeRange(cursol, 1)];
 }
@@ -346,9 +346,9 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     NSString *alpahUnder =
         @"_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXY"
         @"Z"; // 全てのアルファベットの大文字小文字とアンダーバーです。
-    const char *alpahNumUnder =
-        "_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ0123"
-        "456789";                         // 全ての数字とアルファベットの大文字小文字とアンダーバーです。
+    NSString *alpahNumUnder =
+        @"_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ0123"
+        @"456789";                        // 全ての数字とアルファベットの大文字小文字とアンダーバーです。
     const char *signNum = "+-0123456789"; // 全ての符号と数字です。
     NSString *num = @"0123456789";        // 全ての数字です。
     const char *space = " \t\r\n";        // 全ての空白文字です。
@@ -520,12 +520,9 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         }
 
         // キーワードに識別子が区切りなしに続いていないかを確認するため、キーワードの終わった一文字あとを調べます。
-        for (search = alpahNumUnder;
-             *search && getChar(sqlString, charactorCursol) != *search;
-             ++search) {
-        };
-
-        if (!*wordCursol && !*search) {
+        if (!*wordCursol &&
+            ![alpahNumUnder
+                containsString:getOneCharactor(sqlString, charactorCursol)]) {
 
           // 見つかったキーワードを生成します。
           [tokens
@@ -577,16 +574,14 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         NSMutableString *word = [NSMutableString string];
         do {
           // 二文字目以降は数字も許可して文字の種類を確認します。
-          for (search = alpahNumUnder;
-               *search && getChar(sqlString, charactorCursol) != *search;
-               ++search) {
-          };
-          if (*search) {
-            [word appendString:[NSString stringWithFormat:@"%c", *search]];
+          if ([alpahNumUnder
+                  containsString:getOneCharactor(sqlString, charactorCursol)]) {
+            [word appendString:getOneCharactor(sqlString, charactorCursol)];
 
             charactorCursol++;
           }
-        } while (*search);
+        } while ([alpahNumUnder
+            containsString:getOneCharactor(sqlString, charactorCursol)]);
 
         // 読み込んだ識別子を登録します。
         [tokens
