@@ -328,16 +328,16 @@ NSString *getOneCharactor(NSString *string, int cursol) {
 //! FROM USERS, CHILDREN @n
 int ExecuteSQL(const char *sql, const char *outputFileName) {
   enum ResultValue error = ResultOk; // 発生したエラーの種類です。
-  NSMutableArray *inputTableFiles = [NSMutableArray
-      array]; // 読み込む入力ファイルの全てのファイルポインタです。
+  NSMutableArray *inputTableFiles =
+      NSMutableArray.new; // 読み込む入力ファイルの全てのファイルポインタです。
   NSFileHandle *outputFile = nil; // 書き込むファイルのファイルポインタです。
   Data ***currentRow = NULL; // データ検索時に現在見ている行を表します。
   Data **inputData[MAX_TABLE_COUNT][MAX_ROW_COUNT]; // 入力データです。
-  Data **outputData[MAX_ROW_COUNT] = {NULL};        // 出力データです。
+  NSMutableArray *outputData = NSMutableArray.new;  // 出力データです。
   Data **allColumnOutputData[MAX_ROW_COUNT] = {
       NULL}; // 出力するデータに対応するインデックスを持ち、すべての入力データを保管します。
   NSMutableArray *tableNames =
-      [NSMutableArray array]; // FROM句で指定しているテーブル名です。
+      NSMutableArray.new; // FROM句で指定しているテーブル名です。
   @try {
 
     BOOL found = NO; // 検索時に見つかったかどうかの結果を一時的に保存します。
@@ -395,8 +395,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       [Token.alloc initWithKind:SlashToken Word:@"/"]
     ];
 
-    NSMutableArray *tokens =
-        NSMutableArray.new; // SQLを分割したトークンです。
+    NSMutableArray *tokens = NSMutableArray.new; // SQLを分割したトークンです。
 
     // 演算子の情報です。
     Operator *operators[] = {
@@ -1239,27 +1238,15 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       if (MAX_ROW_COUNT <= outputRowsNum) {
         @throw [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
       }
-      Data **row = outputData[outputRowsNum] =
-          malloc(MAX_COLUMN_COUNT *
-                 sizeof(Data *)); // 出力している一行分のデータです。
-      if (!row) {
-        @throw [[TynySQLException alloc] initWithErrorCode:MemoryAllocateError];
-      }
-
-      // 生成した行を初期化します。
-      for (int i = 0; i < MAX_COLUMN_COUNT; ++i) {
-        row[i] = NULL;
-      }
+      NSMutableArray *row =
+          NSMutableArray.new; // 出力している一行分のデータです。
+      [outputData addObject:row];
 
       // 行の各列のデータを入力から持ってきて設定します。
-      int rowsCount = 0;
       for (ColumnIndex *index in selectColumnIndexes) {
-        row[rowsCount] = malloc(sizeof(Data));
-        if (!row[rowsCount]) {
-          @throw
-              [[TynySQLException alloc] initWithErrorCode:MemoryAllocateError];
-        }
-        *row[rowsCount++] = *(*currentRows[index.table])[index.column];
+        Data *data = malloc(sizeof(Data));
+        *data = *(*currentRows[index.table])[index.column];
+        [row addObject:[NSValue valueWithPointer:data]];
       }
 
       Data **allColumnsRow = allColumnOutputData[outputRowsNum++] = malloc(
@@ -1520,10 +1507,9 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
         // 条件に合わない行は出力から削除します。
         if (!whereTopNode.value->value.boolean) {
-          free(row);
           free(allColumnsRow);
           allColumnOutputData[--outputRowsNum] = NULL;
-          outputData[outputRowsNum] = NULL;
+          [outputData removeLastObject];
         }
         // WHERE条件の計算結果をリセットします。
         for (ExtensionTreeNode *node in allNodes) {
@@ -1629,11 +1615,11 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             minIndex = j;
           }
         }
-        Data **tmp = outputData[minIndex];
+        NSMutableArray *tmpArray = outputData[minIndex];
         outputData[minIndex] = outputData[i];
-        outputData[i] = tmp;
+        outputData[i] = tmpArray;
 
-        tmp = allColumnOutputData[minIndex];
+        Data **tmp = allColumnOutputData[minIndex];
         allColumnOutputData[minIndex] = allColumnOutputData[i];
         allColumnOutputData[i] = tmp;
       }
@@ -1662,19 +1648,20 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     }
 
     // 出力ファイルにデータを出力します。
-    currentRow = outputData;
-    while (*currentRow) {
-      Data **column = *currentRow;
+    for (NSArray *currentRow in outputData) {
       for (int i = 0; i < [selectColumns count]; ++i) {
+        NSValue *column = currentRow[i];
         NSString *outputString = nil;
-        switch ((*column)->type) {
+        switch (((Data *)column.pointerValue)->type) {
         case Integer:
-          outputString =
-              [NSString stringWithFormat:@"%ld", (*column)->value.integer];
+          outputString = [NSString
+              stringWithFormat:@"%ld",
+                               ((Data *)column.pointerValue)->value.integer];
           break;
         case String:
-          outputString =
-              [NSString stringWithFormat:@"%s", (*column)->value.string];
+          outputString = [NSString
+              stringWithFormat:@"%s",
+                               ((Data *)column.pointerValue)->value.string];
           break;
         default:
           @throw [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
@@ -1686,9 +1673,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         } else {
           [outputFile writeData:[@"\n" dataUsingEncoding:NSUTF8StringEncoding]];
         }
-        ++column;
       }
-      ++currentRow;
     }
 
     // 正常時の後処理です。
@@ -1717,14 +1702,10 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         currentRow++;
       }
     }
-    currentRow = outputData;
-    while (*currentRow) {
-      Data **dataCursol = *currentRow;
-      while (*dataCursol) {
-        free(*dataCursol++);
+    for (NSArray *currentRow in outputData) {
+      for (NSValue *dataCursol in currentRow) {
+        free(dataCursol.pointerValue);
       }
-      free(*currentRow);
-      currentRow++;
     }
     currentRow = allColumnOutputData;
     while (*currentRow) {
@@ -1763,14 +1744,10 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         currentRow++;
       }
     }
-    currentRow = outputData;
-    while (*currentRow) {
-      Data **dataCursol = *currentRow;
-      while (*dataCursol) {
-        free(*dataCursol++);
+    for (NSArray *currentRow in outputData) {
+      for (NSValue *dataCursol in currentRow) {
+        free(dataCursol.pointerValue);
       }
-      free(*currentRow);
-      currentRow++;
     }
     currentRow = allColumnOutputData;
     while (*currentRow) {
@@ -1808,14 +1785,10 @@ ERROR:
       currentRow++;
     }
   }
-  currentRow = outputData;
-  while (*currentRow) {
-    Data **dataCursol = *currentRow;
-    while (*dataCursol) {
-      free(*dataCursol++);
+  for (NSArray *currentRow in outputData) {
+    for (NSValue *dataCursol in currentRow) {
+      free(dataCursol.pointerValue);
     }
-    free(*currentRow);
-    currentRow++;
   }
   currentRow = allColumnOutputData;
   while (*currentRow) {
