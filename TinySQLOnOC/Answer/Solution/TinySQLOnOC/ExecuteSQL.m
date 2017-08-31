@@ -340,8 +340,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       [NSMutableArray array]; // FROM句で指定しているテーブル名です。
   @try {
 
-    BOOL found = NO;           // 検索時に見つかったかどうかの結果を一時的に保存します。
-    const char *search = NULL; // 文字列検索に利用するポインタです。
+    BOOL found = NO; // 検索時に見つかったかどうかの結果を一時的に保存します。
 
     NSString *alpahUnder =
         @"_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXY"
@@ -351,7 +350,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         @"456789";                        // 全ての数字とアルファベットの大文字小文字とアンダーバーです。
     const char *signNum = "+-0123456789"; // 全ての符号と数字です。
     NSString *num = @"0123456789";        // 全ての数字です。
-    const char *space = " \t\r\n";        // 全ての空白文字です。
+    NSString *space = @" \t\r\n";         // 全ての空白文字です。
 
     // inputDataを初期化します。
     for (size_t i = 0; i < sizeof(inputData) / sizeof(inputData[0]); i++) {
@@ -425,11 +424,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     // SQLをトークンに分割て読み込みます。
     while (getChar(sqlString, charactorCursol)) {
       // 空白を読み飛ばします。
-      for (search = space;
-           *search && getChar(sqlString, charactorCursol) != *search;
-           ++search) {
-      }
-      if (*search) {
+      if ([space containsString:getOneCharactor(sqlString, charactorCursol)]) {
         charactorCursol++;
         continue;
       }
