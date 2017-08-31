@@ -1676,8 +1676,10 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       }
     }
 
-    // 正常時の後処理です。
-
+    return ResultOk;
+  } @catch (TynySQLException *ex) {
+    return ex.errorCode;
+  } @finally {
     // ファイルリソースを解放します。
     for (NSFileHandle *inputTableFile in inputTableFiles) {
       if (inputTableFile) {
@@ -1689,7 +1691,6 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       [outputFile synchronizeFile];
       [outputFile closeFile];
     }
-
     // メモリリソースを解放します。
     for (int i = 0; i < [tableNames count]; ++i) {
       currentRow = inputData[i];
@@ -1716,88 +1717,5 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       free(*currentRow);
       currentRow++;
     }
-
-    return ResultOk;
-  } @catch (TynySQLException *ex) {
-    // エラー時の処理です。
-
-    // ファイルリソースを解放します。
-    for (NSFileHandle *inputTableFile in inputTableFiles) {
-
-      if (inputTableFile) {
-        [inputTableFile closeFile];
-      }
-    }
-    if (outputFile) {
-      [outputFile closeFile];
-    }
-
-    // メモリリソースを解放します。
-    for (int i = 0; i < [tableNames count]; ++i) {
-      currentRow = inputData[i];
-      while (*currentRow) {
-        Data **dataCursol = *currentRow;
-        while (*dataCursol) {
-          free(*dataCursol++);
-        }
-        free(*currentRow);
-        currentRow++;
-      }
-    }
-    for (NSArray *currentRow in outputData) {
-      for (NSValue *dataCursol in currentRow) {
-        free(dataCursol.pointerValue);
-      }
-    }
-    currentRow = allColumnOutputData;
-    while (*currentRow) {
-      Data **dataCursol = *currentRow;
-      while (*dataCursol) {
-        free(*dataCursol++);
-      }
-      free(*currentRow);
-      currentRow++;
-    }
-    return ex.errorCode;
   }
-ERROR:
-  // エラー時の処理です。
-
-  // ファイルリソースを解放します。
-  for (int i = 0; i < MAX_TABLE_COUNT; ++i) {
-    if (inputTableFiles[i]) {
-      [inputTableFiles[i] closeFile];
-    }
-  }
-  if (outputFile) {
-    [outputFile closeFile];
-  }
-
-  // メモリリソースを解放します。
-  for (int i = 0; i < [tableNames count]; ++i) {
-    currentRow = inputData[i];
-    while (*currentRow) {
-      Data **dataCursol = *currentRow;
-      while (*dataCursol) {
-        free(*dataCursol++);
-      }
-      free(*currentRow);
-      currentRow++;
-    }
-  }
-  for (NSArray *currentRow in outputData) {
-    for (NSValue *dataCursol in currentRow) {
-      free(dataCursol.pointerValue);
-    }
-  }
-  currentRow = allColumnOutputData;
-  while (*currentRow) {
-    Data **dataCursol = *currentRow;
-    while (*dataCursol) {
-      free(*dataCursol++);
-    }
-    free(*currentRow);
-    currentRow++;
-  }
-  return error;
 }
