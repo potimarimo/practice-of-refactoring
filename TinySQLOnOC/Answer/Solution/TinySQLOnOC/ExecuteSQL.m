@@ -621,17 +621,6 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     enum TokenKind orders[MAX_COLUMN_COUNT] = {
         0}; // 同じインデックスのorderByColumnsに対応している、昇順、降順の指定です。
 
-    ExtensionTreeNode *whereExtensionNodes
-        [MAX_EXTENSION_TREE_NODE_COUNT]; // WHEREに指定された木のノードを、木構造とは無関係に格納します。
-    // whereExtensionNodesを初期化します。
-    for (size_t i = 0;
-         i < sizeof(whereExtensionNodes) / sizeof(whereExtensionNodes[0]);
-         i++) {
-      whereExtensionNodes[i] = [[ExtensionTreeNode alloc] init];
-    }
-    int whereExtensionNodesNum =
-        0; // 現在読み込まれているのwhereExtensionNodesの数です。
-
     ExtensionTreeNode *whereTopNode = NULL; // 式木の根となるノードです。
 
     // SQLの構文を解析し、必要な情報を取得します。
@@ -683,7 +672,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         first = NO;
       }
     }
-
+    NSMutableArray *allNodes = [NSMutableArray array];
     // ORDER句とWHERE句を読み込みます。最大各一回ずつ書くことができます。
     BOOL readOrder = NO; // すでにORDER句が読み込み済みかどうかです。
     BOOL readWhere = NO; // すでにWHERE句が読み込み済みかどうかです。
@@ -766,26 +755,26 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       }
 
       // WHERE句を読み込みます。
+
       if (nextToken.kind == WhereToken) {
         readWhere = YES;
         nextToken = [tokenCursol nextObject];
-        ;
+
         ExtensionTreeNode *currentNode = NULL; // 現在読み込んでいるノードです。
         while (YES) {
           // オペランドを読み込みます。
 
           // オペランドのノードを新しく生成します。
-          if (MAX_EXTENSION_TREE_NODE_COUNT <= whereExtensionNodesNum) {
-            @throw [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
-          }
           if (currentNode) {
             // 現在のノードを右の子にずらし、元の位置に新しいノードを挿入します。
-            currentNode.right = whereExtensionNodes[whereExtensionNodesNum++];
+            currentNode.right = [[ExtensionTreeNode alloc] init];
+            [allNodes addObject:currentNode.right];
             currentNode.right.parent = currentNode;
             currentNode = currentNode.right;
           } else {
             // 最初はカレントノードに新しいノードを入れます。
-            currentNode = whereExtensionNodes[whereExtensionNodesNum++];
+            currentNode = [[ExtensionTreeNode alloc] init];
+            [allNodes addObject:currentNode];
           }
 
           // カッコ開くを読み込みます。
@@ -921,11 +910,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                       tmp.parent.inParen));
 
             // 演算子のノードを新しく生成します。
-            if (MAX_EXTENSION_TREE_NODE_COUNT <= whereExtensionNodesNum) {
-              @throw
-                  [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
-            }
-            currentNode = whereExtensionNodes[whereExtensionNodesNum++];
+            currentNode = [[ExtensionTreeNode alloc] init];
+            [allNodes addObject:currentNode];
             currentNode.operator= operator;
 
             // 見つかった場所に新しいノードを配置します。これまでその位置にあったノードは左の子となるよう、親ノードと子ノードのポインタをつけかえます。
@@ -1246,13 +1232,11 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
     if (whereTopNode) {
       // 既存数値の符号を計算します。
-      for (int i = 0; i < whereExtensionNodesNum; ++i) {
-        if (whereExtensionNodes[i].operator.kind == NoToken &&
-            [whereExtensionNodes[i].column.columnName isEqualToString:@""] &&
-            whereExtensionNodes[i]
-                .value->type == Integer) {
-          whereExtensionNodes[i].value->value.integer *=
-              whereExtensionNodes[i].signCoefficient;
+      for (ExtensionTreeNode *node in allNodes) {
+        if (node.operator.kind == NoToken &&
+            [node.column.columnName isEqualToString:@""] &&
+            node.value->type == Integer) {
+          node.value->value.integer *= node.signCoefficient;
         }
       }
     }
@@ -1558,8 +1542,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           outputData[outputRowsNum] = NULL;
         }
         // WHERE条件の計算結果をリセットします。
-        for (int i = 0; i < whereExtensionNodesNum; ++i) {
-          whereExtensionNodes[i].calculated = NO;
+        for (ExtensionTreeNode *node in allNodes) {
+          node.calculated = NO;
         }
       }
 
