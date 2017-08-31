@@ -233,6 +233,18 @@ typedef struct {
 
 @end
 
+char getChar(NSString *sql, int cursol) {
+  if ([sql length] <= cursol) {
+    return 0;
+  }
+  NSString *charactor = [sql substringWithRange:NSMakeRange(cursol, 1)];
+
+  char buf[] = " ";
+  char *ch = buf;
+  [charactor getCString:ch maxLength:2 encoding:NSUTF8StringEncoding];
+  return *ch;
+}
+
 //! カレントディレクトリにあるCSVに対し、簡易的なSQLを実行し、結果をファイルに出力します。
 //! @param [in] sql 実行するSQLです。
 //! @param[in] outputFileName
@@ -321,8 +333,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       [NSMutableArray array]; // FROM句で指定しているテーブル名です。
   @try {
 
-    int result = 0;  // 関数の戻り値を一時的に保存します。
-    BOOL found = NO; // 検索時に見つかったかどうかの結果を一時的に保存します。
+    BOOL found = NO;           // 検索時に見つかったかどうかの結果を一時的に保存します。
     const char *search = NULL; // 文字列検索に利用するポインタです。
 
     const char *alpahUnder =
@@ -396,17 +407,20 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         [[Operator alloc] initWithKind:AndToken Order:4],
         [[Operator alloc] initWithKind:OrToken Order:5]};
 
-    const char *charactorBackPoint =
-        NULL; // SQLをトークンに分割して読み込む時に戻るポイントを記録しておきます。
+    NSString *sqlString =
+        [NSString stringWithCString:sql encoding:NSUTF8StringEncoding];
+    int charactorBackPoint =
+        0; // SQLをトークンに分割して読み込む時に戻るポイントを記録しておきます。
 
-    const char *charactorCursol =
-        sql; // SQLをトークンに分割して読み込む時に現在読んでいる文字の場所を表します。
+    int charactorCursol =
+        0; // SQLをトークンに分割して読み込む時に現在読んでいる文字の場所を表します。
 
     // SQLをトークンに分割て読み込みます。
-    while (*charactorCursol) {
-
+    while (getChar(sqlString, charactorCursol)) {
       // 空白を読み飛ばします。
-      for (search = space; *search && *charactorCursol != *search; ++search) {
+      for (search = space;
+           *search && getChar(sqlString, charactorCursol) != *search;
+           ++search) {
       }
       if (*search) {
         charactorCursol++;
@@ -417,7 +431,9 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
       // 先頭文字が数字であるかどうかを確認します。
       charactorBackPoint = charactorCursol;
-      for (search = num; *search && *charactorCursol != *search; ++search) {
+      for (search = num;
+           *search && getChar(sqlString, charactorCursol) != *search;
+           ++search) {
       }
       if (*search) {
 
@@ -425,7 +441,9 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
         // 数字が続く間、文字を読み込み続けます。
         do {
-          for (search = num; *search && *charactorCursol != *search; ++search) {
+          for (search = num;
+               *search && getChar(sqlString, charactorCursol) != *search;
+               ++search) {
           }
           if (*search) {
             [word appendString:[NSString stringWithFormat:@"%c", *search]];
@@ -434,7 +452,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         } while (*search);
 
         // 数字の後にすぐに識別子が続くのは紛らわしいので数値リテラルとは扱いません。
-        for (search = alpahUnder; *search && *charactorCursol != *search;
+        for (search = alpahUnder;
+             *search && getChar(sqlString, charactorCursol) != *search;
              ++search) {
         }
         if (!*search) {
@@ -450,7 +469,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
       // 文字列リテラルを開始するシングルクォートを判別し、読み込みます。
       // メトリクス測定ツールのccccはシングルクォートの文字リテラル中のエスケープを認識しないため、文字リテラルを使わないことで回避しています。
-      if (*charactorCursol == "\'"[0]) {
+      if (getChar(sqlString, charactorCursol) == "\'"[0]) {
         ++charactorCursol;
 
         // 読み込んだ文字列リテラルの情報です。初期値の段階で最初のシングルクォートは読み込んでいます。
@@ -458,15 +477,20 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         NSMutableString *word = [NSMutableString stringWithString:@"\'"];
 
         // 次のシングルクォートがくるまで文字を読み込み続けます。
-        while (*charactorCursol && *charactorCursol != "\'"[0]) {
+        while (getChar(sqlString, charactorCursol) &&
+               getChar(sqlString, charactorCursol) != "\'"[0]) {
 
           [word appendString:[NSString
-                                 stringWithFormat:@"%c", *charactorCursol++]];
+                                 stringWithFormat:@"%c",
+                                                  getChar(sqlString,
+                                                          charactorCursol++)]];
         }
-        if (*charactorCursol == "\'"[0]) {
+        if (getChar(sqlString, charactorCursol) == "\'"[0]) {
           // 最後のシングルクォートを読み込みます。
           [word appendString:[NSString
-                                 stringWithFormat:@"%c", *charactorCursol++]];
+                                 stringWithFormat:@"%c",
+                                                  getChar(sqlString,
+                                                          charactorCursol++)]];
 
           // 文字列の終端文字をつけます。
           [tokens addObject:[[Token alloc] initWithKind:StringLiteralToken
@@ -492,12 +516,14 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                   NSUTF8StringEncoding]; // 確認するキーワードの文字列のうち、現在確認している一文字を指します。
 
         // キーワードが指定した文字列となっているか確認します。
-        while (*wordCursol && toupper(*charactorCursol++) == *wordCursol) {
+        while (*wordCursol &&
+               toupper(getChar(sqlString, charactorCursol++)) == *wordCursol) {
           ++wordCursol;
         }
 
         // キーワードに識別子が区切りなしに続いていないかを確認するため、キーワードの終わった一文字あとを調べます。
-        for (search = alpahNumUnder; *search && *charactorCursol != *search;
+        for (search = alpahNumUnder;
+             *search && getChar(sqlString, charactorCursol) != *search;
              ++search) {
         };
 
@@ -527,7 +553,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                           encoding:NSUTF8StringEncoding];
 
         // 記号が指定した文字列となっているか確認します。
-        while (*wordCursol && toupper(*charactorCursol++) == *wordCursol) {
+        while (*wordCursol &&
+               toupper(getChar(sqlString, charactorCursol++)) == *wordCursol) {
           ++wordCursol;
         }
         if (!*wordCursol) {
@@ -547,14 +574,16 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       // 識別子を読み込みます。
 
       // 識別子の最初の文字を確認します。
-      for (search = alpahUnder; *search && *charactorCursol != *search;
+      for (search = alpahUnder;
+           *search && getChar(sqlString, charactorCursol) != *search;
            ++search) {
       };
       if (*search) {
         NSMutableString *word = [NSMutableString string];
         do {
           // 二文字目以降は数字も許可して文字の種類を確認します。
-          for (search = alpahNumUnder; *search && *charactorCursol != *search;
+          for (search = alpahNumUnder;
+               *search && getChar(sqlString, charactorCursol) != *search;
                ++search) {
           };
           if (*search) {
@@ -985,8 +1014,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       [inputTableFiles addObject:inputFile];
 
       // 入力CSVのヘッダ行を読み込みます。
-      char inputLine[MAX_FILE_LINE_LENGTH] =
-          ""; // ファイルから読み込んだ行文字列です。
+      NSString *inputLine; // ファイルから読み込んだ行文字列です。
       NSData *allFile = nil;
       allFile = [inputFile readDataToEndOfFile];
       NSArray *allLines =
@@ -996,11 +1024,12 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         allLines =
             [allLines subarrayWithRange:NSMakeRange(0, [allLines count] - 1)];
       }
+        inputLine = all
       [allLines[0] getCString:inputLine
                     maxLength:MAX_FILE_LINE_LENGTH
                      encoding:NSUTF8StringEncoding];
       if (allFile) {
-        charactorCursol = inputLine;
+        int charactorCursol = inputLine;
 
         // 読み込んだ行を最後まで読みます。
         while (*charactorCursol && *charactorCursol != '\r' &&
@@ -1052,7 +1081,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         [allLines[rowNum++ + 1] getCString:inputLine
                                  maxLength:MAX_FILE_LINE_LENGTH
                                   encoding:NSUTF8StringEncoding];
-        charactorCursol = inputLine;
+        char *charactorCursol = inputLine;
         int columnNum =
             0; // いま何列目を読み込んでいるか。0基底の数字となります。
 
