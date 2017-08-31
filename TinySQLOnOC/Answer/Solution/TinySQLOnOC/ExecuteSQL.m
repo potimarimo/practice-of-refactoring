@@ -366,52 +366,52 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
     // キーワードをトークンとして認識するためのキーワード一覧情報です。
     NSArray *keywordConditions = @[
-      [[Token alloc] initWithKind:AndToken Word:@"AND"],
-      [[Token alloc] initWithKind:AscToken Word:@"ASC"],
-      [[Token alloc] initWithKind:ByToken Word:@"BY"],
-      [[Token alloc] initWithKind:DescToken Word:@"DESC"],
-      [[Token alloc] initWithKind:FromToken Word:@"FROM"],
-      [[Token alloc] initWithKind:OrderToken Word:@"ORDER"],
-      [[Token alloc] initWithKind:OrToken Word:@"OR"],
-      [[Token alloc] initWithKind:SelectToken Word:@"SELECT"],
-      [[Token alloc] initWithKind:WhereToken Word:@"WHERE"]
+      [Token.alloc initWithKind:AndToken Word:@"AND"],
+      [Token.alloc initWithKind:AscToken Word:@"ASC"],
+      [Token.alloc initWithKind:ByToken Word:@"BY"],
+      [Token.alloc initWithKind:DescToken Word:@"DESC"],
+      [Token.alloc initWithKind:FromToken Word:@"FROM"],
+      [Token.alloc initWithKind:OrderToken Word:@"ORDER"],
+      [Token.alloc initWithKind:OrToken Word:@"OR"],
+      [Token.alloc initWithKind:SelectToken Word:@"SELECT"],
+      [Token.alloc initWithKind:WhereToken Word:@"WHERE"]
     ];
 
     // 記号をトークンとして認識するための記号一覧情報です。
     NSArray *signConditions = @[
-      [[Token alloc] initWithKind:GreaterThanOrEqualToken Word:@">="],
-      [[Token alloc] initWithKind:LessThanOrEqualToken Word:@"<="],
-      [[Token alloc] initWithKind:NotEqualToken Word:@"<>"],
-      [[Token alloc] initWithKind:AsteriskToken Word:@"*"],
-      [[Token alloc] initWithKind:CommaToken Word:@","],
-      [[Token alloc] initWithKind:CloseParenToken Word:@")"],
-      [[Token alloc] initWithKind:DotToken Word:@"."],
-      [[Token alloc] initWithKind:EqualToken Word:@"="],
-      [[Token alloc] initWithKind:GreaterThanToken Word:@">"],
-      [[Token alloc] initWithKind:LessThanToken Word:@"<"],
-      [[Token alloc] initWithKind:MinusToken Word:@"-"],
-      [[Token alloc] initWithKind:OpenParenToken Word:@"("],
-      [[Token alloc] initWithKind:PlusToken Word:@"+"],
-      [[Token alloc] initWithKind:SlashToken Word:@"/"]
+      [Token.alloc initWithKind:GreaterThanOrEqualToken Word:@">="],
+      [Token.alloc initWithKind:LessThanOrEqualToken Word:@"<="],
+      [Token.alloc initWithKind:NotEqualToken Word:@"<>"],
+      [Token.alloc initWithKind:AsteriskToken Word:@"*"],
+      [Token.alloc initWithKind:CommaToken Word:@","],
+      [Token.alloc initWithKind:CloseParenToken Word:@")"],
+      [Token.alloc initWithKind:DotToken Word:@"."],
+      [Token.alloc initWithKind:EqualToken Word:@"="],
+      [Token.alloc initWithKind:GreaterThanToken Word:@">"],
+      [Token.alloc initWithKind:LessThanToken Word:@"<"],
+      [Token.alloc initWithKind:MinusToken Word:@"-"],
+      [Token.alloc initWithKind:OpenParenToken Word:@"("],
+      [Token.alloc initWithKind:PlusToken Word:@"+"],
+      [Token.alloc initWithKind:SlashToken Word:@"/"]
     ];
 
     NSMutableArray *tokens =
-        [NSMutableArray array]; // SQLを分割したトークンです。
+        NSMutableArray.new; // SQLを分割したトークンです。
 
     // 演算子の情報です。
     Operator *operators[] = {
-        [[Operator alloc] initWithKind:AsteriskToken Order:1],
-        [[Operator alloc] initWithKind:SlashToken Order:1],
-        [[Operator alloc] initWithKind:PlusToken Order:2],
-        [[Operator alloc] initWithKind:MinusToken Order:2],
-        [[Operator alloc] initWithKind:EqualToken Order:3],
-        [[Operator alloc] initWithKind:GreaterThanToken Order:3],
-        [[Operator alloc] initWithKind:GreaterThanOrEqualToken Order:3],
-        [[Operator alloc] initWithKind:LessThanToken Order:3],
-        [[Operator alloc] initWithKind:LessThanOrEqualToken Order:3],
-        [[Operator alloc] initWithKind:NotEqualToken Order:3],
-        [[Operator alloc] initWithKind:AndToken Order:4],
-        [[Operator alloc] initWithKind:OrToken Order:5]};
+        [Operator.alloc initWithKind:AsteriskToken Order:1],
+        [Operator.alloc initWithKind:SlashToken Order:1],
+        [Operator.alloc initWithKind:PlusToken Order:2],
+        [Operator.alloc initWithKind:MinusToken Order:2],
+        [Operator.alloc initWithKind:EqualToken Order:3],
+        [Operator.alloc initWithKind:GreaterThanToken Order:3],
+        [Operator.alloc initWithKind:GreaterThanOrEqualToken Order:3],
+        [Operator.alloc initWithKind:LessThanToken Order:3],
+        [Operator.alloc initWithKind:LessThanOrEqualToken Order:3],
+        [Operator.alloc initWithKind:NotEqualToken Order:3],
+        [Operator.alloc initWithKind:AndToken Order:4],
+        [Operator.alloc initWithKind:OrToken Order:5]};
 
     NSString *sqlString =
         [NSString stringWithCString:sql encoding:NSUTF8StringEncoding];
