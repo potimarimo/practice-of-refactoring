@@ -1024,16 +1024,14 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         allLines =
             [allLines subarrayWithRange:NSMakeRange(0, [allLines count] - 1)];
       }
-        inputLine = all
-      [allLines[0] getCString:inputLine
-                    maxLength:MAX_FILE_LINE_LENGTH
-                     encoding:NSUTF8StringEncoding];
+      inputLine = allLines[0];
       if (allFile) {
-        int charactorCursol = inputLine;
+        int charactorCursol = 0;
 
         // 読み込んだ行を最後まで読みます。
-        while (*charactorCursol && *charactorCursol != '\r' &&
-               *charactorCursol != '\n') {
+        while (getChar(inputLine, charactorCursol) &&
+               getChar(inputLine, charactorCursol) != '\r' &&
+               getChar(inputLine, charactorCursol) != '\n') {
           if (MAX_COLUMN_COUNT <= inputColumnNums[tableNamesCount]) {
             @throw [[TynySQLException alloc] initWithErrorCode:MemoryOverError];
           }
@@ -1044,9 +1042,11 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           char *writeCursol = wrote; // 列名の書き込みに利用するカーソルです。
 
           // 列名を一つ読みます。
-          while (*charactorCursol && *charactorCursol != ',' &&
-                 *charactorCursol != '\r' && *charactorCursol != '\n') {
-            *writeCursol++ = *charactorCursol++;
+          while (getChar(inputLine, charactorCursol) &&
+                 getChar(inputLine, charactorCursol) != ',' &&
+                 getChar(inputLine, charactorCursol) != '\r' &&
+                 getChar(inputLine, charactorCursol) != '\n') {
+            *writeCursol++ = getChar(inputLine, charactorCursol++);
           }
           // 書き込んでいる列名の文字列に終端文字を書き込みます。
           writeCursol[1] = '\0';
@@ -1078,16 +1078,15 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         for (int j = 0; j < MAX_COLUMN_COUNT; ++j) {
           row[j] = NULL;
         }
-        [allLines[rowNum++ + 1] getCString:inputLine
-                                 maxLength:MAX_FILE_LINE_LENGTH
-                                  encoding:NSUTF8StringEncoding];
-        char *charactorCursol = inputLine;
+        inputLine = allLines[rowNum++ + 1];
+        int charactorCursol = 0;
         int columnNum =
             0; // いま何列目を読み込んでいるか。0基底の数字となります。
 
         // 読み込んだ行を最後まで読みます。
-        while (*charactorCursol && *charactorCursol != '\r' &&
-               *charactorCursol != '\n') {
+        while (getChar(inputLine, charactorCursol) &&
+               getChar(inputLine, charactorCursol) != '\r' &&
+               getChar(inputLine, charactorCursol) != '\n') {
 
           // 読み込んだデータを書き込む行のカラムを生成します。
           if (MAX_COLUMN_COUNT <= columnNum) {
@@ -1105,9 +1104,11 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                   .string; // データ文字列の書き込みに利用するカーソルです。
 
           // データ文字列を一つ読みます。
-          while (*charactorCursol && *charactorCursol != ',' &&
-                 *charactorCursol != '\r' && *charactorCursol != '\n') {
-            *writeCursol++ = *charactorCursol++;
+          while (getChar(inputLine, charactorCursol) &&
+                 getChar(inputLine, charactorCursol) != ',' &&
+                 getChar(inputLine, charactorCursol) != '\r' &&
+                 getChar(inputLine, charactorCursol) != '\n') {
+            *writeCursol++ = getChar(inputLine, charactorCursol++);
           }
           // 書き込んでいる列名の文字列に終端文字を書き込みます。
           writeCursol[1] = '\0';
