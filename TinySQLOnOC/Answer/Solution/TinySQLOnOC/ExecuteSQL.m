@@ -169,7 +169,7 @@ typedef struct {
 
 - (Token *)init {
   _kind = NoToken;
-  _word = [NSString init];
+  _word = NSString.new;
   return self;
 }
 - (Token *)initWithKind:(enum TokenKind)kind Word:(NSString *)word {
@@ -201,12 +201,12 @@ typedef struct {
 - (ExtensionTreeNode *)init {
   _parent = nil;
   _left = nil;
-  _operator = [[Operator alloc] init];
+  _operator = Operator.new;
   _right = nil;
   _inParen = NO;
   _parenOpenBeforeClose = 0;
   _signCoefficient = 1;
-  _column = [[Column alloc] init];
+  _column = Column.new;
   _calculated = NO;
   __value = (Data){.type = String, .value = {.string = ""}};
   _value = &__value;
@@ -472,17 +472,11 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         while (getChar(sqlString, charactorCursol) &&
                getChar(sqlString, charactorCursol) != "\'"[0]) {
 
-          [word appendString:[NSString
-                                 stringWithFormat:@"%c",
-                                                  getChar(sqlString,
-                                                          charactorCursol++)]];
+          [word appendString:getOneCharactor(sqlString, charactorCursol++)];
         }
         if (getChar(sqlString, charactorCursol) == "\'"[0]) {
           // 最後のシングルクォートを読み込みます。
-          [word appendString:[NSString
-                                 stringWithFormat:@"%c",
-                                                  getChar(sqlString,
-                                                          charactorCursol++)]];
+          [word appendString:getOneCharactor(sqlString, charactorCursol++)];
 
           // 文字列の終端文字をつけます。
           [tokens addObject:[[Token alloc] initWithKind:StringLiteralToken
@@ -594,13 +588,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     NSMutableArray *selectColumns =
         [NSMutableArray array]; // SELECT句に指定された列名です。
 
-    Column *orderByColumns[MAX_COLUMN_COUNT]; // ORDER句に指定された列名です。
-    // orderByColumnsを初期化します。
-    for (size_t i = 0; i < sizeof(orderByColumns) / sizeof(orderByColumns[0]);
-         i++) {
-      orderByColumns[i] = [[Column alloc] init];
-    }
-    int orderByColumnsNum = 0; // ORDER句から現在読み込まれた列名の数です。
+    NSMutableArray *orderByColumns =
+        NSMutableArray.new; // ORDER句に指定された列名です。
 
     enum TokenKind orders[MAX_COLUMN_COUNT] = {
         0}; // 同じインデックスのorderByColumnsに対応している、昇順、降順の指定です。
@@ -686,13 +675,11 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               ;
             }
             if (nextToken.kind == IdentifierToken) {
-              if (MAX_COLUMN_COUNT <= orderByColumnsNum) {
-                @throw [[TynySQLException alloc]
-                    initWithErrorCode:MemoryOverError];
-              }
+
               // テーブル名が指定されていない場合と仮定して読み込みます。
-              orderByColumns[orderByColumnsNum].tableName = @"";
-              orderByColumns[orderByColumnsNum].columnName = nextToken.word;
+              Column *column = [Column.alloc initWithTableName:@""
+                                                    ColumnName:nextToken.word];
+              [orderByColumns addObject:column];
               nextToken = [tokenCursol nextObject];
               ;
               if (nextToken.kind == DotToken) {
@@ -701,9 +688,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                 if (nextToken.kind == IdentifierToken) {
 
                   // テーブル名が指定されていることがわかったので読み替えます。
-                  orderByColumns[orderByColumnsNum].tableName =
-                      orderByColumns[orderByColumnsNum].columnName;
-                  orderByColumns[orderByColumnsNum].columnName = nextToken.word;
+                  column.tableName = column.columnName;
+                  column.columnName = nextToken.word;
 
                   nextToken = [tokenCursol nextObject];
                   ;
@@ -715,18 +701,18 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
               // 並び替えの昇順、降順を指定します。
               if (nextToken.kind == AscToken) {
-                orders[orderByColumnsNum] = AscToken;
+
+                orders[orderByColumns.count - 1] = AscToken;
                 nextToken = [tokenCursol nextObject];
-                ;
+
               } else if (nextToken.kind == DescToken) {
-                orders[orderByColumnsNum] = DescToken;
+                orders[orderByColumns.count - 1] = DescToken;
                 nextToken = [tokenCursol nextObject];
                 ;
               } else {
                 // 指定がない場合は昇順となります。
-                orders[orderByColumnsNum] = AscToken;
+                orders[orderByColumns.count - 1] = AscToken;
               }
-              ++orderByColumnsNum;
             } else {
               @throw
                   [[TynySQLException alloc] initWithErrorCode:SqlSyntaxError];
@@ -1526,21 +1512,21 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     }
 
     // ORDER句による並び替えの処理を行います。
-    if (orderByColumnsNum) {
+    if (orderByColumns.count) {
       // ORDER句で指定されている列が、全ての入力行の中のどの行なのかを計算します。
       int orderByColumnIndexes
           [MAX_COLUMN_COUNT];          // ORDER句で指定された列の、すべての行の中でのインデックスです。
       int orderByColumnIndexesNum = 0; // 現在のorderByColumnIndexesの数です。
-      for (int i = 0; i < orderByColumnsNum; ++i) {
+      for (Column *column in orderByColumns) {
         found = NO;
         for (int j = 0; j < allInputColumnsNum; ++j) {
-          if ([orderByColumns[i].columnName
+          if ([column.columnName
                   caseInsensitiveCompare:allInputColumns[j].columnName] ==
                   NSOrderedSame &&
-              ([orderByColumns[i].tableName
+              ([column.tableName
                    isEqualToString:
                        @""] || // テーブル名が設定されている場合のみテーブル名の比較を行います。
-               ([orderByColumns[i].tableName
+               ([column.tableName
                     caseInsensitiveCompare:allInputColumns[j].tableName] ==
                 NSOrderedSame))) {
 
