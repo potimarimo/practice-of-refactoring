@@ -1201,11 +1201,12 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       }
     }
 
-    Data ***currentRows[MAX_TABLE_COUNT] = {
-        NULL}; // 入力された各テーブルの、現在出力している行を指すカーソルです。
+    NSMutableArray *currentRowNums =
+        NSMutableArray
+            .new; // 入力された各テーブルの、現在出力している行を指すカーソルです。
     for (int i = 0; i < [tableNames count]; ++i) {
       // 各テーブルの先頭行を設定します。
-      currentRows[i] = inputData[i];
+      [currentRowNums addObject:@0];
     }
 
     // 出力するデータを設定します。
@@ -1217,7 +1218,9 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       // 行の各列のデータを入力から持ってきて設定します。
       for (ColumnIndex *index in selectColumnIndexes) {
         Data *data = malloc(sizeof(Data));
-        *data = *(*currentRows[index.table])[index.column];
+        *data =
+            *(inputData[index.table][((NSNumber *)currentRowNums[index.table])
+                                         .integerValue])[index.column];
         [row addObject:[NSValue valueWithPointer:data]];
       }
 
@@ -1230,7 +1233,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       for (int i = 0; i < [tableNames count]; ++i) {
         for (int j = 0; j < inputColumnNums[i]; ++j) {
           Data *data = malloc(sizeof(Data));
-          *data = *(*currentRows[i])[j];
+          *data =
+              *inputData[i][((NSNumber *)currentRowNums[i]).integerValue][j];
           NSValue *value = [NSValue valueWithPointer:data];
 
           if (!value) {
@@ -1484,17 +1488,21 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       // 各テーブルの行のすべての組み合わせを出力します。
 
       // 最後のテーブルのカレント行をインクリメントします。
-      ++currentRows[[tableNames count] - 1];
+      currentRowNums[[tableNames count] - 1] =
+          @(((NSNumber *)currentRowNums[[tableNames count] - 1]).integerValue +
+            1);
 
       // 最後のテーブルが最終行になっていた場合は先頭に戻し、順に前のテーブルのカレント行をインクリメントします。
-      for (unsigned long i = [tableNames count] - 1; !*currentRows[i] && 0 < i;
+      for (unsigned long i = [tableNames count] - 1;
+           !inputData[i][((NSNumber *)currentRowNums[i]).integerValue] && 0 < i;
            --i) {
-        ++currentRows[i - 1];
-        currentRows[i] = inputData[i];
+        currentRowNums[i - 1] =
+            @(((NSNumber *)currentRowNums[i - 1]).integerValue + 1);
+        currentRowNums[i] = @0;
       }
 
       // 最初のテーブルが最後の行を超えたなら出力行の生成は終わりです。
-      if (!*currentRows[0]) {
+      if (!inputData[0][((NSNumber *)currentRowNums[0]).integerValue]) {
         break;
       }
     }
