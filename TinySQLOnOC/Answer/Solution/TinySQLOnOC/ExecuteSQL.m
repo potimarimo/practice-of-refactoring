@@ -330,9 +330,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
   NSMutableArray *inputTableFiles =
       NSMutableArray.new; // 読み込む入力ファイルの全てのファイルポインタです。
   NSFileHandle *outputFile = nil; // 書き込むファイルのファイルポインタです。
-  Data ***currentRow = NULL; // データ検索時に現在見ている行を表します。
-  Data **inputData[MAX_TABLE_COUNT][MAX_ROW_COUNT]; // 入力データです。
-  NSMutableArray *outputData = NSMutableArray.new;  // 出力データです。
+  NSMutableArray *inputData = NSMutableArray.new;  // 入力データです。
+  NSMutableArray *outputData = NSMutableArray.new; // 出力データです。
   NSMutableArray *allColumnOutputData =
       NSMutableArray
           .new; // 出力するデータに対応するインデックスを持ち、すべての入力データを保管します。
@@ -351,14 +350,6 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     const char *signNum = "+-0123456789"; // 全ての符号と数字です。
     NSString *num = @"0123456789";        // 全ての数字です。
     NSString *space = @" \t\r\n";         // 全ての空白文字です。
-
-    // inputDataを初期化します。
-    for (size_t i = 0; i < sizeof(inputData) / sizeof(inputData[0]); i++) {
-      for (size_t j = 0; j < sizeof(inputData[0]) / sizeof(inputData[0][0]);
-           j++) {
-        inputData[i][j] = NULL;
-      }
-    }
 
     // SQLからトークンを読み込みます。
 
@@ -937,9 +928,10 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     }
     int inputColumnNums[MAX_TABLE_COUNT] = {0}; // 各テーブルごとの列の数です。
 
-    int tableNamesCount = 0;
+    int tableNamesNum = 0;
     for (NSString *tableName in tableNames) {
-
+      NSMutableArray *table = NSMutableArray.new;
+      [inputData addObject:table];
       // 入力ファイル名を生成します。
       const char csvExtension[] = ".csv"; // csvの拡張子です。
       char fileName[MAX_WORD_LENGTH + sizeof(csvExtension) -
@@ -979,10 +971,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         while (getChar(inputLine, charactorCursol) &&
                getChar(inputLine, charactorCursol) != '\r' &&
                getChar(inputLine, charactorCursol) != '\n') {
-          if (MAX_COLUMN_COUNT <= inputColumnNums[tableNamesCount]) {
-            @throw [TynySQLException.alloc initWithErrorCode:MemoryOverError];
-          }
-          inputColumns[tableNamesCount][inputColumnNums[tableNamesCount]]
+          inputColumns[tableNamesNum][inputColumnNums[tableNamesNum]]
               .tableName = tableName;
 
           char wrote[MAX_WORD_LENGTH] = "";
@@ -995,9 +984,10 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                  getChar(inputLine, charactorCursol) != '\n') {
             *writeCursol++ = getChar(inputLine, charactorCursol++);
           }
+
           // 書き込んでいる列名の文字列に終端文字を書き込みます。
           writeCursol[1] = '\0';
-          inputColumns[tableNamesCount][inputColumnNums[tableNamesCount]++]
+          inputColumns[tableNamesNum][inputColumnNums[tableNamesNum]++]
               .columnName =
               [NSString stringWithCString:wrote encoding:NSUTF8StringEncoding];
 
@@ -1014,20 +1004,11 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         if (MAX_ROW_COUNT <= rowNum) {
           @throw [TynySQLException.alloc initWithErrorCode:MemoryOverError];
         }
-        Data **row = inputData[tableNamesCount][rowNum] =
-            malloc(MAX_COLUMN_COUNT *
-                   sizeof(Data *)); // 入力されている一行分のデータです。
-        if (!row) {
-          @throw [TynySQLException.alloc initWithErrorCode:MemoryAllocateError];
-        }
-        // 生成した行を初期化します。
-        for (int j = 0; j < MAX_COLUMN_COUNT; ++j) {
-          row[j] = NULL;
-        }
+        NSMutableArray *row =
+            NSMutableArray.new; // 入力されている一行分のデータです。
+        [inputData[inputData.count - 1] addObject:row];
         inputLine = allLines[rowNum++ + 1];
         int charactorCursol = 0;
-        int columnNum =
-            0; // いま何列目を読み込んでいるか。0基底の数字となります。
 
         // 読み込んだ行を最後まで読みます。
         while (getChar(inputLine, charactorCursol) &&
@@ -1035,17 +1016,11 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                getChar(inputLine, charactorCursol) != '\n') {
 
           // 読み込んだデータを書き込む行のカラムを生成します。
-          if (MAX_COLUMN_COUNT <= columnNum) {
-            @throw [TynySQLException.alloc initWithErrorCode:MemoryOverError];
-          }
-          row[columnNum] = malloc(sizeof(Data));
-          if (!row[columnNum]) {
-            @throw
-                [TynySQLException.alloc initWithErrorCode:MemoryAllocateError];
-          }
-          *row[columnNum] = (Data){.type = String, .value = {.string = ""}};
+          Data *data = malloc(sizeof(Data));
+          *data = (Data){.type = String, .value = {.string = ""}};
+          [row addObject:[NSValue valueWithPointer:data]];
           char *writeCursol =
-              row[columnNum++]
+              ((Data *)((NSValue *)row[row.count - 1]).pointerValue)
                   ->value
                   .string; // データ文字列の書き込みに利用するカーソルです。
 
@@ -1065,13 +1040,13 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       }
 
       // 全てが数値となる列は数値列に変換します。
-      for (int j = 0; j < inputColumnNums[tableNamesCount]; ++j) {
+      for (int j = 0; j < inputColumnNums[tableNamesNum]; ++j) {
 
         // 全ての行のある列について、データ文字列から符号と数値以外の文字を探します。
-        currentRow = inputData[tableNamesCount];
         found = NO;
-        while (*currentRow) {
-          char *currentChar = (*currentRow)[j]->value.string;
+        for (NSArray *tableRow in inputData[inputData.count - 1]) {
+          char *currentChar =
+              ((Data *)((NSValue *)tableRow[j]).pointerValue)->value.string;
           while (*currentChar) {
             BOOL isNum = NO;
             const char *currentNum = signNum;
@@ -1091,21 +1066,20 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           if (found) {
             break;
           }
-          ++currentRow;
         }
 
         // 符号と数字以外が見つからない列については、数値列に変換します。
         if (!found) {
-          currentRow = inputData[tableNamesCount];
-          while (*currentRow) {
-            *(*currentRow)[j] = (Data){
+          for (NSArray *tableRow in inputData[inputData.count - 1]) {
+            *((Data *)((NSValue *)tableRow[j]).pointerValue) = (Data){
                 .type = Integer,
-                .value = {.integer = atoi((*currentRow)[j]->value.string)}};
-            ++currentRow;
+                .value = {.integer = atoi(
+                              ((Data *)((NSValue *)tableRow[j]).pointerValue)
+                                  ->value.string)}};
           }
         }
       }
-      tableNamesCount++;
+      tableNamesNum++;
     }
 
     Column *allInputColumns
@@ -1119,7 +1093,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     int allInputColumnsNum = 0; // 入力に含まれるすべての列の数です。
 
     // 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
-    for (int i = 0; i < [tableNames count]; ++i) {
+    for (int i = 0; i < tableNamesNum; ++i) {
       for (int j = 0; j < inputColumnNums[i]; ++j) {
         allInputColumns[allInputColumnsNum].tableName = tableNames[i];
         allInputColumns[allInputColumnsNum++].columnName =
@@ -1151,7 +1125,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         array]; // SELECT句で指定された列の、入力ファイルとしてのインデックスです。
     for (Column *selectedColumn in selectColumns) {
       found = NO;
-      for (int j = 0; j < [tableNames count]; ++j) {
+      for (int j = 0; j < tableNamesNum; ++j) {
         for (int k = 0; k < inputColumnNums[j]; ++k) {
           if ([selectedColumn.columnName
                   caseInsensitiveCompare:inputColumns[j][k].columnName] ==
@@ -1204,7 +1178,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     NSMutableArray *currentRowNums =
         NSMutableArray
             .new; // 入力された各テーブルの、現在出力している行を指すカーソルです。
-    for (int i = 0; i < [tableNames count]; ++i) {
+    for (int i = 0; i < tableNamesNum; ++i) {
       // 各テーブルの先頭行を設定します。
       [currentRowNums addObject:@0];
     }
@@ -1218,9 +1192,12 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       // 行の各列のデータを入力から持ってきて設定します。
       for (ColumnIndex *index in selectColumnIndexes) {
         Data *data = malloc(sizeof(Data));
-        *data =
-            *(inputData[index.table][((NSNumber *)currentRowNums[index.table])
-                                         .integerValue])[index.column];
+        *data = *(
+            (Data *)((NSValue
+                          *)(inputData[index.table]
+                                      [((NSNumber *)currentRowNums[index.table])
+                                           .integerValue])[index.column])
+                .pointerValue);
         [row addObject:[NSValue valueWithPointer:data]];
       }
 
@@ -1230,11 +1207,13 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               allColumnsRow]; // WHEREやORDERのためにすべての情報を含む行。rowとインデックスを共有します。
 
       // allColumnsRowの列を設定します。
-      for (int i = 0; i < [tableNames count]; ++i) {
+      for (int i = 0; i < tableNamesNum; ++i) {
         for (int j = 0; j < inputColumnNums[i]; ++j) {
           Data *data = malloc(sizeof(Data));
           *data =
-              *inputData[i][((NSNumber *)currentRowNums[i]).integerValue][j];
+              *((Data *)((NSValue *)inputData[i][((NSNumber *)currentRowNums[i])
+                                                     .integerValue][j])
+                    .pointerValue);
           NSValue *value = [NSValue valueWithPointer:data];
 
           if (!value) {
@@ -1494,7 +1473,9 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
       // 最後のテーブルが最終行になっていた場合は先頭に戻し、順に前のテーブルのカレント行をインクリメントします。
       for (unsigned long i = [tableNames count] - 1;
-           !inputData[i][((NSNumber *)currentRowNums[i]).integerValue] && 0 < i;
+           ((NSArray *)inputData[i]).count <=
+               ((NSNumber *)currentRowNums[i]).integerValue &&
+           0 < i;
            --i) {
         currentRowNums[i - 1] =
             @(((NSNumber *)currentRowNums[i - 1]).integerValue + 1);
@@ -1502,7 +1483,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       }
 
       // 最初のテーブルが最後の行を超えたなら出力行の生成は終わりです。
-      if (!inputData[0][((NSNumber *)currentRowNums[0]).integerValue]) {
+      if (((NSArray *)inputData[0]).count <=
+          ((NSNumber *)currentRowNums[0]).integerValue) {
         break;
       }
     }
@@ -1663,17 +1645,6 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       [outputFile closeFile];
     }
     // メモリリソースを解放します。
-    for (int i = 0; i < [tableNames count]; ++i) {
-      currentRow = inputData[i];
-      while (*currentRow) {
-        Data **dataCursol = *currentRow;
-        while (*dataCursol) {
-          free(*dataCursol++);
-        }
-        free(*currentRow);
-        currentRow++;
-      }
-    }
     for (NSArray *currentRow in outputData) {
       for (NSValue *dataCursol in currentRow) {
         free(dataCursol.pointerValue);
