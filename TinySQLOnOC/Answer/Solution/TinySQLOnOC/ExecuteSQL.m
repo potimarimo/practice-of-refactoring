@@ -384,7 +384,6 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         @"_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ0123"
         @"456789";                        // 全ての数字とアルファベットの大文字小文字とアンダーバーです。
     const char *signNum = "+-0123456789"; // 全ての符号と数字です。
-    NSString *num = @"0123456789";        // 全ての数字です。
     NSString *space = @" \t\r\n";         // 全ての空白文字です。
 
     // SQLからトークンを読み込みます。
@@ -479,6 +478,26 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       }
 
       // 文字列リテラルを読み込みます。
+      NSRegularExpression *stringLeteral =
+          [NSRegularExpression regularExpressionWithPattern:@"^\'.*\'"
+                                                    options:0
+                                                      error:&error];
+
+      result = [stringLeteral
+          firstMatchInString:sqlString
+                     options:0
+                       range:NSMakeRange(charactorCursol,
+                                         sqlString.length - charactorCursol)];
+
+      if (result != nil) {
+        [tokens
+            addObject:[Token.alloc
+                          initWithKind:StringLiteralToken
+                                  Word:[sqlString
+                                           substringWithRange:result.range]]];
+        charactorCursol += result.range.length;
+        continue;
+      }
 
       // 文字列リテラルを開始するシングルクォートを判別し、読み込みます。
       // メトリクス測定ツールのccccはシングルクォートの文字リテラル中のエスケープを認識しないため、文字リテラルを使わないことで回避しています。
