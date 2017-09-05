@@ -108,7 +108,7 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
 @end
 
 @interface TokenEnumerator : NSEnumerator
-@property NSString *document;
+@property(readonly) NSString *document;
 @property NSInteger
     cursol; // SQLをトークンに分割して読み込む時に現在読んでいる文字の場所を表します。
 - (Token *)nextObject;
@@ -253,7 +253,7 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
   return _string();
 }
 @end
-@implementation Tokenizer : NSObject {
+@implementation Tokenizer {
   NSArray *_rules;
 }
 - (Tokenizer *)initWithRules:(NSArray *)rules {
@@ -265,9 +265,10 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
   ret->_string = ^() {
     return read;
   };
+  NSInteger *pCursol = &ret->_cursol;
   ret->_generater = ^() {
     for (RegulerExpressionTokenizeRule *rule in _rules) {
-      Token *token = [rule parseDocument:read cursol:&ret->_cursol];
+      Token *token = [rule parseDocument:read cursol:pCursol];
       if (token) {
         return token;
       }
@@ -339,7 +340,7 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
 @end
 
 @implementation ColumnIndex
-- (ColumnIndex *)initWithTable:(int)table Column:(int)column {
+- (ColumnIndex *)initWithTable:(int)table column:(int)column {
   _table = table;
   _column = column;
   return self;
@@ -1259,7 +1260,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             found = YES;
             // 見つかった値を持つ列のデータを生成します。
             [selectColumnIndexes
-                addObject:[[ColumnIndex alloc] initWithTable:j Column:k]];
+                addObject:[[ColumnIndex alloc] initWithTable:j column:k]];
           }
         }
       }
