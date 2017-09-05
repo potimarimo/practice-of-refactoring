@@ -448,7 +448,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         0; // SQLをトークンに分割して読み込む時に現在読んでいる文字の場所を表します。
 
     // SQLをトークンに分割て読み込みます。
-    while (getChar(sqlString, charactorCursol)) {
+    while (charactorCursol < sqlString.length) {
       // 空白を読み飛ばします。
       if ([space containsString:getOneCharactor(sqlString, charactorCursol)]) {
         charactorCursol++;
