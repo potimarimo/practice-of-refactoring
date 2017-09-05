@@ -456,32 +456,26 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       }
 
       // 数値リテラルを読み込みます。
+      NSError *error = nil;
+      NSRegularExpression *intLeteral =
+          [NSRegularExpression regularExpressionWithPattern:@"^\\d+(?!\\w)"
+                                                    options:0
+                                                      error:&error];
 
-      // 先頭文字が数字であるかどうかを確認します。
-      charactorBackPoint = charactorCursol;
-      if ([num containsString:getOneCharactor(sqlString, charactorCursol)]) {
+      NSTextCheckingResult *result = [intLeteral
+          firstMatchInString:sqlString
+                     options:0
+                       range:NSMakeRange(charactorCursol,
+                                         sqlString.length - charactorCursol)];
 
-        NSMutableString *word = [NSMutableString string];
-
-        // 数字が続く間、文字を読み込み続けます。
-        do {
-          if ([num
-                  containsString:getOneCharactor(sqlString, charactorCursol)]) {
-            [word appendString:getOneCharactor(sqlString, charactorCursol)];
-            ++charactorCursol;
-          }
-        } while (
-            [num containsString:getOneCharactor(sqlString, charactorCursol)]);
-
-        // 数字の後にすぐに識別子が続くのは紛らわしいので数値リテラルとは扱いません。
-        if (![alpahUnder
-                containsString:getOneCharactor(sqlString, charactorCursol)]) {
-          [tokens
-              addObject:[Token.alloc initWithKind:IntLiteralToken Word:word]];
-          continue;
-        } else {
-          charactorCursol = charactorBackPoint;
-        }
+      if (result != nil) {
+        [tokens
+            addObject:[Token.alloc
+                          initWithKind:IntLiteralToken
+                                  Word:[sqlString
+                                           substringWithRange:result.range]]];
+        charactorCursol += result.range.length;
+        continue;
       }
 
       // 文字列リテラルを読み込みます。
