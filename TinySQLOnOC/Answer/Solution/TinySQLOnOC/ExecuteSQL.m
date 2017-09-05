@@ -141,20 +141,20 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
 @interface ExtensionTreeNode : NSObject
 - (ExtensionTreeNode *)init;
 @property __weak ExtensionTreeNode
-    *parent;                        //!< 親となるノードです。根の式木の場合はNULLとなります。
-@property ExtensionTreeNode *left;  //!<
-                                    //!左の子となるノードです。自身が末端の葉となる式木の場合はNULLとなります。
-@property Operator *operator;       //!<
-                                    //!中置される演算子です。自身が末端のとなる式木の場合の種類はNOT_TOKENとなります。
+    *parent;                       //!< 親となるノードです。根の式木の場合はNULLとなります。
+@property ExtensionTreeNode *left; //!<
+//!左の子となるノードです。自身が末端の葉となる式木の場合はNULLとなります。
+@property Operator *operator; //!<
+//!中置される演算子です。自身が末端のとなる式木の場合の種類はNOT_TOKENとなります。
 @property ExtensionTreeNode *right; //!<
-                                    //!右の子となるノードです。自身が末端の葉となる式木の場合はNULLとなります。
+//!右の子となるノードです。自身が末端の葉となる式木の場合はNULLとなります。
 @property BOOL inParen; //!< 自身がかっこにくるまれているかどうかです。
 @property int parenOpenBeforeClose; //!<
-                                    //!木の構築中に0以外となり、自身の左にあり、まだ閉じてないカッコの開始の数となります。
-@property int signCoefficient;      //!<
-                                    //!自身が葉にあり、マイナス単項演算子がついている場合は-1、それ以外は1となります。
-@property Column *column;           //!<
-                                    //!列場指定されている場合に、その列を表します。列指定ではない場合はcolumnNameが空文字列となります。
+//!木の構築中に0以外となり、自身の左にあり、まだ閉じてないカッコの開始の数となります。
+@property int signCoefficient; //!<
+//!自身が葉にあり、マイナス単項演算子がついている場合は-1、それ以外は1となります。
+@property Column *column; //!<
+//!列場指定されている場合に、その列を表します。列指定ではない場合はcolumnNameが空文字列となります。
 @property BOOL calculated; //!< 式の値を計算中に、計算済みかどうかです。
 @property Data *value; //!< 指定された、もしくは計算された値です。
 
@@ -296,7 +296,8 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
   if (result != nil) {
     *cursol += result.range.length;
     return
-        [Token.alloc initWithKind:IntLiteralToken
+        [Token.alloc initWithKind:self.kind
+
                              Word:[document substringWithRange:result.range]];
   } else {
     return nil;
@@ -522,10 +523,12 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         [Operator.alloc initWithKind:AndToken Order:4],
         [Operator.alloc initWithKind:OrToken Order:5]};
 
-    Tokenizer *tokenizer =
-        [Tokenizer.alloc initWithRules:@[ [RegulerExpressionTokenizeRule.alloc
-                                           initWithPattern:@"^\\d+(?!\\w)"
-                                                      kind:IntLiteralToken] ]];
+    Tokenizer *tokenizer = [Tokenizer.alloc initWithRules:@[
+      [RegulerExpressionTokenizeRule.alloc initWithPattern:@"^\\d+(?!\\w)"
+                                                      kind:IntLiteralToken],
+      [RegulerExpressionTokenizeRule.alloc initWithPattern:@"^^\'.*\'"
+                                                      kind:StringLiteralToken]
+    ]];
 
     TokenEnumerator *tokenEnumerator = [tokenizer
         enumeratorWithReadString:[NSString
@@ -548,29 +551,6 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       Token *token = tokenEnumerator.nextObject;
       if (token) {
         [tokens addObject:token];
-        continue;
-      }
-
-      // 文字列リテラルを読み込みます。
-      NSRegularExpression *stringLeteral =
-          [NSRegularExpression regularExpressionWithPattern:@"^\'.*\'"
-                                                    options:0
-                                                      error:NULL];
-
-      NSTextCheckingResult *result = [stringLeteral
-          firstMatchInString:tokenEnumerator.document
-                     options:0
-                       range:NSMakeRange(tokenEnumerator.cursol,
-                                         tokenEnumerator.document.length -
-                                             tokenEnumerator.cursol)];
-
-      if (result != nil) {
-        [tokens
-            addObject:[Token.alloc
-                          initWithKind:StringLiteralToken
-                                  Word:[tokenEnumerator.document
-                                           substringWithRange:result.range]]];
-        tokenEnumerator.cursol += result.range.length;
         continue;
       }
 
