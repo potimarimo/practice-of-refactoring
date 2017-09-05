@@ -119,6 +119,14 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
 - (TokenEnumerator *)enumeratorWithReadString:(NSString *)read;
 @end
 
+@interface RegulerExpressionTokenizeRule : NSObject
+@property NSRegularExpression *pattern;
+@property TokenKind kind;
+- (RegulerExpressionTokenizeRule *)initWithPattern:(NSString *)pattern
+                                              kind:(TokenKind)kind;
+- (Token *)parseDocument:(NSString *)string Cursol:(NSInteger *)cursol;
+@end
+
 //! 指定された列の情報です。どのテーブルに所属するかの情報も含みます。
 @interface Column : NSObject
 @property NSString *tableName; //!<
@@ -236,6 +244,7 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
 @public
   Token * (^_generater)();
   NSString * (^_string)();
+  NSInteger _cursol;
 }
 - (Token *)nextObject {
   return _generater();
@@ -244,8 +253,11 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
   return _string();
 }
 @end
-@implementation Tokenizer : NSObject
+@implementation Tokenizer : NSObject {
+  NSArray *_rules;
+}
 - (Tokenizer *)initWithRules:(NSArray *)rules {
+  _rules = rules;
   return self;
 }
 - (TokenEnumerator *)enumeratorWithReadString:(NSString *)read {
@@ -253,7 +265,42 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
   ret->_string = ^() {
     return read;
   };
+  ret->_generater = ^() {
+    for (RegulerExpressionTokenizeRule *rule in _rules) {
+      Token *token = [rule parseDocument:read Cursol:&ret->_cursol];
+      if (token) {
+        return token;
+      }
+    }
+    return (Token *)nil;
+  };
   return ret;
+}
+@end
+
+@implementation RegulerExpressionTokenizeRule
+- (RegulerExpressionTokenizeRule *)initWithPattern:(NSString *)pattern
+                                              kind:(TokenKind)kind {
+  _kind = kind;
+  _pattern = [NSRegularExpression regularExpressionWithPattern:pattern
+                                                       options:0
+                                                         error:NULL];
+  return self;
+}
+- (Token *)parseDocument:(NSString *)document Cursol:(NSInteger *)cursol {
+  NSTextCheckingResult *result = [self.pattern
+      firstMatchInString:document
+                 options:0
+                   range:NSMakeRange(*cursol, document.length - *cursol)];
+
+  if (result != nil) {
+    *cursol += result.range.length;
+    return
+        [Token.alloc initWithKind:IntLiteralToken
+                             Word:[document substringWithRange:result.range]];
+  } else {
+    return nil;
+  }
 }
 @end
 
@@ -475,7 +522,10 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         [Operator.alloc initWithKind:AndToken Order:4],
         [Operator.alloc initWithKind:OrToken Order:5]};
 
-    Tokenizer *tokenizer = [Tokenizer.alloc initWithRules:@[]];
+    Tokenizer *tokenizer =
+        [Tokenizer.alloc initWithRules:@[ [RegulerExpressionTokenizeRule.alloc
+                                           initWithPattern:@"^\\d+(?!\\w)"
+                                                      kind:IntLiteralToken] ]];
 
     TokenEnumerator *tokenEnumerator = [tokenizer
         enumeratorWithReadString:[NSString
@@ -495,26 +545,9 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       }
 
       // 数値リテラルを読み込みます。
-      NSError *error = nil;
-      NSRegularExpression *intLeteral =
-          [NSRegularExpression regularExpressionWithPattern:@"^\\d+(?!\\w)"
-                                                    options:0
-                                                      error:&error];
-
-      NSTextCheckingResult *result = [intLeteral
-          firstMatchInString:tokenEnumerator.document
-                     options:0
-                       range:NSMakeRange(tokenEnumerator.cursol,
-                                         tokenEnumerator.document.length -
-                                             tokenEnumerator.cursol)];
-
-      if (result != nil) {
-        [tokens
-            addObject:[Token.alloc
-                          initWithKind:IntLiteralToken
-                                  Word:[tokenEnumerator.document
-                                           substringWithRange:result.range]]];
-        tokenEnumerator.cursol += result.range.length;
+      Token *token = tokenEnumerator.nextObject;
+      if (token) {
+        [tokens addObject:token];
         continue;
       }
 
@@ -522,9 +555,9 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       NSRegularExpression *stringLeteral =
           [NSRegularExpression regularExpressionWithPattern:@"^\'.*\'"
                                                     options:0
-                                                      error:&error];
+                                                      error:NULL];
 
-      result = [stringLeteral
+      NSTextCheckingResult *result = [stringLeteral
           firstMatchInString:tokenEnumerator.document
                      options:0
                        range:NSMakeRange(tokenEnumerator.cursol,
