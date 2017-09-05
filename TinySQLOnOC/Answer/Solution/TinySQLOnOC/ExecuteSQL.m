@@ -107,6 +107,18 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
 
 @end
 
+@interface TokenEnumerator : NSEnumerator
+@property NSString *document;
+@property NSInteger
+    cursol; // SQLをトークンに分割して読み込む時に現在読んでいる文字の場所を表します。
+- (Token *)nextObject;
+@end
+
+@interface Tokenizer : NSObject
+- (Tokenizer *)initWithRules:(NSArray *)rules;
+- (TokenEnumerator *)enumeratorWithReadString:(NSString *)read;
+@end
+
 //! 指定された列の情報です。どのテーブルに所属するかの情報も含みます。
 @interface Column : NSObject
 @property NSString *tableName; //!<
@@ -220,6 +232,24 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
 
 @end
 
+@implementation TokenEnumerator {
+@public
+  Token * (^_generater)();
+}
+- (Token *)nextObject {
+  return _generater();
+}
+@end
+@implementation Tokenizer : NSObject
+- (Tokenizer *)initWithRules:(NSArray *)rules {
+  return self;
+}
+- (TokenEnumerator *)enumeratorWithReadString:(NSString *)read {
+  TokenEnumerator *ret = TokenEnumerator.new;
+  return ret;
+}
+@end
+
 @implementation Column
 
 - (Column *)init {
@@ -269,7 +299,7 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
 
 @end
 
-char getChar(NSString *string, int cursol) {
+char getChar(NSString *string, long cursol) {
   if ([string length] <= cursol) {
     return 0;
   }
@@ -281,7 +311,7 @@ char getChar(NSString *string, int cursol) {
   return *ch;
 }
 
-NSString *getOneCharactor(NSString *string, int cursol) {
+NSString *getOneCharactor(NSString *string, long cursol) {
   if ([string length] <= cursol) {
     return @"¥0";
   }
@@ -440,17 +470,21 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
     NSString *sqlString =
         [NSString stringWithCString:sql encoding:NSUTF8StringEncoding];
-    int charactorBackPoint =
+
+    Tokenizer *tokenizer = [Tokenizer.alloc initWithRules:@[]];
+
+    TokenEnumerator *tokenEnumerator =
+        [tokenizer enumeratorWithReadString:sqlString];
+
+    long charactorBackPoint =
         0; // SQLをトークンに分割して読み込む時に戻るポイントを記録しておきます。
 
-    int charactorCursol =
-        0; // SQLをトークンに分割して読み込む時に現在読んでいる文字の場所を表します。
-
     // SQLをトークンに分割て読み込みます。
-    while (charactorCursol < sqlString.length) {
+    while (tokenEnumerator.cursol < sqlString.length) {
       // 空白を読み飛ばします。
-      if ([space containsString:getOneCharactor(sqlString, charactorCursol)]) {
-        charactorCursol++;
+      if ([space containsString:getOneCharactor(sqlString,
+                                                tokenEnumerator.cursol)]) {
+        tokenEnumerator.cursol++;
         continue;
       }
 
@@ -464,8 +498,9 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       NSTextCheckingResult *result = [intLeteral
           firstMatchInString:sqlString
                      options:0
-                       range:NSMakeRange(charactorCursol,
-                                         sqlString.length - charactorCursol)];
+                       range:NSMakeRange(tokenEnumerator.cursol,
+                                         sqlString.length -
+                                             tokenEnumerator.cursol)];
 
       if (result != nil) {
         [tokens
@@ -473,7 +508,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                           initWithKind:IntLiteralToken
                                   Word:[sqlString
                                            substringWithRange:result.range]]];
-        charactorCursol += result.range.length;
+        tokenEnumerator.cursol += result.range.length;
         continue;
       }
 
@@ -486,8 +521,9 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       result = [stringLeteral
           firstMatchInString:sqlString
                      options:0
-                       range:NSMakeRange(charactorCursol,
-                                         sqlString.length - charactorCursol)];
+                       range:NSMakeRange(tokenEnumerator.cursol,
+                                         sqlString.length -
+                                             tokenEnumerator.cursol)];
 
       if (result != nil) {
         [tokens
@@ -495,28 +531,30 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                           initWithKind:StringLiteralToken
                                   Word:[sqlString
                                            substringWithRange:result.range]]];
-        charactorCursol += result.range.length;
+        tokenEnumerator.cursol += result.range.length;
         continue;
       }
 
       // 文字列リテラルを開始するシングルクォートを判別し、読み込みます。
       // メトリクス測定ツールのccccはシングルクォートの文字リテラル中のエスケープを認識しないため、文字リテラルを使わないことで回避しています。
-      if (getChar(sqlString, charactorCursol) == "\'"[0]) {
-        ++charactorCursol;
+      if (getChar(sqlString, tokenEnumerator.cursol) == "\'"[0]) {
+        ++tokenEnumerator.cursol;
 
         // 読み込んだ文字列リテラルの情報です。初期値の段階で最初のシングルクォートは読み込んでいます。
 
         NSMutableString *word = [NSMutableString stringWithString:@"\'"];
 
         // 次のシングルクォートがくるまで文字を読み込み続けます。
-        while (getChar(sqlString, charactorCursol) &&
-               getChar(sqlString, charactorCursol) != "\'"[0]) {
+        while (getChar(sqlString, tokenEnumerator.cursol) &&
+               getChar(sqlString, tokenEnumerator.cursol) != "\'"[0]) {
 
-          [word appendString:getOneCharactor(sqlString, charactorCursol++)];
+          [word appendString:getOneCharactor(sqlString,
+                                             tokenEnumerator.cursol++)];
         }
-        if (getChar(sqlString, charactorCursol) == "\'"[0]) {
+        if (getChar(sqlString, tokenEnumerator.cursol) == "\'"[0]) {
           // 最後のシングルクォートを読み込みます。
-          [word appendString:getOneCharactor(sqlString, charactorCursol++)];
+          [word appendString:getOneCharactor(sqlString,
+                                             tokenEnumerator.cursol++)];
 
           // 文字列の終端文字をつけます。
           [tokens addObject:[Token.alloc initWithKind:StringLiteralToken
@@ -530,7 +568,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       // キーワードを読み込みます。
       found = NO;
       for (Token *condition in keywordConditions) {
-        charactorBackPoint = charactorCursol;
+        charactorBackPoint = tokenEnumerator.cursol;
         char word[MAX_WORD_LENGTH];
         char *wordCursol = word;
 
@@ -542,20 +580,22 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
         // キーワードが指定した文字列となっているか確認します。
         while (*wordCursol &&
-               toupper(getChar(sqlString, charactorCursol++)) == *wordCursol) {
+               toupper(getChar(sqlString, tokenEnumerator.cursol++)) ==
+                   *wordCursol) {
           ++wordCursol;
         }
 
         // キーワードに識別子が区切りなしに続いていないかを確認するため、キーワードの終わった一文字あとを調べます。
         if (!*wordCursol &&
             ![alpahNumUnder
-                containsString:getOneCharactor(sqlString, charactorCursol)]) {
+                containsString:getOneCharactor(sqlString,
+                                               tokenEnumerator.cursol)]) {
 
           // 見つかったキーワードを生成します。
           [tokens addObject:[Token.alloc initWithKind:condition.kind Word:@""]];
           found = YES;
         } else {
-          charactorCursol = charactorBackPoint;
+          tokenEnumerator.cursol = charactorBackPoint;
         }
       }
       if (found) {
@@ -565,7 +605,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       // 記号を読み込みます。
       found = NO;
       for (Token *condition in signConditions) {
-        charactorBackPoint = charactorCursol;
+        charactorBackPoint = tokenEnumerator.cursol;
         char word[MAX_WORD_LENGTH];
         char *wordCursol =
             word; // 確認する記号の文字列のうち、現在確認している一文字を指します。
@@ -575,7 +615,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
         // 記号が指定した文字列となっているか確認します。
         while (*wordCursol &&
-               toupper(getChar(sqlString, charactorCursol++)) == *wordCursol) {
+               toupper(getChar(sqlString, tokenEnumerator.cursol++)) ==
+                   *wordCursol) {
           ++wordCursol;
         }
         if (!*wordCursol) {
@@ -584,7 +625,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           [tokens addObject:[Token.alloc initWithKind:condition.kind Word:@""]];
           found = YES;
         } else {
-          charactorCursol = charactorBackPoint;
+          tokenEnumerator.cursol = charactorBackPoint;
         }
       }
       if (found) {
@@ -594,19 +635,21 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       // 識別子を読み込みます。
 
       // 識別子の最初の文字を確認します。
-      if ([alpahUnder
-              containsString:getOneCharactor(sqlString, charactorCursol)]) {
+      if ([alpahUnder containsString:getOneCharactor(sqlString,
+                                                     tokenEnumerator.cursol)]) {
         NSMutableString *word = [NSMutableString string];
         do {
           // 二文字目以降は数字も許可して文字の種類を確認します。
           if ([alpahNumUnder
-                  containsString:getOneCharactor(sqlString, charactorCursol)]) {
-            [word appendString:getOneCharactor(sqlString, charactorCursol)];
+                  containsString:getOneCharactor(sqlString,
+                                                 tokenEnumerator.cursol)]) {
+            [word appendString:getOneCharactor(sqlString,
+                                               tokenEnumerator.cursol)];
 
-            charactorCursol++;
+            tokenEnumerator.cursol++;
           }
         } while ([alpahNumUnder
-            containsString:getOneCharactor(sqlString, charactorCursol)]);
+            containsString:getOneCharactor(sqlString, tokenEnumerator.cursol)]);
 
         // 読み込んだ識別子を登録します。
         [tokens addObject:[Token.alloc initWithKind:IdentifierToken Word:word]];
