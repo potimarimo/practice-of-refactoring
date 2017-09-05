@@ -103,7 +103,7 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
 @property NSString *word;      //!<
 //!記録されているトークンの文字列です。記録の必要がなければ空白です。
 - (Token *)init;
-- (Token *)initWithKind:(TokenKind)kind Word:(NSString *)word;
+- (Token *)initWithKind:(TokenKind)kind word:(NSString *)word;
 
 @end
 
@@ -124,7 +124,7 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
 @property TokenKind kind;
 - (RegulerExpressionTokenizeRule *)initWithPattern:(NSString *)pattern
                                               kind:(TokenKind)kind;
-- (Token *)parseDocument:(NSString *)string Cursol:(NSInteger *)cursol;
+- (Token *)parseDocument:(NSString *)string cursol:(NSInteger *)cursol;
 @end
 
 //! 指定された列の情報です。どのテーブルに所属するかの情報も含みます。
@@ -162,7 +162,7 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
 
 //! 行の情報を入力のテーブルインデックス、列インデックスの形で持ちます。
 @interface ColumnIndex : NSObject
-- (ColumnIndex *)initWithTable:(int)table Column:(int)column;
+- (ColumnIndex *)initWithTable:(int)table column:(int)column;
 @property int table;  //!< 列が入力の何テーブル目の列かです。
 @property int column; //!< 列が入力のテーブルの何列目かです。
 @end
@@ -232,7 +232,7 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
   _word = NSString.new;
   return self;
 }
-- (Token *)initWithKind:(enum TokenKind)kind Word:(NSString *)word {
+- (Token *)initWithKind:(enum TokenKind)kind word:(NSString *)word {
   _kind = kind;
   _word = word;
   return self;
@@ -267,7 +267,7 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
   };
   ret->_generater = ^() {
     for (RegulerExpressionTokenizeRule *rule in _rules) {
-      Token *token = [rule parseDocument:read Cursol:&ret->_cursol];
+      Token *token = [rule parseDocument:read cursol:&ret->_cursol];
       if (token) {
         return token;
       }
@@ -287,7 +287,7 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
                                                          error:NULL];
   return self;
 }
-- (Token *)parseDocument:(NSString *)document Cursol:(NSInteger *)cursol {
+- (Token *)parseDocument:(NSString *)document cursol:(NSInteger *)cursol {
   NSTextCheckingResult *result = [self.pattern
       firstMatchInString:document
                  options:0
@@ -298,7 +298,7 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
     return
         [Token.alloc initWithKind:self.kind
 
-                             Word:[document substringWithRange:result.range]];
+                             word:[document substringWithRange:result.range]];
   } else {
     return nil;
   }
@@ -477,33 +477,33 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
     // キーワードをトークンとして認識するためのキーワード一覧情報です。
     NSArray *keywordConditions = @[
-      [Token.alloc initWithKind:AndToken Word:@"AND"],
-      [Token.alloc initWithKind:AscToken Word:@"ASC"],
-      [Token.alloc initWithKind:ByToken Word:@"BY"],
-      [Token.alloc initWithKind:DescToken Word:@"DESC"],
-      [Token.alloc initWithKind:FromToken Word:@"FROM"],
-      [Token.alloc initWithKind:OrderToken Word:@"ORDER"],
-      [Token.alloc initWithKind:OrToken Word:@"OR"],
-      [Token.alloc initWithKind:SelectToken Word:@"SELECT"],
-      [Token.alloc initWithKind:WhereToken Word:@"WHERE"]
+      [Token.alloc initWithKind:AndToken word:@"AND"],
+      [Token.alloc initWithKind:AscToken word:@"ASC"],
+      [Token.alloc initWithKind:ByToken word:@"BY"],
+      [Token.alloc initWithKind:DescToken word:@"DESC"],
+      [Token.alloc initWithKind:FromToken word:@"FROM"],
+      [Token.alloc initWithKind:OrderToken word:@"ORDER"],
+      [Token.alloc initWithKind:OrToken word:@"OR"],
+      [Token.alloc initWithKind:SelectToken word:@"SELECT"],
+      [Token.alloc initWithKind:WhereToken word:@"WHERE"]
     ];
 
     // 記号をトークンとして認識するための記号一覧情報です。
     NSArray *signConditions = @[
-      [Token.alloc initWithKind:GreaterThanOrEqualToken Word:@">="],
-      [Token.alloc initWithKind:LessThanOrEqualToken Word:@"<="],
-      [Token.alloc initWithKind:NotEqualToken Word:@"<>"],
-      [Token.alloc initWithKind:AsteriskToken Word:@"*"],
-      [Token.alloc initWithKind:CommaToken Word:@","],
-      [Token.alloc initWithKind:CloseParenToken Word:@")"],
-      [Token.alloc initWithKind:DotToken Word:@"."],
-      [Token.alloc initWithKind:EqualToken Word:@"="],
-      [Token.alloc initWithKind:GreaterThanToken Word:@">"],
-      [Token.alloc initWithKind:LessThanToken Word:@"<"],
-      [Token.alloc initWithKind:MinusToken Word:@"-"],
-      [Token.alloc initWithKind:OpenParenToken Word:@"("],
-      [Token.alloc initWithKind:PlusToken Word:@"+"],
-      [Token.alloc initWithKind:SlashToken Word:@"/"]
+      [Token.alloc initWithKind:GreaterThanOrEqualToken word:@">="],
+      [Token.alloc initWithKind:LessThanOrEqualToken word:@"<="],
+      [Token.alloc initWithKind:NotEqualToken word:@"<>"],
+      [Token.alloc initWithKind:AsteriskToken word:@"*"],
+      [Token.alloc initWithKind:CommaToken word:@","],
+      [Token.alloc initWithKind:CloseParenToken word:@")"],
+      [Token.alloc initWithKind:DotToken word:@"."],
+      [Token.alloc initWithKind:EqualToken word:@"="],
+      [Token.alloc initWithKind:GreaterThanToken word:@">"],
+      [Token.alloc initWithKind:LessThanToken word:@"<"],
+      [Token.alloc initWithKind:MinusToken word:@"-"],
+      [Token.alloc initWithKind:OpenParenToken word:@"("],
+      [Token.alloc initWithKind:PlusToken word:@"+"],
+      [Token.alloc initWithKind:SlashToken word:@"/"]
     ];
 
     NSMutableArray *tokens = NSMutableArray.new; // SQLを分割したトークンです。
@@ -580,7 +580,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
           // 文字列の終端文字をつけます。
           [tokens addObject:[Token.alloc initWithKind:StringLiteralToken
-                                                 Word:word]];
+                                                 word:word]];
           continue;
         } else {
           @throw [TynySQLException.alloc initWithErrorCode:TokenCantReadError];
@@ -614,7 +614,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                                                tokenEnumerator.cursol)]) {
 
           // 見つかったキーワードを生成します。
-          [tokens addObject:[Token.alloc initWithKind:condition.kind Word:@""]];
+          [tokens addObject:[Token.alloc initWithKind:condition.kind word:@""]];
           found = YES;
         } else {
           tokenEnumerator.cursol = charactorBackPoint;
@@ -644,7 +644,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         if (!*wordCursol) {
 
           // 見つかった記号を生成します。
-          [tokens addObject:[Token.alloc initWithKind:condition.kind Word:@""]];
+          [tokens addObject:[Token.alloc initWithKind:condition.kind word:@""]];
           found = YES;
         } else {
           tokenEnumerator.cursol = charactorBackPoint;
@@ -675,7 +675,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                                            tokenEnumerator.cursol)]);
 
         // 読み込んだ識別子を登録します。
-        [tokens addObject:[Token.alloc initWithKind:IdentifierToken Word:word]];
+        [tokens addObject:[Token.alloc initWithKind:IdentifierToken word:word]];
         continue;
       }
 
