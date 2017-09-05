@@ -74,16 +74,19 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
 };
 
 //! 一つの値を持つデータです。
-typedef struct {
-  enum DataType type; //!< データの型です。
+@interface Data : NSObject
+@property enum DataType type; //!< データの型です。
 
-  //! 実際のデータを格納する共用体です。
-  union {
-    char string[MAX_DATA_LENGTH]; //!< データが文字列型の場合の値です。
-    long integer; //!< データが整数型の場合の値です。
-    BOOL boolean; //!< データが真偽値型の場合の値です。
-  } value;
-} Data;
+//! 実際のデータを格納するオブジェクトです。
+@property NSObject *value;
+- (NSString *)stringValue;
+- (NSInteger)integerValue;
+- (BOOL)boolValue;
+- (Data *)init;
+- (Data *)initWithString:(NSString *)string;
+- (Data *)initWithInteger:(long)integer;
+- (Data *)initWithBool:(BOOL)boolean;
+@end
 
 //! WHERE句に指定する演算子の情報を表します。
 @interface Operator : NSObject
@@ -115,9 +118,7 @@ typedef struct {
 @end
 
 //! WHERE句の条件の式木を表します。
-@interface ExtensionTreeNode : NSObject {
-  Data __value;
-}
+@interface ExtensionTreeNode : NSObject
 - (ExtensionTreeNode *)init;
 @property __weak ExtensionTreeNode
     *parent;                        //!< 親となるノードです。根の式木の場合はNULLとなります。
@@ -135,7 +136,7 @@ typedef struct {
 @property Column *column;           //!<
                                     //!列場指定されている場合に、その列を表します。列指定ではない場合はcolumnNameが空文字列となります。
 @property BOOL calculated; //!< 式の値を計算中に、計算済みかどうかです。
-@property(nonatomic) Data *value; //!< 指定された、もしくは計算された値です。
+@property Data *value; //!< 指定された、もしくは計算された値です。
 
 @end
 
@@ -152,6 +153,45 @@ typedef struct {
 @end
 
 // 以上ヘッダに相当する部分。
+
+@implementation Data
+- (NSString *)stringValue {
+  if (self.type != String)
+    return @"";
+  return (NSString *)self.value;
+}
+- (NSInteger)integerValue {
+  if (self.type != Integer)
+    return 0;
+  return ((NSNumber *)self.value).integerValue;
+}
+- (BOOL)boolValue {
+  if (self.type != Bool)
+    return NO;
+  return ((NSNumber *)self.value).boolValue;
+}
+- (instancetype)init {
+  _type = String;
+  _value = @"";
+  return self;
+}
+- (Data *)initWithString:(NSString *)string {
+  _type = String;
+  _value = string;
+  return self;
+}
+- (Data *)initWithInteger:(long)integer {
+  _type = Integer;
+  _value = @(integer);
+  return self;
+}
+- (Data *)initWithBool:(BOOL)boolean {
+  _type = Bool;
+  _value = @(boolean);
+  return self;
+}
+
+@end
 
 @implementation Operator
 - (Operator *)init {
@@ -208,12 +248,8 @@ typedef struct {
   _signCoefficient = 1;
   _column = Column.new;
   _calculated = NO;
-  __value = (Data){.type = String, .value = {.string = ""}};
-  _value = &__value;
+  _value = Data.new;
   return self;
-}
-- (void)setValue:(Data *)value {
-  __value = *value;
 }
 @end
 
@@ -778,21 +814,15 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             }
           } else if (nextToken.kind == IntLiteralToken) {
             currentNode.value =
-                &(Data){.type = Integer,
-                        .value = {.integer = [nextToken.word integerValue]}};
+                [Data.alloc initWithInteger:[nextToken.word integerValue]];
             nextToken = tokenCursol.nextObject;
 
           } else if (nextToken.kind == StringLiteralToken) {
-            currentNode.value =
-                &(Data){.type = String, .value = {.string = ""}};
+            currentNode.value = Data.new;
 
             // 前後のシングルクォートを取り去った文字列をデータとして読み込みます。
-            [[nextToken.word
-                substringWithRange:NSMakeRange(1, [nextToken.word length] - 2)]
-                getCString:currentNode.value->value.string
-                 maxLength:MAX_WORD_LENGTH < MAX_DATA_LENGTH ? MAX_WORD_LENGTH
-                                                             : MAX_DATA_LENGTH
-                  encoding:NSUTF8StringEncoding];
+            currentNode.value.value = [nextToken.word
+                substringWithRange:NSMakeRange(1, [nextToken.word length] - 2)];
             nextToken = tokenCursol.nextObject;
           } else {
             @throw [TynySQLException.alloc initWithErrorCode:SqlSyntaxError];
@@ -1015,14 +1045,15 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                getChar(inputLine, charactorCursol) != '\r' &&
                getChar(inputLine, charactorCursol) != '\n') {
 
-          // 読み込んだデータを書き込む行のカラムを生成します。
-          Data *data = malloc(sizeof(Data));
-          *data = (Data){.type = String, .value = {.string = ""}};
-          [row addObject:[NSValue valueWithPointer:data]];
+          // 読み込んだデータを書き込む行のカラムを生成します。;
+          [row addObject:Data.new];
+          char word[MAX_WORD_LENGTH] = "";
           char *writeCursol =
-              ((Data *)((NSValue *)row[row.count - 1]).pointerValue)
-                  ->value
-                  .string; // データ文字列の書き込みに利用するカーソルです。
+              word; // データ文字列の書き込みに利用するカーソルです。
+          [((Data *)row[row.count - 1]).stringValue
+              getCString:word
+               maxLength:MAX_WORD_LENGTH
+                encoding:NSUTF8StringEncoding];
 
           // データ文字列を一つ読みます。
           while (getChar(inputLine, charactorCursol) &&
@@ -1033,6 +1064,9 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           }
           // 書き込んでいる列名の文字列に終端文字を書き込みます。
           writeCursol[1] = '\0';
+          row[row.count - 1] = [Data.alloc
+              initWithString:[NSString stringWithCString:word
+                                                encoding:NSUTF8StringEncoding]];
 
           // 入力行のカンマの分を読み進めます。
           ++charactorCursol;
@@ -1045,8 +1079,11 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         // 全ての行のある列について、データ文字列から符号と数値以外の文字を探します。
         found = NO;
         for (NSArray *tableRow in inputData[inputData.count - 1]) {
-          char *currentChar =
-              ((Data *)((NSValue *)tableRow[j]).pointerValue)->value.string;
+          char word[MAX_WORD_LENGTH] = "";
+          char *currentChar = word;
+          [((Data *)tableRow[j]).stringValue getCString:word
+                                              maxLength:MAX_WORD_LENGTH
+                                               encoding:NSUTF8StringEncoding];
           while (*currentChar) {
             BOOL isNum = NO;
             const char *currentNum = signNum;
@@ -1070,12 +1107,10 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
         // 符号と数字以外が見つからない列については、数値列に変換します。
         if (!found) {
-          for (NSArray *tableRow in inputData[inputData.count - 1]) {
-            *((Data *)((NSValue *)tableRow[j]).pointerValue) = (Data){
-                .type = Integer,
-                .value = {.integer = atoi(
-                              ((Data *)((NSValue *)tableRow[j]).pointerValue)
-                                  ->value.string)}};
+          for (NSMutableArray *tableRow in inputData[inputData.count - 1]) {
+            tableRow[j] =
+                [Data.alloc initWithInteger:[((Data *)tableRow[j])
+                                                    .stringValue integerValue]];
           }
         }
       }
@@ -1169,8 +1204,9 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       for (ExtensionTreeNode *node in allNodes) {
         if (node.operator.kind == NoToken &&
             [node.column.columnName isEqualToString:@""] &&
-            node.value->type == Integer) {
-          node.value->value.integer *= node.signCoefficient;
+            node.value.type == Integer) {
+          node.value = [Data.alloc
+              initWithInteger:node.value.integerValue * node.signCoefficient];
         }
       }
     }
@@ -1191,14 +1227,10 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
       // 行の各列のデータを入力から持ってきて設定します。
       for (ColumnIndex *index in selectColumnIndexes) {
-        Data *data = malloc(sizeof(Data));
-        *data = *(
-            (Data *)((NSValue
-                          *)(inputData[index.table]
-                                      [((NSNumber *)currentRowNums[index.table])
-                                           .integerValue])[index.column])
-                .pointerValue);
-        [row addObject:[NSValue valueWithPointer:data]];
+        [row addObject:((NSArray *)
+                            inputData[index.table]
+                                     [((NSNumber *)currentRowNums[index.table])
+                                          .integerValue])[index.column]];
       }
 
       NSMutableArray *allColumnsRow = NSMutableArray.new;
@@ -1209,19 +1241,10 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       // allColumnsRowの列を設定します。
       for (int i = 0; i < tableNamesNum; ++i) {
         for (int j = 0; j < inputColumnNums[i]; ++j) {
-          Data *data = malloc(sizeof(Data));
-          *data =
-              *((Data *)((NSValue *)inputData[i][((NSNumber *)currentRowNums[i])
-                                                     .integerValue][j])
-                    .pointerValue);
-          NSValue *value = [NSValue valueWithPointer:data];
 
-          if (!value) {
-            @throw
-                [TynySQLException.alloc initWithErrorCode:MemoryAllocateError];
-          }
-
-          [allColumnsRow addObject:value];
+          [allColumnsRow
+              addObject:((NSArray *)inputData[i][((NSNumber *)currentRowNums[i])
+                                                     .integerValue])[j]];
         }
       }
       // WHEREの条件となる値を再帰的に計算します。
@@ -1264,8 +1287,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                         initWithErrorCode:BadColumnNameError];
                   }
                   found = YES;
-                  currentNode.value =
-                      ((NSValue *)allColumnsRow[i]).pointerValue;
+                  currentNode.value = allColumnsRow[i];
                 }
               }
               // 一つも見つからなくてもエラーです。
@@ -1274,8 +1296,10 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                     initWithErrorCode:BadColumnNameError];
               };
               // 符号を考慮して値を計算します。
-              if (currentNode.value->type == Integer) {
-                currentNode.value->value.integer *= currentNode.signCoefficient;
+              if (currentNode.value.type == Integer) {
+                currentNode.value =
+                    [Data.alloc initWithInteger:currentNode.value.integerValue *
+                                                currentNode.signCoefficient];
               }
             }
             break;
@@ -1288,47 +1312,45 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             // 比較演算子の場合です。
 
             // 比較できるのは文字列型か整数型で、かつ左右の型が同じ場合です。
-            if ((currentNode.left.value->type != Integer &&
-                 currentNode.left.value->type != String) ||
-                currentNode.left.value->type != currentNode.right.value->type) {
+            if ((currentNode.left.value.type != Integer &&
+                 currentNode.left.value.type != String) ||
+                currentNode.left.value.type != currentNode.right.value.type) {
               @throw [TynySQLException.alloc
                   initWithErrorCode:WhereOperandTypeError];
             }
-            currentNode.value->type = Bool;
-
             // 比較結果を型と演算子によって計算方法を変えて、計算します。
-            switch (currentNode.left.value->type) {
+            switch (currentNode.left.value.type) {
             case Integer:
               switch (currentNode.operator.kind) {
               case EqualToken:
-                currentNode.value->value.boolean =
-                    currentNode.left.value->value.integer ==
-                    currentNode.right.value->value.integer;
+                currentNode.value = [Data.alloc
+                    initWithBool:currentNode.left.value.integerValue ==
+                                 currentNode.right.value.integerValue];
                 break;
               case GreaterThanToken:
-                currentNode.value->value.boolean =
-                    currentNode.left.value->value.integer >
-                    currentNode.right.value->value.integer;
+                currentNode.value = [Data.alloc
+                    initWithBool:currentNode.left.value.integerValue >
+                                 currentNode.right.value.integerValue];
                 break;
               case GreaterThanOrEqualToken:
-                currentNode.value->value.boolean =
-                    currentNode.left.value->value.integer >=
-                    currentNode.right.value->value.integer;
+                currentNode.value = [Data.alloc
+                    initWithBool:currentNode.left.value.integerValue >=
+                                 currentNode.right.value.integerValue];
                 break;
               case LessThanToken:
-                currentNode.value->value.boolean =
-                    currentNode.left.value->value.integer <
-                    currentNode.right.value->value.integer;
+                currentNode.value = [Data.alloc
+                    initWithBool:currentNode.left.value.integerValue <
+                                 currentNode.right.value.integerValue];
                 break;
               case LessThanOrEqualToken:
-                currentNode.value->value.boolean =
-                    currentNode.left.value->value.integer <=
-                    currentNode.right.value->value.integer;
+                currentNode.value = [Data.alloc
+                    initWithBool:currentNode.left.value.integerValue <=
+                                 currentNode.right.value.integerValue];
                 break;
               case NotEqualToken:
-                currentNode.value->value.boolean =
-                    currentNode.left.value->value.integer !=
-                    currentNode.right.value->value.integer;
+                currentNode.value = [Data.alloc
+                    initWithBool:currentNode.left.value.integerValue !=
+                                 currentNode.right.value.integerValue];
                 break;
               default:
                 @throw
@@ -1338,34 +1360,51 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             case String:
               switch (currentNode.operator.kind) {
               case EqualToken:
-                currentNode.value->value.boolean =
-                    strcmp(currentNode.left.value->value.string,
-                           currentNode.right.value->value.string) == 0;
+                currentNode.value =
+                    [Data.alloc initWithBool:[currentNode.left.value.stringValue
+                                                 compare:currentNode.right.value
+                                                             .stringValue] ==
+                                             NSOrderedSame];
                 break;
               case GreaterThanToken:
-                currentNode.value->value.boolean =
-                    strcmp(currentNode.left.value->value.string,
-                           currentNode.right.value->value.string) > 0;
+
+                currentNode.value =
+                    [Data.alloc initWithBool:[currentNode.left.value.stringValue
+                                                 compare:currentNode.right.value
+                                                             .stringValue] ==
+                                             NSOrderedDescending];
                 break;
               case GreaterThanOrEqualToken:
-                currentNode.value->value.boolean =
-                    strcmp(currentNode.left.value->value.string,
-                           currentNode.right.value->value.string) >= 0;
+
+                currentNode.value =
+                    [Data.alloc initWithBool:[currentNode.left.value.stringValue
+                                                 compare:currentNode.right.value
+                                                             .stringValue] !=
+                                             NSOrderedAscending];
                 break;
               case LessThanToken:
-                currentNode.value->value.boolean =
-                    strcmp(currentNode.left.value->value.string,
-                           currentNode.right.value->value.string) < 0;
+
+                currentNode.value =
+                    [Data.alloc initWithBool:[currentNode.left.value.stringValue
+                                                 compare:currentNode.right.value
+                                                             .stringValue] ==
+                                             NSOrderedAscending];
                 break;
               case LessThanOrEqualToken:
-                currentNode.value->value.boolean =
-                    strcmp(currentNode.left.value->value.string,
-                           currentNode.right.value->value.string) <= 0;
+                currentNode.value =
+                    [Data.alloc initWithBool:[currentNode.left.value.stringValue
+                                                 compare:currentNode.right.value
+                                                             .stringValue] !=
+                                             NSOrderedDescending];
                 break;
               case NotEqualToken:
-                currentNode.value->value.boolean =
-                    strcmp(currentNode.left.value->value.string,
-                           currentNode.right.value->value.string) != 0;
+
+                currentNode.value =
+                    [Data.alloc initWithBool:[currentNode.left.value.stringValue
+                                                 compare:currentNode.right.value
+                                                             .stringValue] !=
+                                             NSOrderedSame];
+                ;
                 break;
               default:
                 @throw
@@ -1383,34 +1422,34 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             // 四則演算の場合です。
 
             // 演算できるのは整数型同士の場合のみです。
-            if (currentNode.left.value->type != Integer ||
-                currentNode.right.value->type != Integer) {
+            if (currentNode.left.value.type != Integer ||
+                currentNode.right.value.type != Integer) {
               @throw [TynySQLException.alloc
                   initWithErrorCode:WhereOperandTypeError];
             }
-            currentNode.value->type = Integer;
+            currentNode.value.type = Integer;
 
             // 比較結果を演算子によって計算方法を変えて、計算します。
             switch (currentNode.operator.kind) {
             case PlusToken:
-              currentNode.value->value.integer =
-                  currentNode.left.value->value.integer +
-                  currentNode.right.value->value.integer;
+              currentNode.value = [Data.alloc
+                  initWithInteger:currentNode.left.value.integerValue +
+                                  currentNode.right.value.integerValue];
               break;
             case MinusToken:
-              currentNode.value->value.integer =
-                  currentNode.left.value->value.integer -
-                  currentNode.right.value->value.integer;
+              currentNode.value = [Data.alloc
+                  initWithInteger:currentNode.left.value.integerValue -
+                                  currentNode.right.value.integerValue];
               break;
             case AsteriskToken:
-              currentNode.value->value.integer =
-                  currentNode.left.value->value.integer *
-                  currentNode.right.value->value.integer;
+              currentNode.value = [Data.alloc
+                  initWithInteger:currentNode.left.value.integerValue *
+                                  currentNode.right.value.integerValue];
               break;
             case SlashToken:
-              currentNode.value->value.integer =
-                  currentNode.left.value->value.integer /
-                  currentNode.right.value->value.integer;
+              currentNode.value = [Data.alloc
+                  initWithInteger:currentNode.left.value.integerValue /
+                                  currentNode.right.value.integerValue];
               break;
             default:
               @throw [TynySQLException.alloc initWithErrorCode:SqlSyntaxError];
@@ -1421,24 +1460,24 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             // 論理演算の場合です。
 
             // 演算できるのは真偽値型同士の場合のみです。
-            if (currentNode.left.value->type != Bool ||
-                currentNode.right.value->type != Bool) {
+            if (currentNode.left.value.type != Bool ||
+                currentNode.right.value.type != Bool) {
               @throw [TynySQLException.alloc
                   initWithErrorCode:WhereOperandTypeError];
             }
-            currentNode.value->type = Bool;
 
             // 比較結果を演算子によって計算方法を変えて、計算します。
             switch (currentNode.operator.kind) {
             case AndToken:
-              currentNode.value->value.boolean =
-                  currentNode.left.value->value.boolean &&
-                  currentNode.right.value->value.boolean;
+              currentNode.value =
+                  [Data.alloc initWithBool:currentNode.left.value.boolValue &&
+                                           currentNode.right.value.boolValue];
               break;
             case OrToken:
-              currentNode.value->value.boolean =
-                  currentNode.left.value->value.boolean ||
-                  currentNode.right.value->value.boolean;
+
+              currentNode.value =
+                  [Data.alloc initWithBool:currentNode.left.value.boolValue ||
+                                           currentNode.right.value.boolValue];
               break;
             default:
               @throw [TynySQLException.alloc initWithErrorCode:SqlSyntaxError];
@@ -1454,7 +1493,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         }
 
         // 条件に合わない行は出力から削除します。
-        if (!whereTopNode.value->value.boolean) {
+        if (!whereTopNode.value.boolValue) {
           [allColumnOutputData removeLastObject];
           [outputData removeLastObject];
         }
@@ -1533,21 +1572,19 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           BOOL jLessThanMin =
               NO; // インデックスがjの値が、minIndexの値より小さいかどうかです。
           for (int k = 0; k < orderByColumnIndexesNum; ++k) {
-            NSValue *mData = allColumnOutputData
+            Data *mData = allColumnOutputData
                 [minIndex][orderByColumnIndexes
                                [k]]; // インデックスがminIndexのデータです。
-            NSValue *jData = allColumnOutputData
+            Data *jData = allColumnOutputData
                 [j][orderByColumnIndexes[k]]; // インデックスがjのデータです。
             long cmp =
                 0; // 比較結果です。等しければ0、インデックスjの行が大きければプラス、インデックスminIndexの行が大きければマイナスとなります。
-            switch (((Data *)mData.pointerValue)->type) {
+            switch (mData.type) {
             case Integer:
-              cmp = ((Data *)jData.pointerValue)->value.integer -
-                    ((Data *)mData.pointerValue)->value.integer;
+              cmp = jData.integerValue - mData.integerValue;
               break;
             case String:
-              cmp = strcmp(((Data *)jData.pointerValue)->value.string,
-                           ((Data *)mData.pointerValue)->value.string);
+              cmp = [jData.stringValue compare:mData.stringValue];
               break;
             default:
               @throw [TynySQLException.alloc initWithErrorCode:SqlSyntaxError];
@@ -1603,18 +1640,15 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     // 出力ファイルにデータを出力します。
     for (NSArray *currentRow in outputData) {
       for (int i = 0; i < [selectColumns count]; ++i) {
-        NSValue *column = currentRow[i];
+        Data *column = currentRow[i];
         NSString *outputString = nil;
-        switch (((Data *)column.pointerValue)->type) {
+        switch (column.type) {
         case Integer:
-          outputString = [NSString
-              stringWithFormat:@"%ld",
-                               ((Data *)column.pointerValue)->value.integer];
+          outputString =
+              [NSString stringWithFormat:@"%ld", column.integerValue];
           break;
         case String:
-          outputString = [NSString
-              stringWithFormat:@"%s",
-                               ((Data *)column.pointerValue)->value.string];
+          outputString = [NSString stringWithFormat:@"%@", column.stringValue];
           break;
         default:
           @throw [TynySQLException.alloc initWithErrorCode:SqlSyntaxError];
@@ -1643,17 +1677,6 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     if (outputFile) {
       [outputFile synchronizeFile];
       [outputFile closeFile];
-    }
-    // メモリリソースを解放します。
-    for (NSArray *currentRow in outputData) {
-      for (NSValue *dataCursol in currentRow) {
-        free(dataCursol.pointerValue);
-      }
-    }
-    for (NSArray *currentRow in allColumnOutputData) {
-      for (NSValue *dataCursol in currentRow) {
-        free(dataCursol.pointerValue);
-      }
     }
   }
 }
