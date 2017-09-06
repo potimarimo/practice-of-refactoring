@@ -1023,32 +1023,28 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         int charactorCursol = 0;
 
         // 読み込んだ行を最後まで読みます。
-        while (getChar(inputLine, charactorCursol) &&
-               getChar(inputLine, charactorCursol) != '\r' &&
-               getChar(inputLine, charactorCursol) != '\n') {
+        while (getOneCharactor(inputLine, charactorCursol) &&
+               ![getOneCharactor(inputLine, charactorCursol)
+                   isEqualToString:@"\r"] &&
+               ![getOneCharactor(inputLine, charactorCursol)
+                   isEqualToString:@"\n"]) {
 
           // 読み込んだデータを書き込む行のカラムを生成します。;
           [row addObject:Data.new];
-          char word[MAX_WORD_LENGTH] = "";
-          char *writeCursol =
-              word; // データ文字列の書き込みに利用するカーソルです。
-          [((Data *)row[row.count - 1]).stringValue
-              getCString:word
-               maxLength:MAX_WORD_LENGTH
-                encoding:NSUTF8StringEncoding];
+          NSMutableString *wrote = NSMutableString.new;
 
           // データ文字列を一つ読みます。
-          while (getChar(inputLine, charactorCursol) &&
-                 getChar(inputLine, charactorCursol) != ',' &&
-                 getChar(inputLine, charactorCursol) != '\r' &&
-                 getChar(inputLine, charactorCursol) != '\n') {
-            *writeCursol++ = getChar(inputLine, charactorCursol++);
+          while (getOneCharactor(inputLine, charactorCursol) &&
+                 ![getOneCharactor(inputLine, charactorCursol)
+                     isEqualToString:@","] &&
+                 ![getOneCharactor(inputLine, charactorCursol)
+                     isEqualToString:@"\r"] &&
+                 ![getOneCharactor(inputLine, charactorCursol)
+                     isEqualToString:@"\n"]) {
+            [wrote appendString:getOneCharactor(inputLine, charactorCursol++)];
           }
           // 書き込んでいる列名の文字列に終端文字を書き込みます。
-          writeCursol[1] = '\0';
-          row[row.count - 1] = [Data.alloc
-              initWithString:[NSString stringWithCString:word
-                                                encoding:NSUTF8StringEncoding]];
+          row[row.count - 1] = [Data.alloc initWithString:wrote];
 
           // 入力行のカンマの分を読み進めます。
           ++charactorCursol;
