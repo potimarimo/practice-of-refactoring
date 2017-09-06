@@ -124,6 +124,10 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
 @property TokenKind kind;
 - (RegulerExpressionTokenizeRule *)initWithPattern:(NSString *)pattern
                                               kind:(TokenKind)kind;
+- (RegulerExpressionTokenizeRule *)initWithPattern:(NSString *)pattern
+                                              kind:(TokenKind)kind
+                                           options:(NSRegularExpressionOptions)
+                                                       options;
 - (Token *)parseDocument:(NSString *)string cursol:(NSInteger *)cursol;
 @end
 
@@ -287,6 +291,17 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
   _pattern = [NSRegularExpression
       regularExpressionWithPattern:[@"^" stringByAppendingString:pattern]
                            options:0
+                             error:NULL];
+  return self;
+}
+- (RegulerExpressionTokenizeRule *)initWithPattern:(NSString *)pattern
+                                              kind:(TokenKind)kind
+                                           options:(NSRegularExpressionOptions)
+                                                       options {
+  _kind = kind;
+  _pattern = [NSRegularExpression
+      regularExpressionWithPattern:[@"^" stringByAppendingString:pattern]
+                           options:options
                              error:NULL];
   return self;
 }
@@ -530,11 +545,13 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       [RegulerExpressionTokenizeRule.alloc initWithPattern:@"\'.*\'"
                                                       kind:StringLiteralToken],
       [RegulerExpressionTokenizeRule.alloc
-          initWithPattern:@"[Aa][Nn][Dd](?!\\w)"
-                     kind:AndToken],
+          initWithPattern:@"AND(?!\\w)"
+                     kind:AndToken
+                  options:NSRegularExpressionCaseInsensitive],
       [RegulerExpressionTokenizeRule.alloc
-          initWithPattern:@"[Aa][Ss][Cc](?!\\w)"
-                     kind:AscToken],
+          initWithPattern:@"ASC(?!\\w)"
+                     kind:AscToken
+                  options:NSRegularExpressionCaseInsensitive],
     ]];
 
     TokenEnumerator *tokenEnumerator = [tokenizer
