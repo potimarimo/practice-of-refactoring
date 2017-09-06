@@ -477,14 +477,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       NSMutableArray.new; // FROM句で指定しているテーブル名です。
   @try {
 
-    BOOL found = NO; // 検索時に見つかったかどうかの結果を一時的に保存します。
-
-    NSString *alpahUnder =
-        @"_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXY"
-        @"Z"; // 全てのアルファベットの大文字小文字とアンダーバーです。
-    NSString *alpahNumUnder =
-        @"_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ0123"
-        @"456789";                        // 全ての数字とアルファベットの大文字小文字とアンダーバーです。
+    BOOL found = NO;                      // 検索時に見つかったかどうかの結果を一時的に保存します。
     const char *signNum = "+-0123456789"; // 全ての符号と数字です。
 
     // SQLからトークンを読み込みます。
@@ -511,44 +504,45 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     Tokenizer *tokenizer = [Tokenizer.alloc initWithRules:@[
       [RegulerExpressionTokenizeRule.alloc initWithPattern:@"\\s+"
                                                       kind:NoToken],
-      [RegulerExpressionTokenizeRule.alloc initWithPattern:@"\\d+(?!\\w)"
-                                                      kind:IntLiteralToken],
+      [RegulerExpressionTokenizeRule.alloc
+          initWithPattern:@"\\d+(?![\\p{Ll}\\p{Lu}\\d_])"
+                     kind:IntLiteralToken],
       [RegulerExpressionTokenizeRule.alloc initWithPattern:@"\'.*\'"
                                                       kind:StringLiteralToken],
       [RegulerExpressionTokenizeRule.alloc
-          initWithPattern:@"AND(?!\\w)"
+          initWithPattern:@"AND(?![\\p{Ll}\\p{Lu}\\d_])"
                      kind:AndToken
                   options:NSRegularExpressionCaseInsensitive],
       [RegulerExpressionTokenizeRule.alloc
-          initWithPattern:@"ASC(?!\\w)"
+          initWithPattern:@"ASC(?![\\p{Ll}\\p{Lu}\\d_])"
                      kind:AscToken
                   options:NSRegularExpressionCaseInsensitive],
       [RegulerExpressionTokenizeRule.alloc
-          initWithPattern:@"BY(?!\\w)"
+          initWithPattern:@"BY(?![\\p{Ll}\\p{Lu}\\d_])"
                      kind:ByToken
                   options:NSRegularExpressionCaseInsensitive],
       [RegulerExpressionTokenizeRule.alloc
-          initWithPattern:@"DESC(?!\\w)"
+          initWithPattern:@"DESC(?![\\p{Ll}\\p{Lu}\\d_])"
                      kind:DescToken
                   options:NSRegularExpressionCaseInsensitive],
       [RegulerExpressionTokenizeRule.alloc
-          initWithPattern:@"FROM(?!\\w)"
+          initWithPattern:@"FROM(?![\\p{Ll}\\p{Lu}\\d_])"
                      kind:FromToken
                   options:NSRegularExpressionCaseInsensitive],
       [RegulerExpressionTokenizeRule.alloc
-          initWithPattern:@"ORDER(?!\\w)"
+          initWithPattern:@"ORDER(?![\\p{Ll}\\p{Lu}\\d_])"
                      kind:OrderToken
                   options:NSRegularExpressionCaseInsensitive],
       [RegulerExpressionTokenizeRule.alloc
-          initWithPattern:@"OR(?!\\w)"
+          initWithPattern:@"OR(?![\\p{Ll}\\p{Lu}\\d_])"
                      kind:OrToken
                   options:NSRegularExpressionCaseInsensitive],
       [RegulerExpressionTokenizeRule.alloc
-          initWithPattern:@"SELECT(?!\\w)"
+          initWithPattern:@"SELECT(?![\\p{Ll}\\p{Lu}\\d_])"
                      kind:SelectToken
                   options:NSRegularExpressionCaseInsensitive],
       [RegulerExpressionTokenizeRule.alloc
-          initWithPattern:@"WHERE(?!\\w)"
+          initWithPattern:@"WHERE(?![\\p{Ll}\\p{Lu}\\d_])"
                      kind:WhereToken
                   options:NSRegularExpressionCaseInsensitive],
       [RegulerExpressionTokenizeRule.alloc
@@ -582,7 +576,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       [RegulerExpressionTokenizeRule.alloc initWithPattern:@"/"
                                                       kind:SlashToken],
       [RegulerExpressionTokenizeRule.alloc
-          initWithPattern:@"[\\p{Ll}\\p{Lu}_][\\p{Ll}\\p{Lu}\\p{Nd}_]*"
+          initWithPattern:@"[\\p{Ll}\\p{Lu}_][\\p{Ll}\\p{Lu}\\d_]*"
                      kind:IdentifierToken],
     ]];
 
@@ -600,10 +594,10 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         if (token.kind != NoToken) {
           [tokens addObject:token];
         }
-        continue;
-      }
+      } else {
 
-      @throw [TynySQLException.alloc initWithErrorCode:TokenCantReadError];
+        @throw [TynySQLException.alloc initWithErrorCode:TokenCantReadError];
+      }
     }
 
     // トークン列を解析し、構文を読み取ります。
