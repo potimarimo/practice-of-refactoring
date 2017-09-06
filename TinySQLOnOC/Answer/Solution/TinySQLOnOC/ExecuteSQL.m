@@ -581,6 +581,9 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                                                       kind:PlusToken],
       [RegulerExpressionTokenizeRule.alloc initWithPattern:@"/"
                                                       kind:SlashToken],
+      [RegulerExpressionTokenizeRule.alloc
+          initWithPattern:@"[\\p{Ll}\\p{Lu}_][\\p{Ll}\\p{Lu}\\p{Nd}_]*"
+                     kind:IdentifierToken],
     ]];
 
     TokenEnumerator *tokenEnumerator = [tokenizer
@@ -597,31 +600,6 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         if (token.kind != NoToken) {
           [tokens addObject:token];
         }
-        continue;
-      }
-
-      // 識別子を読み込みます。
-
-      // 識別子の最初の文字を確認します。
-      if ([alpahUnder containsString:getOneCharactor(tokenEnumerator.document,
-                                                     tokenEnumerator.cursol)]) {
-        NSMutableString *word = [NSMutableString string];
-        do {
-          // 二文字目以降は数字も許可して文字の種類を確認します。
-          if ([alpahNumUnder
-                  containsString:getOneCharactor(tokenEnumerator.document,
-                                                 tokenEnumerator.cursol)]) {
-            [word appendString:getOneCharactor(tokenEnumerator.document,
-                                               tokenEnumerator.cursol)];
-
-            tokenEnumerator.cursol++;
-          }
-        } while ([alpahNumUnder
-            containsString:getOneCharactor(tokenEnumerator.document,
-                                           tokenEnumerator.cursol)]);
-
-        // 読み込んだ識別子を登録します。
-        [tokens addObject:[Token.alloc initWithKind:IdentifierToken word:word]];
         continue;
       }
 
