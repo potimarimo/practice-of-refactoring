@@ -491,24 +491,6 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
     // keywordConditionsとsignConditionsは先頭から順に検索されるので、前方一致となる二つの項目は順番に気をつけて登録しなくてはいけません。
 
-    // 記号をトークンとして認識するための記号一覧情報です。
-    NSArray *signConditions = @[
-      [Token.alloc initWithKind:GreaterThanOrEqualToken word:@">="],
-      [Token.alloc initWithKind:LessThanOrEqualToken word:@"<="],
-      [Token.alloc initWithKind:NotEqualToken word:@"<>"],
-      [Token.alloc initWithKind:AsteriskToken word:@"*"],
-      [Token.alloc initWithKind:CommaToken word:@","],
-      [Token.alloc initWithKind:CloseParenToken word:@")"],
-      [Token.alloc initWithKind:DotToken word:@"."],
-      [Token.alloc initWithKind:EqualToken word:@"="],
-      [Token.alloc initWithKind:GreaterThanToken word:@">"],
-      [Token.alloc initWithKind:LessThanToken word:@"<"],
-      [Token.alloc initWithKind:MinusToken word:@"-"],
-      [Token.alloc initWithKind:OpenParenToken word:@"("],
-      [Token.alloc initWithKind:PlusToken word:@"+"],
-      [Token.alloc initWithKind:SlashToken word:@"/"]
-    ];
-
     NSMutableArray *tokens = NSMutableArray.new; // SQLを分割したトークンです。
 
     // 演算子の情報です。
@@ -569,15 +551,42 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           initWithPattern:@"WHERE(?!\\w)"
                      kind:WhereToken
                   options:NSRegularExpressionCaseInsensitive],
+      [RegulerExpressionTokenizeRule.alloc
+          initWithPattern:@">="
+                     kind:GreaterThanOrEqualToken],
+      [RegulerExpressionTokenizeRule.alloc
+          initWithPattern:@"<="
+                     kind:LessThanOrEqualToken],
+      [RegulerExpressionTokenizeRule.alloc initWithPattern:@"<>"
+                                                      kind:NotEqualToken],
+      [RegulerExpressionTokenizeRule.alloc initWithPattern:@"\\*"
+                                                      kind:AsteriskToken],
+      [RegulerExpressionTokenizeRule.alloc initWithPattern:@","
+                                                      kind:CommaToken],
+      [RegulerExpressionTokenizeRule.alloc initWithPattern:@"\\)"
+                                                      kind:CloseParenToken],
+      [RegulerExpressionTokenizeRule.alloc initWithPattern:@"\\."
+                                                      kind:DotToken],
+      [RegulerExpressionTokenizeRule.alloc initWithPattern:@"="
+                                                      kind:EqualToken],
+      [RegulerExpressionTokenizeRule.alloc initWithPattern:@">"
+                                                      kind:GreaterThanToken],
+      [RegulerExpressionTokenizeRule.alloc initWithPattern:@"<"
+                                                      kind:LessThanToken],
+      [RegulerExpressionTokenizeRule.alloc initWithPattern:@"\\-"
+                                                      kind:MinusToken],
+      [RegulerExpressionTokenizeRule.alloc initWithPattern:@"\\("
+                                                      kind:OpenParenToken],
+      [RegulerExpressionTokenizeRule.alloc initWithPattern:@"\\+"
+                                                      kind:PlusToken],
+      [RegulerExpressionTokenizeRule.alloc initWithPattern:@"/"
+                                                      kind:SlashToken],
     ]];
 
     TokenEnumerator *tokenEnumerator = [tokenizer
         enumeratorWithReadString:[NSString
                                      stringWithCString:sql
                                               encoding:NSUTF8StringEncoding]];
-
-    long charactorBackPoint =
-        0; // SQLをトークンに分割して読み込む時に戻るポイントを記録しておきます。
 
     // SQLをトークンに分割て読み込みます。
     while (tokenEnumerator.cursol < tokenEnumerator.document.length) {
@@ -588,36 +597,6 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         if (token.kind != NoToken) {
           [tokens addObject:token];
         }
-        continue;
-      }
-
-      // 記号を読み込みます。
-      found = NO;
-      for (Token *condition in signConditions) {
-        charactorBackPoint = tokenEnumerator.cursol;
-        char word[MAX_WORD_LENGTH];
-        char *wordCursol =
-            word; // 確認する記号の文字列のうち、現在確認している一文字を指します。
-        [condition.word getCString:wordCursol
-                         maxLength:MAX_WORD_LENGTH
-                          encoding:NSUTF8StringEncoding];
-
-        // 記号が指定した文字列となっているか確認します。
-        while (*wordCursol &&
-               toupper(getChar(tokenEnumerator.document,
-                               tokenEnumerator.cursol++)) == *wordCursol) {
-          ++wordCursol;
-        }
-        if (!*wordCursol) {
-
-          // 見つかった記号を生成します。
-          [tokens addObject:[Token.alloc initWithKind:condition.kind word:@""]];
-          found = YES;
-        } else {
-          tokenEnumerator.cursol = charactorBackPoint;
-        }
-      }
-      if (found) {
         continue;
       }
 
