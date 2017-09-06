@@ -916,7 +916,6 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     // FROM句を読み込みます。
     if (nextToken.kind == FromToken) {
       nextToken = tokenCursol.nextObject;
-      ;
     } else {
       @throw [TynySQLException.alloc initWithErrorCode:SqlSyntaxError];
     }
@@ -924,7 +923,6 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     while (nextToken.kind == CommaToken || first) {
       if (nextToken.kind == CommaToken) {
         nextToken = tokenCursol.nextObject;
-        ;
       }
       if (nextToken.kind == IdentifierToken) {
         [tableNames addObject:nextToken.word];
@@ -955,21 +953,11 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     for (NSString *tableName in tableNames) {
       NSMutableArray *table = NSMutableArray.new;
       [inputData addObject:table];
-      // 入力ファイル名を生成します。
-      const char csvExtension[] = ".csv"; // csvの拡張子です。
-      char fileName[MAX_WORD_LENGTH + sizeof(csvExtension) -
-                    1]; // 拡張子を含む、入力ファイルのファイル名です。
-      [tableName getCString:fileName
-                  maxLength:MAX_WORD_LENGTH + sizeof(csvExtension) - 1
-                   encoding:NSUTF8StringEncoding];
-      strncat(fileName, csvExtension,
-              MAX_WORD_LENGTH + sizeof(csvExtension) - 1);
 
       // 入力ファイルを開きます。
-      NSFileHandle *inputFile =
-          [NSFileHandle fileHandleForReadingAtPath:
-                            [NSString stringWithCString:fileName
-                                               encoding:NSUTF8StringEncoding]];
+      NSFileHandle *inputFile = [NSFileHandle
+          fileHandleForReadingAtPath:[tableName
+                                         stringByAppendingString:@".csv"]];
       if (!inputFile) {
         @throw [TynySQLException.alloc initWithErrorCode:FileOpenError];
       }
