@@ -936,12 +936,12 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       NSString *inputLine; // ファイルから読み込んだ行文字列です。
       NSData *allFile = nil;
       allFile = [inputFile readDataToEndOfFile];
-      NSArray *allLines =
+      NSMutableArray *allLines =
           [[[NSString alloc] initWithData:allFile encoding:NSUTF8StringEncoding]
-              componentsSeparatedByString:@"\n"];
+              componentsSeparatedByString:@"\n"]
+              .mutableCopy;
       while ([allLines.lastObject isEqualToString:@""]) {
-        allLines =
-            [allLines subarrayWithRange:NSMakeRange(0, allLines.count - 1)];
+        [allLines removeLastObject];
       }
       inputLine = allLines[0];
       if (allFile) {
