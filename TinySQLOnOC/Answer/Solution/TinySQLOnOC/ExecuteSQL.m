@@ -4,7 +4,6 @@
 
 #pragma warning(disable : 4996)
 
-#define MAX_WORD_LENGTH 256 //!< SQLの一語の最大長です。
 #define MAX_COLUMN_COUNT 16 //!< 入出力されるデータに含まれる列の最大数です。
 #define MAX_ROW_COUNT 256 //!< 入出力されるデータに含まれる行の最大数です。
 #define MAX_TABLE_COUNT 8 //!< CSVとして入力されるテーブルの最大数です。
@@ -462,7 +461,6 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
   @try {
 
     BOOL found = NO;                      // 検索時に見つかったかどうかの結果を一時的に保存します。
-    const char *signNum = "+-0123456789"; // 全ての符号と数字です。
 
     // SQLからトークンを読み込みます。
 
