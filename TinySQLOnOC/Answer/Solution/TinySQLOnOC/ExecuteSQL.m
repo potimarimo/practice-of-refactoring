@@ -1077,14 +1077,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       }
     }
 
-    Column *outputColumns[MAX_TABLE_COUNT *
-                          MAX_COLUMN_COUNT]; // 出力するすべての行の情報です。
-    // outputColumnsを初期化します。
-    for (size_t i = 0; i < sizeof(outputColumns) / sizeof(outputColumns[0]);
-         i++) {
-      outputColumns[i] = [[Column alloc] init];
-    }
-    int outputColumnNum = 0; // 出力するすべての行の現在の数です。
+    NSMutableArray *outputColumns =
+        NSMutableArray.new; // 出力するすべての行の情報です。
 
     // SELECT句で指定された列名が、何個目の入力ファイルの何列目に相当するかを判別します。
     NSMutableArray *selectColumnIndexes = [NSMutableArray
@@ -1125,13 +1119,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
     // 出力する列名を設定します。
     for (ColumnIndex *index in selectColumnIndexes) {
-      outputColumns[outputColumnNum].tableName =
-          ((Column *)((NSArray *)inputColumns[index.table])[index.column])
-              .tableName;
-      outputColumns[outputColumnNum].columnName =
-          ((Column *)((NSArray *)inputColumns[index.table])[index.column])
-              .columnName;
-      ++outputColumnNum;
+      [outputColumns
+          addObject:((NSArray *)inputColumns[index.table])[index.column]];
     }
 
     if (whereTopNode) {
@@ -1563,7 +1552,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
     // 出力ファイルに列名を出力します。
     for (int i = 0; i < [selectColumns count]; ++i) {
-      [outputFile writeData:[outputColumns[i].columnName
+      [outputFile writeData:[((Column *)outputColumns[i]).columnName
                                 dataUsingEncoding:NSUTF8StringEncoding]];
       if (i < [selectColumns count] - 1) {
         [outputFile writeData:[@"," dataUsingEncoding:NSUTF8StringEncoding]];
