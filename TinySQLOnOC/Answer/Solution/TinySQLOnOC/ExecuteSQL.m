@@ -270,6 +270,7 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
     for (RegulerExpressionTokenizeRule *rule in _rules) {
       Token *token = [rule parseDocument:read cursol:pCursol];
       if (token) {
+
         return token;
       }
     }
@@ -283,14 +284,14 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
 - (RegulerExpressionTokenizeRule *)initWithPattern:(NSString *)pattern
                                               kind:(TokenKind)kind {
   _kind = kind;
-  _pattern = [NSRegularExpression regularExpressionWithPattern:[@"^" stringByAppendingString:pattern]
-                                                       options:0
-                                                         error:NULL];
+  _pattern = [NSRegularExpression
+      regularExpressionWithPattern:[@"^" stringByAppendingString:pattern]
+                           options:0
+                             error:NULL];
   return self;
 }
 - (Token *)parseDocument:(NSString *)document cursol:(NSInteger *)cursol {
-  NSTextCheckingResult *result =
-    [self.pattern
+  NSTextCheckingResult *result = [self.pattern
       firstMatchInString:document
                  options:0
                    range:NSMakeRange(*cursol, document.length - *cursol)];
@@ -525,6 +526,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         [Operator.alloc initWithKind:OrToken Order:5]};
 
     Tokenizer *tokenizer = [Tokenizer.alloc initWithRules:@[
+      [RegulerExpressionTokenizeRule.alloc initWithPattern:@"\\s+"
+                                                      kind:NoToken],
       [RegulerExpressionTokenizeRule.alloc initWithPattern:@"\\d+(?!\\w)"
                                                       kind:IntLiteralToken],
       [RegulerExpressionTokenizeRule.alloc initWithPattern:@"\'.*\'"
@@ -541,17 +544,13 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
     // SQLをトークンに分割て読み込みます。
     while (tokenEnumerator.cursol < tokenEnumerator.document.length) {
-      // 空白を読み飛ばします。
-      if ([space containsString:getOneCharactor(tokenEnumerator.document,
-                                                tokenEnumerator.cursol)]) {
-        tokenEnumerator.cursol++;
-        continue;
-      }
 
       // Tokenizerに登録されたトークンを読み込みます。
       Token *token = tokenEnumerator.nextObject;
       if (token) {
-        [tokens addObject:token];
+        if (token.kind != NoToken) {
+          [tokens addObject:token];
+        }
         continue;
       }
 
