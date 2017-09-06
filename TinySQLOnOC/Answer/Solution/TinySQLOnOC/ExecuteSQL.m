@@ -4,14 +4,10 @@
 
 #pragma warning(disable : 4996)
 
-#define MAX_FILE_LINE_LENGTH 4096 //!< 読み込むファイルの一行の最大長です。
 #define MAX_WORD_LENGTH 256 //!< SQLの一語の最大長です。
-#define MAX_DATA_LENGTH 256 //!< 入出力されるデータの、各列の最大長です。
 #define MAX_COLUMN_COUNT 16 //!< 入出力されるデータに含まれる列の最大数です。
 #define MAX_ROW_COUNT 256 //!< 入出力されるデータに含まれる行の最大数です。
 #define MAX_TABLE_COUNT 8 //!< CSVとして入力されるテーブルの最大数です。
-#define MAX_EXTENSION_TREE_NODE_COUNT                                          \
-  256 //!< WHERE句に指定される式木のノードの最大数です。
 
 //! カレントディレクトリにあるCSVに対し、簡易的なSQLを実行し、結果をファイルに出力します。
 //! @param [in] sql 実行するSQLです。
@@ -370,18 +366,6 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
 }
 
 @end
-
-char getChar(NSString *string, long cursol) {
-  if ([string length] <= cursol) {
-    return 0;
-  }
-  NSString *charactor = [string substringWithRange:NSMakeRange(cursol, 1)];
-
-  char buf[] = " ";
-  char *ch = buf;
-  [charactor getCString:ch maxLength:2 encoding:NSUTF8StringEncoding];
-  return *ch;
-}
 
 NSString *getOneCharactor(NSString *string, long cursol) {
   if ([string length] <= cursol) {
