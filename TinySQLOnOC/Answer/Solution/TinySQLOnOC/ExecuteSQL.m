@@ -586,18 +586,14 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                                               encoding:NSUTF8StringEncoding]];
 
     // SQLをトークンに分割て読み込みます。
-    while (tokenEnumerator.cursol < tokenEnumerator.document.length) {
-
-      // Tokenizerに登録されたトークンを読み込みます。
-      Token *token = tokenEnumerator.nextObject;
-      if (token) {
-        if (token.kind != NoToken) {
-          [tokens addObject:token];
-        }
-      } else {
-
-        @throw [TynySQLException.alloc initWithErrorCode:TokenCantReadError];
+    for (Token *token = tokenEnumerator.nextObject; token;
+         token = tokenEnumerator.nextObject) {
+      if (token.kind != NoToken) {
+        [tokens addObject:token];
       }
+    }
+    if (tokenEnumerator.cursol < tokenEnumerator.document.length) {
+      @throw [TynySQLException.alloc initWithErrorCode:TokenCantReadError];
     }
 
     // トークン列を解析し、構文を読み取ります。
