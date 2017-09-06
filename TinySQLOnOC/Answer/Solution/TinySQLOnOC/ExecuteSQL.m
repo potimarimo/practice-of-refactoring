@@ -491,17 +491,6 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
     // keywordConditionsとsignConditionsは先頭から順に検索されるので、前方一致となる二つの項目は順番に気をつけて登録しなくてはいけません。
 
-    // キーワードをトークンとして認識するためのキーワード一覧情報です。
-    NSArray *keywordConditions = @[
-      [Token.alloc initWithKind:ByToken word:@"BY"],
-      [Token.alloc initWithKind:DescToken word:@"DESC"],
-      [Token.alloc initWithKind:FromToken word:@"FROM"],
-      [Token.alloc initWithKind:OrderToken word:@"ORDER"],
-      [Token.alloc initWithKind:OrToken word:@"OR"],
-      [Token.alloc initWithKind:SelectToken word:@"SELECT"],
-      [Token.alloc initWithKind:WhereToken word:@"WHERE"]
-    ];
-
     // 記号をトークンとして認識するための記号一覧情報です。
     NSArray *signConditions = @[
       [Token.alloc initWithKind:GreaterThanOrEqualToken word:@">="],
@@ -552,6 +541,34 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           initWithPattern:@"ASC(?!\\w)"
                      kind:AscToken
                   options:NSRegularExpressionCaseInsensitive],
+      [RegulerExpressionTokenizeRule.alloc
+          initWithPattern:@"BY(?!\\w)"
+                     kind:ByToken
+                  options:NSRegularExpressionCaseInsensitive],
+      [RegulerExpressionTokenizeRule.alloc
+          initWithPattern:@"DESC(?!\\w)"
+                     kind:DescToken
+                  options:NSRegularExpressionCaseInsensitive],
+      [RegulerExpressionTokenizeRule.alloc
+          initWithPattern:@"FROM(?!\\w)"
+                     kind:FromToken
+                  options:NSRegularExpressionCaseInsensitive],
+      [RegulerExpressionTokenizeRule.alloc
+          initWithPattern:@"ORDER(?!\\w)"
+                     kind:OrderToken
+                  options:NSRegularExpressionCaseInsensitive],
+      [RegulerExpressionTokenizeRule.alloc
+          initWithPattern:@"OR(?!\\w)"
+                     kind:OrToken
+                  options:NSRegularExpressionCaseInsensitive],
+      [RegulerExpressionTokenizeRule.alloc
+          initWithPattern:@"SELECT(?!\\w)"
+                     kind:SelectToken
+                  options:NSRegularExpressionCaseInsensitive],
+      [RegulerExpressionTokenizeRule.alloc
+          initWithPattern:@"WHERE(?!\\w)"
+                     kind:WhereToken
+                  options:NSRegularExpressionCaseInsensitive],
     ]];
 
     TokenEnumerator *tokenEnumerator = [tokenizer
@@ -571,43 +588,6 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         if (token.kind != NoToken) {
           [tokens addObject:token];
         }
-        continue;
-      }
-
-      // キーワードを読み込みます。
-      found = NO;
-      for (Token *condition in keywordConditions) {
-        charactorBackPoint = tokenEnumerator.cursol;
-        char word[MAX_WORD_LENGTH];
-        char *wordCursol = word;
-
-        [condition.word
-            getCString:wordCursol
-             maxLength:MAX_WORD_LENGTH
-              encoding:
-                  NSUTF8StringEncoding]; // 確認するキーワードの文字列のうち、現在確認している一文字を指します。
-
-        // キーワードが指定した文字列となっているか確認します。
-        while (*wordCursol &&
-               toupper(getChar(tokenEnumerator.document,
-                               tokenEnumerator.cursol++)) == *wordCursol) {
-          ++wordCursol;
-        }
-
-        // キーワードに識別子が区切りなしに続いていないかを確認するため、キーワードの終わった一文字あとを調べます。
-        if (!*wordCursol &&
-            ![alpahNumUnder
-                containsString:getOneCharactor(tokenEnumerator.document,
-                                               tokenEnumerator.cursol)]) {
-
-          // 見つかったキーワードを生成します。
-          [tokens addObject:[Token.alloc initWithKind:condition.kind word:@""]];
-          found = YES;
-        } else {
-          tokenEnumerator.cursol = charactorBackPoint;
-        }
-      }
-      if (found) {
         continue;
       }
 
