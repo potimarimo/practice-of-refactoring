@@ -5,7 +5,6 @@
 #pragma warning(disable : 4996)
 
 #define MAX_COLUMN_COUNT 16 //!< 入出力されるデータに含まれる列の最大数です。
-#define MAX_ROW_COUNT 256 //!< 入出力されるデータに含まれる行の最大数です。
 #define MAX_TABLE_COUNT 8 //!< CSVとして入力されるテーブルの最大数です。
 
 //! カレントディレクトリにあるCSVに対し、簡易的なSQLを実行し、結果をファイルに出力します。
@@ -984,9 +983,6 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       // 入力CSVのデータ行を読み込みます。
       int rowNum = 0;
       while (rowNum < [allLines count] - 1) {
-        if (MAX_ROW_COUNT <= rowNum) {
-          @throw [TynySQLException.alloc initWithErrorCode:MemoryOverError];
-        }
         NSMutableArray *row =
             NSMutableArray.new; // 入力されている一行分のデータです。
         [inputData[inputData.count - 1] addObject:row];
