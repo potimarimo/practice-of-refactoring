@@ -460,7 +460,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       NSMutableArray.new; // FROM句で指定しているテーブル名です。
   @try {
 
-    BOOL found = NO;                      // 検索時に見つかったかどうかの結果を一時的に保存します。
+    BOOL found = NO; // 検索時に見つかったかどうかの結果を一時的に保存します。
 
     // SQLからトークンを読み込みます。
 
@@ -919,17 +919,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     if (nextToken) {
       @throw [TynySQLException.alloc initWithErrorCode:SqlSyntaxError];
     }
-    Column *inputColumns[MAX_TABLE_COUNT]
-                        [MAX_COLUMN_COUNT]; // 入力されたCSVの行の情報です。
-    // inputColumnsを初期化します。
-    for (size_t i = 0; i < sizeof(inputColumns) / sizeof(inputColumns[0]);
-         i++) {
-      for (size_t j = 0;
-           j < sizeof(inputColumns[0]) / sizeof(inputColumns[0][0]); j++) {
-        inputColumns[i][j] = [[Column alloc] init];
-      }
-    }
-    int inputColumnNums[MAX_TABLE_COUNT] = {0}; // 各テーブルごとの列の数です。
+    NSMutableArray *inputColumns =
+        NSMutableArray.new; // 入力されたCSVの行の情報です。
 
     int tableNamesNum = 0;
     for (NSString *tableName in tableNames) {
@@ -959,15 +950,13 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       inputLine = allLines[0];
       if (allFile) {
         int charactorCursol = 0;
-
+        [inputColumns addObject:NSMutableArray.new];
         // 読み込んだ行を最後まで読みます。
         while (getOneCharactor(inputLine, charactorCursol) &&
                ![getOneCharactor(inputLine, charactorCursol)
                    isEqualToString:@"\r"] &&
                ![getOneCharactor(inputLine, charactorCursol)
                    isEqualToString:@"\n"]) {
-          inputColumns[tableNamesNum][inputColumnNums[tableNamesNum]]
-              .tableName = tableName;
 
           NSMutableString *wrote = NSMutableString.new;
 
@@ -981,9 +970,9 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                      isEqualToString:@"\n"]) {
             [wrote appendString:getOneCharactor(inputLine, charactorCursol++)];
           }
-
-          inputColumns[tableNamesNum][inputColumnNums[tableNamesNum]++]
-              .columnName = wrote;
+          [(NSMutableArray *)inputColumns[inputColumns.count - 1]
+              addObject:[Column.alloc initWithTableName:tableName
+                                             ColumnName:wrote]];
 
           // 入力行のカンマの分を読み進めます。
           ++charactorCursol;
@@ -1025,7 +1014,6 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                      isEqualToString:@"\n"]) {
             [wrote appendString:getOneCharactor(inputLine, charactorCursol++)];
           }
-          // 書き込んでいる列名の文字列に終端文字を書き込みます。
           row[row.count - 1] = [Data.alloc initWithString:wrote];
 
           // 入力行のカンマの分を読み進めます。
@@ -1034,7 +1022,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       }
 
       // 全てが数値となる列は数値列に変換します。
-      for (int j = 0; j < inputColumnNums[tableNamesNum]; ++j) {
+      for (int j = 0; j < ((NSArray *)inputColumns[tableNamesNum]).count; ++j) {
 
         // 全ての行のある列について、データ文字列から符号と数値以外の文字を探します。
         found = NO;
@@ -1076,10 +1064,10 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
     // 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
     for (int i = 0; i < tableNamesNum; ++i) {
-      for (int j = 0; j < inputColumnNums[i]; ++j) {
+      for (int j = 0; j < ((NSArray *)inputColumns[i]).count; ++j) {
         allInputColumns[allInputColumnsNum].tableName = tableNames[i];
         allInputColumns[allInputColumnsNum++].columnName =
-            inputColumns[i][j].columnName;
+            ((Column *)((NSArray *)inputColumns[i])[j]).columnName;
       }
     }
 
@@ -1108,16 +1096,18 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     for (Column *selectedColumn in selectColumns) {
       found = NO;
       for (int j = 0; j < tableNamesNum; ++j) {
-        for (int k = 0; k < inputColumnNums[j]; ++k) {
+        for (int k = 0; k < ((NSArray *)inputColumns[j]).count; ++k) {
           if ([selectedColumn.columnName
-                  caseInsensitiveCompare:inputColumns[j][k].columnName] ==
-                  NSOrderedSame &&
+                  caseInsensitiveCompare:((Column *)((
+                                              NSArray *)inputColumns[j])[k])
+                                             .columnName] == NSOrderedSame &&
               ([selectedColumn.tableName
                    isEqualToString:
                        @""] || // テーブル名が設定されている場合のみテーブル名の比較を行います。
                ([selectedColumn.tableName
-                    caseInsensitiveCompare:inputColumns[j][k].tableName] ==
-                NSOrderedSame))) {
+                    caseInsensitiveCompare:((Column *)((
+                                                NSArray *)inputColumns[j])[k])
+                                               .tableName] == NSOrderedSame))) {
 
             // 既に見つかっているのにもう一つ見つかったらエラーです。
             if (found) {
@@ -1140,9 +1130,11 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     // 出力する列名を設定します。
     for (ColumnIndex *index in selectColumnIndexes) {
       outputColumns[outputColumnNum].tableName =
-          inputColumns[index.table][index.column].tableName;
+          ((Column *)((NSArray *)inputColumns[index.table])[index.column])
+              .tableName;
       outputColumns[outputColumnNum].columnName =
-          inputColumns[index.table][index.column].columnName;
+          ((Column *)((NSArray *)inputColumns[index.table])[index.column])
+              .columnName;
       ++outputColumnNum;
     }
 
@@ -1187,7 +1179,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
       // allColumnsRowの列を設定します。
       for (int i = 0; i < tableNamesNum; ++i) {
-        for (int j = 0; j < inputColumnNums[i]; ++j) {
+        for (int j = 0; j < ((NSArray *)inputColumns[i]).count; ++j) {
 
           [allColumnsRow
               addObject:((NSArray *)inputData[i][((NSNumber *)currentRowNums[i])
