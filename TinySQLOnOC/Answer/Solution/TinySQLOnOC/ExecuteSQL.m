@@ -939,7 +939,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       NSArray *allLines =
           [[[NSString alloc] initWithData:allFile encoding:NSUTF8StringEncoding]
               componentsSeparatedByString:@"\n"];
-      while ([[allLines lastObject] isEqualToString:@""]) {
+      while ([allLines.lastObject isEqualToString:@""]) {
         allLines =
             [allLines subarrayWithRange:NSMakeRange(0, allLines.count - 1)];
       }
@@ -983,7 +983,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         NSMutableArray *row =
             NSMutableArray.new; // 入力されている一行分のデータです。
         [inputData[inputData.count - 1] addObject:row];
-        inputLine = allLines[rowNum+++ 1];
+        inputLine = allLines[rowNum++ + 1];
         int charactorCursol = 0;
 
         // 読み込んだ行を最後まで読みます。
@@ -1007,7 +1007,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                      isEqualToString:@"\n"]) {
             [wrote appendString:getOneCharactor(inputLine, charactorCursol++)];
           }
-          row[row.count - 1] = [Data.alloc initWithString:wrote];
+          [row removeLastObject];
+          [row addObject:[Data.alloc initWithString:wrote]];
 
           // 入力行のカンマの分を読み進めます。
           ++charactorCursol;
@@ -1045,20 +1046,20 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       tableNamesNum++;
     }
 
-      NSMutableArray *allInputColumns = NSMutableArray.new; // 入力に含まれるすべての列の一覧です。
+    NSMutableArray *allInputColumns =
+        NSMutableArray.new; // 入力に含まれるすべての列の一覧です。
 
     // 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
     for (int i = 0; i < tableNamesNum; ++i) {
       for (int j = 0; j < ((NSArray *)inputColumns[i]).count; ++j) {
-          [allInputColumns addObject:((NSArray *)inputColumns[i])[j]];
+        [allInputColumns addObject:((NSArray *)inputColumns[i])[j]];
       }
     }
 
     // SELECT句の列名指定が*だった場合は、入力CSVの列名がすべて選択されます。
     if ([selectColumns count] == 0) {
       for (int i = 0; i < allInputColumns.count; ++i) {
-        [selectColumns
-            addObject:allInputColumns[i]];
+        [selectColumns addObject:allInputColumns[i]];
       }
     }
 
@@ -1181,13 +1182,14 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               for (int i = 0; i < allInputColumns.count; ++i) {
 
                 if ([currentNode.column.columnName
-                        caseInsensitiveCompare:((Column*)allInputColumns[i]).columnName] ==
+                        caseInsensitiveCompare:((Column *)allInputColumns[i])
+                                                   .columnName] ==
                         NSOrderedSame &&
                     ([currentNode.column.tableName
                          isEqualToString:
                              @""] || // テーブル名が設定されている場合のみテーブル名の比較を行います。
                      ([currentNode.column.tableName
-                          caseInsensitiveCompare:((Column*)allInputColumns[i])
+                          caseInsensitiveCompare:((Column *)allInputColumns[i])
                                                      .tableName] ==
                       NSOrderedSame))) {
                   // 既に見つかっているのにもう一つ見つかったらエラーです。
@@ -1447,14 +1449,14 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         found = NO;
         for (int j = 0; j < allInputColumns.count; ++j) {
           if ([column.columnName
-                  caseInsensitiveCompare:((Column*)allInputColumns[j]).columnName] ==
-                  NSOrderedSame &&
+                  caseInsensitiveCompare:((Column *)allInputColumns[j])
+                                             .columnName] == NSOrderedSame &&
               ([column.tableName
                    isEqualToString:
                        @""] || // テーブル名が設定されている場合のみテーブル名の比較を行います。
                ([column.tableName
-                    caseInsensitiveCompare:((Column*)allInputColumns[j]).tableName] ==
-                NSOrderedSame))) {
+                    caseInsensitiveCompare:((Column *)allInputColumns[j])
+                                               .tableName] == NSOrderedSame))) {
 
             // 既に見つかっているのにもう一つ見つかったらエラーです。
             if (found) {
