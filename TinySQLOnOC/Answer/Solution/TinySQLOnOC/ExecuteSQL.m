@@ -478,8 +478,6 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
     // キーワードをトークンとして認識するためのキーワード一覧情報です。
     NSArray *keywordConditions = @[
-      [Token.alloc initWithKind:AndToken word:@"AND"],
-      [Token.alloc initWithKind:AscToken word:@"ASC"],
       [Token.alloc initWithKind:ByToken word:@"BY"],
       [Token.alloc initWithKind:DescToken word:@"DESC"],
       [Token.alloc initWithKind:FromToken word:@"FROM"],
@@ -530,7 +528,13 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       [RegulerExpressionTokenizeRule.alloc initWithPattern:@"\\d+(?!\\w)"
                                                       kind:IntLiteralToken],
       [RegulerExpressionTokenizeRule.alloc initWithPattern:@"\'.*\'"
-                                                      kind:StringLiteralToken]
+                                                      kind:StringLiteralToken],
+      [RegulerExpressionTokenizeRule.alloc
+          initWithPattern:@"[Aa][Nn][Dd](?!\\w)"
+                     kind:AndToken],
+      [RegulerExpressionTokenizeRule.alloc
+          initWithPattern:@"[Aa][Ss][Cc](?!\\w)"
+                     kind:AscToken],
     ]];
 
     TokenEnumerator *tokenEnumerator = [tokenizer
