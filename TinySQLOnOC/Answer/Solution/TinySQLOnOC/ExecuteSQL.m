@@ -471,7 +471,6 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         @"_abcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPQRSTUVWXYZ0123"
         @"456789";                        // 全ての数字とアルファベットの大文字小文字とアンダーバーです。
     const char *signNum = "+-0123456789"; // 全ての符号と数字です。
-    NSString *space = @" \t\r\n";         // 全ての空白文字です。
 
     // SQLからトークンを読み込みます。
 
