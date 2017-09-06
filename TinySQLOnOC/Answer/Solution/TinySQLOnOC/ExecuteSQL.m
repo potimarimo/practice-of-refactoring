@@ -4,9 +4,6 @@
 
 #pragma warning(disable : 4996)
 
-#define MAX_COLUMN_COUNT 16 //!< 入出力されるデータに含まれる列の最大数です。
-#define MAX_TABLE_COUNT 8 //!< CSVとして入力されるテーブルの最大数です。
-
 //! カレントディレクトリにあるCSVに対し、簡易的なSQLを実行し、結果をファイルに出力します。
 //! @param [in] sql 実行するSQLです。
 //! @param[in] outputFileName
@@ -1048,32 +1045,20 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       tableNamesNum++;
     }
 
-    Column *allInputColumns
-        [MAX_TABLE_COUNT *
-         MAX_COLUMN_COUNT]; // 入力に含まれるすべての列の一覧です。
-    // allInputColumnsを初期化します。
-    for (size_t i = 0; i < sizeof(allInputColumns) / sizeof(allInputColumns[0]);
-         i++) {
-      allInputColumns[i] = [[Column alloc] init];
-    }
-    int allInputColumnsNum = 0; // 入力に含まれるすべての列の数です。
+      NSMutableArray *allInputColumns = NSMutableArray.new; // 入力に含まれるすべての列の一覧です。
 
     // 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
     for (int i = 0; i < tableNamesNum; ++i) {
       for (int j = 0; j < ((NSArray *)inputColumns[i]).count; ++j) {
-        allInputColumns[allInputColumnsNum].tableName = tableNames[i];
-        allInputColumns[allInputColumnsNum++].columnName =
-            ((Column *)((NSArray *)inputColumns[i])[j]).columnName;
+          [allInputColumns addObject:((NSArray *)inputColumns[i])[j]];
       }
     }
 
     // SELECT句の列名指定が*だった場合は、入力CSVの列名がすべて選択されます。
     if ([selectColumns count] == 0) {
-      for (int i = 0; i < allInputColumnsNum; ++i) {
+      for (int i = 0; i < allInputColumns.count; ++i) {
         [selectColumns
-            addObject:[[Column alloc]
-                          initWithTableName:allInputColumns[i].tableName
-                                 ColumnName:allInputColumns[i].columnName]];
+            addObject:allInputColumns[i]];
       }
     }
 
@@ -1193,16 +1178,16 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             // データが列名で指定されている場合、今扱っている行のデータを設定します。
             if (![currentNode.column.columnName isEqualToString:@""]) {
               found = NO;
-              for (int i = 0; i < allInputColumnsNum; ++i) {
+              for (int i = 0; i < allInputColumns.count; ++i) {
 
                 if ([currentNode.column.columnName
-                        caseInsensitiveCompare:allInputColumns[i].columnName] ==
+                        caseInsensitiveCompare:((Column*)allInputColumns[i]).columnName] ==
                         NSOrderedSame &&
                     ([currentNode.column.tableName
                          isEqualToString:
                              @""] || // テーブル名が設定されている場合のみテーブル名の比較を行います。
                      ([currentNode.column.tableName
-                          caseInsensitiveCompare:allInputColumns[i]
+                          caseInsensitiveCompare:((Column*)allInputColumns[i])
                                                      .tableName] ==
                       NSOrderedSame))) {
                   // 既に見つかっているのにもう一つ見つかったらエラーです。
@@ -1460,15 +1445,15 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               .new; // ORDER句で指定された列の、すべての行の中でのインデックスです。
       for (Column *column in orderByColumns) {
         found = NO;
-        for (int j = 0; j < allInputColumnsNum; ++j) {
+        for (int j = 0; j < allInputColumns.count; ++j) {
           if ([column.columnName
-                  caseInsensitiveCompare:allInputColumns[j].columnName] ==
+                  caseInsensitiveCompare:((Column*)allInputColumns[j]).columnName] ==
                   NSOrderedSame &&
               ([column.tableName
                    isEqualToString:
                        @""] || // テーブル名が設定されている場合のみテーブル名の比較を行います。
                ([column.tableName
-                    caseInsensitiveCompare:allInputColumns[j].tableName] ==
+                    caseInsensitiveCompare:((Column*)allInputColumns[j]).tableName] ==
                 NSOrderedSame))) {
 
             // 既に見つかっているのにもう一つ見つかったらエラーです。
