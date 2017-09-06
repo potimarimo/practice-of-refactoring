@@ -941,7 +941,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               componentsSeparatedByString:@"\n"];
       while ([[allLines lastObject] isEqualToString:@""]) {
         allLines =
-            [allLines subarrayWithRange:NSMakeRange(0, [allLines count] - 1)];
+            [allLines subarrayWithRange:NSMakeRange(0, allLines.count - 1)];
       }
       inputLine = allLines[0];
       if (allFile) {
@@ -966,7 +966,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                      isEqualToString:@"\n"]) {
             [wrote appendString:getOneCharactor(inputLine, charactorCursol++)];
           }
-          [(NSMutableArray *)inputColumns[inputColumns.count - 1]
+          [(NSMutableArray *)inputColumns.lastObject
               addObject:[Column.alloc initWithTableName:tableName
                                              ColumnName:wrote]];
 
@@ -979,11 +979,11 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
       // 入力CSVのデータ行を読み込みます。
       int rowNum = 0;
-      while (rowNum < [allLines count] - 1) {
+      while (rowNum < allLines.count - 1) {
         NSMutableArray *row =
             NSMutableArray.new; // 入力されている一行分のデータです。
         [inputData[inputData.count - 1] addObject:row];
-        inputLine = allLines[rowNum++ + 1];
+        inputLine = allLines[rowNum+++ 1];
         int charactorCursol = 0;
 
         // 読み込んだ行を最後まで読みます。
