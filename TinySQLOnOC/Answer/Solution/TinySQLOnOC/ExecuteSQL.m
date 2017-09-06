@@ -980,27 +980,28 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
         // 読み込んだ行を最後まで読みます。
         while (getOneCharactor(inputLine, charactorCursol) &&
-               ![getOneCharactor(inputLine, charactorCursol) isEqualToString:@"\r"] &&
-               ![getOneCharactor(inputLine, charactorCursol) isEqualToString:@"\n"]) {
+               ![getOneCharactor(inputLine, charactorCursol)
+                   isEqualToString:@"\r"] &&
+               ![getOneCharactor(inputLine, charactorCursol)
+                   isEqualToString:@"\n"]) {
           inputColumns[tableNamesNum][inputColumnNums[tableNamesNum]]
               .tableName = tableName;
 
-          char wrote[MAX_WORD_LENGTH] = "";
-          char *writeCursol = wrote; // 列名の書き込みに利用するカーソルです。
+          NSMutableString *wrote = NSMutableString.new;
 
           // 列名を一つ読みます。
-          while (getChar(inputLine, charactorCursol) &&
-                 getChar(inputLine, charactorCursol) != ',' &&
-                 getChar(inputLine, charactorCursol) != '\r' &&
-                 getChar(inputLine, charactorCursol) != '\n') {
-            *writeCursol++ = getChar(inputLine, charactorCursol++);
+          while (getOneCharactor(inputLine, charactorCursol) &&
+                 ![getOneCharactor(inputLine, charactorCursol)
+                     isEqualToString:@","] &&
+                 ![getOneCharactor(inputLine, charactorCursol)
+                     isEqualToString:@"\r"] &&
+                 ![getOneCharactor(inputLine, charactorCursol)
+                     isEqualToString:@"\n"]) {
+            [wrote appendString:getOneCharactor(inputLine, charactorCursol++)];
           }
 
-          // 書き込んでいる列名の文字列に終端文字を書き込みます。
-          writeCursol[1] = '\0';
           inputColumns[tableNamesNum][inputColumnNums[tableNamesNum]++]
-              .columnName =
-              [NSString stringWithCString:wrote encoding:NSUTF8StringEncoding];
+              .columnName = wrote;
 
           // 入力行のカンマの分を読み進めます。
           ++charactorCursol;
