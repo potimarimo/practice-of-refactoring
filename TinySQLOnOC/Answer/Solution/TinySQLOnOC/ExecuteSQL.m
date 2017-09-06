@@ -548,44 +548,11 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         continue;
       }
 
-      // 数値リテラルを読み込みます。
+      // Tokenizerに登録されたトークンを読み込みます。
       Token *token = tokenEnumerator.nextObject;
       if (token) {
         [tokens addObject:token];
         continue;
-      }
-
-      // 文字列リテラルを開始するシングルクォートを判別し、読み込みます。
-      // メトリクス測定ツールのccccはシングルクォートの文字リテラル中のエスケープを認識しないため、文字リテラルを使わないことで回避しています。
-      if (getChar(tokenEnumerator.document, tokenEnumerator.cursol) ==
-          "\'"[0]) {
-        ++tokenEnumerator.cursol;
-
-        // 読み込んだ文字列リテラルの情報です。初期値の段階で最初のシングルクォートは読み込んでいます。
-
-        NSMutableString *word = [NSMutableString stringWithString:@"\'"];
-
-        // 次のシングルクォートがくるまで文字を読み込み続けます。
-        while (getChar(tokenEnumerator.document, tokenEnumerator.cursol) &&
-               getChar(tokenEnumerator.document, tokenEnumerator.cursol) !=
-                   "\'"[0]) {
-
-          [word appendString:getOneCharactor(tokenEnumerator.document,
-                                             tokenEnumerator.cursol++)];
-        }
-        if (getChar(tokenEnumerator.document, tokenEnumerator.cursol) ==
-            "\'"[0]) {
-          // 最後のシングルクォートを読み込みます。
-          [word appendString:getOneCharactor(tokenEnumerator.document,
-                                             tokenEnumerator.cursol++)];
-
-          // 文字列の終端文字をつけます。
-          [tokens addObject:[Token.alloc initWithKind:StringLiteralToken
-                                                 word:word]];
-          continue;
-        } else {
-          @throw [TynySQLException.alloc initWithErrorCode:TokenCantReadError];
-        }
       }
 
       // キーワードを読み込みます。
