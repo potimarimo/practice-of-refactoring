@@ -283,13 +283,14 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
 - (RegulerExpressionTokenizeRule *)initWithPattern:(NSString *)pattern
                                               kind:(TokenKind)kind {
   _kind = kind;
-  _pattern = [NSRegularExpression regularExpressionWithPattern:pattern
+  _pattern = [NSRegularExpression regularExpressionWithPattern:[@"^" stringByAppendingString:pattern]
                                                        options:0
                                                          error:NULL];
   return self;
 }
 - (Token *)parseDocument:(NSString *)document cursol:(NSInteger *)cursol {
-  NSTextCheckingResult *result = [self.pattern
+  NSTextCheckingResult *result =
+    [self.pattern
       firstMatchInString:document
                  options:0
                    range:NSMakeRange(*cursol, document.length - *cursol)];
@@ -298,7 +299,6 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
     *cursol += result.range.length;
     return
         [Token.alloc initWithKind:self.kind
-
                              word:[document substringWithRange:result.range]];
   } else {
     return nil;
@@ -525,9 +525,9 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         [Operator.alloc initWithKind:OrToken Order:5]};
 
     Tokenizer *tokenizer = [Tokenizer.alloc initWithRules:@[
-      [RegulerExpressionTokenizeRule.alloc initWithPattern:@"^\\d+(?!\\w)"
+      [RegulerExpressionTokenizeRule.alloc initWithPattern:@"\\d+(?!\\w)"
                                                       kind:IntLiteralToken],
-      [RegulerExpressionTokenizeRule.alloc initWithPattern:@"^^\'.*\'"
+      [RegulerExpressionTokenizeRule.alloc initWithPattern:@"\'.*\'"
                                                       kind:StringLiteralToken]
     ]];
 
