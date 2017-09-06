@@ -1470,9 +1470,9 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     // ORDER句による並び替えの処理を行います。
     if (orderByColumns.count) {
       // ORDER句で指定されている列が、全ての入力行の中のどの行なのかを計算します。
-      int orderByColumnIndexes
-          [MAX_COLUMN_COUNT];          // ORDER句で指定された列の、すべての行の中でのインデックスです。
-      int orderByColumnIndexesNum = 0; // 現在のorderByColumnIndexesの数です。
+      NSMutableArray *orderByColumnIndexes =
+          NSMutableArray
+              .new; // ORDER句で指定された列の、すべての行の中でのインデックスです。
       for (Column *column in orderByColumns) {
         found = NO;
         for (int j = 0; j < allInputColumnsNum; ++j) {
@@ -1492,10 +1492,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                   [TynySQLException.alloc initWithErrorCode:BadColumnNameError];
             }
             found = YES;
-            if (MAX_COLUMN_COUNT <= orderByColumnIndexesNum) {
-              @throw [TynySQLException.alloc initWithErrorCode:MemoryOverError];
-            }
-            orderByColumnIndexes[orderByColumnIndexesNum++] = j;
+
+            [orderByColumnIndexes addObject:@(j)];
           }
         }
         // 一つも見つからなくてもエラーです。
@@ -1510,12 +1508,14 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         for (int j = i + 1; j < [outputData count]; ++j) {
           BOOL jLessThanMin =
               NO; // インデックスがjの値が、minIndexの値より小さいかどうかです。
-          for (int k = 0; k < orderByColumnIndexesNum; ++k) {
+          for (int k = 0; k < orderByColumnIndexes.count; ++k) {
             Data *mData = allColumnOutputData
-                [minIndex][orderByColumnIndexes
-                               [k]]; // インデックスがminIndexのデータです。
+                [minIndex]
+                [((NSNumber *)orderByColumnIndexes[k])
+                     .integerValue]; // インデックスがminIndexのデータです。
             Data *jData = allColumnOutputData
-                [j][orderByColumnIndexes[k]]; // インデックスがjのデータです。
+                [j][((NSNumber *)orderByColumnIndexes[k])
+                        .integerValue]; // インデックスがjのデータです。
             long cmp =
                 0; // 比較結果です。等しければ0、インデックスjの行が大きければプラス、インデックスminIndexの行が大きければマイナスとなります。
             switch (mData.type) {
