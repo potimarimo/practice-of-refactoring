@@ -607,10 +607,11 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     NSMutableArray *orderByColumns =
         NSMutableArray.new; // ORDER句に指定された列名です。
 
-    enum TokenKind orders[MAX_COLUMN_COUNT] = {
-        0}; // 同じインデックスのorderByColumnsに対応している、昇順、降順の指定です。
+    NSMutableArray *orders =
+        NSMutableArray
+            .new; // 同じインデックスのorderByColumnsに対応している、昇順、降順の指定です。
 
-    ExtensionTreeNode *whereTopNode = NULL; // 式木の根となるノードです。
+    ExtensionTreeNode *whereTopNode = nil; // 式木の根となるノードです。
 
     // SQLの構文を解析し、必要な情報を取得します。
 
@@ -716,16 +717,16 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               // 並び替えの昇順、降順を指定します。
               if (nextToken.kind == AscToken) {
 
-                orders[orderByColumns.count - 1] = AscToken;
+                [orders addObject:@(AscToken)];
                 nextToken = tokenCursol.nextObject;
 
               } else if (nextToken.kind == DescToken) {
-                orders[orderByColumns.count - 1] = DescToken;
+                [orders addObject:@(DescToken)];
                 nextToken = tokenCursol.nextObject;
                 ;
               } else {
                 // 指定がない場合は昇順となります。
-                orders[orderByColumns.count - 1] = AscToken;
+                [orders addObject:@(AscToken)];
               }
             } else {
               @throw [TynySQLException.alloc initWithErrorCode:SqlSyntaxError];
@@ -1584,7 +1585,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             }
 
             // 降順ならcmpの大小を入れ替えます。
-            if (orders[k] == DescToken) {
+            if (((NSNumber *)orders[k]).integerValue == DescToken) {
               cmp *= -1;
             }
             if (cmp < 0) {
