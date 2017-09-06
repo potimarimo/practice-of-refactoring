@@ -385,7 +385,7 @@ char getChar(NSString *string, long cursol) {
 
 NSString *getOneCharactor(NSString *string, long cursol) {
   if ([string length] <= cursol) {
-    return @"¥0";
+    return nil;
   }
   return [string substringWithRange:NSMakeRange(cursol, 1)];
 }
@@ -979,9 +979,9 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         int charactorCursol = 0;
 
         // 読み込んだ行を最後まで読みます。
-        while (getChar(inputLine, charactorCursol) &&
-               getChar(inputLine, charactorCursol) != '\r' &&
-               getChar(inputLine, charactorCursol) != '\n') {
+        while (getOneCharactor(inputLine, charactorCursol) &&
+               ![getOneCharactor(inputLine, charactorCursol) isEqualToString:@"\r"] &&
+               ![getOneCharactor(inputLine, charactorCursol) isEqualToString:@"\n"]) {
           inputColumns[tableNamesNum][inputColumnNums[tableNamesNum]]
               .tableName = tableName;
 
