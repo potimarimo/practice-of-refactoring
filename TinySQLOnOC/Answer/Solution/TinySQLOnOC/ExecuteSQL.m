@@ -487,19 +487,20 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     NSMutableArray *tokens = NSMutableArray.new; // SQLを分割したトークンです。
 
     // 演算子の情報です。
-    Operator *operators[] = {
-        [Operator.alloc initWithKind:AsteriskToken Order:1],
-        [Operator.alloc initWithKind:SlashToken Order:1],
-        [Operator.alloc initWithKind:PlusToken Order:2],
-        [Operator.alloc initWithKind:MinusToken Order:2],
-        [Operator.alloc initWithKind:EqualToken Order:3],
-        [Operator.alloc initWithKind:GreaterThanToken Order:3],
-        [Operator.alloc initWithKind:GreaterThanOrEqualToken Order:3],
-        [Operator.alloc initWithKind:LessThanToken Order:3],
-        [Operator.alloc initWithKind:LessThanOrEqualToken Order:3],
-        [Operator.alloc initWithKind:NotEqualToken Order:3],
-        [Operator.alloc initWithKind:AndToken Order:4],
-        [Operator.alloc initWithKind:OrToken Order:5]};
+    NSArray *operators = @[
+      [Operator.alloc initWithKind:AsteriskToken Order:1],
+      [Operator.alloc initWithKind:SlashToken Order:1],
+      [Operator.alloc initWithKind:PlusToken Order:2],
+      [Operator.alloc initWithKind:MinusToken Order:2],
+      [Operator.alloc initWithKind:EqualToken Order:3],
+      [Operator.alloc initWithKind:GreaterThanToken Order:3],
+      [Operator.alloc initWithKind:GreaterThanOrEqualToken Order:3],
+      [Operator.alloc initWithKind:LessThanToken Order:3],
+      [Operator.alloc initWithKind:LessThanOrEqualToken Order:3],
+      [Operator.alloc initWithKind:NotEqualToken Order:3],
+      [Operator.alloc initWithKind:AndToken Order:4],
+      [Operator.alloc initWithKind:OrToken Order:5]
+    ];
 
     Tokenizer *tokenizer = [Tokenizer.alloc initWithRules:@[
       [RegulerExpressionTokenizeRule.alloc initWithPattern:@"\\s+"
@@ -640,10 +641,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           [selectColumns addObject:column];
 
           nextToken = tokenCursol.nextObject;
-          ;
           if (nextToken.kind == DotToken) {
             nextToken = tokenCursol.nextObject;
-            ;
             if (nextToken.kind == IdentifierToken) {
 
               // テーブル名が指定されていることがわかったので読み替えます。
@@ -854,9 +853,9 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
           // 現在見ている演算子の情報を探します。
           found = NO;
-          for (int j = 0; j < sizeof(operators) / sizeof(operators[0]); ++j) {
-            if (operators[j].kind == nextToken.kind) {
-              operator= operators[j];
+          for (Operator *oneOperator in operators) {
+            if (oneOperator.kind == nextToken.kind) {
+              operator= oneOperator;
               found = YES;
               break;
             }
