@@ -1041,28 +1041,15 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         // 全ての行のある列について、データ文字列から符号と数値以外の文字を探します。
         found = NO;
         for (NSArray *tableRow in inputData[inputData.count - 1]) {
-          char word[MAX_WORD_LENGTH] = "";
-          char *currentChar = word;
-          [((Data *)tableRow[j]).stringValue getCString:word
-                                              maxLength:MAX_WORD_LENGTH
-                                               encoding:NSUTF8StringEncoding];
-          while (*currentChar) {
-            BOOL isNum = NO;
-            const char *currentNum = signNum;
-            while (*currentNum) {
-              if (*currentChar == *currentNum) {
-                isNum = YES;
-                break;
-              }
-              ++currentNum;
-            }
-            if (!isNum) {
-              found = YES;
-              break;
-            }
-            ++currentChar;
-          }
-          if (found) {
+          NSString *word = ((Data *)tableRow[j]).stringValue;
+          NSRegularExpression *intPattern =
+              [NSRegularExpression regularExpressionWithPattern:@"^[+-]?\\d+$"
+                                                        options:0
+                                                          error:NULL];
+          if (![intPattern firstMatchInString:word
+                                      options:0
+                                        range:NSMakeRange(0, word.length)]) {
+            found = YES;
             break;
           }
         }
