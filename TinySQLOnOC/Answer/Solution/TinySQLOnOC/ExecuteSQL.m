@@ -157,9 +157,9 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
 
 //! 行の情報を入力のテーブルインデックス、列インデックスの形で持ちます。
 @interface ColumnIndex : NSObject
-- (ColumnIndex *)initWithTable:(int)table column:(int)column;
-@property int table;  //!< 列が入力の何テーブル目の列かです。
-@property int column; //!< 列が入力のテーブルの何列目かです。
+- (ColumnIndex *)initWithTable:(NSUInteger)table column:(NSUInteger)column;
+@property NSUInteger table;  //!< 列が入力の何テーブル目の列かです。
+@property NSUInteger column; //!< 列が入力のテーブルの何列目かです。
 @end
 
 @interface TynySQLException : NSException
@@ -347,7 +347,7 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
 @end
 
 @implementation ColumnIndex
-- (ColumnIndex *)initWithTable:(int)table column:(int)column {
+- (ColumnIndex *)initWithTable:(NSUInteger)table column:(NSUInteger)column {
   _table = table;
   _column = column;
   return self;
@@ -1015,12 +1015,12 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       }
 
       // 全てが数値となる列は数値列に変換します。
-      for (int j = 0; j < ((NSArray *)inputColumns[tableNamesNum]).count; ++j) {
-
+      [inputColumns[tableNamesNum] enumerateObjectsUsingBlock:^(Column *column, NSUInteger i, BOOL *stop){
+    
         // 全ての行のある列について、データ文字列から符号と数値以外の文字を探します。
-        found = NO;
+        BOOL found = NO;
         for (NSArray *tableRow in inputData.lastObject) {
-          NSString *word = ((Data *)tableRow[j]).stringValue;
+          NSString *word = ((Data *)tableRow[i]).stringValue;
           NSRegularExpression *intPattern =
               [NSRegularExpression regularExpressionWithPattern:@"^[+-]?\\d+$"
                                                         options:0
@@ -1036,12 +1036,12 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         // 符号と数字以外が見つからない列については、数値列に変換します。
         if (!found) {
           for (NSMutableArray *tableRow in inputData.lastObject) {
-            tableRow[j] =
-                [Data.alloc initWithInteger:[((Data *)tableRow[j])
+            tableRow[i] =
+                [Data.alloc initWithInteger:[((Data *)tableRow[i])
                                                     .stringValue integerValue]];
           }
         }
-      }
+      }];
       tableNamesNum++;
     }
 
@@ -1050,8 +1050,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
     // 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
     for (int i = 0; i < tableNamesNum; ++i) {
-      for (int j = 0; j < ((NSArray *)inputColumns[i]).count; ++j) {
-        [allInputColumns addObject:((NSArray *)inputColumns[i])[j]];
+      for (Column *column in inputColumns[i]) {
+        [allInputColumns addObject:column];
       }
     }
 
@@ -1067,19 +1067,17 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     NSMutableArray *selectColumnIndexes = [NSMutableArray
         array]; // SELECT句で指定された列の、入力ファイルとしてのインデックスです。
     for (Column *selectedColumn in selectColumns) {
-      found = NO;
+      __block BOOL found = NO;
       for (int j = 0; j < tableNamesNum; ++j) {
-        for (int k = 0; k < ((NSArray *)inputColumns[j]).count; ++k) {
+        [inputColumns[j] enumerateObjectsUsingBlock:^(Column *column, NSUInteger k, BOOL *stop){
           if ([selectedColumn.columnName
-                  caseInsensitiveCompare:((Column *)((
-                                              NSArray *)inputColumns[j])[k])
+                  caseInsensitiveCompare:column
                                              .columnName] == NSOrderedSame &&
               ([selectedColumn.tableName
                    isEqualToString:
                        @""] || // テーブル名が設定されている場合のみテーブル名の比較を行います。
                ([selectedColumn.tableName
-                    caseInsensitiveCompare:((Column *)((
-                                                NSArray *)inputColumns[j])[k])
+                    caseInsensitiveCompare:column
                                                .tableName] == NSOrderedSame))) {
 
             // 既に見つかっているのにもう一つ見つかったらエラーです。
@@ -1092,7 +1090,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             [selectColumnIndexes
                 addObject:[[ColumnIndex alloc] initWithTable:j column:k]];
           }
-        }
+        }];
       }
       // 一つも見つからなくてもエラーです。
       if (!found) {
@@ -1414,12 +1412,12 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       // 各テーブルの行のすべての組み合わせを出力します。
 
       // 最後のテーブルのカレント行をインクリメントします。
-      currentRowNums[[tableNames count] - 1] =
+      currentRowNums[tableNames.count - 1] =
           @(((NSNumber *)currentRowNums[[tableNames count] - 1]).integerValue +
             1);
 
       // 最後のテーブルが最終行になっていた場合は先頭に戻し、順に前のテーブルのカレント行をインクリメントします。
-      for (unsigned long i = [tableNames count] - 1;
+      for (unsigned long i = tableNames.count - 1;
            ((NSArray *)inputData[i]).count <=
                ((NSNumber *)currentRowNums[i]).integerValue &&
            0 < i;
@@ -1472,9 +1470,9 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       }
 
       // outputDataとallColumnOutputDataのソートを一緒に行います。簡便のため凝ったソートは使わず、選択ソートを利用します。
-      for (int i = 0; i < [outputData count]; ++i) {
+      for (int i = 0; i < outputData.count; ++i) {
         int minIndex = i; // 現在までで最小の行のインデックスです。
-        for (int j = i + 1; j < [outputData count]; ++j) {
+        for (int j = i + 1; j < outputData.count; ++j) {
           BOOL jLessThanMin =
               NO; // インデックスがjの値が、minIndexの値より小さいかどうかです。
           for (int k = 0; k < orderByColumnIndexes.count; ++k) {
@@ -1535,10 +1533,10 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     }
 
     // 出力ファイルに列名を出力します。
-    for (int i = 0; i < [selectColumns count]; ++i) {
+    for (int i = 0; i < selectColumns.count; ++i) {
       [outputFile writeData:[((Column *)outputColumns[i]).columnName
                                 dataUsingEncoding:NSUTF8StringEncoding]];
-      if (i < [selectColumns count] - 1) {
+      if (i < selectColumns.count - 1) {
         [outputFile writeData:[@"," dataUsingEncoding:NSUTF8StringEncoding]];
       } else {
         [outputFile writeData:[@"\n" dataUsingEncoding:NSUTF8StringEncoding]];
@@ -1547,7 +1545,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
     // 出力ファイルにデータを出力します。
     for (NSArray *currentRow in outputData) {
-      for (int i = 0; i < [selectColumns count]; ++i) {
+      for (int i = 0; i < selectColumns.count; ++i) {
         Data *column = currentRow[i];
         NSString *outputString = nil;
         switch (column.type) {
@@ -1563,7 +1561,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         }
         [outputFile
             writeData:[outputString dataUsingEncoding:NSUTF8StringEncoding]];
-        if (i < [selectColumns count] - 1) {
+        if (i < selectColumns.count - 1) {
           [outputFile writeData:[@"," dataUsingEncoding:NSUTF8StringEncoding]];
         } else {
           [outputFile writeData:[@"\n" dataUsingEncoding:NSUTF8StringEncoding]];
