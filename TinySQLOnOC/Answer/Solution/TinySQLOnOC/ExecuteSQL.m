@@ -982,7 +982,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
            [allLines subarrayWithRange:NSMakeRange(1, allLines.count - 1)]) {
         NSMutableArray *row =
             NSMutableArray.new; // 入力されている一行分のデータです。
-        [inputData[inputData.count - 1] addObject:row];
+        [inputData.lastObject addObject:row];
         int charactorCursol = 0;
 
         // 読み込んだ行を最後まで読みます。
