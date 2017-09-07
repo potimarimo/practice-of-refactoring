@@ -1019,7 +1019,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
         // 全ての行のある列について、データ文字列から符号と数値以外の文字を探します。
         found = NO;
-        for (NSArray *tableRow in inputData[inputData.count - 1]) {
+        for (NSArray *tableRow in inputData.lastObject) {
           NSString *word = ((Data *)tableRow[j]).stringValue;
           NSRegularExpression *intPattern =
               [NSRegularExpression regularExpressionWithPattern:@"^[+-]?\\d+$"
@@ -1035,7 +1035,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
         // 符号と数字以外が見つからない列については、数値列に変換します。
         if (!found) {
-          for (NSMutableArray *tableRow in inputData[inputData.count - 1]) {
+          for (NSMutableArray *tableRow in inputData.lastObject) {
             tableRow[j] =
                 [Data.alloc initWithInteger:[((Data *)tableRow[j])
                                                     .stringValue integerValue]];
@@ -1056,10 +1056,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     }
 
     // SELECT句の列名指定が*だった場合は、入力CSVの列名がすべて選択されます。
-    if ([selectColumns count] == 0) {
-      for (int i = 0; i < allInputColumns.count; ++i) {
-        [selectColumns addObject:allInputColumns[i]];
-      }
+    if (selectColumns.count == 0) {
+        selectColumns = allInputColumns;
     }
 
     NSMutableArray *outputColumns =
