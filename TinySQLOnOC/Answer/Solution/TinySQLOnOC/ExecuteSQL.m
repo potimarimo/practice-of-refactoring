@@ -673,15 +673,12 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                                                     ColumnName:nextToken.word];
               [orderByColumns addObject:column];
               nextToken = tokenCursol.nextObject;
-              ;
               if (nextToken.kind == DotToken) {
                 nextToken = tokenCursol.nextObject;
                 if (nextToken.kind == IdentifierToken) {
-
                   // テーブル名が指定されていることがわかったので読み替えます。
                   column.tableName = column.columnName;
                   column.columnName = nextToken.word;
-
                   nextToken = tokenCursol.nextObject;
                 } else {
                   @throw
@@ -698,7 +695,6 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               } else if (nextToken.kind == DescToken) {
                 [orders addObject:@(DescToken)];
                 nextToken = tokenCursol.nextObject;
-                ;
               } else {
                 // 指定がない場合は昇順となります。
                 [orders addObject:@(AscToken)];
@@ -740,7 +736,6 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           while (nextToken.kind == OpenParenToken) {
             ++currentNode.parenOpenBeforeClose;
             nextToken = tokenCursol.nextObject;
-            ;
           }
 
           // オペランドに前置される+か-を読み込みます。
@@ -765,7 +760,6 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             currentNode.column.columnName = nextToken.word;
 
             nextToken = tokenCursol.nextObject;
-            ;
             if (nextToken.kind == DotToken) {
               nextToken = tokenCursol.nextObject;
 
@@ -820,7 +814,6 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               }
             }
             nextToken = tokenCursol.nextObject;
-            ;
           }
 
           // 演算子(オペレーターを読み込みます。
