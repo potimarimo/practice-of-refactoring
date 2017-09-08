@@ -161,7 +161,9 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
 @end
 
 @interface Parser : NSObject
+@property void (^action)(Token *token);
 - (Parser *)init;
+- (Parser *)initWithTokenKind:(TokenKind)kind;
 - (BOOL)parse:(NSEnumerator<Token *> *)cursol;
 @end
 
@@ -356,13 +358,26 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
 }
 @end
 
-@implementation Parser
+@implementation Parser {
+  TokenKind _kind;
+}
 - (Parser *)init {
+  return self;
+}
+- (Parser *)initWithTokenKind:(TokenKind)kind {
+  _kind = kind;
   return self;
 }
 - (BOOL)parse:(NSEnumerator<Token *> *)cursol {
   Token *nextToken = cursol.nextObject;
-  return nextToken.kind == SelectToken;
+  if (nextToken.kind == _kind) {
+    if (self.action) {
+      self.action(nextToken);
+    }
+    return YES;
+  } else {
+    return NO;
+  }
 }
 @end
 
@@ -606,8 +621,14 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
             .new; // 同じインデックスのorderByColumnsに対応している、昇順、降順の指定です。
 
     ExtensionTreeNode *whereTopNode = nil; // 式木の根となるノードです。
-
-    Parser *select = Parser.new;
+    __block Column *column = nil;
+    Parser *select = [Parser.alloc initWithTokenKind:SelectToken];
+    Parser *identification = [Parser.alloc initWithTokenKind:IdentifierToken];
+    identification.action = ^(Token *token) {
+      // テーブル名が指定されていることがわかったので読み替えます。
+      column.tableName = column.columnName;
+      column.columnName = token.word;
+    };
 
     // SQLの構文を解析し、必要な情報を取得します。
 
@@ -627,24 +648,19 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       while (nextToken.kind == CommaToken || first) {
         if (nextToken.kind == CommaToken) {
           nextToken = tokenCursol.nextObject;
-          ;
         }
         if (nextToken.kind == IdentifierToken) {
           // テーブル名が指定されていない場合と仮定して読み込みます。
-          Column *column =
+          column =
               [[Column alloc] initWithTableName:@"" columnName:nextToken.word];
           [selectColumns addObject:column];
 
           nextToken = tokenCursol.nextObject;
           if (nextToken.kind == DotToken) {
-            nextToken = tokenCursol.nextObject;
-            if (nextToken.kind == IdentifierToken) {
 
-              // テーブル名が指定されていることがわかったので読み替えます。
-              column.tableName = column.columnName;
-              column.columnName = nextToken.word;
+            if ([identification parse:tokenCursol]) {
+
               nextToken = tokenCursol.nextObject;
-              ;
             } else {
               @throw [TynySQLException.alloc initWithErrorCode:SqlSyntaxError];
             }
