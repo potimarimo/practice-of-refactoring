@@ -451,7 +451,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
   NSMutableArray<NSArray<Data *> *> *allColumnOutputData =
       NSMutableArray
           .new; // 出力するデータに対応するインデックスを持ち、すべての入力データを保管します。
-  NSMutableArray *tableNames =
+  NSMutableArray<NSString *> *tableNames =
       NSMutableArray.new; // FROM句で指定しているテーブル名です。
   @try {
 
@@ -461,7 +461,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
     // keywordConditionsとsignConditionsは先頭から順に検索されるので、前方一致となる二つの項目は順番に気をつけて登録しなくてはいけません。
 
-    NSMutableArray *tokens = NSMutableArray.new; // SQLを分割したトークンです。
+    NSMutableArray<Token *> *tokens =
+        NSMutableArray.new; // SQLを分割したトークンです。
 
     // 演算子の情報です。
     NSArray *operators = @[
@@ -579,13 +580,13 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     NSEnumerator *tokenCursol =
         [tokens objectEnumerator]; // 現在見ているトークンを指します。
 
-    NSMutableArray *selectColumns =
+    NSMutableArray<Column *> *selectColumns =
         NSMutableArray.new; // SELECT句に指定された列名です。
 
-    NSMutableArray *orderByColumns =
+    NSMutableArray<Column *> *orderByColumns =
         NSMutableArray.new; // ORDER句に指定された列名です。
 
-    NSMutableArray *orders =
+    NSMutableArray<NSNumber *> *orders =
         NSMutableArray
             .new; // 同じインデックスのorderByColumnsに対応している、昇順、降順の指定です。
 
@@ -675,7 +676,6 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
               ;
               if (nextToken.kind == DotToken) {
                 nextToken = tokenCursol.nextObject;
-                ;
                 if (nextToken.kind == IdentifierToken) {
 
                   // テーブル名が指定されていることがわかったので読み替えます。
@@ -683,7 +683,6 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                   column.columnName = nextToken.word;
 
                   nextToken = tokenCursol.nextObject;
-                  ;
                 } else {
                   @throw
                       [TynySQLException.alloc initWithErrorCode:SqlSyntaxError];
@@ -727,7 +726,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           // オペランドのノードを新しく生成します。
           if (currentNode) {
             // 現在のノードを右の子にずらし、元の位置に新しいノードを挿入します。
-            currentNode.right = [[ExtensionTreeNode alloc] init];
+            currentNode.right = ExtensionTreeNode.new;
             [allNodes addObject:currentNode.right];
             currentNode.right.parent = currentNode;
             currentNode = currentNode.right;
@@ -792,7 +791,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
             // 前後のシングルクォートを取り去った文字列をデータとして読み込みます。
             currentNode.value.value = [nextToken.word
-                substringWithRange:NSMakeRange(1, [nextToken.word length] - 2)];
+                substringWithRange:NSMakeRange(1, nextToken.word.length - 2)];
             nextToken = tokenCursol.nextObject;
           } else {
             @throw [TynySQLException.alloc initWithErrorCode:SqlSyntaxError];
@@ -914,7 +913,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     if (nextToken) {
       @throw [TynySQLException.alloc initWithErrorCode:SqlSyntaxError];
     }
-    NSMutableArray *inputColumns =
+    NSMutableArray<NSMutableArray<Column *> *> *inputColumns =
         NSMutableArray.new; // 入力されたCSVの行の情報です。
 
     int tableNamesNum = 0;
@@ -935,7 +934,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       NSString *inputLine; // ファイルから読み込んだ行文字列です。
       NSData *allFile = nil;
       allFile = [inputFile readDataToEndOfFile];
-      NSMutableArray *allLines =
+      NSMutableArray<NSString *> *allLines =
           [[[NSString alloc] initWithData:allFile encoding:NSUTF8StringEncoding]
               componentsSeparatedByString:@"\n"]
               .mutableCopy;
@@ -965,7 +964,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                      isEqualToString:@"\n"]) {
             [wrote appendString:getOneCharactor(inputLine, charactorCursol++)];
           }
-          [(NSMutableArray *)inputColumns.lastObject
+          [inputColumns.lastObject
               addObject:[Column.alloc initWithTableName:tableName
                                              ColumnName:wrote]];
 
@@ -1045,7 +1044,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       tableNamesNum++;
     }
 
-    NSMutableArray *allInputColumns =
+    NSMutableArray<Column *> *allInputColumns =
         NSMutableArray.new; // 入力に含まれるすべての列の一覧です。
 
     // 入力ファイルに書いてあったすべての列をallInputColumnsに設定します。
@@ -1060,12 +1059,13 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       selectColumns = allInputColumns;
     }
 
-    NSMutableArray *outputColumns =
+    NSMutableArray<Column *> *outputColumns =
         NSMutableArray.new; // 出力するすべての行の情報です。
 
     // SELECT句で指定された列名が、何個目の入力ファイルの何列目に相当するかを判別します。
-    NSMutableArray *selectColumnIndexes = [NSMutableArray
-        array]; // SELECT句で指定された列の、入力ファイルとしてのインデックスです。
+    NSMutableArray<ColumnIndex *> *selectColumnIndexes =
+        NSMutableArray
+            .new; // SELECT句で指定された列の、入力ファイルとしてのインデックスです。
     for (Column *selectedColumn in selectColumns) {
       __block BOOL found = NO;
       for (int j = 0; j < tableNamesNum; ++j) {
@@ -1143,7 +1143,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
       // allColumnsRowの列を設定します。
       for (int i = 0; i < tableNamesNum; ++i) {
-        for (int j = 0; j < ((NSArray *)inputColumns[i]).count; ++j) {
+        for (int j = 0; j < inputColumns[i].count; ++j) {
 
           [allColumnsRow
               addObject:inputData[i][currentRowNums[i].integerValue][j]];
@@ -1410,14 +1410,12 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
       // 最後のテーブルのカレント行をインクリメントします。
       currentRowNums[tableNames.count - 1] =
-          @(((NSNumber *)currentRowNums[[tableNames count] - 1]).integerValue +
-            1);
+          @(currentRowNums[[tableNames count] - 1].integerValue + 1);
 
       // 最後のテーブルが最終行になっていた場合は先頭に戻し、順に前のテーブルのカレント行をインクリメントします。
       for (unsigned long i = tableNames.count - 1;
            inputData[i].count <= currentRowNums[i].integerValue && 0 < i; --i) {
-        currentRowNums[i - 1] =
-            @(((NSNumber *)currentRowNums[i - 1]).integerValue + 1);
+        currentRowNums[i - 1] = @(currentRowNums[i - 1].integerValue + 1);
         currentRowNums[i] = @0;
       }
 
