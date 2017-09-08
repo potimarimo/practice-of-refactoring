@@ -127,7 +127,7 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
 @property NSString *columnName; //!< 指定された列の列名です。
 - (Column *)init;
 - (Column *)initWithTableName:(NSString *)tableName
-                   ColumnName:(NSString *)columnName;
+                   columnName:(NSString *)columnName;
 @end
 
 //! WHERE句の条件の式木を表します。
@@ -318,7 +318,7 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
   return self;
 }
 - (Column *)initWithTableName:(NSString *)tableName
-                   ColumnName:(NSString *)columnName {
+                   columnName:(NSString *)columnName {
   _tableName = tableName;
   _columnName = columnName;
   return self;
@@ -465,7 +465,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         NSMutableArray.new; // SQLを分割したトークンです。
 
     // 演算子の情報です。
-    NSArray *operators = @[
+    NSArray<Operator*> *operators = @[
       [Operator.alloc initWithKind:AsteriskToken Order:1],
       [Operator.alloc initWithKind:SlashToken Order:1],
       [Operator.alloc initWithKind:PlusToken Order:2],
@@ -615,7 +615,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         if (nextToken.kind == IdentifierToken) {
           // テーブル名が指定されていない場合と仮定して読み込みます。
           Column *column =
-              [[Column alloc] initWithTableName:@"" ColumnName:nextToken.word];
+              [[Column alloc] initWithTableName:@"" columnName:nextToken.word];
           [selectColumns addObject:column];
 
           nextToken = tokenCursol.nextObject;
@@ -670,7 +670,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
               // テーブル名が指定されていない場合と仮定して読み込みます。
               Column *column = [Column.alloc initWithTableName:@""
-                                                    ColumnName:nextToken.word];
+                                                    columnName:nextToken.word];
               [orderByColumns addObject:column];
               nextToken = tokenCursol.nextObject;
               if (nextToken.kind == DotToken) {
@@ -959,7 +959,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           }
           [inputColumns.lastObject
               addObject:[Column.alloc initWithTableName:tableName
-                                             ColumnName:wrote]];
+                                             columnName:wrote]];
 
           // 入力行のカンマの分を読み進めます。
           ++charactorCursol;
