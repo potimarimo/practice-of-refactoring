@@ -165,6 +165,14 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
 - (Parser *)init;
 - (Parser *)initWithTokenKind:(TokenKind)kind;
 - (BOOL)parse:(NSEnumerator<Token *> *)cursol;
+- (Parser*)to:(Parser*)next;
+@end
+
+@interface OrderdParser : Parser
+@property Parser* first;
+@property Parser* second;
+-(OrderdParser*)initWithFirst:(Parser*)first second:(Parser*)second;
+- (BOOL)parse:(NSEnumerator<Token *> *)cursol;
 @end
 
 @interface TynySQLException : NSException
@@ -378,6 +386,30 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
   } else {
     return NO;
   }
+}
+-(Parser *)to:(Parser *)next{
+    return [OrderdParser.alloc initWithFirst:self second:next];
+}
+@end
+
+@implementation OrderdParser : Parser
+-(OrderdParser*)initWithFirst:(Parser*)first second:(Parser*)second{
+    _first = first;
+    _second = second;
+    return self;
+}
+- (BOOL)parse:(NSEnumerator<Token *> *)cursol{
+    NSEnumerator<Token*>* memory = [cursol copy];
+    BOOL firstResult = [self.first parse:cursol];
+    BOOL secondResult = [self.second parse:cursol];
+    
+    if( firstResult && secondResult){
+        return YES;
+    }
+    else{
+        cursol = memory;
+        return NO;
+    }
 }
 @end
 
@@ -622,9 +654,14 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
     ExtensionTreeNode *whereTopNode = nil; // 式木の根となるノードです。
     __block Column *column = nil;
+      
     Parser *select = [Parser.alloc initWithTokenKind:SelectToken];
-    Parser *identification = [Parser.alloc initWithTokenKind:IdentifierToken];
-    identification.action = ^(Token *token) {
+      Parser *dot = [Parser.alloc initWithTokenKind:DotToken];
+    Parser *selectColumnSecondName = [Parser.alloc initWithTokenKind:IdentifierToken];
+      Parser *dotAndName = [dot to:selectColumnSecondName];
+      
+      
+    selectColumnSecondName.action = ^(Token *token) {
       // テーブル名が指定されていることがわかったので読み替えます。
       column.tableName = column.columnName;
       column.columnName = token.word;
@@ -658,7 +695,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           nextToken = tokenCursol.nextObject;
           if (nextToken.kind == DotToken) {
 
-            if ([identification parse:tokenCursol]) {
+            if ([selectColumnSecondName parse:tokenCursol]) {
 
               nextToken = tokenCursol.nextObject;
             } else {
