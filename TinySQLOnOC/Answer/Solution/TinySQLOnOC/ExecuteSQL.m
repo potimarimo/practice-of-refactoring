@@ -160,6 +160,11 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
 @property NSUInteger column; //!< 列が入力のテーブルの何列目かです。
 @end
 
+@interface Parser : NSObject
+- (Parser *)init;
+- (BOOL)parse:(NSEnumerator<Token *> *)cursol;
+@end
+
 @interface TynySQLException : NSException
 - (TynySQLException *)initWithErrorCode:(enum ResultValue)code;
 @property enum ResultValue errorCode;
@@ -351,6 +356,16 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
 }
 @end
 
+@implementation Parser
+- (Parser *)init {
+  return self;
+}
+- (BOOL)parse:(NSEnumerator<Token *> *)cursol {
+  Token *nextToken = cursol.nextObject;
+  return nextToken.kind == SelectToken;
+}
+@end
+
 @implementation TynySQLException
 - (TynySQLException *)initWithErrorCode:(enum ResultValue)code {
   _errorCode = code;
@@ -465,7 +480,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         NSMutableArray.new; // SQLを分割したトークンです。
 
     // 演算子の情報です。
-    NSArray<Operator*> *operators = @[
+    NSArray<Operator *> *operators = @[
       [Operator.alloc initWithKind:AsteriskToken Order:1],
       [Operator.alloc initWithKind:SlashToken Order:1],
       [Operator.alloc initWithKind:PlusToken Order:2],
@@ -577,8 +592,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
     // トークン列を解析し、構文を読み取ります。
 
-    NSEnumerator *tokenCursol =
-        [tokens objectEnumerator]; // 現在見ているトークンを指します。
+    NSEnumerator<Token *> *tokenCursol =
+        tokens.objectEnumerator; // 現在見ているトークンを指します。
 
     NSMutableArray<Column *> *selectColumns =
         NSMutableArray.new; // SELECT句に指定された列名です。
@@ -592,16 +607,18 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
     ExtensionTreeNode *whereTopNode = nil; // 式木の根となるノードです。
 
+    Parser *select = Parser.new;
+
     // SQLの構文を解析し、必要な情報を取得します。
 
     // SELECT句を読み込みます。
-    Token *nextToken = tokenCursol.nextObject;
-    if (nextToken.kind == SelectToken) {
+
+    Token *nextToken = nil;
+    if ([select parse:tokenCursol]) {
       nextToken = tokenCursol.nextObject;
     } else {
       @throw [TynySQLException.alloc initWithErrorCode:SqlSyntaxError];
     }
-
     if (nextToken.kind == AsteriskToken) {
       nextToken = tokenCursol.nextObject;
     } else {
