@@ -67,8 +67,6 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
 //! 一つの値を持つデータです。
 @interface Data : NSObject
 @property enum DataType type; //!< データの型です。
-
-//! 実際のデータを格納するオブジェクトです。
 @property NSObject *value;
 - (NSString *)stringValue;
 - (NSInteger)integerValue;
@@ -158,7 +156,7 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
 //! 行の情報を入力のテーブルインデックス、列インデックスの形で持ちます。
 @interface ColumnIndex : NSObject
 - (ColumnIndex *)initWithTable:(NSUInteger)table column:(NSUInteger)column;
-@property NSUInteger table;  //!< 列が入力の何テーブル目の列かです。
+@property NSUInteger table; //!< 列が入力の何テーブル目の列かです。
 @property NSUInteger column; //!< 列が入力のテーブルの何列目かです。
 @end
 
@@ -444,12 +442,13 @@ NSString *getOneCharactor(NSString *string, long cursol) {
 //! WHERE USERS.ID = CHILDREN.PARENTID @n
 //! FROM USERS, CHILDREN @n
 int ExecuteSQL(const char *sql, const char *outputFileName) {
-  NSMutableArray *inputTableFiles =
+  NSMutableArray<NSFileHandle *> *inputTableFiles =
       NSMutableArray.new; // 読み込む入力ファイルの全てのファイルポインタです。
   NSFileHandle *outputFile = nil; // 書き込むファイルのファイルポインタです。
-  NSMutableArray *inputData = NSMutableArray.new;  // 入力データです。
-  NSMutableArray *outputData = NSMutableArray.new; // 出力データです。
-  NSMutableArray *allColumnOutputData =
+  NSMutableArray *inputData = NSMutableArray.new; // 入力データです。
+  NSMutableArray<NSArray<Data *> *> *outputData =
+      NSMutableArray.new; // 出力データです。
+  NSMutableArray<NSArray<Data *> *> *allColumnOutputData =
       NSMutableArray
           .new; // 出力するデータに対応するインデックスを持ち、すべての入力データを保管します。
   NSMutableArray *tableNames =
@@ -638,7 +637,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         first = NO;
       }
     }
-    NSMutableArray *allNodes = NSMutableArray.new;
+    NSMutableArray<ExtensionTreeNode *> *allNodes = NSMutableArray.new;
     // ORDER句とWHERE句を読み込みます。最大各一回ずつ書くことができます。
     BOOL readOrder = NO; // すでにORDER句が読み込み済みかどうかです。
     BOOL readWhere = NO; // すでにWHERE句が読み込み済みかどうかです。
@@ -1015,8 +1014,10 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       }
 
       // 全てが数値となる列は数値列に変換します。
-      [inputColumns[tableNamesNum] enumerateObjectsUsingBlock:^(Column *column, NSUInteger i, BOOL *stop){
-    
+      [inputColumns[tableNamesNum] enumerateObjectsUsingBlock:^(Column *column,
+                                                                NSUInteger i,
+                                                                BOOL *stop) {
+
         // 全ての行のある列について、データ文字列から符号と数値以外の文字を探します。
         BOOL found = NO;
         for (NSArray *tableRow in inputData.lastObject) {
@@ -1057,7 +1058,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
     // SELECT句の列名指定が*だった場合は、入力CSVの列名がすべて選択されます。
     if (selectColumns.count == 0) {
-        selectColumns = allInputColumns;
+      selectColumns = allInputColumns;
     }
 
     NSMutableArray *outputColumns =
@@ -1069,16 +1070,16 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     for (Column *selectedColumn in selectColumns) {
       __block BOOL found = NO;
       for (int j = 0; j < tableNamesNum; ++j) {
-        [inputColumns[j] enumerateObjectsUsingBlock:^(Column *column, NSUInteger k, BOOL *stop){
+        [inputColumns[j] enumerateObjectsUsingBlock:^(
+                             Column *column, NSUInteger k, BOOL *stop) {
           if ([selectedColumn.columnName
-                  caseInsensitiveCompare:column
-                                             .columnName] == NSOrderedSame &&
+                  caseInsensitiveCompare:column.columnName] == NSOrderedSame &&
               ([selectedColumn.tableName
                    isEqualToString:
                        @""] || // テーブル名が設定されている場合のみテーブル名の比較を行います。
                ([selectedColumn.tableName
-                    caseInsensitiveCompare:column
-                                               .tableName] == NSOrderedSame))) {
+                    caseInsensitiveCompare:column.tableName] ==
+                NSOrderedSame))) {
 
             // 既に見つかっているのにもう一つ見つかったらエラーです。
             if (found) {
@@ -1126,7 +1127,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
     // 出力するデータを設定します。
     while (YES) {
-      NSMutableArray *row =
+      NSMutableArray<Data *> *row =
           NSMutableArray.new; // 出力している一行分のデータです。
       [outputData addObject:row];
 
@@ -1138,7 +1139,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
                                           .integerValue])[index.column]];
       }
 
-      NSMutableArray *allColumnsRow = NSMutableArray.new;
+      NSMutableArray<Data *> *allColumnsRow = NSMutableArray.new;
       [allColumnOutputData
           addObject:
               allColumnsRow]; // WHEREやORDERのためにすべての情報を含む行。rowとインデックスを共有します。
@@ -1437,7 +1438,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     // ORDER句による並び替えの処理を行います。
     if (orderByColumns.count) {
       // ORDER句で指定されている列が、全ての入力行の中のどの行なのかを計算します。
-      NSMutableArray *orderByColumnIndexes =
+      NSMutableArray<NSNumber *> *orderByColumnIndexes =
           NSMutableArray
               .new; // ORDER句で指定された列の、すべての行の中でのインデックスです。
       for (Column *column in orderByColumns) {
@@ -1478,10 +1479,10 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
           for (int k = 0; k < orderByColumnIndexes.count; ++k) {
             Data *mData = allColumnOutputData
                 [minIndex]
-                [((NSNumber *)orderByColumnIndexes[k])
+                [orderByColumnIndexes[k]
                      .integerValue]; // インデックスがminIndexのデータです。
             Data *jData = allColumnOutputData
-                [j][((NSNumber *)orderByColumnIndexes[k])
+                [j][orderByColumnIndexes[k]
                         .integerValue]; // インデックスがjのデータです。
             long cmp =
                 0; // 比較結果です。等しければ0、インデックスjの行が大きければプラス、インデックスminIndexの行が大きければマイナスとなります。
@@ -1544,7 +1545,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
     }
 
     // 出力ファイルにデータを出力します。
-    for (NSArray *currentRow in outputData) {
+    for (NSArray<Data *> *currentRow in outputData) {
       for (int i = 0; i < selectColumns.count; ++i) {
         Data *column = currentRow[i];
         NSString *outputString = nil;
