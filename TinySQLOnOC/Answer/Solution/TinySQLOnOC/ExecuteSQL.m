@@ -263,7 +263,6 @@ typedef NS_ENUM(NSUInteger, TokenKind) {
     for (RegulerExpressionTokenizeRule *rule in _rules) {
       Token *token = [rule parseDocument:read cursol:pCursol];
       if (token) {
-
         return token;
       }
     }
@@ -445,7 +444,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
   NSMutableArray<NSFileHandle *> *inputTableFiles =
       NSMutableArray.new; // 読み込む入力ファイルの全てのファイルポインタです。
   NSFileHandle *outputFile = nil; // 書き込むファイルのファイルポインタです。
-  NSMutableArray *inputData = NSMutableArray.new; // 入力データです。
+  NSMutableArray<NSMutableArray<NSArray<Data *> *> *> *inputData =
+      NSMutableArray.new; // 入力データです。
   NSMutableArray<NSArray<Data *> *> *outputData =
       NSMutableArray.new; // 出力データです。
   NSMutableArray<NSArray<Data *> *> *allColumnOutputData =
@@ -919,7 +919,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
     int tableNamesNum = 0;
     for (NSString *tableName in tableNames) {
-      NSMutableArray *table = NSMutableArray.new;
+      NSMutableArray<NSArray<Data *> *> *table = NSMutableArray.new;
       [inputData addObject:table];
 
       // 入力ファイルを開きます。
@@ -979,7 +979,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       // 入力CSVのデータ行を読み込みます。
       for (NSString *inputLine in
            [allLines subarrayWithRange:NSMakeRange(1, allLines.count - 1)]) {
-        NSMutableArray *row =
+        NSMutableArray<Data *> *row =
             NSMutableArray.new; // 入力されている一行分のデータです。
         [inputData.lastObject addObject:row];
         int charactorCursol = 0;
@@ -1020,8 +1020,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
         // 全ての行のある列について、データ文字列から符号と数値以外の文字を探します。
         BOOL found = NO;
-        for (NSArray *tableRow in inputData.lastObject) {
-          NSString *word = ((Data *)tableRow[i]).stringValue;
+        for (NSArray<Data *> *tableRow in inputData.lastObject) {
+          NSString *word = tableRow[i].stringValue;
           NSRegularExpression *intPattern =
               [NSRegularExpression regularExpressionWithPattern:@"^[+-]?\\d+$"
                                                         options:0
@@ -1036,10 +1036,9 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
         // 符号と数字以外が見つからない列については、数値列に変換します。
         if (!found) {
-          for (NSMutableArray *tableRow in inputData.lastObject) {
-            tableRow[i] =
-                [Data.alloc initWithInteger:[((Data *)tableRow[i])
-                                                    .stringValue integerValue]];
+          for (NSMutableArray<Data *> *tableRow in inputData.lastObject) {
+            tableRow[i] = [Data.alloc
+                initWithInteger:[tableRow[i].stringValue integerValue]];
           }
         }
       }];
@@ -1117,7 +1116,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
       }
     }
 
-    NSMutableArray *currentRowNums =
+    NSMutableArray<NSNumber *> *currentRowNums =
         NSMutableArray
             .new; // 入力された各テーブルの、現在出力している行を指すカーソルです。
     for (int i = 0; i < tableNamesNum; ++i) {
@@ -1133,10 +1132,8 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
       // 行の各列のデータを入力から持ってきて設定します。
       for (ColumnIndex *index in selectColumnIndexes) {
-        [row addObject:((NSArray *)
-                            inputData[index.table]
-                                     [((NSNumber *)currentRowNums[index.table])
-                                          .integerValue])[index.column]];
+        [row addObject:inputData[index.table][currentRowNums[index.table]
+                                                  .integerValue][index.column]];
       }
 
       NSMutableArray<Data *> *allColumnsRow = NSMutableArray.new;
@@ -1149,8 +1146,7 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
         for (int j = 0; j < ((NSArray *)inputColumns[i]).count; ++j) {
 
           [allColumnsRow
-              addObject:((NSArray *)inputData[i][((NSNumber *)currentRowNums[i])
-                                                     .integerValue])[j]];
+              addObject:inputData[i][currentRowNums[i].integerValue][j]];
         }
       }
       // WHEREの条件となる値を再帰的に計算します。
@@ -1419,18 +1415,14 @@ int ExecuteSQL(const char *sql, const char *outputFileName) {
 
       // 最後のテーブルが最終行になっていた場合は先頭に戻し、順に前のテーブルのカレント行をインクリメントします。
       for (unsigned long i = tableNames.count - 1;
-           ((NSArray *)inputData[i]).count <=
-               ((NSNumber *)currentRowNums[i]).integerValue &&
-           0 < i;
-           --i) {
+           inputData[i].count <= currentRowNums[i].integerValue && 0 < i; --i) {
         currentRowNums[i - 1] =
             @(((NSNumber *)currentRowNums[i - 1]).integerValue + 1);
         currentRowNums[i] = @0;
       }
 
       // 最初のテーブルが最後の行を超えたなら出力行の生成は終わりです。
-      if (((NSArray *)inputData[0]).count <=
-          ((NSNumber *)currentRowNums[0]).integerValue) {
+      if (inputData[0].count <= currentRowNums[0].integerValue) {
         break;
       }
     }
